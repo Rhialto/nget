@@ -35,6 +35,7 @@
 #include "_sstream.h"
 #include <iomanip>
 
+#ifndef HAVE_TIMEGM
 long my_timezone=0;
 #if (defined(TIMEZONE_IS_VAR) || defined(_TIMEZONE_IS_VAR))
 void init_my_timezone(void){
@@ -54,6 +55,20 @@ void init_my_timezone(void){
 	my_timezone=lt->tm_gmtoff;
 //	printf("my_timezone2=%li\n",my_timezone);
 }
+#endif
+
+time_t timegm (struct tm *tm) {
+	/* The timegm manpage suggests a strategy of setting the TZ env var to ""
+	 * and then running tzset(), mktime() and then resetting the TZ var to its
+	 * previous value, but unfortunatly it doesn't seem to work on all arches.
+	 * So rather than try to figure out when it does we'll just use the old,
+	 * possibly 1-hour-off during daylight savings time version.
+	 */
+	return mktime(tm)+my_timezone;
+}
+#else
+//if we have a real timegm(), then we don't need to do anything special.
+void init_my_timezone(void) {}
 #endif
 
 int doopen(int &handle,const char * name,int access,int mode) {
@@ -224,7 +239,7 @@ time_t decode_textdate(const char * cbuf, bool local){
 	struct tm tblock;
 	memset(&tblock,0,sizeof(struct tm));
 	char *tdt=NULL;
-	int td_tz=local?my_timezone:0;
+	int td_tz=local?0x7FFFFFFF:0;
 	int yearlen=0;
 	c_regex_subs rsubs;
 	if (!xrfc.match(cbuf,&rsubs)){
@@ -324,7 +339,10 @@ time_t decode_textdate(const char * cbuf, bool local){
 		return 0;
 	}else
 		PDEBUG(DEBUG_ALL,"decode_textdate: %s %i %i %i %i %i %i %i",tdt,tblock.tm_year,tblock.tm_mon,tblock.tm_mday,tblock.tm_hour,tblock.tm_min,tblock.tm_sec,td_tz);
-	return mktime(&tblock)+my_timezone-td_tz;
+	if (local && td_tz==0x7FFFFFFF){//if local=1 and time string didn't contain a timezone, just use mktime directly.
+		return mktime(&tblock);
+	}else
+		return timegm(&tblock)-td_tz;
 }
 #ifdef NO_REGEXPS
 time_t decode_textdate(const char * cbuf){
