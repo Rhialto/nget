@@ -27,7 +27,10 @@ Simple description: take your glob expression, replace:
 See the manpages for more complicated stuff ;)
 
 
-3. Whats this "unequal line count" error?
+3. Whats this "unequal line count" error? 
+
+(Starting with nget 0.15, this is only an error if unequal_line_error=1 in
+ your .ngetrc.  Otherwise it is just a warning.)
 
 If its always the same difference, its likely that your news server
 just counts the lines differently.  You can use the linelenience option
