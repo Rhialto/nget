@@ -192,7 +192,7 @@ void c_prot_nntp::doopen(const char *host, const char *user, const char *pass){
 	try {
 		cursock.open(host,"nntp");
 	} catch (FileEx &e) {
-		throw TransportExError(Ex_INIT,"nntp_doopen:%i %s",e.getExStr());
+		throw TransportExError(Ex_INIT,"nntp_doopen: %s",e.getExStr());
 	}
 	chkreply(getreply(!quiet));
 	putline(debug>=DEBUG_MED,"MODE READER");
