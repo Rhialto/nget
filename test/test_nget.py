@@ -1039,11 +1039,11 @@ else:
 
 	
 	class GZFileErrorTestCase(FileTest_base, SubterfugueTest_base, TestCase):
-		UpgradeZLibMessage = "nget did not detect read error on 0-th byte.  *** Upgrade zlib. ***" #update with version number when fixed version gets released
+		UpgradeZLibMessage = "nget did not detect read error on 0-th byte.  *** Upgrade zlib. See http://nget.sf.net/patches/ ***" #update with version number when fixed version gets released
 		ngetoptions={'options':{'usegz':9}}
 
 	
-	UpgradeUULibMessage = "*** Upgrade uulib. ***" #update with version number when fixed version gets released
+	UpgradeUULibMessage = "*** Upgrade uulib. See http://nget.sf.net/patches/ *** " #update with version number when fixed version gets released
 		
 	class FileErrorTestCase(FileTest_base, SubterfugueTest_base, TestCase):
 		UpgradeZLibMessage = None
@@ -1106,7 +1106,7 @@ else:
 			self.check_for_errormsg(r'uu_msg.*/tmp/[^/]*[ :]')
 
 		def test_uutempfile_write_error(self):
-			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','w',0)]"), 1)
+			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','w',0)]"), 1, UpgradeUULibMessage)
 			self.check_for_errormsg(r'uu_msg.*temp file') #uulib doesn't say the filename in this message
 
 		def test_uutempfile_close_write_error(self):
@@ -1130,7 +1130,7 @@ else:
 			self.check_for_errormsg(r'testfile\.txt\b')
 
 		def test_destfile_write_error(self):
-			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('testfile\.txt$','w',0)]"), 1)
+			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('testfile\.txt$','w',0)]"), 1, UpgradeUULibMessage)
 			self.check_for_errormsg(r'testfile\.txt\b')
 
 		def test_destfile_close_write_error(self):
