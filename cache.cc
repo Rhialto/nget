@@ -640,7 +640,7 @@ c_nntp_cache::~c_nntp_cache(){
 	c_file *f=NULL;
 	t_nntp_files::iterator i;
 	c_nntp_server_info *si;
-	if (saveit && (files.size() || fileread)){
+	if (saveit && (fileread || !files.empty())){
 		string tmpfn;
 		tmpfn=file+".tmp";
 		if((f=dofileopen(tmpfn,"wb",group->usegz))){

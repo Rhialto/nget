@@ -133,7 +133,7 @@ void c_data_file::setfilename(const char * f){
 
 
 int c_data_file::read(void){
-	if (filename.size()==0)
+	if (filename.empty())
 		return -2;
 //	char buf[df_BUFSIZE];
 //	FILE *f=fopen(filename.c_str(),"r");
@@ -148,7 +148,7 @@ int c_data_file::read(void){
 	return -1;
 }
 void c_data_file::save(void){
-	if (filename.size()==0)
+	if (filename.empty())
 		return;
 //	dobackup(filename.str());
 	int r=-1;

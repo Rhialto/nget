@@ -208,7 +208,7 @@ generic_pred * make_pred(const char *optarg){
 		}
 	}
 	if (esc || quote){printf("bad. %i %i\n",esc,quote);return NULL;}
-	if (curpart.size())
+	if (!curpart.empty())
 		e_parts.push_back(curpart);
 	string *x=NULL,*y=NULL;
 	//								const char *x=NULL,*y=NULL;
