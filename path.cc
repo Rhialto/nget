@@ -13,10 +13,8 @@ bool is_abspath(const char *p) {
 
 string& path_append(string &a, string b) {
 	char c=a[a.size()-1];
-	if (!is_pathsep(c)) {
+	if (!is_pathsep(c))
 		a.push_back('/');// since '/' is a valid path sep on windows too, we don't need to specialize this.
-		return a.append(b); 
-	}
 	return a.append(b);
 }
 
