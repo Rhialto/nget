@@ -1,6 +1,6 @@
 /*
     etree.* - handles expression trees..
-    Copyright (C) 1999  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999,2002  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,150 +22,110 @@
 #include "myregex.h"
 #include "misc.h"
 #include "strreps.h"
+#include "getter.h"
 
-template <class Op>
-struct e_generic : public generic_pred {
-	typedef Op op_type;
-	typedef typename Op::arg1_type arg1_type;
-	typedef typename Op::arg2_type arg2_type;
-	arg2_type val2;
-	const Op *O;
-	int ofs;
-//	void *val;
-
-//	e_binder2nd(const arg2_type v):val2(v){};
-	e_generic(const Op *aO,int aofs,arg2_type v){
-		ofs=aofs;val2=v;O=aO;
-	}
-//	virtual ret_type operator()(const arg_type v) const {return (*O)(*((arg1_type*)(v+ofs)),val2);};
+#define MAKE_BINARY_OP(name,op) template <class T,class T2=T>			\
+struct Op_ ## name {			\
+	bool operator()(const T v1,const T2 v2) const {return v1 op v2;}	\
 };
-//typedef e_binary_function<ulong,ulong,bool> bin_fun_ulong;
-template <class Type>
-struct e_generic_type : public e_generic<e_binary_function<Type,Type,bool> > {
-	e_generic_type(const op_type *aO,int aofs,arg2_type v):e_generic<op_type> (aO,aofs,v){};
-	virtual ret_type operator()(const arg_type v) const {return (*O)(*((Type*)((ubyte*)v+ofs)),val2);};
-};
-typedef e_generic_type<ulong> e_generic_ulong;
-typedef e_generic_type<int> e_generic_int;
-typedef e_generic_type<time_t> e_generic_time_t;
+MAKE_BINARY_OP(gt,>);
+MAKE_BINARY_OP(ge,>=);
+MAKE_BINARY_OP(lt,<);
+MAKE_BINARY_OP(le,<=);
+MAKE_BINARY_OP(eq,==);
+MAKE_BINARY_OP(ne,!=);
 
-//needs own type so it can free up the regexp when done
-typedef e_binary_function<string&,c_regex_nosub*,bool> bin_fun_re;
-struct e_generic_re : public e_generic<bin_fun_re> {
-	e_generic_re(const bin_fun_re *aO,int aofs,arg2_type v):e_generic<bin_fun_re>(aO,aofs,v){};
-	virtual ~e_generic_re(){delete val2;}
-	virtual ret_type operator()(const arg_type v) const {return (*O)(*((string*)((ubyte*)v+ofs)),val2);};
-};
-
-//these cannot use generic_type, since they need to go into pointers and stuff
-struct e_nntp_mid : public e_generic_re {
-	e_nntp_mid(const bin_fun_re *aO,int aofs,arg2_type v):e_generic_re(aO, aofs, v){};
-	virtual ret_type operator()(const arg_type f) const {
-		if (f->parts.empty()) {
-			string foobar("");
-			return (*O)(foobar,val2);
+//use real operators here (rather than a predComparison with Op template) to take advantage of short-circuit evaluation.
+template <class ClassType>
+class predAnd : public pred<ClassType> {
+	private:
+		pred<ClassType> *p1, *p2;
+	public:
+		predAnd(pred<ClassType> *n1, pred<ClassType> *n2):p1(n1), p2(n2) { }
+		virtual ~predAnd() {delete p1; delete p2;}
+		virtual bool operator()(ClassType* f) const {
+			return (*p1)(f) && (*p2)(f);
 		}
-		return (*O)((*f->parts.begin()).second->messageid,val2);
-	};
+};
+template <class ClassType>
+class predOr : public pred<ClassType> {
+	private:
+		pred<ClassType> *p1, *p2;
+	public:
+		predOr(pred<ClassType> *n1, pred<ClassType> *n2):p1(n1), p2(n2) { }
+		virtual ~predOr() {delete p1; delete p2;}
+		virtual bool operator()(ClassType* f) const {
+			return (*p1)(f) || (*p2)(f);
+		}
 };
 
-struct e_nntp_date : public e_generic<e_binary_function<time_t,time_t,bool> > {
-	e_nntp_date(const op_type *aO,int aofs,arg2_type v):e_generic<e_binary_function<time_t,time_t,bool> >(aO,aofs,v){};
-	virtual ret_type operator()(const arg_type f) const {
-		if (f->parts.empty()) return (*O)(0,val2);
-		return (*O)((*f->parts.begin()).second->date,val2);
-		//return (*O)(((c_nntp_file*)v)->parts.begin(),val2);
-	};
+template <template <class A, class B> class Op, template <class D, class E> class Getter, class T, class ClassType, class T2=T>
+class Comparison : public pred<ClassType> {
+	private:
+		typedef Getter<T, ClassType> getterT;
+		Op<typename getterT::T,T2> op;
+		getterT getter;
+		T2 v;
+	public:
+		Comparison(typename getterT::init_t gette, const T2 v2):getter(gette), v(v2){}
+		virtual bool operator()(ClassType* f) const {
+			return op(getter(f), v);
+		}
 };
-struct e_nntp_lines : public e_generic<e_binary_function<ulong,ulong,bool> > {
-	e_nntp_lines(const op_type *aO,int aofs,arg2_type v):e_generic<e_binary_function<ulong,ulong,bool> >(aO,aofs,v){};
-	virtual ret_type operator()(const arg_type f) const {
-		return (*O)(f->lines(),val2);
-	};
-};
-struct e_nntp_bytes : public e_generic<e_binary_function<ulong,ulong,bool> > {
-	e_nntp_bytes(const op_type *aO,int aofs,arg2_type v):e_generic<e_binary_function<ulong,ulong,bool> >(aO,aofs,v){};
-	virtual ret_type operator()(const arg_type f) const {
-		return (*O)(f->bytes(),val2);
-	};
-};
-
-/*struct e_nntp_banum : public e_generic<e_binary_function<ulong,ulong,bool> > {
-	e_nntp_banum(const op_type *aO,int aofs,arg2_type v):e_generic<e_binary_function<ulong,ulong,bool> >(aO,aofs,v){};
-	virtual ret_type operator()(const arg_type v) const {
-		c_nntp_file*f=(c_nntp_file*)v;
-		if (f->parts.empty()) return (*O)(0,val2);
-		return (*O)((*f->parts.begin()).second->articlenum,val2);
-		//return (*O)(((c_nntp_file*)v)->parts.begin(),val2);
-	};
-};*/
-
-/*template <class Operation1>
-inline e_generic<Operation1> *
-egeneric(const Operation1 *op1, const int ofs,ubyte *v) {
-	  return new e_generic<Operation1>(op1,ofs,(typename Operation1::arg2_type)v);
-};*/
-
-static bin_fun_re * e_str_;
-static e_eq<string&,c_regex_nosub*> str_eq;
-static e_ne<string&,c_regex_nosub*> str_ne;
-#define MAKE_E_BIN_FUNCS(type) \
-static e_binary_function<type,type,bool> * e_ ## type ## _;\
-static e_gt<type,type> type ## _gt;	\
-static e_ge<type,type> type ## _ge;	\
-static e_lt<type,type> type ## _lt;	\
-static e_le<type,type> type ## _le;	\
-static e_eq<type,type> type ## _eq;	\
-static e_ne<type,type> type ## _ne;
-MAKE_E_BIN_FUNCS(ulong);
-MAKE_E_BIN_FUNCS(time_t);
-MAKE_E_BIN_FUNCS(int);
-static e_binary_function<bool,bool,bool> *e_logic_;
-
-
-#define E_STRING 0
-#define E_ULONG 1
-#define E_INT 2
-#define E_TIME_T 3
-typedef generic_pred*(pred_maker)(const void *op,const void*v);
-static generic_pred* make_e_nntp_date(const void *op,const void*v) {
-	return new e_nntp_date((e_binary_function<time_t,time_t,bool>*)op, 0, (time_t)v);
+template <template <class A, class B> class Op, class ClassType, class RetType>
+pred<ClassType> *new_comparison(RetType (ClassType::*member), RetType v){
+	return new Comparison<Op, MemGetter, RetType, ClassType>(member, v);
 }
-static generic_pred* make_e_nntp_lines(const void *op,const void*v) {
-	return new e_nntp_lines((e_binary_function<ulong,ulong,bool>*)op, 0, (ulong)v);
+template <template <class A, class B> class Op, class ClassType, class RetType>
+pred<ClassType> *new_comparison(RetType (ClassType::*memberf)(void), RetType v){
+	return new Comparison<Op, MemfuncGetter, RetType, ClassType>(memberf, v);
 }
-static generic_pred* make_e_nntp_bytes(const void *op,const void*v) {
-	return new e_nntp_bytes((e_binary_function<ulong,ulong,bool>*)op, 0, (ulong)v);
+template <class ClassType, class getterT, class T2>
+pred<ClassType> *comparison(const string &opstr, getterT get, T2 v) {
+	if      (opstr.compare("==")==0) return new_comparison<Op_eq,ClassType>(get, v);
+	else if (opstr.compare("!=")==0) return new_comparison<Op_ne,ClassType>(get, v);
+	else if (opstr.compare("<")==0)  return new_comparison<Op_lt,ClassType>(get, v);
+	else if (opstr.compare("<=")==0) return new_comparison<Op_le,ClassType>(get, v);
+	else if (opstr.compare(">")==0)  return new_comparison<Op_gt,ClassType>(get, v);
+	else if (opstr.compare(">=")==0) return new_comparison<Op_ge,ClassType>(get, v);
+	throw UserExFatal(Ex_INIT, "invalid op %s for comparison", opstr.c_str());
 }
-/*static generic_pred* make_e_nntp_banum(const void *op,const void*v) {
-	return new e_nntp_banum((e_binary_function<ulong,ulong,bool>*)op, 0, (ulong)v);
-}*/
-static generic_pred* make_e_nntp_mid(const void *op,const void*v) {
-	return new e_nntp_mid((bin_fun_re*)op, 0, (c_regex_nosub*)v);
-}
-struct {
-	char * name;
-	int type;
-	int ofs;
-	//generic_pred *specp;
-	pred_maker *specp;//special pred_maker to use, else use generic_pred
-}nntp_matches[]={
-	{"subject",E_STRING,(ubyte*)(&((c_nntp_file*)NULL)->subject)-(ubyte*)NULL,NULL},
-	{"author",E_STRING,(ubyte*)(&((c_nntp_file*)NULL)->author)-(ubyte*)NULL,NULL},
-	//{"lines",E_ULONG,(ubyte*)(&((c_nntp_file*)NULL)->lines)-(ubyte*)NULL,NULL},
-	//{"bytes",E_ULONG,(ubyte*)(&((c_nntp_file*)NULL)->bytes)-(ubyte*)NULL,NULL},
-	{"lines",E_ULONG,0,make_e_nntp_lines},
-	{"bytes",E_ULONG,0,make_e_nntp_bytes},
-	{"req",E_INT,(ubyte*)(&((c_nntp_file*)NULL)->req)-(ubyte*)NULL,NULL},
-	{"have",E_INT,(ubyte*)(&((c_nntp_file*)NULL)->have)-(ubyte*)NULL,NULL},
-	{"date",E_TIME_T,0,make_e_nntp_date},
-//	{"anum",E_ULONG,0,make_e_nntp_banum},
-	{"messageid",E_STRING,0,make_e_nntp_mid},
-	{"mid",E_STRING,0,make_e_nntp_mid}, //same as messageid
-	{0,0,0,0}
-};
 
-generic_pred * make_pred(const char *optarg, int gflags){
+//template <template <class A, class B> class Op, template <class D, class E, class F> class Getter, class getterT, class T>
+template <template <class A, class B> class Op, template <class D, class E> class Getter, class T, class ClassType>
+class Comparison_re : public pred<ClassType> {
+	private:
+		typedef Getter<T, ClassType> getterT;
+		Op<typename getterT::T,const c_regex_nosub&> op;
+		getterT getter;
+		c_regex_nosub re;
+	public:
+		Comparison_re(typename getterT::init_t gette, const char *pattern, int flags):getter(gette), re(pattern, flags){}
+		virtual bool operator()(ClassType* f) const {
+			return op(getter(f), re);
+		}
+};
+template <template <class A, class B> class Op, class ClassType, class RetType>
+pred<ClassType> *new_comparison_re(RetType (ClassType::*member), const char *pattern, int flags){
+	return new Comparison_re<Op, MemGetter, RetType, ClassType>(member, pattern, flags);
+}
+template <template <class A, class B> class Op, class ClassType, class RetType>
+pred<ClassType> *new_comparison_re(RetType (ClassType::*memberf)(void), const char *pattern, int flags){
+	return new Comparison_re<Op, MemfuncGetter, RetType, ClassType>(memberf, pattern, flags);
+}
+template <class ClassType, class getterT>
+pred<ClassType> *comparison_re(const string &opstr, getterT get, const char *pattern, int flags) {
+	//typedef const string &T;
+	if (opstr.compare("==")==0 || opstr.compare("=~")==0)
+		return new_comparison_re<Op_eq,ClassType>(get, pattern, flags);
+		//return new Comparison_re<Op_eq,Getter,const getterT,T>(get, pattern, flags);
+	else if (opstr.compare("!=")==0 || opstr.compare("!~")==0)
+		return new_comparison_re<Op_ne,ClassType>(get, pattern, flags);
+		//return new Comparison_re<Op_ne,Getter,const getterT,T>(get, pattern, flags);
+	throw UserExFatal(Ex_INIT, "invalid op %s for comparison_re", opstr.c_str());
+}
+
+nntp_file_pred * make_pred(const char *optarg, int gflags){
 	list<string> e_parts;
 	string curpart;
 	//const char /**curstart=NULL,*/*cur;
@@ -208,130 +168,58 @@ generic_pred * make_pred(const char *optarg, int gflags){
 	if (!curpart.empty())
 		e_parts.push_back(curpart);
 	string *x=NULL,*y=NULL;
-	//								const char *x=NULL,*y=NULL;
 	list<string>::iterator i=e_parts.begin();
-	int match;
-	generic_pred * p=NULL,*px=NULL,*py=NULL;
+	int re_flags = REG_EXTENDED | ((gflags&GETFILES_CASESENSITIVE)?0:REG_ICASE);
+	nntp_file_pred * p=NULL,*px=NULL,*py=NULL;
 	for (;i!=e_parts.end();++i){
 		if (!x){
 			PDEBUG(DEBUG_MIN,"x %s",(*i).c_str());
 			x=&(*i);
 			if (px && py){
 				if (x->compare("&&")==0 || x->compare("and")==0)
-					e_logic_=new e_land<bool>;
+					px = new predAnd<const c_nntp_file>(px, py);
 				else if (x->compare("||")==0 || x->compare("or")==0)
-					e_logic_=new e_lor<bool>;
-				else {
-					printf("error: bad op %s\n",x->c_str());
-					return NULL;
-				}
-				p=ecompose2(e_logic_,px,py);
-				py=NULL;px=p;
+					px = new predOr<const c_nntp_file>(px, py);
+				else
+					throw UserExFatal(Ex_INIT, "bad op %s", x->c_str());
+				py=NULL;
 				x=NULL;
 			}
 		}else if (!y){
 			PDEBUG(DEBUG_MIN,"y %s",(*i).c_str());
 			y=&(*i);
 		} else {
+			const char *n = x->c_str();
 			PDEBUG(DEBUG_MIN,"z %s",(*i).c_str());
-			for (match=0;nntp_matches[match].name;match++){
-				if (strcasecmp(nntp_matches[match].name,x->c_str())==0)
-					break;
-			}
-			if (nntp_matches[match].name){
-				PDEBUG(DEBUG_MIN,"%s %i %i",nntp_matches[match].name,nntp_matches[match].type,nntp_matches[match].ofs);
-				if (nntp_matches[match].type==E_STRING){
-					c_regex_nosub *reg=new c_regex_nosub(y->c_str(),REG_EXTENDED | ((gflags&GETFILES_CASESENSITIVE)?0:REG_ICASE));
-					if ((*i).compare("=~")==0 || (*i).compare("==")==0)
-						e_str_=&str_eq;
-					else if ((*i).compare("!~")==0 || (*i).compare("!=")==0)
-						e_str_=&str_ne;
-					else{
-						printf("error: bad op %s\n",(*i).c_str());
-						delete reg;
-						return NULL;
-					}
+			if (strcasecmp(n, "subject")==0)
+				p = comparison_re<const c_nntp_file>((*i), &c_nntp_file::subject, y->c_str(), re_flags);
+			else if (strcasecmp(n, "author")==0)
+				p = comparison_re<const c_nntp_file>((*i), &c_nntp_file::author, y->c_str(), re_flags);
+			else if (strcasecmp(n, "mid")==0 || strcasecmp(n, "messageid")==0)
+				p = comparison_re<const c_nntp_file>((*i), &c_nntp_file::bamid, y->c_str(), re_flags);
+			else if (strcasecmp(n, "bytes")==0)
+				p = comparison<const c_nntp_file>((*i), &c_nntp_file::bytes, atoul(y->c_str()));
+			else if (strcasecmp(n, "lines")==0)
+				p = comparison<const c_nntp_file>((*i), &c_nntp_file::lines, atoul(y->c_str()));
+			else if (strcasecmp(n, "req")==0)
+				p = comparison<const c_nntp_file>((*i), &c_nntp_file::req, atoi(y->c_str()));
+			else if (strcasecmp(n, "have")==0)
+				p = comparison<const c_nntp_file>((*i), &c_nntp_file::have, atoi(y->c_str()));
+			else if (strcasecmp(n, "date")==0)
+				p = comparison<const c_nntp_file>((*i), &c_nntp_file::badate, decode_textdate(y->c_str()));
+			else
+				throw UserExFatal(Ex_INIT, "no match type %s", n);
 
-					//p=egeneric(e_str_,nntp_matches[match].ofs,(ubyte*)reg);
-					if (nntp_matches[match].specp)
-						p=nntp_matches[match].specp(e_str_,(void*)reg);
-					else
-						p=new e_generic_re(e_str_,nntp_matches[match].ofs,reg);
-				}
-				else if (nntp_matches[match].type==E_INT){
-					if ((*i).compare(">")==0)	e_int_=&int_gt;
-					else if ((*i).compare(">=")==0)	e_int_=&int_ge;
-					else if ((*i).compare("<")==0)	e_int_=&int_lt;
-					else if ((*i).compare("<=")==0)	e_int_=&int_le;
-					else if ((*i).compare("==")==0)	e_int_=&int_eq;
-					else if ((*i).compare("!=")==0)	e_int_=&int_ne;
-					else{
-						printf("error: bad op %s\n",(*i).c_str());
-						return NULL;
-					}
-					//p=egeneric(e_int_,nntp_matches[match].ofs,(ubyte*)atoul(y->c_str()));
-					int v=atoi(y->c_str());
-					if (nntp_matches[match].specp)
-						p=nntp_matches[match].specp(e_int_,(void*)v);
-					else
-						p=new e_generic_int(e_int_,nntp_matches[match].ofs,v);
-				}
-				else if (nntp_matches[match].type==E_ULONG){
-					if ((*i).compare(">")==0)	e_ulong_=&ulong_gt;
-					else if ((*i).compare(">=")==0)	e_ulong_=&ulong_ge;
-					else if ((*i).compare("<")==0)	e_ulong_=&ulong_lt;
-					else if ((*i).compare("<=")==0)	e_ulong_=&ulong_le;
-					else if ((*i).compare("==")==0)	e_ulong_=&ulong_eq;
-					else if ((*i).compare("!=")==0)	e_ulong_=&ulong_ne;
-					else{
-						printf("error: bad op %s\n",(*i).c_str());
-						return NULL;
-					}
-					//p=egeneric(e_ulong_,nntp_matches[match].ofs,(ubyte*)atoul(y->c_str()));
-					ulong v=atoul(y->c_str());
-					if (nntp_matches[match].specp)
-						p=nntp_matches[match].specp(e_ulong_,(void*)v);
-					else
-						p=new e_generic_ulong(e_ulong_,nntp_matches[match].ofs,v);
-				}
-				else if (nntp_matches[match].type==E_TIME_T){
-					if ((*i).compare(">")==0)	e_time_t_=&time_t_gt;
-					else if ((*i).compare(">=")==0)	e_time_t_=&time_t_ge;
-					else if ((*i).compare("<")==0)	e_time_t_=&time_t_lt;
-					else if ((*i).compare("<=")==0)	e_time_t_=&time_t_le;
-					else if ((*i).compare("==")==0)	e_time_t_=&time_t_eq;
-					else if ((*i).compare("!=")==0)	e_time_t_=&time_t_ne;
-					else{
-						printf("error: bad op %s\n",(*i).c_str());
-						return NULL;
-					}
-					//p=egeneric(e_time_t_,nntp_matches[match].ofs,(ubyte*)atoul(y->c_str()));
-					//time_t t=atol(y->c_str());
-					time_t t=decode_textdate(y->c_str());
-					PDEBUG(DEBUG_MIN,"t=%li",t);
-					if (nntp_matches[match].specp)
-						p=nntp_matches[match].specp(e_time_t_,(void*)t);
-					else
-						p=new e_generic_time_t(e_time_t_,nntp_matches[match].ofs,t);
-				}
-				if (px)
-					py=p;
-				else
-					px=p;
-				//										if (strncasecmp(x->c_str(),"subject",x->size())==0)
-			}else{
-				printf("error: no match type %s\n",x->c_str());
-				return NULL;
-			}
+			if (px)
+				py=p;
+			else
+				px=p;
+
 			x=y=NULL;
 		}
 	}
 	if (py || x || y){
-		printf("error: unfinished\n");
-		return NULL;
+		throw UserExFatal(Ex_INIT, "unfinished expression");
 	}
 	return px;
 }
-								//nntp_pred *p=ecompose2(new e_land<bool>,
-								//		new e_binder2nd<e_nntp_file_lines<e_ge<ulong> > >(linelimit),
-								//		new e_binder2nd_p<e_nntp_file_subject<e_eq<string,c_regex_nosub*> > >(reg));

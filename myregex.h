@@ -69,6 +69,7 @@ class c_regex_nosub : public c_regex_base{
 };
 inline bool operator == (const string &a,const c_regex_nosub &r){return r.match(a.c_str())==0;}
 inline bool operator == (const string &a,const c_regex_nosub *r){return r->match(a.c_str())==0;}
+inline bool operator != (const string &a,const c_regex_nosub &r){return r.match(a.c_str())!=0;}
 inline bool operator != (const string &a,const c_regex_nosub *r){return r->match(a.c_str())!=0;}
 inline bool operator == (const char *a,const c_regex_nosub &r){return r.match(a)==0;}
 

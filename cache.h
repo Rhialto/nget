@@ -143,48 +143,6 @@ class c_nntp_file : public c_refcounted<c_nntp_file>{
 		virtual ~c_nntp_file();
 };
 
-#if 0
-typedef e_unary_function<c_nntp_file_ptr,bool> nntp_pred;
-
-template <class Op>
-struct e_nntp_file : public e_binary_function<c_nntp_file_ptr, typename Op::arg2_type, typename Op::ret_type> {
-//        typedef typename Op::arg2_type arg2_type;
-//      arg2_type val2;
-        Op O;
-
-//      e_binder2nd(const arg2_type v):val2(v){};
-        virtual ret_type operator()(const arg1_type v,const arg2_type val2) const=0;
-};
-template <class Op>
-struct e_nntp_file_lines : public e_nntp_file<Op> {
-        ret_type operator()(const arg1_type v,const arg2_type val2) const {return O(v->lines,val2);}
-};
-template <class Op>
-struct e_nntp_file_subject : public e_nntp_file<Op> {
-        ret_type operator()(const arg1_type v,const arg2_type val2) const {return O(v->subject,val2);}
-};
-/*
-template <class T1,class T2,class RT>
-struct e_nntp_file : public e_binary_function<c_nntp_file *, T2, typename RT> {
-//        typedef typename Op::arg2_type arg2_type;
-//      arg2_type val2;
-//        Op O;
-	e_binary_function<T1,T2,RT> *O;
-
-//      e_binder2nd(const arg2_type v):val2(v){};
-        virtual ret_type operator()(const T1 v,const T2 val2) const=0;
-};
-template <class Op>
-struct e_nntp_file_lines : public e_nntp_file<Op> {
-        ret_type operator()(const arg1_type v,const arg2_type val2) const {return O(v->lines,val2);}
-};
-template <class Op>
-struct e_nntp_file_subject : public e_nntp_file<typename Op::arg1_type,typename Op::arg2_type,typename Op::ret_type> {
-        ret_type operator()(const arg1_type v,const arg2_type val2) const {return (*O)(v->subject,val2);}
-};
-*/
-#endif
-
 
 //typedef hash_map<const char*, c_nntp_file*, hash<const char*>, eqstr> t_nntp_files;
 #ifdef USE_HASH_MAP
@@ -309,10 +267,10 @@ class c_nntp_getinfo : public c_refcounted<c_nntp_getinfo>{
 	public:
 		string path;
 		string temppath;
-		generic_pred *pred;
+		nntp_file_pred *pred;
 		int flags;
 		dupe_file_checker flist;
-		c_nntp_getinfo(const string &pat, const string &temppat,generic_pred *pre,int flag):path(pat), temppath(temppat), pred(pre), flags(flag) {
+		c_nntp_getinfo(const string &pat, const string &temppat,nntp_file_pred *pre,int flag):path(pat), temppath(temppat), pred(pre), flags(flag) {
 			if (!(flags&GETFILES_NODUPEFILECHECK)) {
 				flist.addfrompath(path);
 			}
