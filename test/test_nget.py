@@ -1097,9 +1097,12 @@ else:
 	
 	class SubterfugueTest_base(DecodeTest_base):
 		def setUp(self):
-			self.servers = nntpd.NNTPD_Master(1)
+			self.do_setUp(1, getattr(self,'ngetoptions',{}))
+
+		def do_setUp(self, numservers, ngetoptions):
+			self.servers = nntpd.NNTPD_Master(numservers)
 			self.addarticles('0001', 'uuencode_single')
-			self.nget = util.TestNGet(ngetexe, self.servers.servers, **getattr(self,'ngetoptions',{}))
+			self.nget = util.TestNGet(ngetexe, self.servers.servers, **ngetoptions)
 			self.servers.start()
 			self.sfexe = "sf -t ExitStatus"
 			self.outputfn = os.path.join(self.nget.rcdir, "output.log")
@@ -1121,11 +1124,15 @@ else:
 				return int(x.group(2))
 			return x.group(1), x.group(2)
 		
-		def check_for_errormsg(self, msg, err=errno.EIO):
+		def check_for_errormsg(self, msg, err=errno.EIO, dupe=0):
 			errmsg = re.escape(os.strerror(err))
 			self.failUnless(re.search(msg+'.*'+errmsg, self.output), "did not find expected error message in output")
 			self.failIf(re.search(msg+'.*'+msg+'.*'+errmsg, self.output), "name duplicated in error message")
-			self.failIf(re.search(msg+'.*'+errmsg+'.*'+msg+'.*'+errmsg, self.output, re.DOTALL), "expected error message duplicated in output")
+			dupe2=re.search(msg+'.*'+errmsg+'.*'+msg+'.*'+errmsg, self.output, re.DOTALL)
+			if not dupe:
+				self.failIf(dupe2, "expected error message duplicated in output")
+			else:
+				self.failIf(not dupe2, "expected error message not duplicated in output")
 
 		def runnget(self, args, trick):
 			self.nget.run(args + self.post, self.sfexe + " -t \""+trick+"\" ")
@@ -1362,9 +1369,16 @@ else:
 			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('r',0)]"), 16)
 			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
 
-		def test_sock_close_error(self):
+		def test_sock_close_error_onexit(self):
 			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw','c')]"), 0) #error on sock close doesn't really need an error return, since it can't cause any problems.  (Any problem causing errors would be caught before sock.close() gets called.)
 			self.check_for_errormsg(r'127.0.0.1')#'TransportEx.*127.0.0.1')
+		
+		def test_sock_close_error(self):
+			#somewhat hacky stuff since we need 2 servers for this test only.
+			self.tearDown()
+			self.do_setUp(2, {'options':{'tries':1, 'maxconnections':1}})
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw','c')]"), 0) #error on sock close doesn't really need an error return, since it can't cause any problems.  (Any problem causing errors would be caught before sock.close() gets called.)
+			self.check_for_errormsg(r'127.0.0.1', dupe=1)#'TransportEx.*127.0.0.1')
 
 
 	class LiteErrorTest_base(SubterfugueTest_base):
@@ -1402,6 +1416,37 @@ else:
 			self.vfailUnlessEqual(self.runlite(self.litelist, r"IOError:f=[('ngetlite\.\d+$','w','c')]"), 255)
 			self.check_for_errormsg(r'ngetlite\.\d+\b')
 			#self.verifyoutput([])
+	
+	class LiteSockErrorTestCase(LiteErrorTest_base, TestCase):
+		def setUp(self):
+			LiteErrorTest_base.setUp(self)
+			os.environ['NGETLITE_TRIES'] = '1'
+			os.environ['NGETLITE_TIMEOUT'] = '10'
+
+		def test_socket_error(self):
+			#self.failUnlessEqual(
+			self.runlite(self.litelist, "IOError:s=[('rw',-2)]")#, 64)
+			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+
+		def test_connect_error(self):
+			#self.failUnlessEqual(self.runlite(self.litelist, "IOError:s=[('rw',-1)]"), 64)
+			self.runlite(self.litelist, "IOError:s=[('rw',-1)]")
+			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+
+		def test_sock_write_error(self):
+			#self.failUnlessEqual(
+			self.runlite(self.litelist, "IOError:s=[('w',0)]")#, 64)
+			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+
+		def test_sock_read_error(self):
+			#self.failUnlessEqual(
+			self.runlite(self.litelist, "IOError:s=[('r',0)]")#, 64)
+			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+
+		def test_sock_close_error(self):
+			self.failUnlessEqual(self.runlite(self.litelist, "IOError:s=[('rw','c')]"), 0) #error on sock close doesn't really need an error return, since it can't cause any problems.  (Any problem causing errors would be caught before sock.close() gets called.)
+			self.check_for_errormsg(r'127.0.0.1')#'TransportEx.*127.0.0.1')
+
 
 
 class CppUnitTestCase(TestCase):
