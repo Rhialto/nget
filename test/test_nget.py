@@ -36,11 +36,14 @@ class DecodeTestCase(unittest.TestCase):
 		self.servers.stop()
 		self.nget.clean_all()
 
-	def do_test(self, testnum, dirname):
+	def addarticles(self, testnum, dirname):
 		for fn in glob.glob(os.path.join("testdata",testnum,dirname,"*")):
 			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
 				continue
 			self.servers.servers[0].addarticle(["test"], nntpd.FileArticle(open(fn, 'r')))
+
+	def do_test(self, testnum, dirname):
+		self.addarticles(testnum, dirname)
 
 		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
 		
@@ -67,12 +70,23 @@ class DecodeTestCase(unittest.TestCase):
 		extra = [fn for fn in os.listdir(self.nget.tmpdir) if fn not in ok]
 		self.failIf(extra, "extra files decoded: "+`extra`)
 	
-	def do_test_auto(self):
+	def do_test_decodeerror(self, testnum, dirname):
+		self.addarticles(testnum, dirname)
+
+		self.failUnless(os.WEXITSTATUS(self.nget.run("-g test -r .")) & 1, "nget process did not detect decode error")
+	
+	def get_auto_args(self):
 		#use some magic so we don't have to type out everything twice
 		import inspect
-		frame = inspect.currentframe().f_back
+		frame = inspect.currentframe().f_back.f_back
 		foo, testnum, testname = frame.f_code.co_name.split('_',2)
-		self.do_test(testnum, testname)
+		return testnum, testname
+	
+	def do_test_auto(self):
+		self.do_test(*self.get_auto_args())
+
+	def do_test_auto_decodeerror(self):
+		self.do_test_decodeerror(*self.get_auto_args())
 	
 	def test_0001_yenc_single(self):
 		self.do_test_auto()
@@ -82,6 +96,12 @@ class DecodeTestCase(unittest.TestCase):
 		self.do_test_auto()
 	def test_0001_yenc_multi(self):
 		self.do_test_auto()
+	def test_0001_yenc_single_crc32_error(self):
+		self.do_test_auto_decodeerror()
+	def test_0001_yenc_multi_crc32_error(self):
+		self.do_test_auto_decodeerror()
+	def test_0001_yenc_multi_pcrc32_error(self):
+		self.do_test_auto_decodeerror()
 	def test_0002_yenc_multi(self):
 		self.do_test_auto()
 	def test_0002_uuencode_multi(self):
