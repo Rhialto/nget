@@ -53,8 +53,7 @@ class c_lockfile{
 			PDEBUG(FLOCK_DEBUG_LEV,"unlocked %s",file.c_str());
 		}
 };
-#else //!HAVE_LIBLOCKFILE
-#ifdef HAVE_FLOCK
+#elif HAVE_FLOCK
 #include <unistd.h>
 #include <sys/file.h>
 class c_lockfile{
@@ -85,15 +84,46 @@ class c_lockfile{
 			}
 		}
 };
-#else //!HAVE_FLOCK
+#elif HAVE_LOCKFILE
+#include <windows.h>
+#include "misc.h"
+class c_lockfile{
+	public:
+		HANDLE hFile;
+
+		c_lockfile(string filename,int flag){
+			PDEBUG(FLOCK_DEBUG_LEV,"attempting to LockFile %s",filename.c_str());
+			if (!fexists(filename.c_str()))
+				return;
+			hFile = CreateFile(filename.c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+			if (hFile==INVALID_HANDLE_VALUE){
+				throw ApplicationExFatal(Ex_INIT,"c_lockfile: open %s (%i)",filename.c_str(),GetLastError());
+			}
+			int tries=1;
+			while (!LockFile(hFile,0,0,0xFFFFFFFF,0)) {
+				if (tries++ >= 10)
+					throw ApplicationExFatal(Ex_INIT,"c_lockfile: LockFile %s: giving up after %i tries",filename.c_str(), tries);
+				sleep(1);
+				PDEBUG(FLOCK_DEBUG_LEV,"try %i LockFile %s",tries,filename.c_str());
+			}
+			PDEBUG(FLOCK_DEBUG_LEV,"locked %s (%p)",filename.c_str(),hFile);
+		}
+		~c_lockfile(){
+			if (hFile!=INVALID_HANDLE_VALUE) {
+				UnlockFile(hFile,0,0,0xFFFFFFFF,0);
+				CloseHandle(hFile);
+				PDEBUG(FLOCK_DEBUG_LEV,"unlocked %p",hFile);
+			}
+		}
+};
+#else
 #warning building without any sort of locking at all
 class c_lockfile{
 	public:
 		c_lockfile(string filename,int flag){}
 		~c_lockfile(){}
 };
-#endif //!HAVE_FLOCK
-#endif //!HAVE_LIBLOCKFILE
+#endif
 
 
 #endif
