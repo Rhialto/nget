@@ -654,6 +654,12 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -r par.test'))
 		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par']})
 	
+	def test_autoparhandling_arg_overrides_cfg(self):
+		self.nget.writerc(self.servers.servers, options={'autopar':0})
+		self.addarticles('par01', 'input')
+		self.vfailIf(self.nget_run('-g test --autopar -r par.test'))
+		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par']})
+	
 	def test_autoparhandling_existingpar(self):
 		self.addarticles('par01', 'input')
 		self.vfailUnlessExitstatus(self.nget_run('-g test -r "par.test.*a b.par"'), 2)
