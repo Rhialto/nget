@@ -439,7 +439,7 @@ class ListgroupProgress : public Progress {
 			long Bps=(dtime>0)?bytes/dtime:0;
 			long Bph=(done>0)?bytes/done:3;//if no headers have been retrieved yet, set the bytes per header to 3 just to get some sort of timeleft display.  (3=strlen(".\r\n"))
 			if (!quiet) clear_line_and_return();
-			printf("Retrieving article list %lu-%lu : %lu/%lu %3li%% %liB/s %s",low,high,done,total,finished?100:done*100/total,Bps,durationstr(finished?dtime:(Bps>0)?((total-done)*Bph)/(Bps):0).c_str());
+			printf("Retrieving article list %lu-%lu : %lu/%lu %3li%% %liB/s %s",low,high,done,total,(finished || total==0)?100:done*100/total,Bps,durationstr(finished?dtime:(Bps>0)?((total-done)*Bph)/(Bps):0).c_str());
 
 			fflush(stdout);//@@@@
 		}
