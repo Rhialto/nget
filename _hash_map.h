@@ -1,6 +1,6 @@
 /*
     _hash_map.h - handle the different types of hash_map extensions
-    Copyright (C) 2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 2002  Matthew Mueller <donut AT dakotacom.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
 /*
     lite.* - ngetlite main files
-    Copyright (C) 2000  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 2000-2001  Matthew Mueller <donut AT dakotacom.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

@@ -1,4 +1,4 @@
-nget 0.24  Copyright 1999-2003 Matthew Mueller <donut@azstarnet.com>
+nget 0.24  Copyright 1999-2003 Matthew Mueller <donut AT dakotacom.net>
 
 Note if you are upgrading from a version 0.8-0.11 to 0.12 or later:
  You will need to run the fixnames.sh script to rename your cache files to the

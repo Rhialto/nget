@@ -1,6 +1,6 @@
 /*
     mylockfile.* - c++ wrapper for file locks (for easy unlocking due to destructors, and abstraction from lowlevel)
-    Copyright (C) 1999-2000  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2003  Matthew Mueller <donut AT dakotacom.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

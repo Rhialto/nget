@@ -2,7 +2,7 @@
     etree.* - handles expression trees.. Allows to create a predicate
         that can then be tested against many objects (of the same ClassType)
         to see if they match the expression.
-    Copyright (C) 1999,2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999,2001-2002  Matthew Mueller <donut AT dakotacom.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
