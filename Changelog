@@ -1,7 +1,7 @@
 2004-xx-xx v?.??:
   * Don't store fileid codes in the cache file, instead calculate them when needed. (Can halve size of gzipped cache files.)
   * Change fileid calculation for single-part posts to include the message-id, fixes problem with multiple posts with the same subject/author not downloading when using -K.
-  * Support IPv6 if available.
+  * Support IPv6 if available. (Can force off with configure --disable-ipv6)
   * If a hostname resolves to multiple ip addresses, try as many as needed to find one that works.
 
 2003-12-27 v0.26:

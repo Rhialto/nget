@@ -142,6 +142,11 @@ fi
 if test "$nget_ndebug" = "yes"; then
 	AC_DEFINE(NDEBUG,1,[debug mode?])
 fi
+nget_ipv6=yes
+AC_ARG_ENABLE(ipv6,
+ [ --disable-ipv6           Do not try to use IPv6 capable netcode.],
+	nget_ipv6="$enableval"
+)
 dnl AC_ARG_ENABLE(debug_cache,
 dnl [ --enable-debug_cache     Enable consistancy checks when loading and saving header cache],
 dnl 	if test "$enableval" != "no"; then
@@ -152,7 +157,6 @@ dnl )
 
 dnl checks for socklen_t
 SOCK_CHECK_TYPE(socklen_t, int)
-AC_CHECK_TYPES([struct addrinfo],,,[#include "compat/socketheaders.h"])
 
 AC_CHECK_TYPES([long long, int_fast64_t, uint_fast64_t, int32_t, uint32_t, int64_t, uint64_t])
 
@@ -181,13 +185,17 @@ AC_CHECK_FUNCS(strchr memcpy)
 
 dnl again, due to windows' linking methods, you need the correct prototype to find some funcs..
 AC_DEFUN([MY_CHECK_SOCKFUNCS],[MY_CHECK_FUNCS([$1],[$2],,,[#include "compat/socketheaders.h"])])
-MY_CHECK_SOCKFUNCS([hstrerror gai_strerror],[0])
+MY_CHECK_SOCKFUNCS([hstrerror],[0])
 MY_CHECK_SOCKFUNCS([inet_aton],[NULL,NULL])
 MY_CHECK_SOCKFUNCS([gethostbyname],[NULL])
 MY_CHECK_SOCKFUNCS([gethostbyaddr],[NULL,0,0])
-MY_CHECK_SOCKFUNCS([getaddrinfo],[NULL,NULL,NULL,NULL])
-MY_CHECK_SOCKFUNCS([freeaddrinfo],[NULL])
-MY_CHECK_SOCKFUNCS([getnameinfo],[NULL,0,NULL,0,NULL,0,0])
+if test "$nget_ipv6" != "no"; then
+	MY_CHECK_SOCKFUNCS([gai_strerror],[0])
+	MY_CHECK_SOCKFUNCS([getaddrinfo],[NULL,NULL,NULL,NULL])
+	MY_CHECK_SOCKFUNCS([freeaddrinfo],[NULL])
+	MY_CHECK_SOCKFUNCS([getnameinfo],[NULL,0,NULL,0,NULL,0,0])
+	AC_CHECK_TYPES([struct addrinfo],,,[#include "compat/socketheaders.h"])
+fi
 
 AC_CHECK_FUNCS(mktime regcomp strerror atoul asprintf vasprintf timegm gmtime_r localtime_r getopt_long flock setlinebuf fcntl fsync getpid)
 

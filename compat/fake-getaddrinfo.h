@@ -4,6 +4,13 @@
 #define _FAKE_GETADDRINFO_H
 
 #include "socketheaders.h"
+/* Whenever a function isn't found, we define the name to have a fake_ prefix.
+ * This enables the --disable-ipv6 flag to bypass the real functions without
+ * requiring any ifdefs in code using these functions.
+ * It can also help if a header file is included which prototypes something
+ * even though the appropriate library wasn't linked, then it will avoid
+ * conflicting types errors.
+ */
 
 #include "fake-gai-errnos.h"
 
@@ -19,6 +26,8 @@
 #endif
 
 #ifndef HAVE_STRUCT_ADDRINFO
+#undef addrinfo
+#define addrinfo fake_addrinfo
 struct addrinfo {
 	int	ai_flags;	/* AI_PASSIVE, AI_CANONNAME */
 	int	ai_family;	/* PF_xxx */
@@ -32,19 +41,21 @@ struct addrinfo {
 #endif /* !HAVE_STRUCT_ADDRINFO */
 
 #ifndef HAVE_GETADDRINFO
+#undef getaddrinfo
+#define getaddrinfo fake_getaddrinfo
 int getaddrinfo(const char *hostname, const char *servname, 
                 const struct addrinfo *hints, struct addrinfo **res);
 #endif /* !HAVE_GETADDRINFO */
 
 #ifndef HAVE_GAI_STRERROR
-/* This undef works around some wierdness in mingw32 where gai_strerror is 
- * prototyped but doesn't actually exist in libws2_32.  Without this, you get
- * a conflicting types error. */
 #undef gai_strerror
+#define gai_strerror fake_gake_strerror
 char *gai_strerror(int ecode);
 #endif /* !HAVE_GAI_STRERROR */
 
 #ifndef HAVE_FREEADDRINFO
+#undef freeaddrinfo
+#define freeaddrinfo fake_freeaddroinfo
 void freeaddrinfo(struct addrinfo *ai);
 #endif /* !HAVE_FREEADDRINFO */
 
