@@ -3,6 +3,7 @@
   * Fix -G* when NGETCACHE != NGETHOME. (Reported by Steven Adeff)
   * Fix midinfo and newsgroups files not honoring NGETCACHE/cachedir setting. (Reported by Christian Marillat)
   * Allow absolute paths in --text=mbox:<filename>. (Requested by Volker Wysk)
+  * Support tab as the field separator in XPAT results, for Newsplex server support.  (Requested by Mark Blain)
 
 2004-06-17 v0.27:
   * Cache file format change, so switch default NGETHOME to ~/.nget5.

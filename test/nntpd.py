@@ -260,7 +260,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			article = self.group.articles[anum]
 			val = getattr(article, field, "")
 			if matcher(val):
-				self.nwrite(str(anum)+' '+val)
+				self.nwrite(str(anum)+self.server.xpat_field_sep+val)
 		self.nwrite('.')
 	def cmd_article(self, args):
 		if args[0]=='<':
@@ -344,6 +344,7 @@ class NNTPTCPServer(StoppableThreadingTCPServer):
 		self.adduser('','')
 		self.lock = threading.Lock()
 		self.counts = {}
+		self.xpat_field_sep = ' '
 	
 	def count(self, key):
 		return self.counts.get(key, 0)

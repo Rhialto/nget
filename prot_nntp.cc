@@ -645,7 +645,7 @@ void c_prot_nntp::doxpat(c_nrange &r, c_xpat::ptr xpat, ulong total, ulong lowes
 		bytes+=getline(debug>=DEBUG_ALL);
 		if (cbuf[0]=='.')break;
 		an = strtoul(cbuf, &eptr, 10);
-		if (*cbuf=='\0' || *eptr!=' ') {
+		if (*cbuf=='\0' || !(*eptr==' ' || *eptr=='\t')) {
 			printf("error retrieving article number\n");
 			continue;
 		}

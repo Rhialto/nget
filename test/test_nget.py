@@ -1920,6 +1920,11 @@ class MetaGrouping_NoCacheRetrieveTestCase(TestCase, MetaGrouping_RetrieveTest_b
 		newcmd = re.sub('-[Gg] ', '-x ', cmd)
 		return self.nget.run(newcmd)
 
+class MetaGrouping_NoCacheTabSepRetrieveTestCase(MetaGrouping_NoCacheRetrieveTestCase):
+	def setUp(self):
+		MetaGrouping_NoCacheRetrieveTestCase.setUp(self)
+		self.servers.servers[0].xpat_field_sep = '\t'
+
 class MetaGrouping_CacheRetrieveTestCase(TestCase, MetaGrouping_RetrieveTest_base):
 	def setUp(self):
 		MetaGrouping_RetrieveTest_base.setUp(self)
