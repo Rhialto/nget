@@ -34,21 +34,4 @@ struct ltstr
 	}
 };
 
-//string class that won't segv on NULL to constructor.  todo: also protect assign() ?
-#include <string>
-template <class basestring,class charT>
-class safe_string : public basestring {
-	public:
-		safe_string(const charT *s):basestring(){
-			if (s) assign(s);
-		}
-		safe_string(const charT *s,int l):basestring(){
-			if (s) assign(s,l);
-		}
-		safe_string(int l,charT c):basestring(l,c){}
-		safe_string():basestring(){}
-};
-typedef safe_string<string,char> safestring;
-
-
 #endif
