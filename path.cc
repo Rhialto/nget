@@ -2,7 +2,7 @@
 
 #ifdef WIN32
 #include <ctype.h>
-bool is_abspath(char *p) {
+bool is_abspath(const char *p) {
 	if (is_pathsep(p[0]))
 		return true;
 	if (p[0]!=0 && p[1]!=0 && p[2]!=0 && isalpha(p[0]) && p[1]==':' && is_pathsep(p[2]))
