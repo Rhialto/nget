@@ -133,9 +133,11 @@ distclean: clean
 	-$(MAKE) -C compat distclean
 	-rm config.status config.h config.cache config.log configure.lineno Makefile stamp-h nget.spec
 	-rm -r autom4te.cache
+
+extraclean: distclean
 	-find . \( -name 'CVS' -o -name '.cvsignore' -o -name '*~' -o -name '.*~' -o -name '.#*' -o -name '.*.sw[po]' -o -name '*.rej' -o -name '*.orig' -o -name 'tags' \) -print0 | xargs -0 rm -r
 
-distclean-killuu: distclean
+extraclean-killuu: extraclean
 	-rm -r uulib
 
 -include *.d
