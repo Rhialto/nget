@@ -163,57 +163,56 @@ class file_match {
 };
 typedef slist<file_match *> filematchlist;
 
-#define ALNUM "a-zA-Z0-9"
+void flist_addfile(filematchlist &l, const string &path, const char *filename) {
+	struct stat stbuf;
+	file_match *fm;
+	string buf;
+	const char *cp = filename;
+	if (isalnum(*cp)){ //only add word boundry match if we are actually next to a word, or else there isn't a word boundry to match at all.
+		buf+='\\';
+#ifdef HAVE_PCREPOSIX_H
+		buf+='b';//match word boundary
+#else	
+		buf+='<';//match beginning of word
+#endif
+	}
+	while (*cp){
+		if (strchr("{}()|[]\\.+*^$",*cp))
+			buf+='\\';//escape special chars
+		buf+=*cp;
+		cp++;
+	}
+	if (isalnum(*(cp-1))){
+		buf+='\\';
+#ifdef HAVE_PCREPOSIX_H
+		buf+='b';//match word boundary
+#else
+		buf+='>';//match end of word
+#endif
+	}
+	fm=new file_match(buf.c_str(),REG_EXTENDED|REG_ICASE|REG_NOSUB);
+	if (stat((path+'/'+filename).c_str(), &stbuf)==0)
+		fm->size=stbuf.st_size;
+	else
+		fm->size=0;
+	l.push_front(fm);
+}
+
 void buildflist(const string &path, filematchlist **l){
 	DIR *dir=opendir(path.c_str());
 	struct dirent *de;
 	if (!dir)
 		throw PathExFatal(Ex_INIT,"opendir: %s(%i)",strerror(errno),errno);
-	*l=NULL;
 	*l=new filematchlist;
-	struct stat stbuf;
-	file_match *fm;
-	char buf[1024],*cp;
-	int sl;
 	while ((de=readdir(dir))) {
 		if (strcmp(de->d_name,"..")==0) continue;
 		if (strcmp(de->d_name,".")==0) continue;
-		sl=0;
-		if (isalnum(de->d_name[0])){ //only add word boundry match if we are actually next to a word, or else there isn't a word boundry to match at all.
-			buf[sl++]='\\';
-#ifdef HAVE_PCREPOSIX_H
-			buf[sl++]='b';//match word boundary
-#else	
-			buf[sl++]='<';//match beginning of word
-#endif
-		}
-		cp=de->d_name;
-		while (*cp){
-			if (strchr("{}()|[]\\.+*^$",*cp))
-				buf[sl++]='\\';//escape special chars
-			buf[sl++]=*cp;
-			cp++;
-		}
-		if (isalnum(*(cp-1))){
-			buf[sl++]='\\';
-#ifdef HAVE_PCREPOSIX_H
-			buf[sl++]='b';//match word boundary
-#else
-			buf[sl++]='>';//match end of word
-#endif
-		}
-		buf[sl++]=0;
-		fm=new file_match(buf,REG_EXTENDED|REG_ICASE|REG_NOSUB);
-		if (stat((path+'/'+de->d_name).c_str(), &stbuf)==0)
-			fm->size=stbuf.st_size;
-		else
-			fm->size=0;
-		(*l)->push_front(fm);
+		flist_addfile(**l, path, de->d_name);
 	}
 	closedir(dir);
 }
 
-int checkhavefile(filematchlist *fl,const char *f,string messageid,ulong bytes){
+int flist_checkhavefile(filematchlist *fl,const char *f,string messageid,ulong bytes){
 	filematchlist::iterator curl;
 	if (fl){
 		file_match *fm;
@@ -261,7 +260,7 @@ c_nntp_files_u* c_nntp_cache::getfiles(const string &path, const string &temppat
 					goto file_match_loop_end;//can't continue out of multiple loops
 			}
 
-			if (!(flags&GETFILES_NODUPEFILECHECK) && checkhavefile(flist,f->subject.c_str(),f->bamid(),f->bytes())){
+			if (!(flags&GETFILES_NODUPEFILECHECK) && flist_checkhavefile(flist,f->subject.c_str(),f->bamid(),f->bytes())){
 				if (flags&GETFILES_DUPEFILEMARK)
 					midinfo->insert(f->bamid());
 				continue;
