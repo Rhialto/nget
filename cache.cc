@@ -126,7 +126,7 @@ void c_nntp_part::addserverarticle(c_nntp_header *h){
 		}
 	}
 	if (h->date!=date)
-		printf("date=%li h->date=%li\n",date,h->date);
+		printf("adding server_article with different date, date=%li h->date=%li mid=%s\n",date,h->date,h->messageid.c_str());
 #endif
 	sa=new c_nntp_server_article(h->serverid,h->articlenum,h->bytes,h->lines);
 	articles.insert(t_nntp_server_articles::value_type(h->serverid,sa));
