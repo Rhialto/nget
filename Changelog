@@ -3,6 +3,8 @@
   * Fix slow exit with very large midinfo files.
   * In -T mode, only print x/y parts if the post is incomplete, otherwise just print x.
   * Set default --limit to 0.
+  * Remove old -L/-S args since noone probably used them anyway (can still be set in .ngetrc).
+  * Added -L/--maxlines to complement -l/--limit.
   * Now saves References in cache file.
   * Cache file format change, so switch default NGETHOME to ~/.nget4.
     (Upgrade should be as simple as "mv ~/.nget3 ~/.nget4; rm ~/.nget4/*,cache*")

@@ -37,6 +37,8 @@ extern "C" {
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+#include "_sstream.h"
+
 #include "misc.h"
 #include "termstuff.h"
 #include "strreps.h"
@@ -132,7 +134,7 @@ void print_error_status(void){
 
 time_t lasttime;
 
-#define NUM_OPTIONS 31
+#define NUM_OPTIONS 30
 #ifndef HAVE_LIBPOPT
 
 #ifndef HAVE_GETOPT_LONG
@@ -206,6 +208,7 @@ static void addoptions(void)
 	addoption("tries",1,'t',"INT","set max retries (-1 unlimits, default 20)");
 	addoption("delay",1,'s',"INT","seconds to wait between retry attempts(default 1)");
 	addoption("limit",1,'l',"INT","min # of lines a 'file' must have(default 0)");
+	addoption("maxlines",1,'L',"INT","max # of lines a 'file' must have(default -1)");
 	addoption("incomplete",0,'i',0,"retrieve files with missing parts");
 	addoption("complete",0,'I',0,"retrieve only files with all parts(default)");
 	addoption("keep",0,'k',0,"keep temp files");
@@ -216,8 +219,6 @@ static void addoptions(void)
 	addoption("nodupecheck",0,'D',0,"don't check if you already have files(shortcut for -dFIM)");
 	addoption("mark",0,'M',0,"mark matching articles as retrieved");
 	addoption("unmark",0,'U',0,"mark matching articles as not retrieved (implies -dI)");
-	addoption("tempshortnames",0,'S',0,"use 8.3 names for tempfiles");
-	addoption("templongnames",0,'L',0,"use long names for tempfiles");
 	addoption("temppath",1,'P',"DIRECTORY","path to store tempfiles");
 	addoption("writelite",1,'w',"LITEFILE","write out a ngetlite list file");
 	addoption("noconnect",0,'N',0,"don't connect, only try to decode what we have");
@@ -317,7 +318,7 @@ nget_options::nget_options(void){
 	get_path();
 	get_temppath();
 }
-nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),gflags(o.gflags),badskip(o.badskip),qstatus(o.qstatus),makedirs(o.makedirs),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
+nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),qstatus(o.qstatus),makedirs(o.makedirs),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
 	/*	if (o.path){
 			path=new char[strlen(o.path)+1];
 			strcpy(path,o.path);
@@ -528,13 +529,13 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 							//									throw new c_error(EX_U_WARN,"nntp_retrieve: no match for %s",match);
 							//								nntp.nntp_queueretrieve(loptarg,linelimit,gflags);
 							qstatus=1;*/
-							char *s;
+							ostringstream s; 
+							s << "subject \"" << loptarg << "\" =~";
 							if (options.linelimit > 0)
-								asprintf(&s,"lines %lu >= subject \"%s\" =~ &&",options.linelimit,loptarg);
-							else
-								asprintf(&s,"subject \"%s\" =~",loptarg);
-							generic_pred *p=make_pred(s);
-							free(s);
+								s << " lines " << options.linelimit << " >= &&" ;
+							if (options.maxlinelimit < ULONG_MAX)
+								s << " lines " << options.maxlinelimit << " <= &&" ;
+							generic_pred *p=make_pred(s.str().c_str());
 							if (p){
 								nntp.filec=nntp.gcache->getfiles(options.path,options.temppath,nntp.filec,nntp.midinfo,p,options.gflags);
 								delete p;
@@ -567,12 +568,6 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				case 'D':
 					options.parse_dupe_flags("FIM");
 					break;
-				case 'S':
-					options.gflags|= GETFILES_TEMPSHORTNAMES;
-					break;
-				case 'L':
-					options.gflags&= ~GETFILES_TEMPSHORTNAMES;
-					break;
 				case 'N':
 					options.gflags|= GETFILES_NOCONNECT;
 					break;
@@ -590,6 +585,10 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 					if (options.maxretry==-1)
 						options.maxretry=INT_MAX-1;
 					printf("max retries set to %i\n",options.maxretry);
+					break;
+				case 'L':
+					options.maxlinelimit=atoul(loptarg);
+					printf("maximum line limit set to %lu\n",options.maxlinelimit);
 					break;
 				case 'l':
 					options.linelimit=atoul(loptarg);
@@ -878,6 +877,7 @@ int main(int argc, char ** argv){
 			options.retrydelay=1;
 			options.badskip=0;
 			options.linelimit=0;
+			options.maxlinelimit=ULONG_MAX;
 			options.gflags=0;
 			options.qstatus=0;
 			options.group=NULL;

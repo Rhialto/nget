@@ -57,6 +57,8 @@ idea).
 .IP "-l/--limit int"
 Set the minimum number of lines a message (or total number of lines for a
 multi-part message) must have to be considered for retrieval.
+.IP "-L/--maxlines int"
+Set the maximum number of lines a message must have to be considered for retrieval. (-1 for unlimited)
 .IP "-s/--delay int"
 Set the number of seconds to wait between retry attempts.
 .IP "-i/--incomplete"
@@ -92,10 +94,6 @@ and/or binaries saved with another newsreader.)
 .IP "-D/--nodupecheck"
 Don't check either of the --dupecheck methods, retrieve any messages that
 match.
-.IP "-S/--tempshortnames"
-Use 8.3 tempfile names (for old dos partitions, etc).
-.IP "-L/--templongnames"
-Use 17.3 tempfile names. 
 .IP "-P/--temppath DIRECTORY"
 Store temporary files in path instead of the current dir.
 .IP "-N/--noconnect"
@@ -129,7 +127,7 @@ Integral: limit, tries, debug, delay, usegz(-1=default, 0=uncompressed, 1-9=gzip
 .br
 Float: curservmult
 .br
-Boolean(0/1): case, complete, dupeidcheck, dupefilecheck, quiet, tempshortnames, unequal_line_error
+Boolean(0/1): case, complete, dupeidcheck, dupefilecheck, quiet, tempshortnames(1=Use 8.3 tempfile names (for old dos partitions, etc), 0=Use 17.3 tempfile names), unequal_line_error
 .br
 yes/no/ask: makedirs
 .P

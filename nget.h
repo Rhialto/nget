@@ -65,7 +65,7 @@ void set_skipped_ok_status(int incr=1);
 
 struct nget_options {
 	int maxretry,retrydelay;
-	ulong linelimit;
+	ulong linelimit,maxlinelimit;
 	int gflags,badskip,qstatus;
 	char makedirs;
 	c_group_info::ptr group;//,*host;
