@@ -60,7 +60,7 @@ int dupe_file_checker::checkhavefile(const char *f, const string &messageid, ulo
 	file_match *fm;
 	for (curl=flist.begin();curl!=flist.end();++curl){
 		fm=*curl;
-		if ((fm->reg.match(f)==0/* || fm->reg.match((messageid+".txt").c_str())==0*/) && fm->size*2>bytes && fm->size<bytes){//TODO: handle text files saved.
+		if (fm->size*2>bytes && fm->size<bytes && (fm->reg.match(f)==0/* || fm->reg.match((messageid+".txt").c_str())==0*/)){//TODO: handle text files saved.
 			//			printf("0\n");
 			printf("already have %s\n",f);
 			return 1;
