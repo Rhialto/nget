@@ -259,5 +259,5 @@ if test "$GXX" = "yes"; then
 	CXXFLAGS="$CXXFLAGS -Wall"
 fi
 
-AC_OUTPUT(Makefile,[echo timestamp > stamp-h])
+AC_OUTPUT(Makefile test/Makefile,[echo timestamp > stamp-h])
 

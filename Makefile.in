@@ -27,9 +27,8 @@ ngetlite: $(LITEOBJS) .depend
 @NOUU@	(cd @UUDIR@ && ./configure)
 @NOUU@	$(MAKE) -C @UUDIR@ libuu.a
 
-
-nrangetest: nrangetest.o file.o sockstuff.o nrange.o log.o
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
+test:
+	$(MAKE) -C test test
 
 filetest2: filetest2.o file.o sockstuff.o
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)

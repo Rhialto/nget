@@ -1,0 +1,15 @@
+CXXFLAGS=@CXXFLAGS@ @UUINC@ @DEFS@ -I..
+
+CXX=@CXX@
+LIBS=@LIBS@
+
+srcdir=@srcdir@
+
+all: TestRunner
+
+test: all
+	./TestRunner
+
+TestRunner: TestRunner.o ../file.o ../sockstuff.o ../nrange.o ../log.o
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS) `cppunit-config --libs`
+
