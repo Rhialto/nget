@@ -46,11 +46,16 @@ class DecodeTest_base(unittest.TestCase):
 		for server in servers:
 			self.addarticles_toserver(testnum, dirname, server)
 
-	def verifyoutput(self, testnum, nget=None):
+	def verifyoutput(self, testnums, nget=None):
 		if nget is None:
 			nget = self.nget
 		ok = []
-		for fn in glob.glob(os.path.join("testdata",testnum,"_output","*")):
+		if type(testnums)==type(""):
+			testnums=[testnums]
+		outputs=[]
+		for testnum in testnums:
+			outputs.extend(glob.glob(os.path.join("testdata",testnum,"_output","*")))
+		for fn in outputs:
 			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
 				continue
 			tail = os.path.split(fn)[1]
@@ -146,6 +151,129 @@ class DecodeTestCase(unittest.TestCase, DecodeTest_base):
 		self.servers.servers[0].rmarticle(article.mid)
 		self.failUnless(os.WEXITSTATUS(self.nget.run("-G test -r ."))==8, "nget process did not detect retrieve error")
 		self.verifyoutput('0002') #should have gotten the articles the server still has.
+
+
+class RetrieveTestCase(unittest.TestCase, DecodeTest_base):
+	def setUp(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.addarticles('0003', 'newspost_uue_0')
+		self.addarticles('0002', 'uuencode_multi3')
+		self.addarticles('0001', 'uuencode_single')
+		self.servers.start()
+		
+	def tearDown(self):
+		self.servers.stop()
+		self.nget.clean_all()
+
+	def test_mid(self):
+		self.failIf(self.nget.run('-g test -R "mid .a67ier.6l5.1.bar. =="'), "nget process returned with an error")
+		self.verifyoutput('0002')
+
+	def test_not_mid(self):
+		self.failIf(self.nget.run('-g test -R "mid .1.foo. !="'), "nget process returned with an error")
+		self.verifyoutput(['0002','0001'])
+
+	def test_mid_or_mid(self):
+		self.failIf(self.nget.run('-g test -R "mid .a67ier.6l5.1.bar. == mid .1000.test. == ||"'), "nget process returned with an error")
+		self.verifyoutput(['0002','0001'])
+
+	def test_messageid(self):
+		self.failIf(self.nget.run('-g test -R "messageid .a67ier.6l5.1.bar. =="'), "nget process returned with an error")
+		self.verifyoutput('0002')
+	
+	def test_author(self):
+		self.failIf(self.nget.run('-g test -R "author Matthew =="'), "nget process returned with an error")
+		self.verifyoutput('0002')
+	
+	def test_r(self):
+		self.failIf(self.nget.run('-g test -r joystick'), "nget process returned with an error")
+		self.verifyoutput('0002')
+
+	def test_subject(self):
+		self.failIf(self.nget.run('-g test -R "subject joystick =="'), "nget process returned with an error")
+		self.verifyoutput('0002')
+	
+	def test_r_l_toohigh(self):
+		self.failIf(self.nget.run('-g test -l 434 -r .'), "nget process returned with an error")
+		self.verifyoutput([])
+
+	def test_r_l(self):
+		self.failIf(self.nget.run('-g test -l 433 -r .'), "nget process returned with an error")
+		self.verifyoutput('0002')
+
+	def test_r_L_toolow(self):
+		self.failIf(self.nget.run('-g test -L 15 -r .'), "nget process returned with an error")
+		self.verifyoutput([])
+
+	def test_r_L(self):
+		self.failIf(self.nget.run('-g test -L 16 -r .'), "nget process returned with an error")
+		self.verifyoutput('0001')
+
+	def test_r_l_L(self):
+		self.failIf(self.nget.run('-g test -l 20 -L 200 -r .'), "nget process returned with an error")
+		self.verifyoutput('0003')
+
+	def test_lines_le_toolow(self):
+		self.failIf(self.nget.run('-g test -R "lines 15 <="'), "nget process returned with an error")
+		self.verifyoutput([])
+
+	def test_lines_le(self):
+		self.failIf(self.nget.run('-g test -R "lines 16 <="'), "nget process returned with an error")
+		self.verifyoutput('0001')
+
+	def test_lines_lt_toolow(self):
+		self.failIf(self.nget.run('-g test -R "lines 16 <"'), "nget process returned with an error")
+		self.verifyoutput([])
+
+	def test_lines_lt(self):
+		self.failIf(self.nget.run('-g test -R "lines 17 <"'), "nget process returned with an error")
+		self.verifyoutput('0001')
+
+	def test_lines_ge_toohigh(self):
+		self.failIf(self.nget.run('-g test -R "lines 434 >="'), "nget process returned with an error")
+		self.verifyoutput([])
+
+	def test_lines_ge(self):
+		self.failIf(self.nget.run('-g test -R "lines 433 >="'), "nget process returned with an error")
+		self.verifyoutput('0002')
+
+	def test_lines_gt_toohigh(self):
+		self.failIf(self.nget.run('-g test -R "lines 433 >"'), "nget process returned with an error")
+		self.verifyoutput([])
+
+	def test_lines_gt(self):
+		self.failIf(self.nget.run('-g test -R "lines 432 >"'), "nget process returned with an error")
+		self.verifyoutput('0002')
+
+	def test_lines_eq(self):
+		self.failIf(self.nget.run('-g test -R "lines 433 =="'), "nget process returned with an error")
+		self.verifyoutput('0002')
+
+	def test_lines_and_lines(self):
+		self.failIf(self.nget.run('-g test -R "lines 20 > lines 200 < &&"'), "nget process returned with an error")
+		self.verifyoutput('0003')
+
+	def test_bytes(self):
+		self.failIf(self.nget.run('-g test -R "bytes 2000 >"'), "nget process returned with an error")
+		self.verifyoutput('0002')
+	
+	def test_have(self):
+		self.failIf(self.nget.run('-g test -R "have 3 =="'), "nget process returned with an error")
+		self.verifyoutput('0002')
+
+	def test_req(self):
+		self.failIf(self.nget.run('-g test -R "req 3 =="'), "nget process returned with an error")
+		self.verifyoutput('0002')
+
+	def test_date(self):
+		self.failIf(self.nget.run('-g test -R "date \'Thu, 7 Mar 2002 11:20:59 +0000 (UTC)\' =="'), "nget process returned with an error")
+		self.verifyoutput('0002')
+
+	def test_date_iso(self):
+		self.failIf(self.nget.run('-g test -R "date 20020307T112059+0000 =="'), "nget process returned with an error")
+		self.verifyoutput('0002')
+
 
 class XoverTestCase(unittest.TestCase, DecodeTest_base):
 	def setUp(self):
