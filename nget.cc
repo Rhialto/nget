@@ -675,10 +675,8 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					}catch(RegexEx &e){
 						printCaughtEx(e);
 						set_user_error_status_and_do_fatal_user_error();
-					}catch(UserEx &e){
-						printCaughtEx(e);
-						set_fatal_error_status();//if make_pred breaks during -r, it can't be the users fault, since they only supply the regex
 					}
+					//if make_pred breaks during -r, it can't be the users fault, since they only supply the regex, so let UserEx be be caught by the main func
 					break;
 				}
 				if (!options.badskip){
@@ -712,10 +710,8 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 						}catch(RegexEx &e){
 							printCaughtEx(e);
 							set_user_error_status_and_do_fatal_user_error();
-						}catch(UserEx &e){
-							printCaughtEx(e);
-							set_fatal_error_status();//if make_pred breaks during -r, it can't be the users fault, since they only supply the regex
 						}
+						//if make_pred breaks during -r, it can't be the users fault, since they only supply the regex, so let UserEx be be caught by the main func
 					}
 				}
 				break;
