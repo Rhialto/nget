@@ -1,4 +1,4 @@
-.TH nget 1 "15 Mar 2002"
+.TH nget 1 "09 Jul 2002"
 .SH NAME
 nget \- retrieve files from NNTP hosts
 .SH SYNOPSIS
@@ -116,6 +116,9 @@ Options are specified one per line in the form:
 .RS
 .B key=value
 .RE
+.P
+Values may be strings(any sequence of characters ending in a newline, not quoted), integers(whole numbers), floats(decimal numbers), boolean(0=false/1=true).
+.P
 Subsections are specified in the form:
 .RS
 .B {section_name
@@ -126,46 +129,92 @@ Subsections are specified in the form:
 .RE
 where data is any number of options.
 .P
-Global options that can be specified are: 
-.br
-String: cachedir (Specifies a different location to store cache files.  Could be used to share a single cache dir between a trusted group of users, to reduce HD/bandwidth usage, while still allowing each user to have their own config/midinfo files.)
-.br
-Integral: limit, tries, debug, delay, usegz(-1=default, 0=uncompressed, 1-9=gzip compression level), timeout, maxstreaming, idletimeout, maxconnections, penaltystrikes(number of consecutive connect errors before penalizing a server, -1 to disable penalization), initialpenalty(number of seconds to ignore a penalized server for)
-.br
-Float: curservmult, penaltymultiplier(multiplier for penalty time for each time the penalty time runs out and the server continues to be down)
-.br
-Boolean(0/1): case, complete, dupeidcheck, dupefilecheck, quiet, tempshortnames(1=Use 8.3 tempfile names (for old dos partitions, etc), 0=Use 17.3 tempfile names), unequal_line_error, fullxover
-.br
-yes/no/ask: makedirs
-.br
-no/short/long: test_multiserver
-.P
-Host configuration is done in the halias section, with a subsection for each
-host containing its address, unique id, and optionally shortname, user, pass, fullxover, maxstreaming, idletimeout, and linelenience
-items.  The "id" field must be unique, and should not be changed after you have
-used it (since it could leave leftovers in your cache files, unless you delete
-them first).  The "id" must be greater than 0 and less than ULONG_MAX. (usually
-4294967295).  In other words, don't use id 0.
-.br
-The maxstreaming option sets how many xover commands will be sent at once, when
-using fullxover.  maxstreaming=0 will disable streaming.  Note that setting
+.SS "Global Configuration Options"
+.IP "limit (int, default=0)"
+Default value for -l/--limit
+.IP "tries (int, default=20)"
+Default value for -t/--tries
+.IP "delay (int, default=1)"
+Default value for -s/--delay
+.IP "usegz (int, default=-1)"
+Default gzip compression level to use for cache/midinfo files (can be overridden on a per-group basis).
+Acceptable values are -1=zlib default, 0=uncompressed, and 1-9.
+.IP "timeout (int, default=180)"
+Seconds to wait for a reply from the nntp server before giving up.
+.IP "maxstreaming (int, default=64)"
+Sets how many xover commands will be sent at once, when using fullxover.
+maxstreaming=0 will disable streaming.  Note that setting
 maxstreaming too high can cause your connection to deadlock if the write buffer
 is filled up and the write command blocks, but the server will never read more
-commands since it is waiting for us to read what it has already sent us.  The default
-value is maxstreaming=64.
-.br
+commands since it is waiting for us to read what it has already sent us.
+.IP "maxconnections (int, default=-1)"
+Maximum number of connections to open at once, -1 to allow unlimited open connections.
+When reached, the servers used least recently will be disconnected first.
+(Note that regardless of this setting, nget never opens more than one connection per server.)
+.IP "idletimeout (int, default=300)"
+Max seconds to keep an idle connection to a nntp server open.
+.IP "curservmult (float, default=2.0)"
+Priority multiplier given to servers which are currently connected.
+This can be used to avoid excessive server switching.  (Set to 1.0 if you want to disable it.)
+.IP "penaltystrikes (int, default=3)"
+Number of consecutive connect errors before penalizing a server, -1 to disable penalization.
+.IP "initialpenalty (int, default=180)"
+Number of seconds to ignore a penalized server for.
+.IP "penaltymultiplier (float, default=2.0)"
+Multiplier for penalty time for each time the penalty time runs out and the server continues to be down.
+.IP "case (boolean, default=0)"
+Default for regex case sensitivity. (0=-C/--nocase, 1=-c/--case)
+.IP "complete (boolean, default=1)"
+Default for incomplete file filter. (0=-i/--incomplete, 1=-I/--complete)
+.IP "dupeidcheck (boolean, default=1)"
+Default for already downloaded file filter. (0=-dI, 1=-di)
+.IP "dupefilecheck (boolean, default=1)"
+Default for duplicate file filter. (0=-dF, 1=-df)
+.IP "quiet (boolean, default=0)"
+Default for quiet option. (0=normal, 1=-q)
+.IP "tempshortnames (boolean, default=0)"
+1=Use 8.3 tempfile names (for old dos partitions, etc), 0=Use 17.3 tempfile names
+.IP "unequal_line_error (boolean, default=0)"
+If set, downloaded articles whose actual number of lines does not match the expected value will be regarded as an error and ignored.
+If 0, a warning will be generated but the article will be accepted.
+.IP "fullxover (boolean, default=0)"
+On each refresh of the header cache, check holes in the article list to see if any new articles have appeared there.  The NNTP spec says this shouldn't happen, but some servers do it anyway.
+.IP "makedirs (special, default=no)"
+Create non-existant directories specified by -p/-P? (yes/no/ask)
+.IP "test_multiserver (special, default=no)"
+Display multiserver file complition info in testmode output? (no=no, short=show shortname of each server that has parts of the file, lowercase when complete and uppercase when that server only has some parts, long=show fullname of each server along with a count of how many parts it has if it does not have them all.)
+.IP "cachedir (string)"
+Specifies a different location to store cache files.  Could be used to share a single cache dir between a trusted group of users, to reduce HD/bandwidth usage, while still allowing each user to have their own config/midinfo files.)
+.SS "Host Configuration"
+Host configuration is done in the halias section, with a subsection for each
+host containing its options:
+.IP "address (string, required)"
+Address of the server, with optional port number seperated by a colon.
+.IP "id (int, required)"
+An identifier for this server. Must be unique, and should not be changed after you have
+used it.  Must be greater than 0 and less than ULONG_MAX. (usually 4294967295).
+.IP "shortname (string, default=first character of host alias)"
+The shortname to use for this server.
+.IP "user (string)"
+Username for the server, if it requires authorization.
+.IP "pass (string)"
+Password for the server, if it requires authorization.
+.IP "fullxover (boolean)"
+Override global fullxover setting for this server only.
+.IP "maxstreaming (int)"
+Override global maxstreaming setting for this server only.
+.IP "idletimeout (int)"
+Override global idletimeout setting for this server only.
+.IP "linelenience (special, default=0)"
 The linelenience option may be specified as either a single int, or two ints seperated by a comma.
 If only a single int, X is specified, then it will be interpeted as shorthand for "-X,+X".
 These values specify the ammount that the real (recieved) number of lines (inclusive) for an article may deviate from
 the values returned by the server in the header listings.  For example, "-1,2" means that the real number
 of lines may be one less than, equal to, one greater than, or two greater than the expected amount.
-The default linelenience is 0.
-.br
+.P
 For example, the following host section defines a single host "host1", with
 nntp authentication for user "bob", password "something", and the fullxover
-option enabled. (fullxover retrieves all headers from the server, including
-gaps in the header list, while normally it only retrieves headers more recent
-than the latest.)
+option enabled. 
 .RS
 .B {halias
 .RS
@@ -188,24 +237,25 @@ than the latest.)
 .B }
 .RE
 .P
+.SS "Server Priority Configuration"
 Multiserver priorities are defined in the hpriority section.  Multiple priority
 groups can be made, and different newsgroups can be configured to use their own
-priority grouping, or they will default to the "default" group.  The hpriority
+priority grouping, or they will default to the "default" group.
+.P
+The hpriority
 section contains a subsection for each priority group, with data items of
 server=prio-multiplier, and the special items _level=float and _glevel=float.
 _level sets the priority level assigned to any host not listed in the group,
 and _glevel sets the required priority needed for -g to automatically use that
 host.  Both _level and _glevel default to 1.0 if not specified.
+.P
 The priority group "trustsizes" also has special meaning, and is used to choose which servers
 reporting of article line/byte counts to trust when reporting to the user.
-When retrieving articles, nget will multiply the current servers priority by
-the global setting "curservmult" (default 2.0), this can be used to avoid
-excesive server switching.  (set it to 1.0 if you want to disable it).
-.br
+.P
 For example, the following section defines the default priority group and the
 trustsizes priority group.  If all hosts have a certain article, goodhost will
 be most likely to be chosen, and badhost least likely.  It also sets the
-default proirity level to 1.01, meaning any hosts not listed in this group will have a
+default priority level to 1.01, meaning any hosts not listed in this group will have a
 priority of 1.01.  When using -g without first specifying a host, only those
 with prios 1.2 or above will be selected.
 .RS
@@ -236,10 +286,11 @@ with prios 1.2 or above will be selected.
 .B }
 .RE
 .P
+.SS "Newsgroup Alias Configuration"
 Newsgroup aliases are defined in the galias section.  An alias can be a simple
 alias=fullname data item, or  a subsection containing group=, prio=, and usegz= items.
 The per-group usegz setting will override the global setting.
-.br
+.P
 For example, the following galias section defines an alias of "abpl" for the
 group "alt.binaries.pictures.linux", and "chocobo" for the group "alt.chocobo".
 In addition, the chocobo group is assigned to use the chocoprios priority
@@ -374,10 +425,6 @@ Alternate location, use this if you can't create a dir/file starting with a peri
 .IP "~/.nget4/lists/"
 Default directory for listfiles.
 .SH BUGS
-The config examples would be easier to read if they were indented, but I'm no man page guru.
-If someone wants to clean up this manpage and fix the little things like that,
-feel free.
-.P
 In multi part messages, part 0/x is usually a description.. this will be saved.
 But sometimes the description will be in 1/x, in which case it is not saved.
 Well, I found the UUInfo stuff, so it'll now print out this information..
