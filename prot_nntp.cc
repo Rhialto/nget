@@ -374,6 +374,14 @@ void c_prot_nntp::doxover(c_nrange *r){
 					}
 				}
 			}
+			if (i<=1 && streamed) {
+				if (atoul(cbuf)==224){//some servers (DNEWS) will drop data while doing xover streaming, but seeminly only the ends of the requests.  Then you get a 224 data follows message for the next range without getting the rest of the current range or the "." line.  Retrying starting from the current range would be better, but this is easier ;)
+					connection->server->maxstreaming=0;
+					connection->close(1);
+					set_xover_warn_status();
+					throw ProtocolExError(Ex_INIT, "XOVER streaming error: recieved start of next range without end of current.  Setting maxstreaming to 0. (You may wish to decrease or disable maxstreaming for this server in your ngetrc.)");
+				}
+			}
 			if (i>7){
 				//	c=new c_nntp_cache_item(atol(t[0]),	decode_textdate(t[3]), atol(t[6]), atol(t[7]),t[1],t[2]);
 				//gcache->additem(c);
@@ -384,15 +392,21 @@ void c_prot_nntp::doxover(c_nrange *r){
 				gcache->additem(&nh);
 				//delete nh;
 				realnum++;
+				if (an<low || an>high || an<last) {
+					printf("weird: articlenum %lu not in range %lu-%lu (last=%lu)\n",an,low,high,last);
+					set_xover_warn_status();
+				} else {
 #ifndef NDEBUG
-				ulong ort=realtotal;
+					ulong ort=realtotal;
 #endif
-				realtotal -= an - last;
-				assert(ort>=realtotal);
-				last = an + 1;
+					realtotal -= an - last;
+					assert(ort>=realtotal);
+					last = an + 1;
+				}
 				if (progress.needupdate())
 					progress.print_retrieving_headers(lowest,highest,realnum,realtotal,total,bytes,doneranges,streamed,totalranges);
 			}else{
+				set_xover_warn_status();
 				printf("error retrieving xover (%i<=7): ",i);
 				for (int j=0;j<i;j++)
 					printf("%i:%s ",j,t[j]);

@@ -842,6 +842,27 @@ class XOver1LineDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 			self.discocountdown -= 1
 		nntpd.NNTPRequestHandler.nwrite(self, s)
 
+class _XOverFinisher(Exception): pass
+class XOverStreamingDropsDataNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	def cmd_xover(self, args):
+		time.sleep(0.2)#ensure the client has time for its streamed commands to get here.
+		import select
+		rf,wf,ef=select.select([self.rfile], [], [], 0)
+		if rf: #if client is streaming, do the screw up stuff.
+			self.discocountdown = 2 #allow a single xover result to pass before disconnecting
+		elif hasattr(self,'discocountdown'):
+			del self.discocountdown
+		try:
+			nntpd.NNTPRequestHandler.cmd_xover(self, args)
+		except _XOverFinisher:
+			pass
+	def nwrite(self, s):
+		if hasattr(self, 'discocountdown'):
+			if self.discocountdown==0:
+				raise _XOverFinisher
+			self.discocountdown -= 1
+		nntpd.NNTPRequestHandler.nwrite(self, s)
+
 class ConnectionTestCase(TestCase, DecodeTest_base):
 	def tearDown(self):
 		if hasattr(self, 'servers'):
@@ -1137,6 +1158,23 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
 		self.verifyoutput('0002')
+	
+	def test_XOverStreaming_BuggyServerWhichDropsTheEndsOfReplies(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), XOverStreamingDropsDataNNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':1, 'timeout':3, 'tries':2})
+		self.servers.start()
+		#set up article list with holes in it so next run will use xover streaming
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0001', 'yenc_multi', '001', self.servers.servers[0], anum=5)
+		self.addarticle_toserver('0003', 'newspost_uue_0', '002', self.servers.servers[0], anum=8)
+		self.vfailIf(self.nget.run("-g test"))
+		#now fill in holes with articles and try again
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=2)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=3)
+		self.addarticle_toserver('0001', 'yenc_multi', '002', self.servers.servers[0], anum=6)
+		self.addarticle_toserver('0003', 'newspost_uue_0', '001', self.servers.servers[0], anum=4)
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.verifyoutput(['0001','0002','0003'])
 
 	def test_timeout(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DelayAfterArticle2NNTPRequestHandler)])

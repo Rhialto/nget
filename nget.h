@@ -47,6 +47,7 @@ void set_fatal_error_status(int incr=1);
 void fatal_exit(void);
 
 void set_group_warn_status(int incr=1);
+void set_xover_warn_status(int incr=1);
 void set_retrieve_warn_status(int incr=1);
 void set_undecoded_warn_status(int incr=1);
 void set_unequal_line_count_warn_status(int incr=1);

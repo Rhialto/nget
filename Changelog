@@ -1,6 +1,8 @@
 2002-??-?? v0.??:
   * With fullxover=2, don't needlessly retrieve article list if all cached headers are older than all available headers.
   * Fix group/grouplist typo in manpage exit status warnings section.
+  * Add "xover" exit warning status.
+  * Workaround streaming bug in DNEWS servers that drops the end part of a xover reply (by disabling streaming and trying again.)
 
 2002-08-04 v0.21:
   * Remove configure check for gcc<=2.7 since it can't really build nget anymore and the test was incorrectly detecting some gcc versions.
