@@ -27,6 +27,7 @@ class dupe_file_Test : public TestCase {
 			CPPUNIT_ASSERT(!dupechecker->checkhavefile("boo est.foo (1/1)", "<foo@bar>", 600));
 			CPPUNIT_ASSERT(!dupechecker->checkhavefile("boo testxfoo (1/1)", "<foo@bar>", 600));//is . escaped?
 			CPPUNIT_ASSERT(!dupechecker->checkhavefile("boo atest.foo (1/1)", "<foo@bar>", 600));//word boundry
+			CPPUNIT_ASSERT(!dupechecker->checkhavefile("boo test.foob (1/1)", "<foo@bar>", 600));//word boundry
 			CPPUNIT_ASSERT(!dupechecker->checkhavefile("boo test.foo (1/1)", "<foo@bar>", 400));//too small
 			CPPUNIT_ASSERT(!dupechecker->checkhavefile("boo test.foo (1/1)", "<foo@bar>", 1100));//too big
 			CPPUNIT_ASSERT(dupechecker->checkhavefile("boo \"test.foo\" (1/1)", "<foo@bar>", 600));//quoted
