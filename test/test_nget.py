@@ -350,6 +350,12 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		output = self.vfailIf_getoutput(self.nget.run_getoutput("-g test -r ."))
 		self.verifyoutput(['0001','0001/_yenc_single_withtext_output'], output=output, enctype='yenc')
 	
+	def test_save_binary_info(self):
+		self.addarticles("0001", "yenc_multi")
+		self.nget.writerc(self.servers.servers, options={'save_binary_info':1})
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.verifyoutput(['0001','0001/_yenc_multi_save_binary_info_output'])
+	
 	def test_nosavetext_on_decodeerror(self):
 		self.addarticles("0001", "yenc_single_crc32_error")
 
@@ -423,9 +429,34 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -c -r jOyStIcK'))
 		self.verifyoutput([])
 	
+	def test_r_case_cfg(self):
+		self.nget.writerc(self.servers.servers, options={'case':1})
+		self.vfailIf(self.nget_run('-g test -r jOyStIcK'))
+		self.verifyoutput([])
+	
 	def test_r_nocase(self):
 		self.vfailIf(self.nget_run('-g test -C -r jOyStIcK'))
 		self.verifyoutput('0002')
+	
+	def test_r_nocase_cfg(self):
+		self.nget.writerc(self.servers.servers, options={'case':0})
+		self.vfailIf(self.nget_run('-g test -r jOyStIcK'))
+		self.verifyoutput('0002')
+
+	def test_r_incomplete(self):
+		self.rmarticles('0002', 'uuencode_multi3', fname='003')
+		self.vfailUnlessExitstatus(self.nget_run("-g test -i -r joys"), 1)
+	
+	def test_r_incomplete_cfg(self):
+		self.nget.writerc(self.servers.servers, options={'complete':0})
+		self.rmarticles('0002', 'uuencode_multi3', fname='003')
+		self.vfailUnlessExitstatus(self.nget_run("-g test -r joys"), 1)
+	
+	def test_r_incomplete_cfg2(self):
+		self.nget.writerc(self.servers.servers, options={'complete':1})
+		self.rmarticles('0002', 'uuencode_multi3', fname='003')
+		self.vfailIf(self.nget_run("-g test -r joys"))
+		self.verifyoutput([])
 	
 	def test_multi_r_samepath(self):
 		self.vfailIf(self.nget_run('-g test -r joystick -r foo'))
@@ -449,8 +480,18 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -l 434 -r .'))
 		self.verifyoutput([])
 
+	def test_r_l_toohigh_cfg(self):
+		self.nget.writerc(self.servers.servers, options={'limit':434})
+		self.vfailIf(self.nget_run('-g test -r .'))
+		self.verifyoutput([])
+
 	def test_r_l(self):
 		self.vfailIf(self.nget_run('-g test -l 433 -r .'))
+		self.verifyoutput('0002')
+
+	def test_r_l_cfg(self):
+		self.nget.writerc(self.servers.servers, options={'limit':433})
+		self.vfailIf(self.nget_run('-g test -r .'))
 		self.verifyoutput('0002')
 
 	def test_r_L_toolow(self):
@@ -480,6 +521,15 @@ class RetrieveTest_base(DecodeTest_base):
 		self.verifyoutput('0001')
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 2)
 
+	def test_dupef_D_cfg(self):
+		self.vfailIf(self.nget_run('-g test -r foo'))
+		self.verifyoutput('0001')
+		self.nget.writerc(self.servers.servers, options={'dupefilecheck':0})
+		self.vfailIf(self.nget_run('-G test -U -r foo'))
+		self.vfailIf(self.nget_run('-G test -r foo'))
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 2)
+
 	def test_dupei(self):
 		self.vfailIf(self.nget_run('-g test -r .'))
 		self.verifyoutput(['0002','0001','0005'])
@@ -493,6 +543,15 @@ class RetrieveTest_base(DecodeTest_base):
 		self.verifyoutput(['0002','0001','0005'])
 		self.nget.clean_tmp()
 		self.vfailIf(self.nget_run('-g test -D -r .'))
+		self.verifyoutput(['0002','0001','0005'])
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 10)
+	
+	def test_dupei_D_cfg(self):
+		self.vfailIf(self.nget_run('-g test -r .'))
+		self.verifyoutput(['0002','0001','0005'])
+		self.nget.clean_tmp()
+		self.nget.writerc(self.servers.servers, options={'dupeidcheck':0})
+		self.vfailIf(self.nget_run('-g test -r .'))
 		self.verifyoutput(['0002','0001','0005'])
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 10)
 	
@@ -533,6 +592,12 @@ class RetrieveTest_base(DecodeTest_base):
 	def test_noautoparhandling(self):
 		self.addarticles('par01', 'input')
 		self.vfailIf(self.nget_run('-g test --no-autopar -r par.test'))
+		self.verifyoutput('par01')
+
+	def test_noautoparhandling_cfg(self):
+		self.nget.writerc(self.servers.servers, options={'autopar':0})
+		self.addarticles('par01', 'input')
+		self.vfailIf(self.nget_run('-g test -r par.test'))
 		self.verifyoutput('par01')
 
 	def test_autoparhandling_nodecode(self):
