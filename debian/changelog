@@ -1,3 +1,9 @@
+nget (0.27.1-0.1) unstable; urgency=low
+
+  *  New release.
+
+ -- Matthew Mueller <donut@users.sourceforge.net>  Mon, 20 Dec 2004 21:34:42 -0700
+
 nget (0.27-0.1) unstable; urgency=low
 
   * New release.
