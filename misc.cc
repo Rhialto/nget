@@ -60,27 +60,6 @@ time_t timegm (const struct tm *gmtimein) {
 }
 #endif
 
-int doopen(int &handle,const char * name,int access,int mode) {
-	if ((handle=open(name,access,mode))==-1){
-//      if (domiscquiet)
-//      domiscquiet--;
-//      else
-		PERROR("Error opening %s: %s",name,strerror(errno));
-		return -1;
-	}
-	else return 0;
-}
-
-int dofopen(FILE * &f,const char * name,const char * mode,int domiscquiet) {
-//   FILE *f;
-	if ((f=fopen(name,mode))==NULL){
-		if (!domiscquiet)
-			PERROR("Error opening %s: %s",name,strerror(errno));
-		return -1;
-	}
-	return 0;
-}
-
 int fexists(const char * f){
 	struct stat statbuf;
 	return (!stat(f,&statbuf));
