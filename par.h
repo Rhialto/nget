@@ -29,6 +29,7 @@
 #include "cache.h"
 
 typedef multimap<string, string> t_nocase_map;
+bool par2file_get_sethash(const string &filename, string &sethash);
 bool parfile_get_sethash(const string &filename, string &sethash);
 bool parfile_ok(const string &filename, uint32_t &vol_number);
 int parfile_check(const string &filename, const string &path, const t_nocase_map &nocase_map);
@@ -53,9 +54,13 @@ class ParSetInfo {
 				count++;
 			}
 			if (serverpars.empty() && !serverpxxs.empty()){
-				fc.addfile(serverpxxs.begin()->second, path, temppath);
+				t_server_file_list::iterator smallest = serverpxxs.begin(), cur = smallest;
+				for (++cur; cur!=serverpxxs.end(); ++cur)
+					if (cur->second->bytes() < smallest->second->bytes())
+						smallest = cur;
+				fc.addfile(smallest->second, path, temppath);
 				count++;
-				serverpxxs.erase(serverpxxs.begin());
+				serverpxxs.erase(smallest);
 			}
 			serverpars.clear();
 			return count;
@@ -78,7 +83,7 @@ class LocalParFiles {
 		t_basenames_map basenames; // maps sethash -> known basenames for that set
 		t_basefilenames_map basefilenames; // maps sethash -> all known filenames for that set
 
-		void addsubjmatch(const string &key, const string &basename){
+		void addsubjmatch_par1(const string &key, const string &basename){
 			if (basenames[key].find(basename)!=basenames[key].end())
 				return;//only insert one subject match for each basename
 			basenames[key].insert(basename);
@@ -91,7 +96,21 @@ class LocalParFiles {
 			matchstr+=regex_match_word_end();
 			subjmatches.insert_value(key, new c_regex_r(matchstr.c_str(), REG_EXTENDED|REG_ICASE));
 		}
-		void addfrompath(const string &path, t_nocase_map *nocase_map=NULL);
+		void addsubjmatch_par2(const string &key, const string &basename){
+			if (basenames[key].find(basename)!=basenames[key].end())
+				return;//only insert one subject match for each basename
+			basenames[key].insert(basename);
+
+			string matchstr;
+			if (isalnum(basename[0]))
+				matchstr+=regex_match_word_beginning();
+			regex_escape_string(basename, matchstr);
+			matchstr+="(\\.vol([0-9]+)\\+([0-9]+))?\\.par2";
+			matchstr+=regex_match_word_end();
+			subjmatches.insert_value(key, new c_regex_r(matchstr.c_str(), REG_EXTENDED|REG_ICASE));
+		}
+		void addfrompath_par1(const string &path, t_nocase_map *nocase_map=NULL);
+		void addfrompath_par2(const string &path, t_nocase_map *nocase_map=NULL);
 		void clear(void){
 			basefilenames.clear();
 			basenames.clear();
@@ -100,7 +119,7 @@ class LocalParFiles {
 };
 
 
-class ParInfo {
+class ParXInfoBase {
 	protected:
 		t_server_file_list serverpars;
 		t_server_file_list serverpxxs;
@@ -111,28 +130,77 @@ class ParInfo {
 		LocalParFiles localpars;
 		const string path;
 		const string temppath;
-	public:
-		ParInfo(const string &p,const string &t):finished_okcount(0),path(p),temppath(t){//well, saving and using only the first temppath encountered isn't exactly perfect, but I doubt many people really download multiple things to the same path but with different temp paths.  And I'm lazy.
-			localpars.addfrompath(path);
-		}
+
 		ParSetInfo *parset(const string &basename) { 
 			return &parsets[basename]; // will insert a new ParSetInfo into parsets if needed.
 		}
-		bool maybe_add_parfile(const c_nntp_file::ptr &f);
+	
+	public:
+		ParXInfoBase(const string &p,const string &t):finished_okcount(0),path(p),temppath(t){//well, saving and using only the first temppath encountered isn't exactly perfect, but I doubt many people really download multiple things to the same path but with different temp paths.  And I'm lazy.
+		}
 		int get_initial_pars(c_nntp_files_u &fc);
-		int get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nntp_files_u &fc);
-		void maybe_get_pxxs(c_nntp_files_u &fc);
+		int getNumFinished(void) const { return finished_parsets.size(); }
+		int getNumFinishedOk(void) const { return finished_okcount; }
 };
 
+class Par1Info : public ParXInfoBase {
+	protected:
+		int get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nntp_files_u &fc);
+	public:
+		Par1Info(const string &p,const string &t):ParXInfoBase(p,t){
+			localpars.addfrompath_par1(path);
+		}
+		bool maybe_add_parfile(const c_nntp_file::ptr &f);
+		int maybe_get_pxxs(c_nntp_files_u &fc);
+};
 
-class ParInfo;
+class Par2Info : public ParXInfoBase {
+	protected:
+		int get_recoverypackets(int num, set<uint32_t> &havepackets, const string &key, c_nntp_files_u &fc);
+	public:
+		Par2Info(const string &p,const string &t):ParXInfoBase(p,t){
+			localpars.addfrompath_par2(path);
+		}
+		bool maybe_add_parfile(const c_nntp_file::ptr &f);
+		int maybe_get_pxxs(c_nntp_files_u &fc);
+};
+
+class ParInfo {
+	protected:
+		const string path;
+		Par1Info par1info;
+		Par2Info par2info;
+
+	public:
+		ParInfo(const string &p,const string &t):path(p), par1info(p,t), par2info(p,t) {
+		}
+		bool maybe_add_parfile(const c_nntp_file::ptr &f) {
+			return par1info.maybe_add_parfile(f) || par2info.maybe_add_parfile(f);
+		}
+		void get_initial_pars(c_nntp_files_u &fc) {
+			par1info.get_initial_pars(fc);
+			par2info.get_initial_pars(fc);
+		}
+		void maybe_get_pxxs(c_nntp_files_u &fc) {
+			int total_added=0;
+			total_added += par1info.maybe_get_pxxs(fc);
+			total_added += par2info.maybe_get_pxxs(fc);
+			if (!total_added) {
+				PDEBUG(DEBUG_MIN, "par checking in %s done (%i/%i parsets ok)", path.c_str(),
+						par1info.getNumFinishedOk()+par2info.getNumFinishedOk(),
+						par1info.getNumFinished()+par2info.getNumFinished());
+			}
+		}
+};
+
 class ParHandler {
 	protected:
 		typedef auto_map<string, ParInfo> t_parinfo_map;
 		t_parinfo_map parinfos;
-	public:
+
 		t_parinfo_map::data_type parinfo(const string &path, const string &temppath);
 		t_parinfo_map::data_type parinfo(const string &path);
+	public:
 		bool maybe_add_parfile(const c_nntp_file::ptr &f, const string &path, const string &temppath);
 		void get_initial_pars(c_nntp_files_u &fc);
 		void maybe_get_pxxs(const string &path, c_nntp_files_u &fc);

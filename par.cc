@@ -26,6 +26,8 @@
 #include "md5.h"
 #include "misc.h"
 #include "nget.h"
+#include "par2/par2cmdline.h"
+#include "knapsack.h"
 
 
 static void add_to_nocase_map(t_nocase_map *nocase_map, const char *key, const char *name){
@@ -34,9 +36,9 @@ static void add_to_nocase_map(t_nocase_map *nocase_map, const char *key, const c
 		lowername.push_back(tolower(*cp));
 	nocase_map->insert(t_nocase_map::value_type(lowername, name));
 }
-void LocalParFiles::addfrompath(const string &path, t_nocase_map *nocase_map){
-	c_regex_r parfile_re((string("^(.+)\\.p(ar|[0-9]{2})(\\.[0-9]+\\.[0-9]+)?$")).c_str(), REG_EXTENDED|REG_ICASE);
-	c_regex_r dupefile_re((string("^(.+)\\.[0-9]+\\.[0-9]+$")).c_str());
+void LocalParFiles::addfrompath_par1(const string &path, t_nocase_map *nocase_map){
+	c_regex_r parfile_re("^(.+)\\.p(ar|[0-9]{2})(\\.[0-9]+\\.[0-9]+)?$", REG_EXTENDED|REG_ICASE);
+	c_regex_r dupefile_re("^(.+)\\.[0-9]+\\.[0-9]+$");
 	c_regex_subs rsubs;
 	DIR *dir=opendir(path.c_str());
 	struct dirent *de;
@@ -51,7 +53,41 @@ void LocalParFiles::addfrompath(const string &path, t_nocase_map *nocase_map){
 				for (string::iterator i=basename.begin(); i!=basename.end(); ++i)
 					*i=tolower(*i);
 				basefilenames[sethash].push_back(de->d_name);
-				addsubjmatch(sethash, basename);
+				addsubjmatch_par1(sethash, basename);
+			}
+		}
+		if (nocase_map) {
+			if (strcmp(de->d_name,"..")!=0 && strcmp(de->d_name,".")!=0){
+				if (!dupefile_re.match(de->d_name, &rsubs)) //check for downloaded dupe files, and add them under their original name.
+					add_to_nocase_map(nocase_map, rsubs.subs(1), de->d_name);
+				add_to_nocase_map(nocase_map, de->d_name, de->d_name);
+			}
+		}
+	}
+	closedir(dir);
+}
+
+void LocalParFiles::addfrompath_par2(const string &path, t_nocase_map *nocase_map){
+	c_regex_r parfile_re("^(.+)\\.par2(\\.[0-9]+\\.[0-9]+)?$", REG_EXTENDED|REG_ICASE);
+	c_regex_r dupefile_re("^(.+)\\.[0-9]+\\.[0-9]+$");
+	static c_regex_r par2pxxre("^(.*).vol[0-9]+\\+[0-9]+$", REG_EXTENDED|REG_ICASE);
+	c_regex_subs rsubs;
+	DIR *dir=opendir(path.c_str());
+	struct dirent *de;
+	if (!dir)
+		throw PathExFatal(Ex_INIT,"opendir: %s(%i)",strerror(errno),errno);
+	while ((de=readdir(dir))) {
+		if (!parfile_re.match(de->d_name, &rsubs)) {
+			string sethash;
+			string fullname = path_join(path, de->d_name);
+			if (par2file_get_sethash(fullname, sethash)) {
+				string basename = rsubs.sub(1);
+				if (!par2pxxre.match(basename.c_str(), &rsubs))
+					basename = rsubs.sub(1);
+				for (string::iterator i=basename.begin(); i!=basename.end(); ++i)
+					*i=tolower(*i);
+				basefilenames[sethash].push_back(de->d_name);
+				addsubjmatch_par2(sethash, basename);
 			}
 		}
 		if (nocase_map) {
@@ -66,7 +102,7 @@ void LocalParFiles::addfrompath(const string &path, t_nocase_map *nocase_map){
 }
 
 
-bool ParInfo::maybe_add_parfile(const c_nntp_file::ptr &f) {
+bool Par1Info::maybe_add_parfile(const c_nntp_file::ptr &f) {
 	if (f->maybe_a_textpost())
 		return false;//try to avoid mistaking text posts that have .pxx stuff in the title for binary par posts.
 
@@ -98,7 +134,7 @@ bool ParInfo::maybe_add_parfile(const c_nntp_file::ptr &f) {
 	return false;
 }
 
-int ParInfo::get_initial_pars(c_nntp_files_u &fc) {
+int ParXInfoBase::get_initial_pars(c_nntp_files_u &fc) {
 	int count=0;
 	for (t_server_file_list::const_iterator spi=serverpars.begin(); spi!=serverpars.end(); ++spi){
 		fc.addfile(spi->second, path, temppath);
@@ -111,7 +147,7 @@ int ParInfo::get_initial_pars(c_nntp_files_u &fc) {
 	return count;
 }
 
-int ParInfo::get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nntp_files_u &fc) {
+int Par1Info::get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nntp_files_u &fc) {
 	assert(localpars.subjmatches.find(key)!=localpars.subjmatches.end());
 	pair<t_subjmatches_map::iterator,t_subjmatches_map::iterator> matches=localpars.subjmatches.equal_range(key);
 	c_regex_subs rsubs;
@@ -156,10 +192,10 @@ int ParInfo::get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nnt
 	return cur;
 }
 
-void ParInfo::maybe_get_pxxs(c_nntp_files_u &fc) {
+int Par1Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 	t_nocase_map nocase_map;
 	localpars.clear();
-	localpars.addfrompath(path, &nocase_map);
+	localpars.addfrompath_par1(path, &nocase_map);
 
 	vector<c_nntp_file::ptr> unclaimedfiles;
 	for (t_parset_map::iterator psi=parsets.begin(); psi!=parsets.end(); ++psi){
@@ -215,10 +251,168 @@ void ParInfo::maybe_get_pxxs(c_nntp_files_u &fc) {
 			finished_okcount++;
 		}
 	}
+
+	return total_added;
 	
-	if (!total_added) {
-		PDEBUG(DEBUG_MIN, "par checking in %s done (%i/%i parsets ok)", path.c_str(), finished_okcount, finished_parsets.size());
+}
+
+
+bool Par2Info::maybe_add_parfile(const c_nntp_file::ptr &f) {
+	if (f->maybe_a_textpost())
+		return false;//try to avoid mistaking text posts that have .pxx stuff in the title for binary par posts.
+
+	c_regex_subs rsubs;
+	for (t_subjmatches_map::iterator smi=localpars.subjmatches.begin(); smi!=localpars.subjmatches.end(); ++smi) {
+		if (!smi->second->match(f->subject.c_str(), &rsubs)) {
+			PDEBUG(DEBUG_MIN, "file %s matches localpar2s (%s) (%i)",f->subject.c_str(),hexstr(smi->first).c_str(),rsubs.sublen(1)!=0);
+			if (rsubs.sublen(1) == 0)
+				serverpars.insert(t_server_file_list::value_type(f->badate(), f));
+			else
+				serverpxxs.insert(t_server_file_list::value_type(f->badate(), f));
+			return true;
+		}
 	}
+
+	static c_regex_r par2subj_re((string("([^ ]*)\\.par2")+regex_match_word_end()).c_str(), REG_EXTENDED|REG_ICASE);
+	static c_regex_r par2pxxre("^(.*).vol[0-9]+\\+[0-9]+$", REG_EXTENDED|REG_ICASE);
+	if (!par2subj_re.match(f->subject.c_str(), &rsubs)){
+		string basename(rsubs.sub(1));
+		bool ispxx = !par2pxxre.match(basename.c_str(), &rsubs);
+		if (ispxx)
+			basename = rsubs.sub(1);
+		if (!basename.empty() && basename[0]=='"')
+			basename.erase(basename.begin());
+		PDEBUG(DEBUG_MIN, "file %s seems like a par2 (%s) (%i)",f->subject.c_str(),basename.c_str(), ispxx);
+		if (!ispxx)
+			parset(basename)->addserverpar(f);
+		else
+			parset(basename)->addserverpxx(f);
+		return true;
+	}
+
+	return false;
+}
+		
+int Par2Info::get_recoverypackets(int num, set<uint32_t> &havepackets, const string &key, c_nntp_files_u &fc) {
+	assert(localpars.subjmatches.find(key)!=localpars.subjmatches.end());
+	pair<t_subjmatches_map::iterator,t_subjmatches_map::iterator> matches=localpars.subjmatches.equal_range(key);
+	c_regex_subs rsubs;
+	
+	vector<int> sizes, values;
+	vector<t_server_file_list::iterator> items;
+	set<int> results;
+	set<uint32_t> availpackets;
+	for (t_server_file_list::iterator sfi=serverpxxs.begin(); sfi!=serverpxxs.end(); ++sfi){
+		for (t_subjmatches_map::iterator smi=matches.first; smi!=matches.second; ++smi) {
+			if (!smi->second->match(sfi->second->subject.c_str(), &rsubs)) {
+				uint32_t beginpacket = atoi(rsubs.subs(2)), endpacket = atoi(rsubs.subs(3)) + beginpacket;
+				int value = 0;
+				for (uint32_t packet = beginpacket; packet < endpacket; ++packet)
+					if (havepackets.find(packet)==havepackets.end() && //don't try to retrive packets we already have
+							availpackets.find(packet)==availpackets.end()) //don't try to retrieve multiple of the same packet in one run
+					{
+						availpackets.insert(packet);
+						value++;
+					}
+				if (value>0) {
+					sizes.push_back(endpacket-beginpacket);
+					values.push_back(value);
+					items.push_back(sfi);
+				}
+				else PDEBUG(DEBUG_MIN, "get_recoverypackets: %s, already have or getting packets %u+%u, skipping %s", hexstr(key).c_str(), beginpacket, endpacket - beginpacket, sfi->second->subject.c_str());
+			}
+		}
+	}
+	if (nconfig.autopar_optimistic && (signed)availpackets.size()<num){
+		PERROR("get_recoverypackets: Only %i/%i needed packets available for par2set %s, giving up", availpackets.size(), num, hexstr(key).c_str());
+		return 0;
+	}
+	int result_size = knapsack_minsize(values, sizes, num, results);
+	
+	int cur=0;
+	set<int>::iterator ri=results.begin(), re=results.end();
+	while (ri!=re){
+		assert(cur<num);
+
+		cur += values[*ri];
+		fc.addfile(items[*ri]->second, path, temppath);
+		PDEBUG(DEBUG_MIN, "get_recoverypackets: %i, %s, adding %s", cur, hexstr(key).c_str(), items[*ri]->second->subject.c_str());
+		serverpxxs.erase(items[*ri]);
+#ifndef NDEBUG
+		result_size -= sizes[*ri];
+#endif
+		++ri;
+	}
+	assert(result_size==0);
+	return cur;
+}
+
+int Par2Info::maybe_get_pxxs(c_nntp_files_u &fc) {
+	localpars.clear();
+	localpars.addfrompath_par2(path);
+
+	vector<c_nntp_file::ptr> unclaimedfiles;
+	for (t_parset_map::iterator psi=parsets.begin(); psi!=parsets.end(); ++psi){
+		psi->second.release_unclaimed_pxxs(unclaimedfiles);
+	}
+	for (vector<c_nntp_file::ptr>::iterator ufi=unclaimedfiles.begin(); ufi!=unclaimedfiles.end(); ++ufi) {
+		bool r=maybe_add_parfile(*ufi);
+		assert(r);
+	}
+
+	int total_added = get_initial_pars(fc);
+
+	for (t_basefilenames_map::const_iterator bfni=localpars.basefilenames.begin(); bfni!=localpars.basefilenames.end(); ++bfni) {
+		if (finished_parsets.find(bfni->first)!=finished_parsets.end())
+			continue;//we are already done with this parset, don't waste time retesting stuff.
+		
+		set<uint32_t> goodpackets;
+		bool goodparfound = false;
+		int needed_packets = 0;
+
+		vector<string> fullpaths;
+		for (vector<string>::const_iterator fni=bfni->second.begin(); fni!=bfni->second.end(); ++fni)
+			fullpaths.push_back(path_join(path, *fni));
+	
+		for (vector<string>::const_iterator fni=fullpaths.begin(); fni!=fullpaths.end(); ++fni) {
+			const string &fn = *fni;
+			
+			CommandLine par2cmd(fn, fullpaths);
+			Par2Repairer par2;
+			Result r = par2.Process(par2cmd, false);
+
+			if (r == eSuccess || r == eRepairPossible || r == eRepairNotPossible) {
+				goodparfound = true;
+
+				for (map<u32, RecoveryPacket*>::const_iterator rpmi = par2.recoverypacketmap.begin(); rpmi != par2.recoverypacketmap.end(); ++rpmi)
+					goodpackets.insert(rpmi->first);
+				
+				if (r == eRepairNotPossible)
+					needed_packets = par2.missingblockcount - par2.recoverypacketmap.size();
+				PDEBUG(DEBUG_MIN, "par2set %s in %s: %i recovery packets, %i bad/missing source blocks, trying to get %i more", hexstr(bfni->first).c_str(), path.c_str(), goodpackets.size(), par2.missingblockcount, needed_packets);
+				break;
+			}
+		}
+
+		if (!goodparfound) {
+			needed_packets = 1;
+			PDEBUG(DEBUG_MIN, "par2set %s in %s no goodpar found, trying to get one", hexstr(bfni->first).c_str(), path.c_str());
+		}
+
+		if (needed_packets) {
+			int parset_added = get_recoverypackets(needed_packets, goodpackets, bfni->first, fc);
+			if (!parset_added) {
+				set_autopar_error_status();
+				finished_parsets.insert(bfni->first);
+			}
+			total_added += parset_added;
+		}else{
+			set_autopar_ok_status();
+			finished_parsets.insert(bfni->first);
+			finished_okcount++;
+		}
+	}
+	return total_added;
 }
 
 		
@@ -303,6 +497,33 @@ void md5_file(const char *filename, uchar *result) {
 	md5_file(&f, result);
 }
 
+
+static int par2file_check_header(c_file &f) {
+	const uchar parheader[] = "PAR2\0PKT";
+	uchar buf[8];
+	f.readfull(buf, 8);
+	if (memcmp(buf, parheader, 8)){
+		PERROR("error reading %s: invalid par2 file header", f.name());
+		return 1;
+	}
+	return 0;
+}
+
+bool par2file_get_sethash(const string &filename, string &sethash) {
+	try{
+		c_file_fd f(filename.c_str(), "rb");
+		if (par2file_check_header(f))
+			return false;
+		f.seek(8+8+16, SEEK_SET);
+		char set_hash[16];
+		f.readfull(set_hash, 16);
+		sethash.assign(set_hash, 16);
+		return true;
+	}catch(FileEx &e){
+		printCaughtEx(e);
+		return false;
+	}
+}
 
 static int parfile_check_header(c_file &f) {
 	const uchar parheader[] = "PAR\0\0\0\0\0";
