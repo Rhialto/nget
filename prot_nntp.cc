@@ -136,13 +136,14 @@ int c_prot_nntp::getreply(int echo){
 class XoverProgress {
 	public:
 		time_t lasttime, starttime, curt;
-		void print_retrieving_headers(ulong low,ulong high,ulong cur,ulong bytes){
-			long tot=high-low+1,done=cur-low+1;
+		void print_retrieving_headers(ulong low,ulong high,ulong done,ulong realtotal,ulong total,ulong bytes,int doneranges,int streamed,int totalranges){
 			time_t dtime=lasttime-starttime;
 			long Bps=(dtime>0)?bytes/dtime:0;
-			long Bph=(done>0)?bytes/done:0;
+			long Bph=(done>0)?bytes/done:3;//if no headers have been retrieved yet, set the bytes per header to 3 just to get some sort of timeleft display.  (3=strlen(".\r\n"))
 			if (!quiet) clear_line_and_return();
-			printf("Retrieving headers %lu-%lu: %li %3li%% %liB/s %s",low,high,done,(tot!=0)?(done*100/tot):0,Bps,durationstr((Bps>0)?((high-cur)*Bph)/(Bps):0).c_str());
+			printf("Retrieving headers %lu-%lu : %li/%li/%li %3li%% %liB/s %s",low,high,done,realtotal,total,(realtotal!=0)?((done+(total-realtotal))*100/total):0,Bps,durationstr(realtotal==done?dtime:(Bps>0)?((realtotal-done)*Bph)/(Bps):0).c_str());
+			if (totalranges>1)
+				printf(" (%i/%i/%i)",doneranges,doneranges+streamed,totalranges);
 			fflush(stdout);//@@@@
 			time(&lasttime);
 		};
@@ -177,94 +178,114 @@ Other optional fields may follow line count. These fields are specified by
 examining the response to the LIST OVERVIEW.FMT command. Where no data
 exists, a null field must be provided
 */
-void c_prot_nntp::doxover(ulong low, ulong high){
-	XoverProgress progress;
-	char *p;
-	char *t[10];
-	ulong bytes=0,realnum=0,lowest=0;
-	int i;
-	nntp_doopen();
-	nntp_dogroup(0);
-	if (!quiet)
-		progress.print_retrieving_headers(low,high,low,0);
-	if (low==high)
-		chkreply(stdputline(debug>=DEBUG_MED,"XOVER %lu",low));//save a few bytes
-	else
-		chkreply(stdputline(debug>=DEBUG_MED,"XOVER %lu-%lu",low,high));
-	//stdgetreply(debug);
-	unsigned long an=0;
-	c_nntp_header nh;
-	char * tp;
-	do {
-		bytes+=getline(debug>=DEBUG_ALL);
-		if (cbuf[0]=='.')break;
-		p=cbuf;
-		for(i=0;i<10;i++){
-			if((t[i]=goodstrtok(&p,'\t'))==NULL){
-				break;
-			}
-			// fields 0, 6, 7 must all be numeric
-			// otherwise restart
-			if (i==0 || i==6 || i==7){
-				tp=t[i];
-				while (*tp){
-					if (!isdigit(*tp) && !isspace(*tp))
-						break;
-					tp++;
-				}
-				// did the test finish, and/or was it a blank field?
-				if (*tp && tp!=t[i]){
-					// no - get out and read the next line
-					// Is this how we want to handle it? SMW
-					printf("error retrieving xover (%i non-numeric)\n",i);
-//					printf("error retrieving xover (%i non-numeric): ",i);
-//					for (int j=0;j<i;j++)
-//						printf("%i:%s ",j,t[j]);
-//					printf("*:%s\n",p);
-					break;
-				}
-			}
-		}
-		if (i>7){
-		//	c=new c_nntp_cache_item(atol(t[0]),	decode_textdate(t[3]), atol(t[6]), atol(t[7]),t[1],t[2]);
-			//gcache->additem(c);
-			an=atoul(t[0]);
-			nh.set(t[1],t[2],an,decode_textdate(t[3]),atoul(t[6]),atoul(t[7]),t[4],t[5]);
-			nh.serverid=curserverid;
-			//gcache->additem(an, decode_textdate(t[3]), atol(t[6]), atol(t[7]),t[1],t[2]);
-			gcache->additem(&nh);
-			//delete nh;
-			realnum++;
-			if (lowest==0){
-				lowest=an;
-			}
-			if (progress.needupdate())
-				progress.print_retrieving_headers(lowest,high,an,bytes);
-		}else{
-			printf("error retrieving xover (%i<=7): ",i);
-			for (int j=0;j<i;j++)
-				printf("%i:%s ",j,t[j]);
-			printf("*:%s\n",p);
-//			break;
-			continue;
-		}
-	}while(1);
-	if(quiet<2 /*&& an*/){
-		if (lowest==0)
-			lowest=an=low;
-		progress.print_retrieving_headers(lowest,high,an,bytes);
-		printf(" (%li)\n",realnum);
-	}
-}
-//unfortunatly, XOVER doesn't allow for more than one range per xover command.
 void c_prot_nntp::doxover(c_nrange *r){
 	if (r->empty())
 		return;
-	t_rlist::iterator i;
-	for (i=r->rlist.begin();i!=r->rlist.end();++i){
-//		printf("%lu-%lu\n",(*i).second,(*i).first);
-		doxover((*i).second,(*i).first);
+	XoverProgress progress;
+	ulong lowest=r->rlist.begin()->second, highest=r->rlist.rbegin()->first;
+	ulong bytes=0, realnum=0, realtotal=r->get_total(), last;
+	ulong total=realtotal;
+	nntp_doopen();
+	nntp_dogroup(0);
+
+	t_rlist::iterator r_ri;
+	t_rlist::iterator w_ri=r->rlist.begin();
+	int streamed = 0, totalranges = r->rlist.size(), doneranges = 0;
+	for (r_ri=r->rlist.begin();r_ri!=r->rlist.end();++r_ri, ++doneranges){
+		if (progress.needupdate())
+			progress.print_retrieving_headers(lowest,highest,realnum,realtotal,total,bytes,doneranges,streamed,totalranges);
+		char *p;
+		char *t[10];
+		int i;
+		while (w_ri!=r->rlist.end() && streamed<=host->maxstreaming) { 
+			ulong low=(*w_ri).second, high=(*w_ri).first;
+			if (low==high)
+				putline(debug>=DEBUG_MED,"XOVER %lu",low);//save a few bytes
+			else
+				putline(debug>=DEBUG_MED,"XOVER %lu-%lu",low,high);
+			++w_ri;
+			++streamed;
+		}
+		ulong low=(*r_ri).second, high=(*r_ri).first;
+		last = low;
+		chkreply(getreply(debug>=DEBUG_MED));
+		bytes+=strlen(cbuf)+2;//#### ugly.
+		--streamed;
+		unsigned long an=0;
+		c_nntp_header nh;
+		char * tp;
+		do {
+			bytes+=getline(debug>=DEBUG_ALL);
+			if (cbuf[0]=='.')break;
+			p=cbuf;
+			for(i=0;i<10;i++){
+				if((t[i]=goodstrtok(&p,'\t'))==NULL){
+					break;
+				}
+				// fields 0, 6, 7 must all be numeric
+				// otherwise restart
+				if (i==0 || i==6 || i==7){
+					tp=t[i];
+					while (*tp){
+						if (!isdigit(*tp) && !isspace(*tp))
+							break;
+						tp++;
+					}
+					// did the test finish, and/or was it a blank field?
+					if (*tp && tp!=t[i]){
+						// no - get out and read the next line
+						// Is this how we want to handle it? SMW
+						printf("error retrieving xover (%i non-numeric)\n",i);
+						//printf("error retrieving xover (%i non-numeric): ",i);
+						//for (int j=0;j<i;j++)
+							//printf("%i:%s ",j,t[j]);
+						//printf("*:%s\n",p);
+						break;
+					}
+				}
+			}
+			if (i>7){
+				//	c=new c_nntp_cache_item(atol(t[0]),	decode_textdate(t[3]), atol(t[6]), atol(t[7]),t[1],t[2]);
+				//gcache->additem(c);
+				an=atoul(t[0]);
+				nh.set(t[1],t[2],an,decode_textdate(t[3]),atoul(t[6]),atoul(t[7]),t[4],t[5]);
+				nh.serverid=curserverid;
+				//gcache->additem(an, decode_textdate(t[3]), atol(t[6]), atol(t[7]),t[1],t[2]);
+				gcache->additem(&nh);
+				//delete nh;
+				realnum++;
+#ifndef NDEBUG
+				ulong ort=realtotal;
+#endif
+				realtotal -= an - last;
+				assert(ort>=realtotal);
+				last = an + 1;
+				if (progress.needupdate())
+					progress.print_retrieving_headers(lowest,highest,realnum,realtotal,total,bytes,doneranges,streamed,totalranges);
+			}else{
+				printf("error retrieving xover (%i<=7): ",i);
+				for (int j=0;j<i;j++)
+					printf("%i:%s ",j,t[j]);
+				printf("*:%s\n",p);
+				//break;
+				continue;
+			}
+		}while(1);
+#ifndef NDEBUG
+		ulong ort=realtotal;
+#endif
+		realtotal -= high - last + 1;
+		assert(ort>=realtotal);
 	}
+	if(quiet<2 /*&& an*/){
+		progress.print_retrieving_headers(lowest,highest,realnum,realtotal,total,bytes,doneranges,streamed,totalranges);
+		printf("\n");
+	}
+}
+void c_prot_nntp::doxover(ulong low, ulong high){
+	c_nrange r;
+	r.insert(low, high);
+	doxover(&r);
 }
 
 void c_prot_nntp::nntp_dogroup(int getheaders){

@@ -38,6 +38,12 @@ class c_nrange{
 		int changed;
 		string file;
 		t_rlist rlist;
+		int get_total(void) {
+			ulong tot=0;
+			for (t_rlist::iterator i=rlist.begin();i!=rlist.end();++i)
+				tot += i->first - i->second + 1;
+			return tot;
+		}
 		bool empty(void){return rlist.empty();}
 		int check(ulong n){
 			t_rlist::iterator i=rlist.lower_bound(n);

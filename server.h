@@ -36,15 +36,21 @@ class c_server {
 		string addr;
 		string user,pass;
 		bool fullxover;
+		int maxstreaming;
 		int lineleniencelow,lineleniencehigh;
 
-		c_server(ulong id, string alia, string add, string use,string pas,const char *fullxove,const char *ll):alias(alia),addr(add),user(use),pass(pas){
+		c_server(ulong id, string alia, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea):alias(alia),addr(add),user(use),pass(pas){
 //			serverid=atoul(id.c_str());
 			serverid=id;
 			if (fullxove)
 				fullxover=atoi(fullxove);
 			else
 				fullxover=0;
+			if (maxstrea<0) {
+				printf("invalid maxstreaming %i for host %s\n",maxstrea,addr.c_str());
+				maxstreaming = 0;
+			}else
+				maxstreaming = maxstrea;
 			if (ll){
 				int l,h;
 				if (!parse_int_pair(ll,&l,&h)){

@@ -1,4 +1,4 @@
-.TH nget 1 "13 Jan 2002"
+.TH nget 1 "17 Jan 2002"
 .SH NAME
 nget \- retrieve files from NNTP hosts
 .SH SYNOPSIS
@@ -132,11 +132,18 @@ Boolean(0/1): case, complete, dupeidcheck, dupefilecheck, quiet, tempshortnames(
 yes/no/ask: makedirs
 .P
 Host configuration is done in the halias section, with a subsection for each
-host containing its address, unique id, and optionally user, pass, fullxover, and linelenience
+host containing its address, unique id, and optionally user, pass, fullxover, maxstreaming, and linelenience
 items.  The "id" field must be unique, and should not be changed after you have
 used it (since it could leave leftovers in your cache files, unless you delete
 them first).  The "id" must be greater than 0 and less than ULONG_MAX. (usually
 4294967295).  In other words, don't use id 0.
+.br
+The maxstreaming option sets how many xover commands will be sent at once, when
+using fullxover.  maxstreaming=0 will disable streaming.  Note that setting
+maxstreaming too high can cause your connection to deadlock if the write buffer
+is filled up and the write command blocks, but the server will never read more
+commands since it is waiting for us to read what it has already sent us.  The default
+value is maxstreaming=64.
 .br
 The linelenience option may be specified as either a single int, or two ints seperated by a comma.
 If only a single int, X is specified, then it will be interpeted as shorthand for "-X,+X".

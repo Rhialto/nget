@@ -9,6 +9,8 @@
   * Cache file format change, so switch default NGETHOME to ~/.nget4.
     (Upgrade should be as simple as "mv ~/.nget3 ~/.nget4; rm ~/.nget4/*,cache*")
   * Add heuristic to detect replies to multi-part posts and mark them as complete.  No more need to specify -i to catch replies.
+  * Cleaned up retrieving headers progress display when using fullxover=1.
+  * Added streaming support for header retrieval, using fullxover should now be many times faster. (and on high ping links, increasing the maxstreaming setting can improve the speed even more.)
 
 2001-11-24 - v0.15.2:
   * Fix -df with filenames that begin or end in "non-word" chars since the \< and \> will not match because there is no word boundry in such a case. (reported by Bernhard Josef Rieder)
