@@ -137,7 +137,7 @@ char *goodgetcwd(char **p){
 	do {
 		t+=48;
 		if (!(*p=(char*)realloc(*p,t))){
-			PERROR("realloc error %s",strerror(errno));exit(128);
+			PERROR("goodgetcwd: realloc error %s (size=%i)",strerror(errno), t);exit(128);
 		}
 	}while(!(*p=getcwd(*p,t)));
 	PDEBUG(DEBUG_MED,"goodgetcwd %i %s(%p-%p)",t,*p,p,*p);
