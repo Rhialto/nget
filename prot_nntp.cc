@@ -287,14 +287,12 @@ void c_prot_nntp::nntp_dogroup(int getheaders){
 			gcache->getxrange(servinfo,low,high,&r);
 			doxover(&r);
 		}else{
-//			c_nrange r;
+			c_nrange r;
 			if (servinfo->high<high)
-//				r.insert(servinfo->high+1,high);
-				doxover(servinfo->high+1,high);
+				r.insert(servinfo->high+1, high);
 			if (servinfo->low>low)
-//				r.insert(low,servinfo->low-1);
-				doxover(low,servinfo->low-1);
-//			doxover(&r);
+				r.insert(low, servinfo->low-1);
+			doxover(&r);
 		}
 	}
 };
