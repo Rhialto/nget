@@ -318,10 +318,8 @@ bool Par2Info::maybe_add_parfile(const c_nntp_file::ptr &f, bool want_incomplete
 
 int Par2Info::get_extradata(int num, c_nntp_files_u &fc, const Par2Repairer *par2) {
 	int added = 0;
-	t_server_file_list::iterator curi=serverextradata.begin(), edi; 
-	while (added<num && curi!=serverextradata.end()) {
-		edi = curi;
-		++curi;
+	vector<t_server_file_list::iterator> items;
+	for (t_server_file_list::iterator edi=serverextradata.begin(); added<num && edi!=serverextradata.end(); ++edi) {
 		for (vector<Par2RepairerSourceFile*>::const_iterator sf = par2->sourcefiles.begin(); sf != par2->sourcefiles.end(); ++sf) {
 			const Par2RepairerSourceFile *sourcefile = *sf;
 			if (sourcefile && sourcefile->GetCompleteFile() == 0) {
@@ -329,16 +327,24 @@ int Par2Info::get_extradata(int num, c_nntp_files_u &fc, const Par2Repairer *par
 				path_split(head, tail);
 				lowerstr(tail);
 				if (strtolower(edi->second->subject).find(tail) != string::npos) {
-					if (!added)
-						PMSG("autopar: not enough par2 recovery packets, trying to get %i blocks of incomplete data", num);
 					added += max(1, (int)(sourcefile->BlockCount() * -edi->first.first));
-					fc.addfile(edi->second, path, temppath, false);
-					serverextradata.erase(edi);
+					items.push_back(edi);
 					break;
 				}
 			}
 		}
-
+	}
+	if (nconfig.autopar_optimistic && added<num){
+		if (!serverextradata.empty())
+			PERROR("autopar: Only %i/%i needed incomplete blocks available, giving up", added, num);
+		return 0;
+	}
+	// We could use knapsack_minsize again here, but it may not be worth the effort (incomplete files may not actually contain the amount of blocks our simplistic blockcount*completeness calculation gives, and we'll do a knapsack on the par2s after we get our incompletes anyway..)
+	if (added)
+		PMSG("autopar: not enough par2 recovery packets, trying to get %i blocks of incomplete data", num);
+	for (vector<t_server_file_list::iterator>::iterator fli=items.begin(); fli!=items.end(); ++fli) {
+		fc.addfile((*fli)->second, path, temppath, false);
+		serverextradata.erase(*fli);
 	}
 	return added;
 }

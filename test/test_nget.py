@@ -1073,6 +1073,25 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 8)
 		self.vfailUnlessEqual(output.count("blocks of incomplete data"), 1)
 
+	def test_autopar2handling_incompletefile_pessimistic(self):
+		self.addarticles('par2-01', 'input', fname='dat[125]')
+		self.addarticles('par2-01', 'input', fname='par')
+		self.addarticles('par2-01', 'input', fname='par1')
+		self.addarticles('par2-01', 'multipart', fname="dat[12345]-1")
+		output = self.vfailUnlessExitstatus_getoutput(self.nget_run_getoutput('-g test -r par2.test'), 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 7)
+		self.vfailUnlessEqual(output.count("blocks of incomplete data"), 1)
+
+	def test_autopar2handling_incompletefile_optimistic(self):
+		self.nget.writerc(self.servers.servers, options={'autopar_optimistic':1})
+		self.addarticles('par2-01', 'input', fname='dat[125]')
+		self.addarticles('par2-01', 'input', fname='par')
+		self.addarticles('par2-01', 'input', fname='par1')
+		self.addarticles('par2-01', 'multipart', fname="dat[12345]-1")
+		output = self.vfailUnlessExitstatus_getoutput(self.nget_run_getoutput('-g test -r par2.test'), 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 4)
+		self.vfailUnlessEqual(output.count("blocks of incomplete data"), 0)
+
 	def test_autopar2handling_reply(self):
 		self.addarticles('par2-01', 'input')
 		self.addarticles('par2-01', 'reply')
