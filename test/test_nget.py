@@ -450,7 +450,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.addarticles('par01', 'input')
 		self.rmarticle_fromserver('par01','input','dat2',self.servers.servers[0])
 		self.rmarticle_fromserver('par01','input','dat4',self.servers.servers[0])
-		self.vfailIf(self.nget_run('-g test -r "par.test.*\.[dp]a[tr])"'))
+		self.vfailIf(self.nget_run('-g test -r "par.test.*\.[dp]a[tr]"'))
 		self.vfailIf(self.nget_run('-g test -r par.test'))
 		self.verifyoutput({'par01':['01.dat','03.dat','05.dat','a b.par','a b.p01','a b.p02']})
 		
@@ -538,7 +538,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.rmarticle_fromserver('par02','input','dat1',self.servers.servers[0])
 		self.rmarticle_fromserver('par02','input','dat3',self.servers.servers[0])
 		self.rmarticle_fromserver('par02','input','dat5',self.servers.servers[0])
-		self.vfailIf(self.nget_run('-g test -r "par.*test.*\.[dp]a[tr])"'))
+		self.vfailIf(self.nget_run('-g test -r "par.*test.*\.[dp]a[tr]"'))
 		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
 		self.verifyoutput({'par01':['01.dat','03.dat','05.dat','a b.par','a b.p01','a b.p02'],
 			'par02':['p2-02.dat','p2-04.dat','p2.par','p2.p01','p2.p02','p2.p03']})
