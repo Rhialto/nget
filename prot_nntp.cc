@@ -1340,11 +1340,12 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 				uustatus.th = &texthandler;
 				if ((r=UUInitialize())!=UURET_OK)
 					throw ApplicationExFatal(Ex_INIT,"UUInitialize: %s",UUstrerror(r));
-				UUSetOption(UUOPT_DUMBNESS,1,NULL);//we already put the parts in the correct order, so it doesn't need to.
+				UUSetOption(UUOPT_DUMBNESS,0,NULL); // need smartness for uulib to notice some kinds of decode errors
 				//UUSetOption(UUOPT_FAST,1,NULL);//we store each message in a seperate file
 				//actually, I guess that won't work, since some messages have multiple files in them anyway.
 				UUSetOption(UUOPT_OVERWRITE,0,NULL);//no thanks.
 				UUSetOption(UUOPT_USETEXT,1,NULL);//######hmmm...
+				UUSetOption(UUOPT_DESPERATE,1,NULL);
 				UUSetMsgCallback(&uustatus,uu_msg_callback);
 				UUSetBusyCallback(NULL,uu_busy_callback,1000);
 				UUSetFNameFilter(&fr->path,uu_fname_filter);
@@ -1358,13 +1359,14 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 					if (uul->filename==NULL) {
 						printf("invalid uulist item, uul->filename==NULL\n");
 						uustatus.derr++;
-						continue;
+						//continue; // if not using UUOPT_DESPERATE.
+						UURenameFile(uul,"noname");
 					}
 					if (!(uul->state & UUFILE_OK)){
 						printf("%s not ok\n",uul->filename);
 						texthandler.adddecodeinfo(string(uul->filename) + " not ok");
 						uustatus.derr++;
-						continue;
+						//continue; // if not using UUOPT_DESPERATE.
 					}
 					//				printf("\ns:%x d:%x\n",uul->state,uul->uudet);
 					r=UUInfoFile(uul,&texthandler,uu_info_callback);
@@ -1372,9 +1374,10 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 						continue; //ignore, as this should be handled by the UUInfoFile already..
 					}
 					//check if dest file exists before attempting decode, avoids having to hack around the uu_error that occurs when the destfile exists and overwriting is disabled.
+					//also rename the file if it is not ok to avoid the impression that you have a correct file.
 					char orig_fnp[PATH_MAX];
 					fname_filter(orig_fnp, fr->path.c_str(), uul->filename);
-					if (!fexists(orig_fnp)) 
+					if ((uul->state & UUFILE_OK) && !fexists(orig_fnp)) 
 						r=UUDecodeFile(uul,NULL);
 					else {
 						//all the following ugliness with fname_filter is due to uulib forgetting that we already filtered the name and giving us the original name instead.
@@ -1384,7 +1387,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 						UURenameFile(uul,nfn);
 						r=UUDecodeFile(uul,NULL);
 						// did it decode correctly?
-						if (r == UURET_OK){
+						if (r == UURET_OK && fexists(orig_fnp)){
 							char *nfnp;
 							asprintf(&nfnp,"%s/%s",fr->path.c_str(),nfn);
 							// if identical, delete the one we just downloaded

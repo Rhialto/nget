@@ -1091,32 +1091,7 @@ bool Par2Repairer::VerifyExtraFiles(const list<CommandLine::ExtraFile> &extrafil
     {
       filename = DiskFile::GetCanonicalPathname(filename);
 
-      // Has this file already been dealt with
-      if (diskFileMap.Find(filename) == 0)
-      {
-        DiskFile *diskfile = new DiskFile;
-
-        // Does the file exist
-        if (!diskfile->Open(filename))
-        {
-          delete diskfile;
-          continue;
-        }
-
-        // Remember that we have processed this file
-        bool success = diskFileMap.Insert(diskfile);
-        assert(success);
-
-        // Do the actual verification
-        VerifyDataFile(diskfile, 0);
-        // Ignore errors
-
-        // We have finished with the file for now
-        diskfile->Close();
-
-        // Find out how much data we have found
-        UpdateVerificationResults();
-      }
+      VerifyExtraFile(filename);
     }
   }
 
@@ -1142,35 +1117,51 @@ bool Par2Repairer::VerifyExtraFiles(const list<CommandLine::ExtraFile> &extrafil
         // attach the path to the new name
         filename = path + matchingfiles.first->second;
 
-        // Remember to update this block to match the similar code up above.        
-        // Has this file already been dealt with
-        if (diskFileMap.Find(filename) == 0)
-        {
-          DiskFile *diskfile = new DiskFile;
-
-          // Does the file exist
-          if (!diskfile->Open(filename))
-          {
-            delete diskfile;
-            continue;
-          }
-
-          // Remember that we have processed this file
-          bool success = diskFileMap.Insert(diskfile);
-          assert(success);
-
-          // Do the actual verification
-          VerifyDataFile(diskfile, 0);
-          // Ignore errors
-
-          // We have finished with the file for now
-          diskfile->Close();
-
-          // Find out how much data we have found
-          UpdateVerificationResults();
-        }
+        VerifyExtraFile(filename);
       }
     }
+  }
+
+  // Search any files whose original name is unknown.
+  pair<multimap<string,string>::const_iterator, multimap<string,string>::const_iterator> matchingfiles(extrafilenamemap.equal_range("noname"));
+  for (;
+       matchingfiles.first!=matchingfiles.second && completefilecount<sourcefiles.size();
+       ++matchingfiles.first)
+  {
+    // attach the path to the new name
+    string filename = searchpath + matchingfiles.first->second;
+
+    VerifyExtraFile(filename);
+  }
+  return true;
+}
+
+bool Par2Repairer::VerifyExtraFile(const string &filename) {
+  // Has this file already been dealt with
+  if (diskFileMap.Find(filename) == 0)
+  {
+    DiskFile *diskfile = new DiskFile;
+
+    // Does the file exist
+    if (!diskfile->Open(filename))
+    {
+      delete diskfile;
+      return false;
+    }
+
+    // Remember that we have processed this file
+    bool success = diskFileMap.Insert(diskfile);
+    assert(success);
+
+    // Do the actual verification
+    VerifyDataFile(diskfile, 0);
+    // Ignore errors
+
+    // We have finished with the file for now
+    diskfile->Close();
+
+    // Find out how much data we have found
+    UpdateVerificationResults();
   }
   return true;
 }

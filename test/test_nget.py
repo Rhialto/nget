@@ -23,6 +23,9 @@ import os, sys, unittest, glob, filecmp, re, time, errno
 import StringIO
 import nntpd, util
 
+	
+UpgradeUULibMessage = "*** Upgrade uulib. See http://nget.sf.net/patches/ *** " #update with version number when fixed version gets released
+
 #allow nget executable to be tested to be overriden with TEST_NGET env var.
 ngetexe = os.environ.get('TEST_NGET',os.path.join(os.pardir, 'nget'))
 if os.sep in ngetexe or (os.altsep and os.altsep in ngetexe):
@@ -332,6 +335,41 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.failUnless(len(output)==1, "extra output: %s"%output)
 		self.failUnless(output[0].endswith(".-01"), "wrong output: %s"%output)
 
+	def test_uuencode_incomplete1(self):
+		self.addarticles('0002', 'uuencode_multi3', fname='00[12]')
+		self.addarticles('0002', 'par2', fname='par')
+		self.addarticles('0002', 'par2', fname='par4')
+		self.vfailUnlessExitstatus(self.nget.run("-g test -i -r ."), 1)
+
+	def test_uuencode_incomplete2(self):
+		self.addarticles('0002', 'uuencode_multi3', fname='00[13]')
+		self.addarticles('0002', 'par2', fname='par')
+		self.addarticles('0002', 'par2', fname='par4')
+		self.vfailUnlessExitstatus(self.nget.run("-g test -i -r ."), 1, UpgradeUULibMessage)
+
+	def test_uuencode_incomplete3(self):
+		self.addarticles('0002', 'uuencode_multi3', fname='00[23]')
+		self.addarticles('0002', 'par2', fname='par')
+		self.addarticles('0002', 'par2', fname='par4')
+		self.vfailUnlessExitstatus(self.nget.run("-g test -i -r ."), 1)
+
+	def test_yenc_incomplete1(self):
+		self.addarticles('0002', 'yenc_multi3', fname='00[12]')
+		self.addarticles('0002', 'par2', fname='par')
+		self.addarticles('0002', 'par2', fname='par4')
+		self.vfailUnlessExitstatus(self.nget.run("-g test -i -r ."), 1)
+
+	def test_yenc_incomplete2(self):
+		self.addarticles('0002', 'yenc_multi3', fname='00[13]')
+		self.addarticles('0002', 'par2', fname='par')
+		self.addarticles('0002', 'par2', fname='par4')
+		self.vfailUnlessExitstatus(self.nget.run("-g test -i -r ."), 1, UpgradeUULibMessage)
+
+	def test_yenc_incomplete3(self):
+		self.addarticles('0002', 'yenc_multi3', fname='00[23]')
+		self.addarticles('0002', 'par2', fname='par')
+		self.addarticles('0002', 'par2', fname='par4')
+		self.vfailUnlessExitstatus(self.nget.run("-g test -i -r ."), 1)
 
 
 class RetrieveTest_base(DecodeTest_base):
@@ -2453,8 +2491,6 @@ else:
 		UpgradeZLibMessage = "nget did not detect read error on 0-th byte.  *** Upgrade zlib. See http://nget.sf.net/patches/ ***" #update with version number when fixed version gets released
 		ngetoptions={'options':{'usegz':9}}
 
-	
-	UpgradeUULibMessage = "*** Upgrade uulib. See http://nget.sf.net/patches/ *** " #update with version number when fixed version gets released
 		
 	class FileErrorTestCase(FileTest_base, SubterfugueTest_base, TestCase):
 		UpgradeZLibMessage = None
