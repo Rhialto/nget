@@ -993,6 +993,9 @@ bool Par2Repairer::VerifySourceFiles(void)
 
         // Set error but let verification of other files continue
         finalresult = false;
+
+        // Avoid segfault on missing FileDesc packet.  nget doesn't care about verification of other files if we error out anyway. -MPM
+        return false;
       }
       else
       {
