@@ -407,8 +407,8 @@ inline void arinfo::print_retrieving_articles(time_t curtime, quinfo*tot){
 	dtime=curtime-starttime;
 	Bps=(dtime>0)?bytesdone/dtime:0;
 	if (!quiet) clear_line_and_return();
-	printf("article %li: %li/%liL %li/%liB %3li%% %liB/s %s",
-			anum,linesdone,linestot,bytesdone,bytestot,
+	printf("%li (%i/%i): %li/%liL %li/%liB %3li%% %liB/s %s",
+			anum,partnum,partreq,linesdone,linestot,bytesdone,bytestot,
 			(linestot!=0)?(linesdone*100/linestot):0,Bps,
 			durationstr((linesdone>=linestot)?dtime:((Bps>0)?(bytestot-bytesdone)/(Bps):-1)).c_str());
 	if (tot)
@@ -570,6 +570,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 				host=nconfig.serv[curserverid];
 				force_host=NULL;
 			}
+			ari->partnum=part->partnum;
 			ari->anum=sa->articlenum;
 			ari->bytestot=sa->bytes;
 			ari->linestot=sa->lines;
@@ -805,6 +806,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 						asprintf(&fn,"%s%lx-%lx.%03i",usepath,group_id,f->fileid,(*curp).first);
 				}
 				if (!fexists(fn)){
+					ainfo.partreq = f->req;
 //					ainfo.anum=p->articlenum;//set in doarticle now.
 //					ainfo.linesdone=0;
 //					ainfo.bytesdone=0;

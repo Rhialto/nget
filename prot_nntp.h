@@ -43,7 +43,6 @@ struct quinfo {
 	int_fast64_t bytesleft;
 	long filestot,filesdone;
 	time_t starttime;
-//	long fpartstot,fpartsdone;
 };
 struct arinfo {
 	long Bps;
@@ -53,6 +52,7 @@ struct arinfo {
 	long linesdone,linestot;
 	long bytesdone,bytestot;
 	time_t starttime;
+	int partnum,partreq;
 	void print_retrieving_articles(time_t curtime,quinfo*tot);
 };
 
