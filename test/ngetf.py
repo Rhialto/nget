@@ -28,7 +28,7 @@ if os.sep in ngetexe or (os.altsep and os.altsep in ngetexe):
 
 def main():
 	if len(sys.argv)<=1:
-		print 'Usage: ngetf.py  [articles]...  --  [nget args]...'
+		print 'Usage: ngetf.py  [articles]...  [--  [nget args]...]'
 		return 0
 	articles,ngetargs = [],[]
 	c = articles
@@ -37,6 +37,8 @@ def main():
 			c=ngetargs
 		else:
 			c.append(a)
+	if not ngetargs:
+		ngetargs = ['-gtest','-r.']
 	servers = nntpd.NNTPD_Master(1)
 	nget = util.TestNGet(ngetexe, servers.servers) 
 	try:
