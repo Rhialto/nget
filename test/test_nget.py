@@ -369,6 +369,12 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run('-g test -R "age 3w2h5m1s >"'))
 		self.verifyoutput(['0002','0001','0003'])
 	
+	def test_references(self):
+		self.addarticles('refs01', 'input')
+		self.addarticles('refs02', 'input')
+		self.vfailIf(self.nget.run('-g test -R "references foo01 =="'))
+		self.verifyoutput('refs01')
+	
 	def test_R_extra_whitespace(self):
 		self.vfailIf(self.nget.run('-g test -R "  \tlines  \t 20 \t  > \t  lines \t  200\t  <\t  &&\t  \t"'))
 		self.verifyoutput('0003')
