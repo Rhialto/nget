@@ -17,6 +17,15 @@
 
 import os, random, sys, shutil
 
+def exitstatus(st):
+	if os.WIFSTOPPED(st):
+		return 'stopped',os.WSTOPSIG(st)
+	if os.WIFSIGNALED(st):
+		return 'signal',os.WTERMSIG(st)
+	if os.WIFEXITED(st):
+		return os.WEXITSTATUS(st)
+	return 'unknown',st
+
 class TestNGet:
 	def __init__(self, nget, servers, priorities=None, options=None, hostoptions=None):
 		defaultoptions = {
@@ -69,14 +78,14 @@ class TestNGet:
 	
 	def run(self, args, pre=""):
 		os.environ['NGETHOME'] = self.rcdir
-		return os.system(pre + self.exe+" -p "+self.tmpdir+" "+args)
+		return exitstatus(os.system(pre + self.exe+" -p "+self.tmpdir+" "+args))
 	
 	def runlite(self, args, pre=""):
 		olddir = os.getcwd()
 		try:
 			ngetliteexe = os.path.abspath(os.path.join(os.path.split(self.exe)[0], 'ngetlite'))
 			os.chdir(self.tmpdir)
-			return os.system(pre + ngetliteexe+" "+args)
+			return exitstatus(os.system(pre + ngetliteexe+" "+args))
 		finally:
 			os.chdir(olddir)
 

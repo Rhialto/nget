@@ -28,6 +28,27 @@ ngetexe = os.environ.get('TEST_NGET',os.path.join(os.pardir, 'nget'))
 
 zerofile_fn_re = re.compile(r'(\d+)\.(\d+)\.txt$')
 
+
+class TestCase(unittest.TestCase):
+	def vfailIf(self, expr, msg=None):
+		"Include the expr in the error message"
+		if expr:
+			if msg:
+				msg = '(%r) %s'%(expr, msg)
+			else:
+				msg = '(%r)'%(expr)
+			raise self.failureException, msg
+	def vfailUnlessEqual(self, first, second, msg=None):
+		"Include the exprs in the error message even if msg is given"
+		if first != second:
+			if msg:
+				msg = '(%r != %r) %s'%(first, second, msg)
+			else:
+				msg = '(%r != %r)'%(first, second)
+			raise self.failureException, msg
+								
+
+
 class DecodeTest_base:
 	def addarticle_toserver(self, testnum, dirname, aname, server, **kw):
 		article = nntpd.FileArticle(open(os.path.join("testdata",testnum,dirname,aname), 'r'))
@@ -91,7 +112,7 @@ class DecodeTest_base:
 		self.failIf(extra, "extra files decoded: "+`extra`)
 
 
-class DecodeTestCase(unittest.TestCase, DecodeTest_base):
+class DecodeTestCase(TestCase, DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
@@ -104,14 +125,14 @@ class DecodeTestCase(unittest.TestCase, DecodeTest_base):
 	def do_test(self, testnum, dirname):
 		self.addarticles(testnum, dirname)
 
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
 		
 		self.verifyoutput(testnum)
 	
 	def do_test_decodeerror(self, testnum, dirname):
 		self.addarticles(testnum, dirname)
 
-		self.failUnless(os.WEXITSTATUS(self.nget.run("-g test -r .")) & 1, "nget process did not detect decode error")
+		self.vfailUnlessEqual(self.nget.run("-g test -r ."), 1, "nget process did not detect decode error")
 	
 	def get_auto_args(self):
 		#use some magic so we don't have to type out everything twice
@@ -162,13 +183,13 @@ class DecodeTestCase(unittest.TestCase, DecodeTest_base):
 	def test_article_expiry(self):
 		article = self.addarticle_toserver('0001', 'uuencode_single', 'testfile.001', self.servers.servers[0])
 		self.addarticles('0002', 'uuencode_multi')
-		self.failIf(self.nget.run("-g test"), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test"))
 		self.servers.servers[0].rmarticle(article.mid)
-		self.failUnless(os.WEXITSTATUS(self.nget.run("-G test -r ."))==8, "nget process did not detect retrieve error")
+		self.vfailUnlessEqual(self.nget.run("-G test -r ."), 8, "nget process did not detect retrieve error")
 		self.verifyoutput('0002') #should have gotten the articles the server still has.
 
 
-class RetrieveTestCase(unittest.TestCase, DecodeTest_base):
+class RetrieveTestCase(TestCase, DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
@@ -182,146 +203,146 @@ class RetrieveTestCase(unittest.TestCase, DecodeTest_base):
 		self.nget.clean_all()
 
 	def test_mid(self):
-		self.failIf(self.nget.run('-g test -R "mid .a67ier.6l5.1.bar. =="'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "mid .a67ier.6l5.1.bar. =="'))
 		self.verifyoutput('0002')
 
 	def test_not_mid(self):
-		self.failIf(self.nget.run('-g test -R "mid .1.foo. !="'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "mid .1.foo. !="'))
 		self.verifyoutput(['0002','0001'])
 
 	def test_mid_or_mid(self):
-		self.failIf(self.nget.run('-g test -R "mid .a67ier.6l5.1.bar. == mid .1000.test. == ||"'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "mid .a67ier.6l5.1.bar. == mid .1000.test. == ||"'))
 		self.verifyoutput(['0002','0001'])
 
 	def test_messageid(self):
-		self.failIf(self.nget.run('-g test -R "messageid .a67ier.6l5.1.bar. =="'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "messageid .a67ier.6l5.1.bar. =="'))
 		self.verifyoutput('0002')
 	
 	def test_author(self):
-		self.failIf(self.nget.run('-g test -R "author Matthew =="'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "author Matthew =="'))
 		self.verifyoutput('0002')
 	
 	def test_r(self):
-		self.failIf(self.nget.run('-g test -r joystick'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -r joystick'))
 		self.verifyoutput('0002')
 
 	def test_subject(self):
-		self.failIf(self.nget.run('-g test -R "subject joystick =="'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "subject joystick =="'))
 		self.verifyoutput('0002')
 	
 	def test_r_l_toohigh(self):
-		self.failIf(self.nget.run('-g test -l 434 -r .'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -l 434 -r .'))
 		self.verifyoutput([])
 
 	def test_r_l(self):
-		self.failIf(self.nget.run('-g test -l 433 -r .'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -l 433 -r .'))
 		self.verifyoutput('0002')
 
 	def test_r_L_toolow(self):
-		self.failIf(self.nget.run('-g test -L 15 -r .'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -L 15 -r .'))
 		self.verifyoutput([])
 
 	def test_r_L(self):
-		self.failIf(self.nget.run('-g test -L 16 -r .'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -L 16 -r .'))
 		self.verifyoutput('0001')
 
 	def test_r_l_L(self):
-		self.failIf(self.nget.run('-g test -l 20 -L 200 -r .'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -l 20 -L 200 -r .'))
 		self.verifyoutput('0003')
 
 	def test_lines_le_toolow(self):
-		self.failIf(self.nget.run('-g test -R "lines 15 <="'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "lines 15 <="'))
 		self.verifyoutput([])
 
 	def test_lines_le(self):
-		self.failIf(self.nget.run('-g test -R "lines 16 <="'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "lines 16 <="'))
 		self.verifyoutput('0001')
 
 	def test_lines_lt_toolow(self):
-		self.failIf(self.nget.run('-g test -R "lines 16 <"'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "lines 16 <"'))
 		self.verifyoutput([])
 
 	def test_lines_lt(self):
-		self.failIf(self.nget.run('-g test -R "lines 17 <"'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "lines 17 <"'))
 		self.verifyoutput('0001')
 
 	def test_lines_ge_toohigh(self):
-		self.failIf(self.nget.run('-g test -R "lines 434 >="'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "lines 434 >="'))
 		self.verifyoutput([])
 
 	def test_lines_ge(self):
-		self.failIf(self.nget.run('-g test -R "lines 433 >="'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "lines 433 >="'))
 		self.verifyoutput('0002')
 
 	def test_lines_gt_toohigh(self):
-		self.failIf(self.nget.run('-g test -R "lines 433 >"'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "lines 433 >"'))
 		self.verifyoutput([])
 
 	def test_lines_gt(self):
-		self.failIf(self.nget.run('-g test -R "lines 432 >"'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "lines 432 >"'))
 		self.verifyoutput('0002')
 
 	def test_lines_eq(self):
-		self.failIf(self.nget.run('-g test -R "lines 433 =="'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "lines 433 =="'))
 		self.verifyoutput('0002')
 
 	def test_lines_and_lines(self):
-		self.failIf(self.nget.run('-g test -R "lines 20 > lines 200 < &&"'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "lines 20 > lines 200 < &&"'))
 		self.verifyoutput('0003')
 
 	def test_bytes(self):
-		self.failIf(self.nget.run('-g test -R "bytes 2000 >"'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "bytes 2000 >"'))
 		self.verifyoutput('0002')
 	
 	def test_have(self):
-		self.failIf(self.nget.run('-g test -R "have 3 =="'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "have 3 =="'))
 		self.verifyoutput('0002')
 
 	def test_req(self):
-		self.failIf(self.nget.run('-g test -R "req 3 =="'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "req 3 =="'))
 		self.verifyoutput('0002')
 
 	def test_date(self):
-		self.failIf(self.nget.run('-g test -R "date \'Thu, 7 Mar 2002 11:20:59 +0000 (UTC)\' =="'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "date \'Thu, 7 Mar 2002 11:20:59 +0000 (UTC)\' =="'))
 		self.verifyoutput('0002')
 
 	def test_date_iso(self):
-		self.failIf(self.nget.run('-g test -R "date 20020307T112059+0000 =="'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -R "date 20020307T112059+0000 =="'))
 		self.verifyoutput('0002')
 	
 	def test_dupef(self):
-		self.failIf(self.nget.run('-g test -r joy'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -r joy'))
 		self.verifyoutput('0002')
-		self.failIf(self.nget.run('-G test -U -D -r joy'), "nget process returned with an error") #remove from midinfo so that we can test if the file dupe check catches it
-		self.failIf(self.nget.run('-G test -r joy'), "nget process returned with an error")
-		self.failUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailIf(self.nget.run('-G test -U -D -r joy')) #remove from midinfo so that we can test if the file dupe check catches it
+		self.vfailIf(self.nget.run('-G test -r joy'))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
 
 	def test_dupef_D(self):
-		self.failIf(self.nget.run('-g test -r joy'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -r joy'))
 		self.verifyoutput('0002')
-		self.failIf(self.nget.run('-G test -U -D -r joy'), "nget process returned with an error")
-		self.failIf(self.nget.run('-G test -D -r joy'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-G test -U -D -r joy'))
+		self.vfailIf(self.nget.run('-G test -D -r joy'))
 		self.verifyoutput('0002')
-		self.failUnlessEqual(self.servers.servers[0].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
 
 	def test_dupei(self):
-		self.failIf(self.nget.run('-g test -r .'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -r .'))
 		self.verifyoutput(['0002','0001','0003'])
 		self.nget.clean_tmp()
-		self.failIf(self.nget.run('-G test -r .'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-G test -r .'))
 		self.verifyoutput([])
-		self.failUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
 
 	def test_dupei_D(self):
-		self.failIf(self.nget.run('-g test -r .'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-g test -r .'))
 		self.verifyoutput(['0002','0001','0003'])
 		self.nget.clean_tmp()
-		self.failIf(self.nget.run('-G test -D -r .'), "nget process returned with an error")
+		self.vfailIf(self.nget.run('-G test -D -r .'))
 		self.verifyoutput(['0002','0001','0003'])
-		self.failUnlessEqual(self.servers.servers[0].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
 
 
-class XoverTestCase(unittest.TestCase, DecodeTest_base):
+class XoverTestCase(TestCase, DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':0}) 
@@ -341,14 +362,14 @@ class XoverTestCase(unittest.TestCase, DecodeTest_base):
 	def test_newarticle(self):
 		self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[0])
 
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
-		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.vfailIf(self.fxnget.run("-g test -r ."))
 		self.verifynonewfiles()
 		
 		self.addarticle_toserver('0002', 'uuencode_multi', '002', self.servers.servers[0])
 
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
-		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.vfailIf(self.fxnget.run("-g test -r ."))
 
 		self.verifyoutput('0002')
 		self.verifyoutput('0002', nget=self.fxnget)
@@ -356,14 +377,14 @@ class XoverTestCase(unittest.TestCase, DecodeTest_base):
 	def test_oldarticle(self):
 		self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[0], anum=2)
 
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
-		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.vfailIf(self.fxnget.run("-g test -r ."))
 		self.verifynonewfiles()
 		
 		self.addarticle_toserver('0002', 'uuencode_multi', '002', self.servers.servers[0], anum=1)
 
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
-		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.vfailIf(self.fxnget.run("-g test -r ."))
 
 		self.verifyoutput('0002')
 		self.verifyoutput('0002', nget=self.fxnget)
@@ -372,15 +393,15 @@ class XoverTestCase(unittest.TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=3)
 
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
-		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.vfailIf(self.fxnget.run("-g test -r ."))
 		self.verifynonewfiles()
 		
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=2)
 
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifynonewfiles() #fullxover=0 should not be able to find new article
-		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.fxnget.run("-g test -r ."))
 
 		self.verifyoutput('0002', nget=self.fxnget)
 	
@@ -389,8 +410,8 @@ class XoverTestCase(unittest.TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=2147483647)
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=4294967295L)
 
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
-		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.vfailIf(self.fxnget.run("-g test -r ."))
 
 		self.verifyoutput('0002')
 		self.verifyoutput('0002', nget=self.fxnget)
@@ -401,10 +422,10 @@ class XoverTestCase(unittest.TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=4294967295L)
 
 		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
-		self.failIf(self.nget.run("-w %s -g test -r ."%litelist), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-w %s -g test -r ."%litelist))
 		self.verifynonewfiles()
-		self.failIf(self.nget.runlite(litelist), "ngetlite process returned with an error")
-		self.failIf(self.nget.run("-N -G test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.runlite(litelist))
+		self.vfailIf(self.nget.run("-N -G test -r ."))
 
 		self.verifyoutput('0002')
 
@@ -425,7 +446,7 @@ class ErrorDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 		self.nwrite("503 You are now disconnected. Have a nice day.")
 		return -1
 
-class ConnectionTestCase(unittest.TestCase, DecodeTest_base):
+class ConnectionTestCase(TestCase, DecodeTest_base):
 	def tearDown(self):
 		if hasattr(self, 'servers'):
 			self.servers.stop()
@@ -436,17 +457,17 @@ class ConnectionTestCase(unittest.TestCase, DecodeTest_base):
 		servers = [nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)]
 		self.nget = util.TestNGet(ngetexe, servers) 
 		servers[0].server_close()
-		self.failUnless(os.WEXITSTATUS(self.nget.run("-g test -r .")) & 64, "nget process did not detect connection error")
+		self.vfailUnlessEqual(self.nget.run("-g test -r ."), 64, "nget process did not detect connection error")
 	
 	def test_DeadServerRetr(self):
 		self.servers = nntpd.NNTPD_Master(1)
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
-		self.failIf(self.nget.run("-g test"), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test"))
 		self.servers.stop()
 		del self.servers
-		self.failUnless(os.WEXITSTATUS(self.nget.run("-G test -r .")) & 8, "nget process did not detect connection error")
+		self.vfailUnlessEqual(self.nget.run("-G test -r ."), 8, "nget process did not detect connection error")
 	
 	def test_OneLiveServer(self):
 		self.servers = nntpd.NNTPD_Master(1)
@@ -455,7 +476,7 @@ class ConnectionTestCase(unittest.TestCase, DecodeTest_base):
 		deadserver.server_close()
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifyoutput('0002')
 	
 	def test_OneLiveServerRetr(self):
@@ -466,9 +487,9 @@ class ConnectionTestCase(unittest.TestCase, DecodeTest_base):
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
 		self.addarticles('0002', 'uuencode_multi', deadservers.servers)
-		self.failIf(self.nget.run("-g test"), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test"))
 		deadservers.stop()
-		self.failIf(self.nget.run("-G test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-G test -r ."))
 		self.verifyoutput('0002')
 	
 	def test_DiscoServer(self):
@@ -477,7 +498,7 @@ class ConnectionTestCase(unittest.TestCase, DecodeTest_base):
 		self.servers.start()
 
 		self.addarticles('0002', 'uuencode_multi')
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifyoutput('0002')
 		
 	def test_TwoDiscoServers(self):
@@ -486,7 +507,7 @@ class ConnectionTestCase(unittest.TestCase, DecodeTest_base):
 		self.servers.start()
 
 		self.addarticles('0002', 'uuencode_multi')
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifyoutput('0002')
 
 	def test_ForceWrongServer(self):
@@ -494,8 +515,8 @@ class ConnectionTestCase(unittest.TestCase, DecodeTest_base):
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
 		self.servers.start()
 		self.addarticles_toserver('0002', 'uuencode_multi', self.servers.servers[0])
-		self.failIf(self.nget.run("-g test"), "nget process returned with an error")
-		self.failUnless(os.WEXITSTATUS(self.nget.run("-h host1 -G test -r .")) & 8, "nget process did not detect retrieve error")
+		self.vfailIf(self.nget.run("-g test"))
+		self.vfailUnlessEqual(self.nget.run("-h host1 -G test -r ."), 8, "nget process did not detect retrieve error")
 	
 	def test_AbruptTimeout(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
@@ -504,7 +525,7 @@ class ConnectionTestCase(unittest.TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifyoutput('0002')
 
 	def test_ErrorTimeout(self):
@@ -514,7 +535,7 @@ class ConnectionTestCase(unittest.TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifyoutput('0002')
 
 	def test_SockPool(self):
@@ -524,9 +545,9 @@ class ConnectionTestCase(unittest.TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
-		self.failUnlessEqual(self.servers.servers[0].conns, 1)
-		self.failUnlessEqual(self.servers.servers[1].conns, 1)
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
 		self.verifyoutput('0002')
 
 	def test_idletimeout(self):
@@ -536,9 +557,9 @@ class ConnectionTestCase(unittest.TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[1])
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
-		self.failUnlessEqual(self.servers.servers[0].conns, 1)
-		self.failUnlessEqual(self.servers.servers[1].conns, 2)
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
 		self.verifyoutput('0002')
 
 	def test_maxconnections(self):
@@ -548,9 +569,9 @@ class ConnectionTestCase(unittest.TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
-		self.failUnlessEqual(self.servers.servers[0].conns, 3)
-		self.failUnlessEqual(self.servers.servers[1].conns, 2)
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
 		self.verifyoutput('0002')
 
 	def test_maxconnections_2(self):
@@ -560,14 +581,14 @@ class ConnectionTestCase(unittest.TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[2])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
-		self.failUnlessEqual(self.servers.servers[0].conns, 2)
-		self.failUnlessEqual(self.servers.servers[1].conns, 1)
-		self.failUnlessEqual(self.servers.servers[2].conns, 1)
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[2].conns, 1)
 		self.verifyoutput('0002')
 
 
-class AuthTestCase(unittest.TestCase, DecodeTest_base):
+class AuthTestCase(TestCase, DecodeTest_base):
 	def tearDown(self):
 		if hasattr(self, 'servers'):
 			self.servers.stop()
@@ -581,7 +602,7 @@ class AuthTestCase(unittest.TestCase, DecodeTest_base):
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, hostoptions=[{'user':'ralph', 'pass':'5'}])
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifyoutput('0002')
 
 	def test_lite_GroupAuth(self):
@@ -592,9 +613,9 @@ class AuthTestCase(unittest.TestCase, DecodeTest_base):
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
 		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
-		self.failIf(self.nget.run("-w %s -g test -r ."%litelist), "nget process returned with an error")
-		self.failIf(self.nget.runlite(litelist), "ngetlite process returned with an error")
-		self.failIf(self.nget.run("-N -G test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-w %s -g test -r ."%litelist))
+		self.vfailIf(self.nget.runlite(litelist))
+		self.vfailIf(self.nget.run("-N -G test -r ."))
 		self.verifyoutput('0002')
 
 	def test_ArticleAuth(self):
@@ -604,7 +625,7 @@ class AuthTestCase(unittest.TestCase, DecodeTest_base):
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, hostoptions=[{'user':'ralph', 'pass':'5'}])
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifyoutput('0002')
 		
 	def test_lite_ArticleAuth(self):
@@ -615,9 +636,9 @@ class AuthTestCase(unittest.TestCase, DecodeTest_base):
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
 		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
-		self.failIf(self.nget.run("-w %s -g test -r ."%litelist), "nget process returned with an error")
-		self.failIf(self.nget.runlite(litelist), "ngetlite process returned with an error")
-		self.failIf(self.nget.run("-N -G test -r ."), "nget process returned with an error")
+		self.vfailIf(self.nget.run("-w %s -g test -r ."%litelist))
+		self.vfailIf(self.nget.runlite(litelist))
+		self.vfailIf(self.nget.run("-N -G test -r ."))
 		self.verifyoutput('0002')
 		
 	def test_FailedAuth(self):
@@ -627,7 +648,7 @@ class AuthTestCase(unittest.TestCase, DecodeTest_base):
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, hostoptions=[{'user':'ralph', 'pass':'WRONG'}])
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
-		self.failUnless(os.WEXITSTATUS(self.nget.run("-g test -r ."))==64, "nget process did not detect auth error")
+		self.vfailUnlessEqual(self.nget.run("-g test -r ."), 64, "nget process did not detect auth error")
 
 	def test_NoAuth(self):
 		self.servers = nntpd.NNTPD_Master(1)
@@ -636,11 +657,11 @@ class AuthTestCase(unittest.TestCase, DecodeTest_base):
 		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
-		self.failUnless(os.WEXITSTATUS(self.nget.run("-g test -r ."))==64, "nget process did not detect auth error")
+		self.vfailUnlessEqual(self.nget.run("-g test -r ."), 64, "nget process did not detect auth error")
 
 #if os.system('sf --help'):
 if os.system('sf date'):
-	class SubterfugueTestCase(unittest.TestCase):
+	class SubterfugueTestCase(TestCase):
 		def test_SUBTERFUGUE_NOT_INSTALLED(self):
 			raise "SUBTERFUGUE does not appear to be installed, some tests skipped"
 else:
@@ -694,217 +715,217 @@ else:
 	class FileTest_base:
 		"Holds all the tests that need to be done with both usegz and without"
 		def test_cache_openread_error(self):
-			self.failUnlessEqual(self.runnget("-G foo", "IOError:f=[('foo,cache','r',-1)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G foo", "IOError:f=[('foo,cache','r',-1)]"), 128)
 			self.check_for_errormsg(r'foo,cache')
 
 		def test_cache_read_error(self):
-			self.failIf(self.nget.run("-g test"))
-			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',60)]"), 128)
+			self.vfailIf(self.nget.run("-g test"))
+			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',60)]"), 128)
 			self.check_for_errormsg(r'test,cache')
-			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',20)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',20)]"), 128)
 			self.check_for_errormsg(r'test,cache')
-			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',10)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',10)]"), 128)
 			self.check_for_errormsg(r'test,cache')
 
 		def test_cache_zerobyte_read_error(self):
-			self.failIf(self.nget.run("-g test"))
-			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',0)]"), 128, self.UpgradeZLibMessage)
+			self.vfailIf(self.nget.run("-g test"))
+			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',0)]"), 128, self.UpgradeZLibMessage)
 			self.check_for_errormsg(r'test,cache')
 
 		def test_cache_close_read_error(self):
-			self.failIf(self.nget.run("-g test"))
-			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r','c')]"), 128)
+			self.vfailIf(self.nget.run("-g test"))
+			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r','c')]"), 128)
 			self.check_for_errormsg(r'test,cache')
 			
 		def test_cache_openwrite_error(self):
-			self.failUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w',-1)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w',-1)]"), 128)
 			self.check_for_errormsg(r'test,cache')
 
 		def test_cache_zerobyte_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w',0)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w',0)]"), 128)
 			self.check_for_errormsg(r'test,cache')
 
 		def test_cache_empty_zerobyte_write_error(self):
-			self.failIf(self.nget.run("-g test -r ."))
+			self.vfailIf(self.nget.run("-g test -r ."))
 			self.rmarticles('0001', 'uuencode_single')
-			self.failUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w',0)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w',0)]"), 128)
 			self.check_for_errormsg(r'test,cache')
 
 		def test_cache_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w',20)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w',20)]"), 128)
 			self.check_for_errormsg(r'test,cache')
 
 		def test_cache_rename_error(self):
-			self.failUnlessEqual(self.runnget("-g test", "IOError:r=[('test,cache.*tmp','test,cache')]"), 128)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:r=[('test,cache.*tmp','test,cache')]"), 128)
 			self.check_for_errormsg(r'test,cache.*tmp.*test,cache')
 
 		def test_cache_close_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w','c')]"), 128)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w','c')]"), 128)
 			self.check_for_errormsg(r'test,cache')
 
 		def test_midinfo_open_read_error(self):
-			self.failUnlessEqual(self.runnget("-G foo", "IOError:f=[('foo,midinfo','r',-1)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G foo", "IOError:f=[('foo,midinfo','r',-1)]"), 128)
 			self.check_for_errormsg(r'foo,midinfo')
 
 		def test_midinfo_read_error(self):
-			self.failIf(self.nget.run("-g test -M -r ."))
-			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,midinfo','r',20)]"), 128)
+			self.vfailIf(self.nget.run("-g test -M -r ."))
+			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,midinfo','r',20)]"), 128)
 			self.check_for_errormsg(r'test,midinfo')
 
 		def test_midinfo_close_read_error(self):
-			self.failIf(self.nget.run("-g test -M -r ."))
-			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,midinfo','r','c')]"), 128)
+			self.vfailIf(self.nget.run("-g test -M -r ."))
+			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,midinfo','r','c')]"), 128)
 			self.check_for_errormsg(r'test,midinfo')
 
 		def test_midinfo_zerobyte_read_error(self):
-			self.failIf(self.nget.run("-g test -M -r ."))
-			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,midinfo','r',0)]"), 128, self.UpgradeZLibMessage)
+			self.vfailIf(self.nget.run("-g test -M -r ."))
+			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,midinfo','r',0)]"), 128, self.UpgradeZLibMessage)
 			self.check_for_errormsg(r'test,midinfo')
 
 		def test_midinfo_zerobyte_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test -M -r .", "IOError:f=[('test,midinfo','w',0)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-g test -M -r .", "IOError:f=[('test,midinfo','w',0)]"), 128)
 			self.check_for_errormsg(r'test,midinfo')
 
 		def test_midinfo_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test -M -r .", "IOError:f=[('test,midinfo','w',20)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-g test -M -r .", "IOError:f=[('test,midinfo','w',20)]"), 128)
 			self.check_for_errormsg(r'test,midinfo')
 
 		def test_midinfo_close_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test -M -r .", "IOError:f=[('test,midinfo','w','c')]"), 128)
+			self.vfailUnlessEqual(self.runnget("-g test -M -r .", "IOError:f=[('test,midinfo','w','c')]"), 128)
 			self.check_for_errormsg(r'test,midinfo')
 
 		def test_midinfo_rename_error(self):
-			self.failUnlessEqual(self.runnget("-g test -M -r .", "IOError:r=[('test,midinfo.*tmp','test,midinfo')]"), 128)
+			self.vfailUnlessEqual(self.runnget("-g test -M -r .", "IOError:r=[('test,midinfo.*tmp','test,midinfo')]"), 128)
 			self.check_for_errormsg(r'test,midinfo.*tmp.*test,midinfo')
 
 	
-	class GZFileErrorTestCase(FileTest_base, SubterfugueTest_base, unittest.TestCase):
+	class GZFileErrorTestCase(FileTest_base, SubterfugueTest_base, TestCase):
 		UpgradeZLibMessage = "nget did not detect read error on 0-th byte.  *** Upgrade zlib. ***" #update with version number when fixed version gets released
 		ngetoptions={'options':{'usegz':9}}
 
 	
 	UpgradeUULibMessage = "*** Upgrade uulib. ***" #update with version number when fixed version gets released
 		
-	class FileErrorTestCase(FileTest_base, SubterfugueTest_base, unittest.TestCase):
+	class FileErrorTestCase(FileTest_base, SubterfugueTest_base, TestCase):
 		UpgradeZLibMessage = None
 		ngetoptions={'options':{'usegz':0}}
 
 		def test_ngetrc_open_error(self):
-			self.failUnlessEqual(self.runnget("-G foo", "IOError:f=[('ngetrc$','r',-1)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G foo", "IOError:f=[('ngetrc$','r',-1)]"), 128)
 			self.failUnless(self.output.find('man nget')<0, "nget gave config help message for io error")
 			self.check_for_errormsg(r'ngetrc\b')
 
 		def test_ngetrc_read_error(self):
-			self.failUnlessEqual(self.runnget("-G foo", "IOError:f=[('ngetrc$','r',0)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G foo", "IOError:f=[('ngetrc$','r',0)]"), 128)
 			self.failUnless(self.output.find('man nget')<0, "nget gave config help message for io error")
 			self.check_for_errormsg(r'ngetrc\b')
 
 		def test_ngetrc_close_error(self):
-			self.failUnlessEqual(self.runnget("-G foo", "IOError:f=[('ngetrc$','r','c')]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G foo", "IOError:f=[('ngetrc$','r','c')]"), 128)
 			self.failUnless(self.output.find('man nget')<0, "nget gave config help message for io error")
 			self.check_for_errormsg(r'ngetrc\b')
 
 		def test_tempfile_open_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','w',-1)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','w',-1)]"), 128)
 			self.check_for_errormsg(r'\.[-0-9][0-9]{2}\b')
 			self.verifyoutput([])
 
 		def test_tempfile_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','w',0)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','w',0)]"), 128)
 			self.check_for_errormsg(r'\.[-0-9][0-9]{2}\b')
 			self.verifyoutput([]) #ensure bad tempfile is deleted
 
 		def test_tempfile_close_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','w','c')]"), 128)
+			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','w','c')]"), 128)
 			self.check_for_errormsg(r'\.[-0-9][0-9]{2}\b')
 			self.verifyoutput([]) #ensure bad tempfile is deleted
 
 		def test_tempfile_open_read_error(self):
-			self.failIf(self.nget.run("-g test -K -r ."))
-			self.failUnlessEqual(self.runnget("-G test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','r',-1)]"), 1)####128?
+			self.vfailIf(self.nget.run("-g test -K -r ."))
+			self.vfailUnlessEqual(self.runnget("-G test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','r',-1)]"), 1)####128?
 			self.check_for_errormsg(r'\.[-0-9][0-9]{2}\b')
 
 		def test_tempfile_zerobyte_read_error(self):
-			self.failIf(self.nget.run("-g test -K -r ."))
-			self.failUnlessEqual(self.runnget("-G test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','r',0)]"), 1, UpgradeUULibMessage)####128?
+			self.vfailIf(self.nget.run("-g test -K -r ."))
+			self.vfailUnlessEqual(self.runnget("-G test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','r',0)]"), 1, UpgradeUULibMessage)####128?
 			self.check_for_errormsg(r'\.[-0-9][0-9]{2}\b')
 
 		def test_tempfile_read_error(self):
 			self.rmarticles('0001', 'uuencode_single')
 			self.addarticles('0002', 'uuencode_multi')#need a bigger part
-			self.failIf(self.nget.run("-g test -K -r ."))
-			self.failUnlessEqual(self.runnget("-G test -r .", "IOError:f=[('\.001$','r',9900)]"), 1)####128?
+			self.vfailIf(self.nget.run("-g test -K -r ."))
+			self.vfailUnlessEqual(self.runnget("-G test -r .", "IOError:f=[('\.001$','r',9900)]"), 1)####128?
 			self.check_for_errormsg(r'\.[-0-9][0-9]{2}\b')
 
 		#def test_tempfile_close_read_error(self):
-		#	self.failIf(self.nget.run("-g test -K -r ."))
-		#	self.failUnlessEqual(self.runnget("-G test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','r','c')]"), 1)####128?
+		#	self.vfailIf(self.nget.run("-g test -K -r ."))
+		#	self.vfailUnlessEqual(self.runnget("-G test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','r','c')]"), 1)####128?
 		#	self.check_for_errormsg(r'\.[-0-9][0-9]{2}\b')
 		
 		def test_uutempfile_open_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','w',-1)]"), 1)
+			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','w',-1)]"), 1)
 			self.check_for_errormsg(r'uu_msg.*/tmp/[^/]*[ :]')
 
 		def test_uutempfile_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','w',0)]"), 1)
+			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','w',0)]"), 1)
 			self.check_for_errormsg(r'uu_msg.*temp file') #uulib doesn't say the filename in this message
 
 		def test_uutempfile_close_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','w','c')]"), 1, UpgradeUULibMessage)
+			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','w','c')]"), 1, UpgradeUULibMessage)
 			self.check_for_errormsg(r'uu_msg.*temp file') #uulib doesn't say the filename in this message
 
 		def test_uutempfile_open_read_error(self):
-			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','r',-1)]"), 1)
+			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','r',-1)]"), 1)
 			self.check_for_errormsg(r'uu_msg.*/tmp/[^/]*[ :]')
 
 		def test_uutempfile_read_error(self):
-			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','r',0)]"), 1)
+			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','r',0)]"), 1)
 			self.check_for_errormsg(r'uu_msg.*/tmp/[^/]*[ :]')
 
 		#def test_uutempfile_close_read_error(self):
-		#	self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','r','c')]"), 1)
+		#	self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','r','c')]"), 1)
 		#	self.check_for_errormsg(r'uu_msg.*/tmp/[^/]*[ :]')
 
 		def test_destfile_open_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('testfile\.txt$','w',-1)]"), 1)
+			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('testfile\.txt$','w',-1)]"), 1)
 			self.check_for_errormsg(r'testfile\.txt\b')
 
 		def test_destfile_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('testfile\.txt$','w',0)]"), 1)
+			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('testfile\.txt$','w',0)]"), 1)
 			self.check_for_errormsg(r'testfile\.txt\b')
 
 		def test_destfile_close_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('testfile\.txt$','w','c')]"), 1, UpgradeUULibMessage)
+			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('testfile\.txt$','w','c')]"), 1, UpgradeUULibMessage)
 			self.check_for_errormsg(r'testfile\.txt\b')
 
 
-	class SockErrorTestCase(SubterfugueTest_base, unittest.TestCase):
+	class SockErrorTestCase(SubterfugueTest_base, TestCase):
 		ngetoptions={'options':{'tries':1}}
 
 		def test_socket_error(self):
-			self.failUnlessEqual(self.runnget("-g test", "IOError:s=[('rw',-2)]"), 64)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw',-2)]"), 64)
 			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
 
 		def test_connect_error(self):
-			self.failUnlessEqual(self.runnget("-g test", "IOError:s=[('rw',-1)]"), 64)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw',-1)]"), 64)
 			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
 
 		def test_sock_write_error(self):
-			self.failUnlessEqual(self.runnget("-g test", "IOError:s=[('w',0)]"), 64)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('w',0)]"), 64)
 			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
 
 		def test_sock_read_error(self):
-			self.failUnlessEqual(self.runnget("-g test", "IOError:s=[('r',0)]"), 64)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('r',0)]"), 64)
 			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
 
 		def test_sock_close_error(self):
-			self.failUnlessEqual(self.runnget("-g test", "IOError:s=[('rw','c')]"), 0) #error on sock close doesn't really need an error return, since it can't cause any problems.  (Any problem causing errors would be caught before sock.close() gets called.)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw','c')]"), 0) #error on sock close doesn't really need an error return, since it can't cause any problems.  (Any problem causing errors would be caught before sock.close() gets called.)
 			self.check_for_errormsg(r'127.0.0.1')#'TransportEx.*127.0.0.1')
 
 
-class CppUnitTestCase(unittest.TestCase):
+class CppUnitTestCase(TestCase):
 	def test_TestRunner(self):
-		self.failIf(os.system(os.path.join(os.curdir,'TestRunner')), "CppUnit TestRunner returned an error")
+		self.vfailIf(util.exitstatus(os.system(os.path.join(os.curdir,'TestRunner'))), "CppUnit TestRunner returned an error")
 
 if __name__ == '__main__':
 	unittest.main()
