@@ -111,10 +111,26 @@ void ParInfo::get_initial_pars(c_nntp_files_u &fc) {
 int ParInfo::get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nntp_files_u &fc) {
 	assert(localpars.subjmatches.find(key)!=localpars.subjmatches.end());
 	pair<t_subjmatches_map::iterator,t_subjmatches_map::iterator> matches=localpars.subjmatches.equal_range(key);
+	c_regex_subs rsubs;
+	if (nconfig.autopar_optimistic) {
+		set<uint32_t> availvols;
+		for (t_server_file_list::iterator sfi=serverpxxs.begin(); sfi!=serverpxxs.end() && (signed)availvols.size()<num; ++sfi){
+			for (t_subjmatches_map::iterator smi=matches.first; smi!=matches.second; ++smi) {
+				if (!smi->second->match(sfi->second->subject.c_str(), &rsubs)) {
+					int vol = atoi(rsubs.subs(1));
+					if (havevols.find(vol)==havevols.end())
+						availvols.insert(vol);
+				}
+			}
+		}
+		if ((signed)availvols.size()<num){
+			PERROR("get_pxxs: Only %i/%i needed volumes available for parset %s, giving up", availvols.size(), num, hexstr(key).c_str());
+			return 0;
+		}
+	}
+	int cur=0;
 	t_server_file_list::iterator sfi=serverpxxs.begin();
 	t_server_file_list::iterator last_sfi=serverpxxs.end();
-	c_regex_subs rsubs;
-	int cur=0;
 	while (sfi!=serverpxxs.end() && cur<num){
 		last_sfi=sfi;
 		++sfi;

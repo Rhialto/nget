@@ -33,6 +33,7 @@
 #text=files
 #save_binary_info=0
 #autopar=1
+#autopar_optimistic=0
 
 //hostname aliases
 {halias

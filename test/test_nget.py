@@ -464,6 +464,23 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -r par.test'))
 		self.verifyoutput({'par01':['01.dat','03.dat','05.dat','a b.par','a b.p01','a b.p02']})
 		
+	def test_autoparhandling_incomplete_pessimistic(self):
+		self.addarticle_toserver('par01', 'input', 'dat2', self.servers.servers[0])
+		self.addarticle_toserver('par01', 'input', 'par', self.servers.servers[0])
+		self.addarticle_toserver('par01', 'input', 'par2', self.servers.servers[0])
+		self.addarticle_toserver('par01', 'input', 'par3', self.servers.servers[0])
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par.test'), 2)
+		self.verifyoutput({'par01':['02.dat','a b.par','a b.p02','a b.p03']})
+		
+	def test_autoparhandling_incomplete_optimistic(self):
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'autopar_optimistic':1})
+		self.addarticle_toserver('par01', 'input', 'dat2', self.servers.servers[0])
+		self.addarticle_toserver('par01', 'input', 'par', self.servers.servers[0])
+		self.addarticle_toserver('par01', 'input', 'par2', self.servers.servers[0])
+		self.addarticle_toserver('par01', 'input', 'par3', self.servers.servers[0])
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par.test'), 2)
+		self.verifyoutput({'par01':['02.dat','a b.par']})
+		
 	def test_autoparhandling_corruptfile(self):
 		self.addarticles('par01', 'input')
 		self.rmarticle_fromserver('par01','input','dat2',self.servers.servers[0])

@@ -278,6 +278,10 @@ Default for already downloaded file filter. (0=-dI, 1=-di)
 Default for duplicate file filter. (0=-dF, 1=-df)
 .IP "autopar (boolean, default=1)"
 Default for automatic par handling. (0=--no-autopar, 1=--autopar)
+.IP "autopar_optimistic (boolean, default=0)"
+One problem with automatic par handling, is that sometimes people do multi-day posts and post the par files first.
+If autopar_optimistic is enabled, it will assume that when there aren't enough .pxx files, that it must just be a multi-day post and will not grab any pxx files.
+If autopar_optimistic is off, it grab all the pxx files so that if they expire before more are posted, we will already have them.
 .IP "quiet (boolean, default=0)"
 Default for quiet option. (0=normal, 1=-q)
 .IP "tempshortnames (boolean, default=0)"
