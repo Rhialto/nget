@@ -768,11 +768,11 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 									}
 
 									do_args(larg.argc,larg.argv,options,1);
-									if (options.host){//####here we reset the stuff that may have been screwed in our recursiveness.  Perhaps it should reset it before returning, or something.. but I guess this'll do for now, since its the only place its called recursively.
+									//####here we reset the stuff that may have been screwed in our recursiveness.  Perhaps it should reset it before returning, or something.. but I guess this'll do for now, since its the only place its called recursively.
+									if (options.host)
 										nntp.nntp_open(options.host);
-										if (!options.group.isnull())
-											nntp.nntp_group(options.group,0,options);
-									}
+									if (options.group)
+										nntp.nntp_group(options.group,0,options);
 									if (!chdir(options.path.c_str())){
 										printf("path:%s\n",options.path.c_str());
 									}else{
@@ -780,6 +780,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 										set_path_error_status();
 										return -1;
 									}
+
 									for (it=arglist.begin();it!=arglist.end();++it)
 										free((*it).argv);
 									free(larg.argv);
