@@ -607,6 +607,41 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-G test -r foo'))
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
+	def test_dupedecode(self):
+		open(os.path.join(self.nget.tmpdir,"testfile.txt"), "w").close()
+		output = self.vfailIf_getoutput(self.nget_run_getoutput('-g test -r foo'))
+		self.verifyoutput(['0001','0001/_empty_output'],output=output)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
+		self.failUnless(output.count("WARNINGS: 1 dupe")==1)
+		output = self.vfailIf_getoutput(self.nget_run_getoutput('-G test -D -r foo'))
+		self.verifyoutput(['0001','0001/_empty_output'],output=output)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 2)
+		self.failUnless(re.search("OK:.*1 dupe",output))
+		self.failIf(output.count("WARNINGS"))
+
+	def test_dupedecode_errfile(self):
+		self.addarticles('0001', 'yenc_single_crc32_error')
+		output = self.vfailUnlessExitstatus_getoutput(self.nget_run_getoutput('-g test -r "yenc.*testfile"'), 1)
+		outfiles=glob.glob(os.path.join(self.nget.tmpdir,'testfile*'))
+		self.vfailUnlessEqual(len(outfiles), 1, outfiles)
+		output = self.vfailUnlessExitstatus_getoutput(self.nget_run_getoutput('-G test -D -r "yenc.*testfile"'), 1)
+		outfiles=glob.glob(os.path.join(self.nget.tmpdir,'testfile*'))
+		self.vfailUnlessEqual(len(outfiles), 1, outfiles)
+		self.failUnless(re.search("OK:.*1 dupe",output))
+		self.failIf(output.count("WARNINGS"))
+
+	def test_dupedecode_errfile2(self):
+		open(os.path.join(self.nget.tmpdir,"testfile.txt"), "w").close()
+		self.addarticles('0001', 'yenc_single_crc32_error')
+		output = self.vfailUnlessExitstatus_getoutput(self.nget_run_getoutput('-g test -r "yenc.*testfile"'), 1)
+		outfiles=glob.glob(os.path.join(self.nget.tmpdir,'testfile*'))
+		self.vfailUnlessEqual(len(outfiles), 2, outfiles)
+		output = self.vfailUnlessExitstatus_getoutput(self.nget_run_getoutput('-G test -D -r "yenc.*testfile"'), 1)
+		outfiles=glob.glob(os.path.join(self.nget.tmpdir,'testfile*'))
+		self.vfailUnlessEqual(len(outfiles), 2, outfiles)
+		self.failUnless(re.search("OK:.*1 dupe",output))
+		self.failIf(output.count("WARNINGS"))
+
 	def test_available_overrides_group(self):
 		self.vfailIf(self.nget_run('-g test -A -T -r .'))
 		self.verifyoutput([])

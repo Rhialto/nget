@@ -28,6 +28,8 @@
 #include "status.h"
 #include "_sstream.h"
 
+#include <glob.h>
+
 #ifndef PROTOTYPES
 #define PROTOTYPES //required for uudeview.h to prototype function args.
 #endif
@@ -116,6 +118,53 @@ string make_dupe_name(const string &path, const string &fn, c_nntp_file::ptr f) 
 	}
 }
 
+int find_duplicate(const string &nfn, const string &orgfn) {
+	string escfn;
+
+	//glob-escape fn
+	for (unsigned int i = 0; i < orgfn.length(); i++){
+		if (orgfn[i] == '?' || orgfn[i] == '*' || orgfn[i] == '[')
+			escfn += '\\' + orgfn[i];
+		else
+			escfn += orgfn[i];
+	}
+
+	escfn += '*';
+
+	//find similar filenames with same prefix
+	glob_t g;
+
+	if (0 != glob(escfn.c_str(), 0, NULL, &g)){
+		//no expansion or error. Whatever.
+		return 0;
+	}
+
+	int found = 0;
+
+	//find previously partly decoded files, or other files that happen to have the same name.
+	for (unsigned int i = 0; i < g.gl_pathc; i++){
+		if (0 == strcmp(nfn.c_str(), g.gl_pathv[i]))
+			continue; //it's the new file itself.
+		if (filecompare(nfn.c_str(),g.gl_pathv[i])){
+			found = 1;
+			break;
+		}
+	}
+
+	globfree(&g);
+	return found;
+}
+
+int remove_if_duplicate(const string &nfn, const string &orgfn) {
+	int found_dup = find_duplicate(nfn,orgfn);
+	if (found_dup){
+		// if identical to a previously decoded file, delete the one we just downloaded
+		unlink(nfn.c_str());
+		printf("Duplicate File Removed %s\n", nfn.c_str());
+		set_dupe_ok_status();
+	}
+	return found_dup;
+}
 
 void Decoder::addpart(int partno,char *fn) {
 	fnbuf.push_back(pair<int,char*>(partno,fn));
@@ -175,6 +224,7 @@ int Decoder::decode(const nget_options &options, const c_nntp_file_retr::ptr &fr
 				string nfnp;
 				nfnp = make_dupe_name(fr->path.c_str(), orig_fnp, f);
 				xxrename(orig_fnp.c_str(), nfnp.c_str());
+				remove_if_duplicate(nfnp, orig_fnp);
 			}
 		}
 		else {
@@ -183,16 +233,14 @@ int Decoder::decode(const nget_options &options, const c_nntp_file_retr::ptr &fr
 			string nfn(make_dupe_name(fr->path.c_str(), fname_filter(NULL,uul->filename), f));
 			UURenameFile(uul,const_cast<char*>(nfn.c_str())); //uulib isn't const-ified
 			r=UUDecodeFile(uul,NULL);
-			// did it decode correctly?
-			if (r == UURET_OK && fexists(orig_fnp)){
+			// did it decode something? (could still be incomplete or broken though)
+			if (r == UURET_OK){
 				string nfnp(path_join(fr->path,nfn));
-				// if identical, delete the one we just downloaded
-				if (filecompare(orig_fnp.c_str(),nfnp.c_str())){
-					printf("Duplicate File Removed %s\n", nfn.c_str());
-					unlink(nfnp.c_str());
-					set_dupe_ok_status();
-				}else
+				int removed_dup = remove_if_duplicate(nfnp, orig_fnp);
+
+				if (fexists(orig_fnp) && !removed_dup){
 					set_dupe_warn_status();
+				}
 			}
 		}
 		if (r!=UURET_OK){

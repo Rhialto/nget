@@ -4,6 +4,7 @@
   * Support IPv6 if available. (Can force off with configure --disable-ipv6)
   * If a hostname resolves to multiple ip addresses, try as many as needed to find one that works.
   * Add NGETRC environment variable to specify alternate config file directly.
+  * Extend removal of identical dupe downloaded files to also cover incomplete/broken files. (Based on patch from Bram)
 
 2003-12-27 v0.26:
   * Add simplest possible example to manpage.
