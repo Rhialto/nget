@@ -107,7 +107,7 @@ void ParInfo::get_initial_pars(c_nntp_files_u &fc) {
 	}
 }
 
-void ParInfo::get_pxxs(int num, const string &key, c_nntp_files_u &fc) {
+void ParInfo::get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nntp_files_u &fc) {
 	assert(localpars.subjmatches.find(key)!=localpars.subjmatches.end());
 	pair<t_subjmatches_map::iterator,t_subjmatches_map::iterator> matches=localpars.subjmatches.equal_range(key);
 	t_server_file_list::iterator sfi=serverpxxs.begin();
@@ -118,6 +118,12 @@ void ParInfo::get_pxxs(int num, const string &key, c_nntp_files_u &fc) {
 		++sfi;
 		for (t_subjmatches_map::iterator smi=matches.first; smi!=matches.second; ++smi) {
 			if (!smi->second->match(last_sfi->second->subject.c_str(), &rsubs)) {
+				int vol = atoi(rsubs.subs(1));
+				if (havevols.find(vol)!=havevols.end()){
+					PDEBUG(DEBUG_MIN, "get_pxxs: %i, %s, already have or getting vol %i, not adding %s", num, hexstr(key).c_str(), vol, last_sfi->second->subject.c_str());
+					continue;
+				}
+				havevols.insert(vol);//don't try to retrieve multiple of the same volume in one run
 				--num;
 				PDEBUG(DEBUG_MIN, "get_pxxs: %i, %s, adding %s", num, hexstr(key).c_str(), last_sfi->second->subject.c_str());
 				fc.addfile(last_sfi->second, path, path);//#### should honor -P
@@ -171,7 +177,7 @@ void ParInfo::maybe_get_pxxs(c_nntp_files_u &fc) {
 			needed = max(0, bad - (signed)goodvols.size());
 			PDEBUG(DEBUG_MIN, "parset %s in %s: %i goodpxxs, %i badp??s, %i bad/missing files, trying to get %i more", hexstr(bfni->first).c_str(), path.c_str(), goodvols.size(), badcount, bad, needed);
 		}
-		get_pxxs(needed, bfni->first, fc);
+		get_pxxs(needed, goodvols, bfni->first, fc);//modifies goodvals, but we don't care.
 	}
 }
 

@@ -527,7 +527,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.addarticle_toserver('par02', 'input', 'par4', self.servers.servers[0])
 		self.addarticles('par02', 'a_b_par_input')
 		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
-		self.verifyoutput({'par02':['p2-02.dat','p2.par','p2.p02', 'p2.p04', '_a_b_par_output/a b.p01', '_a_b_par_output/a b.p02', '_a_b_par_output/a b.p03', '_a_b_par_output/a b.par']}) #####maybe shouldn't retrieve "a b.p02"?
+		self.verifyoutput({'par02':['p2-02.dat','p2.par','p2.p02', 'p2.p04', '_a_b_par_output/a b.p01', '_a_b_par_output/a b.p03', '_a_b_par_output/a b.par']})
 		
 	def test_autoparhandling_differingparfilenames_nopar(self):
 		self.addarticle_toserver('par02', 'input', 'dat2', self.servers.servers[0])
@@ -536,7 +536,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.addarticles('par02', 'a_b_par_input')
 		self.rmarticle_fromserver('par02','a_b_par_input','par',self.servers.servers[0])
 		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
-		self.verifyoutput({'par02':['p2-02.dat','p2.p02', 'p2.p04', '_a_b_par_output/a b.p01', '_a_b_par_output/a b.p02', '_a_b_par_output/a b.p03']}) #####maybe shouldn't retrieve "a b.p02"?
+		self.verifyoutput({'par02':['p2-02.dat','p2.p02', 'p2.p04', '_a_b_par_output/a b.p01', '_a_b_par_output/a b.p03']})
 		
 	def test_autoparhandling_multiparset(self):
 		self.addarticles('par01', 'input')
