@@ -1,4 +1,4 @@
-.TH nget 1 "21 Dec 2004"
+.TH nget 1 "21 Mar 2005"
 .SH NAME
 nget \- retrieve files from NNTP (usenet news) hosts
 .SH SYNOPSIS
@@ -134,7 +134,8 @@ Set the number of seconds to wait for a reply from the nntp server before giving
 .IP "\-i/\-\-incomplete"
 Retrieve files with missing parts.
 .IP "\-I/\-\-complete"
-Retrieve only files with all parts.
+Retrieve only files with all parts (default).
+Note that if autopar handling is enabled, incomplete files may be retrieved anyway, if there are not enough recovery packets.
 .IP "\-\-decode"
 Decode and delete temp files (default)
 .IP "\-k/\-\-keep"
@@ -146,8 +147,9 @@ Match case sensitively.
 .IP "\-C/\-\-nocase"
 Match case insensitively.
 .IP "\-\-autopar"
-Enable automatic parfile handling. (default)
+Enable automatic parfile handling (default).
 Only download as many par files as needed to replace missing or corrupt files.
+With par2 files, if there are not enough recovery packets available, nget will automatically download incomplete files as necessary, even if \-i is not set.
 .IP "\-\-no\-autopar"
 Disable automatic parfile handling.
 All parfiles that match the expression will be downloaded.
