@@ -533,6 +533,16 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('--no-autopar -g test -r a.b.par'))
 		self.vfailIf(self.nget_run('-G test -K -r par.test'))
 
+	def test_autoparhandling_mark_unmark(self):
+		self.addarticles('par01', 'input')
+		self.vfailIf(self.nget_run('-g test'))
+		self.vfailIf(self.nget_run('-G test -Mr .'))
+		self.vfailIf(self.nget_run('-G test --no-autopar -r .'))
+		self.verifyoutput([])
+		self.vfailIf(self.nget_run('-G test -Ur .'))
+		self.vfailIf(self.nget_run('-G test --no-autopar -r a.b.par'))
+		self.verifyoutput({'par01':['a b.par']})
+
 	def test_autoparhandling(self):
 		self.addarticles('par01', 'input')
 		self.vfailIf(self.nget_run('-g test -r par.test'))
