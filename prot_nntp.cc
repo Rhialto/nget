@@ -250,16 +250,13 @@ void c_prot_nntp::doxover(ulong low, ulong high){
 }
 
 void c_prot_nntp::nntp_dogroup(int getheaders){
-	//if(!gcache && getheaders){
-	if(gcache.isnull() && getheaders){
-		throw UserExFatal(Ex_INIT,"nntp_dogroup: nogroup selected");
-	}
 	assert(connection);
 	if (connection->curgroup!=group || getheaders){	
 		chkreply(stdputline(quiet<2,"GROUP %s",group->group.c_str()));
 		connection->curgroup=group;
 	}
 	if (getheaders){
+		assert(gcache);
 		char *p;
 		ulong num,low,high;
 		p=strchr(cbuf,' ')+1;
@@ -298,6 +295,7 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 	if (group == ngroup && gcache && !getheaders)
 		return; // group is already selected, don't waste time reloading it
 
+	assert(ngroup);
 	group=ngroup;
 //	if (gcache) delete gcache;
 	cleanupcache();
@@ -714,7 +712,9 @@ char * make_text_file_name(c_nntp_file_retr::ptr fr, bool usepath=0) {
 
 void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_list &getinfos, const nget_options &options){
 	c_nntp_files_u filec;
+	assert(rgroup);
 	if (gcache) {
+		assert(group == rgroup);
 		gcache->getfiles(&filec, midinfo, getinfos);
 	} else {
 		if (rgroup != group) {
