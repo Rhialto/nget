@@ -218,5 +218,5 @@ if test "$GCC" = "yes"; then
 	fi
 fi
 
-AC_OUTPUT(Makefile test/Makefile par2/Makefile nget.spec,[echo timestamp > stamp-h])
+AC_OUTPUT(Makefile test/Makefile compat/Makefile par2/Makefile nget.spec,[echo timestamp > stamp-h])
 

@@ -30,15 +30,16 @@ all: .autostuff $(NGET) $(NGETLITE)
 INSTALLDIRS=$(bindir) $(mandir)/man1
 W32DISTFILES=COPYING Changelog FAQ README.win32 nget.txt ngetlite.txt _ngetrc $(NGET) $(NGETLITE)
 
-COMPATOBJS=compat/fake-getaddrinfo.o compat/fake-getnameinfo.o
-OBJS=nget.o status.o prot_nntp.o decode.o texthandler.o sockpool.o sockstuff.o cache.o grouplist.o dupe_file.o file.o file_gz.o termstuff.o path.o misc.o strtoker.o strreps.o myregex.o cfgfile.o argparser.o etree.o nrange.o log.o server.o par.o knapsack.o $(COMPATOBJS) par2/par2.a @UULIB@
+OBJS=nget.o status.o prot_nntp.o decode.o texthandler.o sockpool.o sockstuff.o cache.o grouplist.o dupe_file.o file.o file_gz.o termstuff.o path.o misc.o strtoker.o strreps.o myregex.o cfgfile.o argparser.o etree.o nrange.o log.o server.o par.o knapsack.o compat/compat.a par2/par2.a @UULIB@
 $(NGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
 
-LITEOBJS=lite.o litenntp.o log.o sockstuff.o strreps.o file.o path.o myregex.o $(COMPATOBJS)
+LITEOBJS=lite.o litenntp.o log.o sockstuff.o strreps.o file.o path.o myregex.o compat/compat.a
 $(NGETLITE): $(LITEOBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LITEOBJS) -o $@ $(LITELIBS)
 
+compat/compat.a: compat/*.c compat/*.h config.h _subconf.h
+	$(MAKE) -C compat compat.a
 par2/par2.a: par2/*.cpp par2/*.h config.h _subconf.h
 	$(MAKE) -C par2 par2.a
 
