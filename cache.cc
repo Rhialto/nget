@@ -466,19 +466,14 @@ class c_nntp_cache_reader {
 c_nntp_cache_reader::c_nntp_cache_reader(c_file *cf, c_mid_info *mi, t_nntp_server_info &server_info):f(cf), midinfo(mi) {
 	count=0;counta=0;curline=0;countdeada=0;totalnum=0;
 	
-	char *buf;
 	char *t[5];
 	int i;
-	if (f->bgets()<=0)
+	if (f->beof())
 		throw CacheEx(Ex_INIT, "unexpected EOF on cache file line %i",curline);
-	buf=f->rbufp();
 	curline++;
 	//(mode==START_MODE)
-	for(i=0;i<2;i++)
-		if((t[i]=goodstrtok(&buf,'\t'))==NULL){
-			break;
-		}
-	if (i>=2 && (strcmp(t[0],CACHE_VERSION))==0){
+	i = f->btoks('\t',t,2);
+	if (i==2 && (strcmp(t[0],CACHE_VERSION))==0){
 		totalnum=atoul(t[1]);
 	}else{
 		if (i>0 && strncmp(t[0],"NGET",4)==0)
@@ -488,21 +483,17 @@ c_nntp_cache_reader::c_nntp_cache_reader(c_file *cf, c_mid_info *mi, t_nntp_serv
 	}
 
 	while (1) {
-		if (f->bgets()<=0)
+		if (f->beof())
 			throw CacheEx(Ex_INIT, "unexpected EOF on cache file line %i",curline);
-		buf=f->rbufp();
 		curline++;
 		//(mode==SERVERINFO_MODE)
-		if (buf[0]=='.') {
-			assert(buf[1]==0);
+		if (f->bpeek()=='.') {
+			assert(f->bgetsp()[1]==0);
 			//mode=FILE_MODE;//start new file mode
 			return;
 		}
-		for(i=0;i<4;i++)
-			if((t[i]=goodstrtok(&buf,'\t'))==NULL){
-				i=-1;break;
-			}
-		if (i>=4){
+		i = f->btoks('\t',t,4);
+		if (i==4){
 			ulong serverid=atoul(t[0]);
 			if (nconfig.getserver(serverid)) {
 				server_info.insert(t_nntp_server_info::value_type(serverid, c_nntp_server_info(serverid, atoul(t[1]), atoul(t[2]), atoul(t[3]))));
@@ -511,7 +502,7 @@ c_nntp_cache_reader::c_nntp_cache_reader(c_file *cf, c_mid_info *mi, t_nntp_serv
 				set_cache_warn_status();
 			}
 		}else{
-			printf("invalid line %lu mode %i\n",curline,SERVERINFO_MODE);//mode);
+			printf("invalid line %lu mode %i (%i toks)\n",curline,SERVERINFO_MODE,i);//mode);
 			set_cache_warn_status();
 		}
 	}
@@ -524,24 +515,18 @@ c_nntp_file::ptr c_nntp_cache_reader::read_file(void) {
 	c_nntp_file::ptr nf=NULL;
 	c_nntp_part	*np=NULL;
 	c_nntp_server_article *sa;
-	char *buf;
 	char *t[8];
 	int i;
-	while (f->bgets()>0){
-		buf=f->rbufp();
+	while (!f->beof()){
 		curline++;
 		if (mode==SERVER_ARTICLE_MODE && np){//new server_article mode
-			if (buf[0]=='.'){
-				assert(buf[1]==0);
+			if (f->bpeek()=='.'){
+				assert(f->bgetsp()[1]==0);
 				mode=PART_MODE;//go back to new part mode
 				continue;
 			}else{
-				for(i=0;i<4;i++)
-					if((t[i]=goodstrtok(&buf,'\t'))==NULL){
-						i=-1;break;
-					}
-				if (i>=4){
-					assert(i==4);
+				i = f->btoks('\t',t,4);
+				if (i==4){
 					ulong serverid=atoul(t[0]);
 					if (nconfig.getserver(serverid)) {
 						sa=new c_nntp_server_article(serverid,atoul(t[1]),atoul(t[2]),atoul(t[3]));
@@ -551,7 +536,7 @@ c_nntp_file::ptr c_nntp_cache_reader::read_file(void) {
 					}else
 						countdeada++;
 				}else{
-					printf("invalid line %lu mode %i\n",curline,mode);
+					printf("invalid line %lu mode %i (%i toks)\n",curline,mode,i);
 					set_cache_warn_status();
 				}
 			}
@@ -564,8 +549,8 @@ c_nntp_file::ptr c_nntp_cache_reader::read_file(void) {
 				np=NULL;
 				count--;
 			}
-			if (buf[0]=='.'){
-				assert(buf[1]==0);
+			if (f->bpeek()=='.'){
+				assert(f->bgetsp()[1]==0);
 				if (nf->parts.empty()){
 					set_cache_warn_status();
 					printf("empty nntp_file finished at line %lu mode %i\n",curline,mode);
@@ -575,37 +560,30 @@ c_nntp_file::ptr c_nntp_cache_reader::read_file(void) {
 				}else
 					return nf;
 			}else{
-				for(i=0;i<3;i++)
-					if((t[i]=goodstrtok(&buf,'\t'))==NULL){
-						i=-1;break;
-					}
-				if (i>=3){
-					assert(i==3);
+				i = f->btoks('\t',t,3);
+				if (i==3){
 					np=new c_nntp_part(atoi(t[0]),atoul(t[1]),t[2]);
 					nf->addpart(np);//add at '.' section (above) ... o r not.
 					count++;
 				}else{
-					printf("invalid line %lu mode %i\n",curline,mode);
+					printf("invalid line %lu mode %i (%i toks)\n",curline,mode,i);
 					set_cache_warn_status();
 				}
 				mode=SERVER_ARTICLE_MODE;//start adding server_articles
 			}
 		}
 		else if (mode==FILE_MODE){//new file mode
-			for(i=0;i<7;i++)
-				if((t[i]=goodstrtok(&buf,'\t'))==NULL){
-					i=-1;break;
-				}
-			if (i>=7){
-				assert(i==7);
+			i = f->btoks('\t',t,7);
+			if (i==7){
 				nf=new c_nntp_file(atoi(t[0]),atoul(t[1]),atoul(t[2]),t[3],t[4],atoi(t[5]),atoi(t[6]));
 				mode=REFERENCES_MODE;
 			}else{
-				printf("invalid line %lu mode %i\n",curline,mode);
+				printf("invalid line %lu mode %i (%i toks)\n",curline,mode,i);
 				set_cache_warn_status();
 			}
 		}
 		else if (mode==REFERENCES_MODE && nf){//adding references on new file
+			char *buf=f->bgetsp();
 			if (buf[0]=='.' && buf[1]==0){
 				mode=PART_MODE;
 				np=NULL;
@@ -831,19 +809,21 @@ void c_mid_info::load(string path,bool merge,bool lock){
 		//locker=new c_lockfile(path,WANT_SH_LOCK);//why can't we just do this?  sigh.
 	}
 //	c_regex_r midre("^(.+) ([0-9]+) ([0-9]+)$");
-	strtoker toker(3,' ');
+	char *t[3];
+	int i;
 	try {
 		f=dofileopen(path.c_str(),"rb");
 	}catch(FileNOENTEx &e){
 		return;
 	}
 	auto_ptr<c_file> fcloser(f);
-	while (f->bgets()>0){
+	while (!f->beof()){
 		line++;
-		if (!toker.tok(f->rbufp()) && toker.numtoks==3)
-			insert_full(toker[0],atol(toker[1]),atol(toker[2]));//TODO: shouldn't set changed flag if no new ones are actually merged.
+		i = f->btoks(' ',t,3);
+		if (i==3)
+			insert_full(t[0],atol(t[1]),atol(t[2]));//TODO: shouldn't set changed flag if no new ones are actually merged.
 		else {
-			printf("c_mid_info::load: invalid line %i (%i toks)\n",line,toker.numtoks);
+			printf("c_mid_info::load: invalid line %i (%i toks)\n",line,i);
 			set_cache_warn_status();
 		}
 	}

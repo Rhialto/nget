@@ -85,6 +85,10 @@ class c_buffy {
 			return i;
 		}
 	public:
+		bool beof(void){
+			if (btail!=bhead) return false;
+			return (dofill()<=0);
+		}
 		void clearbuf(void){bhead=btail=0;}
 		int bpeek(void){
 			if (bhead==btail)
@@ -123,6 +127,36 @@ class c_buffy {
 				}
 				buf.append(i);
 			}
+		}
+		//Read a line and tokenize it at the same time.  returns number of tokens found (which may be more or less than max)
+		int btoks(CharBuffer &buf, char tok, char **toks, int max){
+			int i;
+			int num = 1;
+			buf.clear();
+			toks[0] = 0;
+			while (1){
+				i=bget();
+				if (i<0)
+					break;//errors are exceptions now, so this can only mean end of file
+				if (i==tok){
+					if (num<max) {
+						buf.append(0);
+						toks[num]=(char*)buf.size();//since buf.append could invalidate pointers into buf.c_str(), store the offset instead
+					}
+					num++;
+					continue;
+				}else if (i==13){
+					continue;
+				}else if (i==10){
+					break;
+				}
+				if (num<=max)
+					buf.append(i);
+			}
+			char *bstr = buf.c_str();
+			for (i=0;i<num;i++)
+				toks[i] = bstr + (int)toks[i];//now that we are done appending, add the c_str location to the offsets we stored earlier to get the real locations.
+			return num;
 		}
 		c_buffy(){bhead=btail=0;/*buf=NULL;buffy_bufsize=0;*/}
 		virtual ~c_buffy(){/*if (buf) free(buf);*/}

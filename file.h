@@ -57,7 +57,10 @@ class c_file_buffy : public c_buffy{
 	public:
 		CharBuffer cbuf;
 		char *cbufp(void){return cbuf.c_str();}
+		bool beof(void){return c_buffy::beof();}
+		int bpeek(void){return c_buffy::bpeek();}
 		int bgets(void){return c_buffy::bgets(cbuf);}
+		int btoks(char tok, char **toks, int max){return c_buffy::btoks(cbuf,tok,toks,max);}
 		c_file_buffy(c_file*f):fileptr(f) {}
 		//~c_file_buffy();
 };
@@ -103,6 +106,10 @@ class c_file {
 	ssize_t bread(size_t len);//buffered read, must be used instead of normal read, if you are using bgets
 	//char * bgets(void);//buffered gets, should be faster than normal gets, definatly for tcp or gz. maybe not for stream.
 	int bgets(void){return rbuffer->bgets();}//buffered gets, should be faster than normal gets, definatly for tcp or gz. maybe not for stream.
+	char *bgetsp(void){rbuffer->bgets(); return rbuffer->cbufp();}
+	int btoks(char tok, char **toks, int max){return rbuffer->btoks(tok,toks,max);}
+	int bpeek(void){return rbuffer->bpeek();}
+	bool beof(void){return rbuffer->beof();}
 	void initrbuf(void);
 //	int open(const char *name,const char * mode);
 	void flush(int local=0);
