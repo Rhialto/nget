@@ -973,15 +973,6 @@ int main(int argc, char ** argv){
 				if (!halias)
 					throw ConfigExFatal(Ex_INIT,"no halias section (or error reading ngetrc)");
 				nconfig.setlist(&cfg.data,halias,hpriority,galias);
-				const char *cp=cfg.data.getitema("curservmult");
-				float f;
-				if (cp){
-					f=atof(cp);
-					if (f)
-						nconfig.curservmult=f;
-					else
-						printf("invalid curservmult: %s\n",cp);
-				}
 				int t;
 				/*			if (!halias || !(options.host=halias->getitema("default")))
 							options.host=getenv("NNTPSERVER")?:"";
@@ -1010,7 +1001,7 @@ int main(int argc, char ** argv){
 				options.set_makedirs(cfg.data.getitema("makedirs"));
 				
 				cfg.data.getitems("cachedir",&ngcachehome);//.ngetrc setting overrides default
-				cp=getenv("NGETCACHE");//environment var overrides .ngetrc
+				char *cp=getenv("NGETCACHE");//environment var overrides .ngetrc
 				if (cp)
 					ngcachehome=cp;
 				ngcachehome = path_join(ngcachehome, "");

@@ -6,6 +6,7 @@
   * Documented make test in README.
   * Make -h work for -r/-R too. (Only download articles from the given host.  If that host doesn't have the article, skip and flag it as an error)
   * Added a connection pool to avoid continuously reconnecting when articles are spread across different servers a lot. (suggested by Thore Harald Hoye)  (Adds new .ngetrc global opts idletimeout/maxconnections, and per-server idletimeout)
+  * Added "server penalization" to avoid wasting lots of time trying to connect to dead servers. (New .ngetrc global opts penaltystrikes, initialpenalty, penaltymultiplier)
 
 2002-02-28 v0.17:
   * Handle invalid References starting with a '.'.

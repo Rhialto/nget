@@ -41,6 +41,10 @@ class c_server {
 		int lineleniencelow,lineleniencehigh;
 		int idletimeout;
 
+		time_t last_penalty;
+		time_t penalty_time;
+		int penalty_count;
+
 		c_server(ulong id, string alia, string shortnam, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea, int idletimeou);
 };
 typedef map<ulong,c_server*> t_server_list;
@@ -109,7 +113,33 @@ class c_nget_config {
 		int maxstreaming;
 		int idletimeout;
 		int maxconnections;
+		int penaltystrikes, initialpenalty;
+		float penaltymultiplier;
 
+		void check_penalized(ulong serverid) const {
+			c_server *s=getserver(serverid);
+			if (penaltystrikes > 0 && s && s->penalty_count >= penaltystrikes) {
+				long timeleft = s->last_penalty + s->penalty_time - time(NULL);
+				if (timeleft > 0)
+					throw TransportExFatal(Ex_INIT,"server %s penalized %li sec", s->alias.c_str(), timeleft);
+			}
+		}
+		void unpenalize(c_server *server) const {
+			server->penalty_count = 0;
+		}
+		void penalize(c_server *server) const {
+			if (penaltystrikes<=0)
+				return;//penalization disabled
+			++server->penalty_count;
+			if (server->penalty_count == penaltystrikes) {
+				server->penalty_time = initialpenalty;
+			}
+			else if (server->penalty_count > penaltystrikes) {
+				server->penalty_time = (time_t)(server->penalty_time * penaltymultiplier);
+			}
+			server->last_penalty = time(NULL);
+			PDEBUG(DEBUG_MED, "penalized %s: count %i, last %li, time %li", server->alias.c_str(), server->penalty_count, server->last_penalty, server->penalty_time);
+		}
 		const char * getservername(ulong serverid) const {
 			c_server *s=getserver(serverid);
 			if (s) return s->alias.c_str();
@@ -167,6 +197,9 @@ class c_nget_config {
 			maxstreaming=64;
 			idletimeout=5*60;
 			maxconnections=-1;
+			penaltystrikes=3;
+			initialpenalty=180;
+			penaltymultiplier=2.0;
 		}
 		~c_nget_config(){
 			t_server_list::iterator i;

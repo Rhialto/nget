@@ -83,6 +83,9 @@ Connection* SockPool::connect(ulong serverid) {
 		}
 	}
 	
+	//check penalization before expire_old_connection
+	nconfig.check_penalized(serverid); // (throws exception if penalized)
+	
 	//if we have to create a new one, don't go over max
 	if (nconfig.maxconnections > 0 && (signed)connections.size() >= nconfig.maxconnections)
 		expire_old_connection();
@@ -90,9 +93,11 @@ Connection* SockPool::connect(ulong serverid) {
 	//create new connection
 	Connection *c = new Connection(nconfig.getserver(serverid));
 	if (c->open()<0){
+		nconfig.penalize(c->server);
 		delete c;
 		throw TransportExError(Ex_INIT,"make_connection:%s(%i)",strerror(errno),errno);
 	}
+	nconfig.unpenalize(c->server);
 	connections.insert(t_connection_map::value_type(serverid, c));
 	c->touch();
 	return c;

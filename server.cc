@@ -74,6 +74,10 @@ c_server::c_server(ulong id, string alia, string shortnam, string add, string us
 	}else{
 		lineleniencelow=lineleniencehigh=0;
 	}
+
+	penalty_count=0;
+	last_penalty=0;
+	penalty_time=0;
 }
 
 void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_section *pinfo,c_data_section *ginfo){
@@ -85,6 +89,15 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 	ulong tul;
 	//cfg
 	assert(cfg);
+	const char *cp=cfg->getitema("curservmult");
+	float f;
+	if (cp){
+		f=atof(cp);
+		if (f)
+			nconfig.curservmult=f;
+		else
+			printf("invalid curservmult: %s\n",cp);
+	}
 	cfg->getitemi("usegz",&usegz);
 	if (cfg->getitema("fullxover"))
 		fullxover=cfg->getitema("fullxover");
@@ -92,6 +105,16 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 	cfg->getitemi("maxstreaming",&maxstreaming);
 	cfg->getitemi("maxconnections",&maxconnections);
 	cfg->getitemi("idletimeout",&idletimeout);
+	cfg->getitemi("penaltystrikes",&penaltystrikes);
+	cfg->getitemi("initialpenalty",&initialpenalty);
+	cp=cfg->getitema("penaltymultiplier");
+	if (cp){
+		f=atof(cp);
+		if (f>0)
+			nconfig.penaltymultiplier=f;
+		else
+			printf("invalid penaltymultiplier: %s\n",cp);
+	}
 	//halias
 	assert(hinfo);
 	for (dli=hinfo->data.begin();dli!=hinfo->data.end();++dli){

@@ -24,6 +24,9 @@ fullxover=0
 maxstreaming=64
 idletimeout=300
 maxconnections=-1
+penaltystrikes=3
+initialpenalty=180
+penaltymultiplier=2.0
 
 //hostname aliases
 {halias
