@@ -628,6 +628,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 		redone++;
 	}
 	printf("couldn't get %s from anywhere\n",part->messageid.c_str());
+	set_retrieve_error_status();
 	return -1;
 }
 

@@ -51,6 +51,7 @@ extern "C" {
 #define decode_ERROR 1
 #define path_ERROR 2
 #define user_ERROR 4
+#define retrieve_ERROR 8
 #define fatal_ERROR 128
 static int errflags=0;
 #define SET_x_ERROR_STATUS(type) static int err_ ## type;\
@@ -61,6 +62,7 @@ void set_ ## type ## _error_status(void){\
 SET_x_ERROR_STATUS(decode)
 SET_x_ERROR_STATUS(path)
 SET_x_ERROR_STATUS(user)
+SET_x_ERROR_STATUS(retrieve)
 SET_x_ERROR_STATUS(fatal)
 #define print_x_STATUS(type) if (err_ ## type) printf(" %i " #type, err_ ##type)
 void print_error_status(void){
@@ -69,6 +71,7 @@ void print_error_status(void){
 		print_x_STATUS(decode);
 		print_x_STATUS(path);
 		print_x_STATUS(user);
+		print_x_STATUS(retrieve);
 		print_x_STATUS(fatal);
 		printf("\n");
 	}

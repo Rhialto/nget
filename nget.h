@@ -39,6 +39,7 @@ extern c_server_priority_grouping_list priogroups;*/
 
 
 void set_decode_error_status(void);
+void set_retrieve_error_status(void);
 void set_path_error_status(void);
 void set_user_error_status(void);
 void set_fatal_error_status(void);
