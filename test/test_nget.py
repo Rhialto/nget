@@ -462,6 +462,14 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -r par.test'))
 		self.verifyoutput({'par01':['01.dat','_corrupt_output/02.dat','03.dat','_corrupt_output/04.dat','05.dat','a b.par','a b.p01','a b.p02']})
 		
+	def test_autoparhandling_corruptfile_correctdupe(self):
+		self.addarticles('par01', 'corrupt_input')
+		self.vfailIf(self.nget_run('-g test -r par.test'))
+		self.addarticles('par01', 'input')
+		self.vfailIf(self.nget_run('-dF -g test -r par.test'))
+		#self.verifyoutput({'par01':['01.dat','02.dat','_corrupt_output/02.dat','03.dat','04.dat','_corrupt_output/04.dat','05.dat','a b.par']})
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 8)
+		
 	def test_autoparhandling_corruptpxx(self):
 		self.addarticles('par01', 'input')
 		self.rmarticle_fromserver('par01','input','dat2',self.servers.servers[0])

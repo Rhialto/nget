@@ -25,8 +25,15 @@
 #include "log.h"
 #include "md5.h"
 
+static void add_to_nocase_map(t_nocase_map *nocase_map, const char *key, const char *name){
+	string lowername;
+	for (const char *cp=key; *cp; ++cp)
+		lowername.push_back(tolower(*cp));
+	nocase_map->insert(t_nocase_map::value_type(lowername, name));
+}
 void LocalParFiles::addfrompath(const string &path, t_nocase_map *nocase_map){
 	c_regex_r parfile_re((string("^(.+)\\.p(ar|[0-9]{2})(\\.[0-9]+\\.[0-9]+)?$")).c_str(), REG_EXTENDED|REG_ICASE);
+	c_regex_r dupefile_re((string("^(.+)\\.[0-9]+\\.[0-9]+$")).c_str());
 	c_regex_subs rsubs;
 	DIR *dir=opendir(path.c_str());
 	struct dirent *de;
@@ -37,10 +44,9 @@ void LocalParFiles::addfrompath(const string &path, t_nocase_map *nocase_map){
 			addfile(rsubs.sub(1), de->d_name);
 		if (nocase_map) {
 			if (strcmp(de->d_name,"..")!=0 && strcmp(de->d_name,".")!=0){
-				string lowername;
-				for (const char *cp=de->d_name; *cp; ++cp)
-					lowername.push_back(tolower(*cp));
-				nocase_map->insert(t_nocase_map::value_type(lowername, de->d_name));
+				if (!dupefile_re.match(de->d_name, &rsubs)) //check for downloaded dupe files, and add them under their original name.
+					add_to_nocase_map(nocase_map, rsubs.subs(1), de->d_name);
+				add_to_nocase_map(nocase_map, de->d_name, de->d_name);
 			}
 		}
 	}
