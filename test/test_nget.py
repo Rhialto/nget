@@ -23,8 +23,9 @@ import os, sys, unittest, glob, filecmp, re
 
 import nntpd, util
 
-ngetexe = os.path.join(os.pardir, 'nget')
-#ngetexe = '../../nget-dev/nget'
+#allow nget executable to be tested to be overriden with TEST_NGET env var.
+ngetexe = os.environ.get('TEST_NGET',os.path.join(os.pardir, 'nget'))
+
 zerofile_fn_re = re.compile(r'(\d+)\.(\d+)\.txt$')
 
 class DecodeTest_base(unittest.TestCase):
