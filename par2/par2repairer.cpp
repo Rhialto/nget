@@ -130,7 +130,7 @@ Result Par2Repairer::Process(const CommandLine &commandline, bool dorepair)
     //cout << endl << "Scanning extra files:" << endl << endl;
 
     // Scan any extra files specified on the command line
-    if (!VerifyExtraFiles(extrafiles))
+    if (!VerifyExtraFiles(extrafiles, commandline.GetExtraFilenameMap()))
       return eLogicError;
   }
 
@@ -1077,7 +1077,7 @@ bool Par2Repairer::VerifySourceFiles(void)
 }
 
 // Scan any extra files specified on the command line
-bool Par2Repairer::VerifyExtraFiles(const list<CommandLine::ExtraFile> &extrafiles)
+bool Par2Repairer::VerifyExtraFiles(const list<CommandLine::ExtraFile> &extrafiles, const multimap<string,string> &extrafilenamemap)
 {
   for (ExtraFileIterator i=extrafiles.begin(); 
        i!=extrafiles.end() && completefilecount<mainpacket->RecoverableFileCount(); 
@@ -1120,6 +1120,58 @@ bool Par2Repairer::VerifyExtraFiles(const list<CommandLine::ExtraFile> &extrafil
     }
   }
 
+  // Search for files that have similar names to the ones mentioned in the par2,
+  // so that we can find ones with differing case or that have been dupe-renamed. -MPM
+  for (vector<Par2RepairerSourceFile*>::iterator sf = sourcefiles.begin(); 
+       sf != sourcefiles.end() && completefilecount<sourcefiles.size(); 
+       ++sf) {
+    Par2RepairerSourceFile *sourcefile = *sf;
+    
+    if (!sourcefile->GetCompleteFile()) {
+      // What filename does the file use
+      string filename = sourcefile->TargetFileName();
+      string path, name;
+      // strip off the path
+      DiskFile::SplitFilename(filename, path, name);
+      // find matches for that name
+      pair<multimap<string,string>::const_iterator, multimap<string,string>::const_iterator> matchingfiles(extrafilenamemap.equal_range(name));
+      for (;
+           matchingfiles.first!=matchingfiles.second && completefilecount<sourcefiles.size();
+           ++matchingfiles.first)
+      {
+        // attach the path to the new name
+        filename = path + matchingfiles.first->second;
+
+        // Remember to update this block to match the similar code up above.        
+        // Has this file already been dealt with
+        if (diskFileMap.Find(filename) == 0)
+        {
+          DiskFile *diskfile = new DiskFile;
+
+          // Does the file exist
+          if (!diskfile->Open(filename))
+          {
+            delete diskfile;
+            continue;
+          }
+
+          // Remember that we have processed this file
+          bool success = diskFileMap.Insert(diskfile);
+          assert(success);
+
+          // Do the actual verification
+          VerifyDataFile(diskfile, 0);
+          // Ignore errors
+
+          // We have finished with the file for now
+          diskfile->Close();
+
+          // Find out how much data we have found
+          UpdateVerificationResults();
+        }
+      }
+    }
+  }
   return true;
 }
 

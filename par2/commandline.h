@@ -27,7 +27,7 @@
 class CommandLine
 {
 public:
-  CommandLine(const string &filename, const vector<string> &extrafilenames);
+  CommandLine(const string &filename, const vector<string> &extrafilenames, const multimap<string,string> &extrafilenamemap);
 
   // Any extra files listed on the command line
   class ExtraFile
@@ -52,6 +52,7 @@ public:
 
   string                              GetParFilename(void) const {return parfilename;}
   const list<CommandLine::ExtraFile>& GetExtraFiles(void) const  {return extrafiles;}
+  const multimap<string,string>& GetExtraFilenameMap(void) const {return extrafilenamemap;}
 
 protected:
   string parfilename;          // The name of the PAR2 file to create, or
@@ -63,6 +64,8 @@ protected:
                                // the source files, and when verifying or
                                // repairing, this will be additional PAR2
                                // files or data files to be examined.
+
+  const multimap<string,string> &extrafilenamemap; // Maps source file names to alternate names they might be found under.
 };
 
 typedef list<CommandLine::ExtraFile>::const_iterator ExtraFileIterator;

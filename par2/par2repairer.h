@@ -73,7 +73,7 @@ protected:
   bool VerifySourceFiles(void);
 
   // Scan any extra files specified on the command line
-  bool VerifyExtraFiles(const list<CommandLine::ExtraFile> &extrafiles);
+  bool VerifyExtraFiles(const list<CommandLine::ExtraFile> &extrafiles, const multimap<string,string> &extrafilenamemap);
 
   // Attempt to match the data in the DiskFile with the source file
   bool VerifyDataFile(DiskFile *diskfile, Par2RepairerSourceFile *sourcefile);

@@ -54,9 +54,10 @@ CommandLine::ExtraFile::ExtraFile(const string &name, u64 size)
 }
 
 
-CommandLine::CommandLine(const string &filename, const vector<string> &extrafilenames)
+CommandLine::CommandLine(const string &filename, const vector<string> &extrafilenames, const multimap<string,string> &extrafilenamemaparg)
 : parfilename(filename)
 , extrafiles()
+, extrafilenamemap(extrafilenamemaparg)
 {
   for (vector<string>::const_iterator fni=extrafilenames.begin(); fni!=extrafilenames.end(); ++fni)
   {

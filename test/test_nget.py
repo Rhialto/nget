@@ -725,7 +725,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -r par2.test'))
 		self.addarticles('par2-01', 'input')
 		self.vfailIf(self.nget_run('-dF -g test -r par2.test'))
-		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','_corrupt_output/c d 02.dat','c d 03.dat','c d 04.dat','_corrupt_output/c d 04.dat','c d 05.dat','c d.par2']}) #### TODO requires mods to par2cmdline
+		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','_corrupt_output/c d 02.dat','c d 03.dat','c d 04.dat','_corrupt_output/c d 04.dat','c d 05.dat','c d.par2']})
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 8)
 		
 	def test_autopar2handling_corruptfileblock(self):
@@ -816,7 +816,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.addarticles('par02', 'par2_input')
 		self.addarticles('par02', 'case_input')
 		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
-		self.verifyoutput({'par02':['p2-01.dat','p2-02.dat','p2-03.dat','_case_output/P2-04.dAt','_case_output/p2-05.DaT','_par2_output/p2.par2']}) #### TODO requires mods to par2cmdline
+		self.verifyoutput({'par02':['p2-01.dat','p2-02.dat','p2-03.dat','_case_output/P2-04.dAt','_case_output/p2-05.DaT','_par2_output/p2.par2']})
 		
 	def test_autopar2handling_differingparfilenames(self):
 		self.addarticles('par02', 'input',fname='dat2')

@@ -354,8 +354,9 @@ int Par2Info::get_recoverypackets(int num, set<uint32_t> &havepackets, const str
 }
 
 int Par2Info::maybe_get_pxxs(c_nntp_files_u &fc) {
+	t_nocase_map nocase_map;
 	localpars.clear();
-	localpars.addfrompath_par2(path);
+	localpars.addfrompath_par2(path, &nocase_map);
 
 	vector<c_nntp_file::ptr> unclaimedfiles;
 	for (t_parset_map::iterator psi=parsets.begin(); psi!=parsets.end(); ++psi){
@@ -386,7 +387,7 @@ int Par2Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 		for (vector<string>::const_iterator fni=fullpaths.begin(); fni!=fullpaths.end(); ++fni) {
 			const string &fn = *fni;
 			
-			CommandLine par2cmd(fn, fullpaths);
+			CommandLine par2cmd(fn, fullpaths, nocase_map);
 			Par2Repairer par2;
 			Result r = par2.Process(par2cmd, false);
 
