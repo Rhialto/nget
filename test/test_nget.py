@@ -786,7 +786,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.addarticles('par2-01', 'input',fname='par?')
 		self.addarticles('par2-01', 'missing_ifscpkt')
 		self.vfailIf(self.nget_run('-g test -r par2.test'))
-		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','c d 05.dat','_missing_ifscpkt_output/c d.par2','c d.vol00+01.par2']})
+		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','c d 05.dat','_missing_ifscpkt_output/c d.par2']})
 		
 	def test_autopar2handling_reply(self):
 		self.addarticles('par2-01', 'input')
