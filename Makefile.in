@@ -28,7 +28,9 @@ NGETLITE=ngetlite$(EXEEXT)
 all: .autostuff $(NGET) $(NGETLITE)
 
 INSTALLDIRS=$(bindir) $(mandir)/man1
-W32DISTFILES=COPYING Changelog FAQ README.win32 nget.txt ngetlite.txt _ngetrc $(NGET) $(NGETLITE)
+W32DISTTXTFILES=COPYING Changelog FAQ README.win32 nget.txt ngetlite.txt _ngetrc
+W32DISTBINFILES=$(NGET) $(NGETLITE)
+W32DISTFILES=$(W32DISTTXTFILES) $(W32DISTBINFILES)
 
 OBJS=nget.o status.o prot_nntp.o decode.o texthandler.o sockpool.o sockstuff.o cache.o grouplist.o dupe_file.o file.o file_gz.o termstuff.o path.o misc.o strtoker.o strreps.o myregex.o cfgfile.o argparser.o etree.o nrange.o log.o server.o par.o knapsack.o compat/compat.a par2/par2.a @UULIB@
 $(NGET): $(OBJS)
@@ -70,20 +72,24 @@ _ngetrc: .ngetrc
 
 win32dist: $(W32DISTFILES)
 	$(STRIP) $(NGET) $(NGETLITE)
-	zip -j -9 ../nget-$(VERSION).win32.zip $(W32DISTFILES)
+	zip -j -9 -l ../nget-$(VERSION).win32.zip $(W32DISTTXTFILES)
+	zip -j -9 ../nget-$(VERSION).win32.zip $(W32DISTBINFILES)
 win32dist-static: $(W32DISTFILES)
 	-rm $(NGET) $(NGETLITE)
 	$(MAKE) CXX="$(CXX) -static" $(NGET) $(NGETLITE)
 	$(STRIP) $(NGET) $(NGETLITE)
-	zip -j -9 ../nget-$(VERSION).win32.zip $(W32DISTFILES)
+	zip -j -9 -l ../nget-$(VERSION).win32.zip $(W32DISTTXTFILES)
+	zip -j -9 ../nget-$(VERSION).win32.zip $(W32DISTBINFILES)
 cygwin32dist: $(W32DISTFILES)
 	$(STRIP) $(NGET) $(NGETLITE)
-	zip -j -9 ../nget-$(VERSION).cygwin32.zip $(W32DISTFILES)
+	zip -j -9 -l ../nget-$(VERSION).cygwin32.zip $(W32DISTTXTFILES)
+	zip -j -9 ../nget-$(VERSION).cygwin32.zip $(W32DISTBINFILES)
 cygwin32dist-static: $(W32DISTFILES)
 	-rm $(NGET) $(NGETLITE)
 	$(MAKE) CXX="$(CXX) -static" $(NGET) $(NGETLITE)
 	$(STRIP) $(NGET) $(NGETLITE)
-	zip -j -9 ../nget-$(VERSION).cygwin32.zip $(W32DISTFILES) /bin/cygwin1.dll
+	zip -j -9 -l ../nget-$(VERSION).cygwin32.zip $(W32DISTTXTFILES)
+	zip -j -9 ../nget-$(VERSION).cygwin32.zip $(W32DISTBINFILES) /bin/cygwin1.dll
 
 
 .autostuff: configure config.h.in config.h Makefile config.status
