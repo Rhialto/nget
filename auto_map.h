@@ -31,8 +31,8 @@ class auto_map_base : public Base<K, restricted_ptr<T> > {
 		typedef typename super::iterator iterator;
 
 		void clear(void){
-			while (!empty())
-				erase(begin());
+			while (!this->empty())
+				erase(this->begin());
 		}
 		void erase(iterator i){
 			T* p=(*i).second.gimmethepointer();
@@ -46,7 +46,7 @@ class auto_map_base : public Base<K, restricted_ptr<T> > {
 	private:
 		void insert(void); //private insert func to hide std::map's insert members
 		void delete_all(void) {
-			for (iterator i=begin(); i!=end(); ++i)
+			for (iterator i=this->begin(); i!=this->end(); ++i)
 				delete (*i).gimmethepointer();
 		}
 		auto_map_base(const auto_map_base &v); //private copy constructor to disallow copying
@@ -57,6 +57,7 @@ class auto_map_base : public Base<K, restricted_ptr<T> > {
 template <class K, class T>
 class auto_map : public auto_map_base<K, T, std::map> {
 	public:
+		typedef auto_map_base<K, T, std::map> super;
 		typedef typename super::iterator iterator;
 		typedef typename super::value_type value_type;
 		/*super::value_type value_type(const K &k, T*p) {
@@ -67,7 +68,7 @@ class auto_map : public auto_map_base<K, T, std::map> {
 			return super::insert(v);
 		}*/
 		std::pair<iterator, bool> insert_value(const K &k, T* p) { //we can't really use the normal insert funcs, but we don't want to just name it insert since it would be easy to confuse with all the normal map insert funcs
-			assert(find(k)==end());
+			assert(find(k)==this->end());
 			return super::insert(value_type(k, restricted_ptr<T>(p)));
 		}
 };
@@ -75,6 +76,7 @@ class auto_map : public auto_map_base<K, T, std::map> {
 template <class K, class T>
 class auto_multimap : public auto_map_base<K, T, std::multimap> {
 	public:
+		typedef auto_map_base<K, T, std::multimap> super;
 		typedef typename super::iterator iterator;
 		typedef typename super::value_type value_type;
 		iterator insert_value(const K &k, T* p) { //we can't really use the normal insert funcs, but we don't want to just name it insert since it would be easy to confuse with all the normal map insert funcs

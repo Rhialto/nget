@@ -36,7 +36,7 @@ class auto_vector : public std::vector<restricted_ptr<T> > {
 			super::clear();
 		}
 		void pop_back(void) {
-			delete back().gimmethepointer();
+			delete this->back().gimmethepointer();
 			super::pop_back();
 		}
 		iterator erase(iterator i){
@@ -49,7 +49,7 @@ class auto_vector : public std::vector<restricted_ptr<T> > {
 		}
 	private:
 		void delete_all(void) {
-			for (iterator i=begin(); i!=end(); ++i)
+			for (iterator i=this->begin(); i!=this->end(); ++i)
 				delete (*i).gimmethepointer();
 		}
 		void insert(void); //private insert func to hide std::vector's insert members
