@@ -48,11 +48,9 @@ class sockbuffy :public c_buffy{
 		int isopen(void)const{
 			return sock>=0;
 		}
-		int open(const char *netaddress,const char *service){
+		void open(const char *netaddress,const char *service){
 			sock=make_connection(SOCK_STREAM,netaddress,service,(char*)buf,buffy_bufsize);
 			clearbuf();
-			if (isopen())return 0;
-			else return -1;
 		}
 		int close(void){
 			if (isopen()){

@@ -1,6 +1,6 @@
 /*
     strreps.* - replacements for some string funcs that aren't always available
-    Copyright (C) 1999-2001  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -49,9 +49,9 @@ int vasprintf(char **str,const char *format,va_list ap){
 }
 #endif
 
-#ifndef HAVE_STRERROR
-const char * strerror(int err){
-	static char buf[5];
+#ifdef NEED_CRAPPY_STRERROR
+const char * crappy_strerror(int err){
+	static char buf[12];
 	sprintf(buf,"%i",err);
 	return buf;
 }

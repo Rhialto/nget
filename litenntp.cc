@@ -188,9 +188,11 @@ void c_prot_nntp::doopen(const char *host, const char *user, const char *pass){
 		return;
 
 	doclose();
-	int i;
-	if ((i=cursock.open(host,"nntp"))<0)
-		throw TransportExError(Ex_INIT,"nntp_doopen:%i %s(%i)",i,sock_strerror(sock_errno),sock_errno);
+	try {
+		cursock.open(host,"nntp");
+	} catch (FileEx &e) {
+		throw TransportExError(Ex_INIT,"nntp_doopen:%i %s",e.getExStr());
+	}
 	chkreply(getreply(!quiet));
 	putline(debug>=DEBUG_MED,"MODE READER");
 	getline(debug>=DEBUG_MED);

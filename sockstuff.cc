@@ -162,7 +162,7 @@ int atoport(const char *service, const char *proto,char * buf, int buflen) {
 	else { /* Not in services, maybe a number? */
 		lport = strtol(service,&errpos,0);
 		if ( (errpos[0] != 0) || (lport < 1) || (lport > 65535) )
-			return -1; /* Invalid port address */
+			throw FileEx(Ex_INIT,"atoport: invalid port number or unknown service %s",service);
 		port = htons(lport);
 	}
 	return port;
@@ -194,14 +194,14 @@ static int do_gethostbyname(const char *netaddress,struct in_addr *addr,char *bu
 	else return 0;
 }
 
-int atoaddr(const char *netaddress,struct in_addr *addr,char *buf, int buflen){
+void atoaddr(const char *netaddress,struct in_addr *addr,char *buf, int buflen){
 	if
 #ifdef HAVE_INET_ATON
 		(inet_aton(netaddress,addr))
 #else
 		((addr->s_addr=inet_addr(netaddress))!=INADDR_NONE)
 #endif
-			return 1;
+			return;
 	else {
 		int r;
 		if (!(r=do_gethostbyname(netaddress, addr, buf, buflen)) && sock_errno==ERANGE) {
@@ -212,34 +212,24 @@ int atoaddr(const char *netaddress,struct in_addr *addr,char *buf, int buflen){
 			} while (!(r=do_gethostbyname(netaddress, addr, buf, buflen)) && sock_errno==ERANGE);
 			free(buf);
 		}
-		return r;
+		if (r==0)
+			throw FileEx(Ex_INIT,"gethostbyname: %s",sock_hstrerror(sock_h_errno));
 	}
 }
 
-int atosockaddr(const char *netaddress, const char *defport, const char *proto,struct sockaddr_in *address, char * buf, int buflen){
-	char *p;
-	char *a;
+void atosockaddr(const char *netaddress, const char *defport, const char *proto,struct sockaddr_in *address, char * buf, int buflen){
+	const char *p;
+	string a;
 	address->sin_family = AF_INET;
 	if ((p=strrchr(netaddress,':')))
 			defport=p+1;
 	int port=atoport(defport,proto,buf,buflen);
-	if (port<0)
-		return -1;
 	address->sin_port=port;
 	if (p){
-		a=new char[p-netaddress+1];
-		memcpy(a,netaddress,p-netaddress);
-		a[p-netaddress]=0;
-		netaddress=a;
-	}else
-		a=NULL;
-	if (!atoaddr(netaddress,&address->sin_addr,buf,buflen)){
-		if (a) delete [] a;
-		return -2;
+		a.assign(netaddress, p-netaddress);
+		netaddress=a.c_str();
 	}
-	if (a) delete [] a;
-	return 0;
-//	address->sin_addr.s_addr = addr.s_addr;
+	atoaddr(netaddress,&address->sin_addr,buf,buflen);
 }
 
 /* This is a generic function to make a connection to a given server/port.
@@ -274,10 +264,8 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 	else if (type == SOCK_DGRAM)
 //		port = atoport(service, "udp",buf,buflen);
 		prot="udp";
-	else {
-		PERROR("make_connection:  Invalid prot type %i",type);
-		return -1;
-	}
+	else 
+		throw FileEx(Ex_INIT,"make_connection:  Invalid prot type %i",type);
 //	if (r == -1) {
 //		PERROR("make_connection:  Invalid socket type %s",service);
 //		return -1;
@@ -306,10 +294,8 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 	//	if (tmp) *tmp=':';
 
 	memset((char *) &address, 0, sizeof(address));
-	if (atosockaddr(netaddress,service,prot,&address,buf,buflen)<0){
-		PERROR("make_connection:  Invalid network address %s (%s)(%i %s)",netaddress,service,sock_errno,sock_strerror(sock_errno));
-		return -1;
-	}
+	atosockaddr(netaddress,service,prot,&address,buf,buflen);
+
 	unsigned char *i;
 	i=(unsigned char *)&address.sin_addr.s_addr;
 	PMSG("Connecting to %i.%i.%i.%i:%i",i[0],i[1],i[2],i[3],ntohs(address.sin_port));
@@ -319,10 +305,8 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 	address.sin_addr.s_addr = addr.s_addr;*/
 
 	sock = socket(address.sin_family, type, 0);
-	if (sock < 0) {
-		PERROR("socket: %s",sock_strerror(sock_errno));
-		return -1;
-	}
+	if (sock < 0)
+		throw FileEx(Ex_INIT,"socket: %s",sock_strerror(sock_errno));
 
 
 	//  printf("Connecting to %s on port %d.\n",inet_ntoa(*addr),htons(port));
@@ -346,36 +330,31 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 				int erp;
 				socklen_t erl=sizeof(erp);
 				if (getsockopt(sock,SOL_SOCKET,SO_ERROR,&erp,&erl)){
-					PERROR("getsockopt: %s",sock_strerror(sock_errno));
 					sock_close(sock);
-					return -1;
+					throw FileEx(Ex_INIT,"getsockopt: %s",sock_strerror(sock_errno));
 				}
 				if (erp) {
-					PERROR("connect: %s",strerror(erp));
 					sock_close(sock);
-					return -1;
+					throw FileEx(Ex_INIT,"connect: %s",sock_strerror(erp));
 				}
 			}else{
-				PERROR("connection timed out\n");
 				sock_close(sock);
-				return -1;
+				throw FileEx(Ex_INIT,"make_connection timeout reached (%is)", sock_timeout);
 			}
 			fcntl(sock,F_SETFL,0);//set to blocking again (I hope)
 			connected=0;
 		}
 #endif
 		if (connected < 0) {
-			PERROR("connect: %s",sock_strerror(sock_errno));
 			sock_close(sock);
-			return -1;
+			throw FileEx(Ex_INIT,"connect: %s",sock_strerror(sock_errno));
 		}
 		return sock;
 	}
 	/* Otherwise, must be for udp, so bind to address. */
 	if (bind(sock, (struct sockaddr *) &address, sizeof(address)) < 0) {
-		PERROR("bind: %s",sock_strerror(sock_errno));
 		sock_close(sock);
-		return -1;
+		throw FileEx(Ex_INIT,"bind: %s",sock_strerror(sock_errno));
 	}
 	return sock;
 }

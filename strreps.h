@@ -39,7 +39,15 @@ int vasprintf(char **str,const char *format,va_list ap);
 #endif
 
 #ifndef HAVE_STRERROR
-const char * strerror(int err);
+#define NEED_CRAPPY_STRERROR
+const char * crappy_strerror(int err);
+inline const char * strerror(int err) {return crappy_strerror(err);}
+#endif
+//tests if hstrerror might be a define, too, since autoconf can't find that.
+#if (!defined(HAVE_HSTRERROR) && !defined(hstrerror))
+#define NEED_CRAPPY_STRERROR
+const char * crappy_strerror(int err);
+inline const char * hstrerror(int err) {return crappy_strerror(err);}
 #endif
 
 #endif //HAVE_CONFIG_H

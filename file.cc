@@ -298,20 +298,22 @@ inline ssize_t c_file_stream::doread(void *data,size_t len){
 
 
 c_file_tcp::c_file_tcp(const char *host,const char * port):c_file(host){
-	if (rbuffer){
-		rbuffer->cbuf.reserve(512);//ensure at least 512 bytes
-		sock=make_connection(SOCK_STREAM,host,port,rbuffer->cbuf.data(),rbuffer->cbuf.capacity());
-	}
-	else{
-		char buf[512];
-		sock=make_connection(SOCK_STREAM,host,port,buf,512);
-	}
 	if (m_name.find(':')<0){
 		m_name+=':';
 		m_name+=port;
 	}
-	if (sock<0)
-		throw FileEx(Ex_INIT,"open %s (%s)", name(), sock_strerror(sock_errno));
+	try {
+		if (rbuffer){
+			rbuffer->cbuf.reserve(512);//ensure at least 512 bytes
+			sock=make_connection(SOCK_STREAM,host,port,rbuffer->cbuf.data(),rbuffer->cbuf.capacity());
+		}
+		else{
+			char buf[512];
+			sock=make_connection(SOCK_STREAM,host,port,buf,512);
+		}
+	} catch (FileEx &e) {
+		throw FileEx(Ex_INIT,"open %s (%s)", name(), e.getExStr());
+	}
 }
 const char *c_file_tcp::dostrerror(void) {
 	return sock_strerror(sock_errno);

@@ -27,23 +27,25 @@
 void sockstuff_init(void);
 inline int sock_close(int s) {return closesocket(s);}
 #define sock_errno WSAGetLastError()
+#define sock_h_errno WSAGetLastError()
 const char* sock_strerror(int e);
+#define sock_hstrerror sock_strerror
 #else /* !HAVE_WINSOCK_H */
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <errno.h>
 #include <string.h>
 #include "strreps.h"
 #define sockstuff_init()
 inline int sock_close(int s) {return close(s);}
 #define sock_errno errno
+#define sock_h_errno h_errno
 inline const char* sock_strerror(int e) {return strerror(e);}
+inline const char* sock_hstrerror(int e) {return hstrerror(e);}
 #endif /* !HAVE_WINSOCK_H */
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#endif
 #include <stdarg.h>
 
 inline int sock_write(int sockfd, const char *buf, size_t count) {
@@ -53,10 +55,10 @@ inline int sock_write(int sockfd, const char *buf, size_t count) {
 
 extern int sock_timeout;
 
-int atosockaddr(const char *netaddress, const char *defport, const char *proto,struct sockaddr_in *address, char * buf, int buflen);
+void atosockaddr(const char *netaddress, const char *defport, const char *proto,struct sockaddr_in *address, char * buf, int buflen);
 
 int atoport(const char *service,const char *proto,char * buf, int buflen);
-int atoaddr(const char *netaddress,struct in_addr *addr,char *buf, int buflen);
+void atoaddr(const char *netaddress,struct in_addr *addr,char *buf, int buflen);
 
 //int make_connection(char *service, int type, char *netaddress,char * buf, int buflen);
 int make_connection(int type,const char *netaddress,const char *service,char * buf, int buflen);
