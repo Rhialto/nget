@@ -159,8 +159,6 @@ AC_raf_FUNC_WHICH_GETSERVBYNAME_R
 AC_PROTOTYPE_RECV
 AC_FUNC_MKDIR
 
-MY_CHECK_OPTIMIZATION
-
 dnl enable warnings if using gcc
 if test "$GXX" = "yes"; then
 	CXXFLAGS="$CXXFLAGS -Wall"

@@ -1,3 +1,6 @@
+2002-xx-xx v0.xx:
+  * Remove configure check for gcc<=2.7 since it can't really build nget anymore and the test was incorrectly detecting some gcc versions.
+
 2002-07-11 v0.20:
   * Use timegm func in date string parser if available, fixes possibility of some times being parsed an hour off due to daylight savings time.
   * Replace the old kludge that was used when timegm wasn't available with a routine by Yitzchak Scott-Thoennes that should work on all systems, even in daylight savings time.
