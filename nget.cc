@@ -81,6 +81,7 @@ class c_poptContext {
 		const char * BadOption(int flags) {return poptBadOption(optCon, flags);}
 		c_poptContext(const char *name, int argc, const char **argv, const struct poptOption *options, int flags) {
 			optCon = poptGetContext(POPT_NAME_T name, argc, POPT_ARGV_T argv, options, flags);
+			poptReadDefaultConfig(optCon, 0);
 		}
 		~c_poptContext() {
 			poptFreeContext(optCon);
@@ -507,7 +508,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 #ifndef POPT_CONTEXT_ARG_OPTS
 #define POPT_CONTEXT_ARG_OPTS 0
 #endif
-	c_poptContext optCon(NULL, argc, argv, optionsTable, (sub?POPT_CONTEXT_KEEP_FIRST:0) | POPT_CONTEXT_ARG_OPTS);
+	c_poptContext optCon("nget", argc, argv, optionsTable, (sub?POPT_CONTEXT_KEEP_FIRST:0) | POPT_CONTEXT_ARG_OPTS);
 #else
 #ifdef HAVE_GETOPT_LONG
 	int opt_idx;
