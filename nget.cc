@@ -164,7 +164,7 @@ void set_user_error_status_and_do_fatal_user_error(int incr=1) {
 		throw FatalUserException();
 }
 
-#define NUM_OPTIONS 38
+#define NUM_OPTIONS 39
 #ifndef HAVE_LIBPOPT
 
 #ifndef HAVE_GETOPT_LONG
@@ -214,6 +214,7 @@ enum {
 	OPT_TEXT_HANDLING,
 	OPT_SAVE_TEXT_FOR_BINARIES,
 	OPT_DECODE,
+	OPT_TIMEOUT,
 	OPT_MIN_SHORTNAME
 };
 
@@ -269,6 +270,7 @@ static void addoptions(void)
 	addoption("save-binary-info",1,OPT_SAVE_TEXT_FOR_BINARIES,"OPT","save text files for posts that contained only binaries (yes/no(default))");
 	addoption("tries",1,'t',"INT","set max retries (-1 unlimits, default 20)");
 	addoption("delay",1,'s',"INT","seconds to wait between retry attempts(default 1)");
+	addoption("timeout",1,OPT_TIMEOUT,"INT","seconds to wait for reply from server");
 	addoption("limit",1,'l',"INT","min # of lines a 'file' must have(default 0)");
 	addoption("maxlines",1,'L',"INT","max # of lines a 'file' must have(default -1)");
 	addoption("incomplete",0,'i',0,"retrieve files with missing parts");
@@ -809,6 +811,18 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					options.retrydelay=1;
 				PMSG("retry delay set to %i",options.retrydelay);
 				break;
+			case OPT_TIMEOUT:{
+				char *erp;
+				int newtimeout = strtol(loptarg,&erp,10);
+				if (*loptarg=='\0' || *erp!='\0' || newtimeout < 0) {
+					PERROR("invalid timeout value %s",loptarg);
+					set_user_error_status_and_do_fatal_user_error();
+					break;
+				}
+				sock_timeout = newtimeout;
+				PMSG("sock timeout set to %i",sock_timeout);
+				break;
+			}
 			case 't':
 				options.maxretry=atoi(loptarg);
 				if (options.maxretry==-1)

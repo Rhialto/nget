@@ -4,6 +4,7 @@
   * Make ngetlite check if the tempfile already exists and skip retrieving that article (in case it was already downloaded by nget.)
   * Stop some inconsequential messages from being printed when -qq was specified.
   * Fix some errors that were being printed on stdout rather than stderr.
+  * Add --timeout arg. (overrides .ngetrc timeout option)
 
 2002-10-28 v0.22.1:
   * Fix segv on saving text file if no uulib info was recorded.

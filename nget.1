@@ -1,4 +1,4 @@
-.TH nget 1 "18 Oct 2002"
+.TH nget 1 "27 Nov 2002"
 .SH NAME
 nget \- retrieve files from NNTP (usenet news) hosts
 .SH SYNOPSIS
@@ -110,6 +110,8 @@ multi-part message) must have to be considered for retrieval.
 Set the maximum number of lines a message must have to be considered for retrieval. (-1 for unlimited)
 .IP "-s/--delay int"
 Set the number of seconds to wait between retry attempts.
+.IP "--timeout int"
+Set the number of seconds to wait for a reply from the nntp server before giving up.
 .IP "-i/--incomplete"
 Retrieve files with missing parts.
 .IP "-I/--complete"
