@@ -167,7 +167,7 @@ c_nntp_files_u* c_nntp_cache::getfiles(const string &path, const string &temppat
 		f=(*fi).second;
 		//if (f->lines>=linelimit && (flags&GETFILES_NODUPECHECK || !(f->flags&FILEFLAG_READ)) && (f->have>=f->req || flags&GETFILES_GETINCOMPLETE) && !hreg.match(f->subject.c_str())){//matches user spec
 		//if (f->lines>=linelimit && (flags&GETFILES_NODUPECHECK || !(grange->check(banum))) && (f->have>=f->req || flags&GETFILES_GETINCOMPLETE) && !hreg.match(f->subject.c_str())){//matches user spec
-		if ((flags&GETFILES_NODUPEIDCHECK || !(midinfo->check(f->bamid()))) && (f->have>=f->req || flags&GETFILES_GETINCOMPLETE) && (*pred)((ubyte*)f.gimmethepointer())){//matches user spec
+		if ((flags&GETFILES_NODUPEIDCHECK || !(midinfo->check(f->bamid()))) && (flags&GETFILES_GETINCOMPLETE || f->iscomplete()) && (*pred)((ubyte*)f.gimmethepointer())){//matches user spec
 //			fc->additem(i);
 //			if (!(flags&GETFILES_NODUPECHECK) && f->isread())
 //				continue;

@@ -137,6 +137,7 @@ class c_nntp_file : public c_refcounted<c_nntp_file>{
 		string subject,author;
 		int partoff,tailoff;
 		void addpart(c_nntp_part *p);
+		bool iscomplete(void) {return have>=req;}
 //		ulong banum(void){assert(!parts.empty());return (*parts.begin()).second->articlenum;}
 		string bamid(void) const {assert(!parts.empty());return (*parts.begin()).second->messageid;}
 		time_t badate(void) const {assert(!parts.empty());return (*parts.begin()).second->date;}
