@@ -19,8 +19,7 @@
 
 from __future__ import nested_scopes
 
-import nntpd
-import threading
+import nntpd,util
 
 import os, sys, time, random, atexit
 from optik import Option, OptionValueError
@@ -63,37 +62,22 @@ parser.add_option(None, "--seed",
 
 (options, args) = parser.parse_args()
 
-servers = []
-serverthreads = []
 groups = options.groups.split(',')
 files = {}
 tot_errs = 0
 
 def cleanup():
 	if tot_errs==0:
-		import shutil
-		#shutil.rmtree(tmpdir)
-		#print 'rmtree',tmpdir
-		#print 'leaving',rcdir
-		print 'rmtree',rcdir
-		shutil.rmtree(rcdir)
+		testnget.clean_all()
 	else:
-		print 'errors, leaving',rcdir
+		print 'errors, leaving',testnget.rcdir
 	print 'seed was', options.seed
 
 atexit.register(cleanup)
 
-rcdir = os.path.join(os.environ.get('TMPDIR') or '/tmp', 'nget_stress_'+hex(random.randrange(0,sys.maxint)))
-os.environ['NGETHOME'] = rcdir
-os.mkdir(rcdir)
-tmpdir = os.path.join(rcdir, 'tmp')
-os.mkdir(tmpdir)
-
 rand = random.Random(options.seed)
 
-for i in range(0, options.numservers):
-	server = nntpd.NNTPTCPServer(("127.0.0.1", 0)) #port 0 selects a port automatically.
-	servers.append(server)
+servers = nntpd.NNTPD_Master(options.numservers)
 
 files = {}
 def randfile(f, size, name):
@@ -108,7 +92,7 @@ def populate():
 	from cStringIO import StringIO
 	import uu
 	size_left = options.totalsize
-	def randservers(allservers=servers[:]):
+	def randservers(allservers=servers.servers[:]):
 		rand.shuffle(allservers)
 		return allservers[:rand.randrange(1,options.numservers+1)]
 	fileno = 0
@@ -142,37 +126,20 @@ def populate():
 
 print 'generating test posts...'	
 populate()
+
+testnget = util.TestNGet(options.nget, servers.servers)
 	
-rc = open(os.path.join(rcdir, '_ngetrc'), 'w')
-rc.write("tries=1\n")
-#rc.write("debug=3\n")
-rc.write("debug=0\n")
-rc.write("{halias\n")
-for i in range(0, options.numservers):
-	rc.write("""
- {host%i
-  addr=127.0.0.1:%i
-  fullxover=1
-  id=%i
- }
-"""%(i, servers[i].socket.getsockname()[1], i+1))
-rc.write("}\n")
-rc.close()
 print 'starting servers...'
-for server in servers:
-	s=threading.Thread(target=server.serve_forever)
-	#s.setDaemon(1)
-	s.start()
-	serverthreads.append(s)
+servers.start()
 
 print 'starting nget...'
-tot_errs += os.system(options.nget+' -gfoo -p '+tmpdir+' -r .')
+tot_errs += testnget.run('-gfoo -r .')
 print 'verifying decoded files...'
 fnames = files.keys()
 fnames.sort()
 err=0
 for fk in fnames:
-	fn = os.path.join(tmpdir, fk)
+	fn = os.path.join(testnget.tmpdir, fk)
 	#assert(open(fn).read() == files[fk])
 	if not os.path.exists(fn):
 		print fn,'does not exist'
@@ -189,10 +156,7 @@ print err, " errors"
 #s.start()
 #s.join()
 print 'stopping servers...'
-for server in servers:
-	server.stop_serving()
-for s in serverthreads:
-	s.join()
+servers.stop()
 print 'exiting...'
 
 #if __name__=="__main__":

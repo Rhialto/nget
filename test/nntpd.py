@@ -111,6 +111,27 @@ class NNTPTCPServer(StoppableThreadingTCPServer):
 				self.groups[g]=Group()
 			self.groups[g].addarticle(article)
 
+class NNTPD_Master:
+	def __init__(self, num):
+		self.servers = []
+		self.threads = []
+		for i in range(num):
+			self.servers.append(NNTPTCPServer(("127.0.0.1", 0))) #port 0 selects a port automatically.
+			
+	def start(self):
+		for server in self.servers:
+			s=threading.Thread(target=server.serve_forever)
+			#s.setDaemon(1)
+			s.start()
+			self.threads.append(s)
+			
+	def stop(self):
+		for server in self.servers:
+			server.stop_serving()
+		for thread in self.threads:
+			thread.join()
+		self.threads = []
+
 
 class Group:
 	def __init__(self):
