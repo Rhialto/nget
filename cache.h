@@ -245,7 +245,7 @@ class c_message_state : public c_refcounted<c_message_state>{
 #ifdef HAVE_HASH_MAP_H
 typedef hash_map<const char*, c_message_state::ptr, hash<const char*>, eqstr> t_message_state_list;
 #else
-typedef map<const char*, c_message_state::ptr, hash<const char*>, ltstr> t_message_state_list;
+typedef map<const char*, c_message_state::ptr, ltstr> t_message_state_list;
 #endif
 
 //hrm.
