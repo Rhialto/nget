@@ -1322,6 +1322,11 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 				dupe_file_checker flist;
 				for (un=0;;un++){
 					if ((uul=UUGetFileListItem(un))==NULL)break;
+					if (uul->filename==NULL) {
+						printf("invalid uulist item, uul->filename==NULL\n");
+						uustatus.derr++;
+						continue;
+					}
 					if (!(uul->state & UUFILE_OK)){
 						printf("%s not ok\n",uul->filename);
 						texthandler.adddecodeinfo(string(uul->filename) + " not ok");
