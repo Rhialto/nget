@@ -38,10 +38,19 @@ Install:      (./configure --help will show extra options not described here)
 2) make
 3) make test     (optional, see TestSuite Requirements)
 4) make install
-5) mkdir $HOME/.nget4/ ; cp .ngetrc $HOME/.nget4/ ; vi $HOME/.nget4/.ngetrc
-   (remember to chmod 600 your .ngetrc if you are going to use password auth)
 
 
+Usage:
+1) Before the first use, nget must be configured.
+1.a) Make nget directory:         mkdir $HOME/.nget4
+1.b) Copy example .ngetrc:        cp .ngetrc $HOME/.nget4/
+1.c) Add your newsservers:        vi $HOME/.nget4/.ngetrc
+   (Remember to chmod 600 your .ngetrc if you are using password auth.)
+2) See manpage and nget --help output.  The manpage thoroughly describes all
+  command line and configuration options, and has an examples section.
+
+
+Portability:
 nget is developed on linux (glibc2), and has been successfully compiled/tested
 on: linux x86(gcc 2.95.4, gcc 3.0.4, gcc 3.2), linux alpha(gcc 2.95.2),
 macosx(gcc 2.95.2), freebsd x86(gcc 2.95.4, gcc 3.0.4), solaris sparc(gcc
@@ -63,7 +72,10 @@ See the file 'COPYING' for more information.
 I would appreciate it if you make modifications if you would send them
 to me for possible inclusion in the main source.
 
-You can get the latest version at 
+
+You can find the latest version at 
 http://nget.sourceforge.net/
 or
 http://www.azstarnet.com/~donut/programs.html
+or
+http://freshmeat.net/projects/nget/
