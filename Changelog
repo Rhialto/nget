@@ -12,7 +12,7 @@
   * Cleaned up retrieving headers progress display when using fullxover=1.
   * Added streaming support for header retrieval, using fullxover should now be many times faster. (and on high ping links, increasing the maxstreaming setting can improve the speed even more.)
   * Force stdout to be line buffered. (Keeps stdout and stderr from getting out of sync when redirecting both to a file.)
-  * Force posts with no body to be handled as text. (As opposed to giving a "No encoded data found" error and keeping the temp file)
+  * Force single-part posts with no body to be handled as text. (As opposed to giving a "No encoded data found" error and keeping the temp file)
   * Better error handling on writing cache/midinfo files.
 
 2001-11-24 - v0.15.2:
