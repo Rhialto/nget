@@ -1,4 +1,4 @@
-2002-xx-xx v0.xx:
+2002-07-11 v0.20:
   * Use timegm func in date string parser if available, fixes possibility of some times being parsed an hour off due to daylight savings time.
   * Replace the old kludge that was used when timegm wasn't available with a routine by Yitzchak Scott-Thoennes that should work on all systems, even in daylight savings time.
   * Complete rewrite of expression tree code (what handles the -R and -r args) to make the code more flexible, remove ugly pointer math, and fix gcc 3.1 warnings.  Also make the and/or operators use short circuit evaluation.
@@ -9,7 +9,8 @@
   * Optimize cache/midinfo parsing a bit.
   * Extend server penalization so that any server that disconnects before successfully executing at least one command will be penalized.  This means that disconnects due to overquota, servers that connect but timeout before saying hello, etc, will also be penalized now.
   * Fix needing to escape quotes inside -r strings.
-  * Preliminary support for (cross-)compiling with mingw32. (see README.mingw32)
+  * Support for (cross-)compiling with mingw32. (see README.mingw32)
+  * Added nget.spec(.in) file for RPM support. (Thomas Kotzian)
   * Remove configure --disable-filecompare option.  I don't think anyone used it, and even if they did it really shouldn't be a configure option.  (If you did use it, and want me to add it as a runtime option, then contact me.)
   * Major manpage cleanups, example ngetrc sections are indented properly and all .ngetrc global and host options are individually documented.
   * Check for internally used non-standard regex operators at runtime, should fix problems with dupe file checking not working on some non-gnu regex system libraries.

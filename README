@@ -1,4 +1,4 @@
-nget 0.19.1  Copyright 1999-2002 Matthew Mueller <donut@azstarnet.com>
+nget 0.20  Copyright 1999-2002 Matthew Mueller <donut@azstarnet.com>
 
 Note if you are upgrading from a version 0.8-0.11 to 0.12 or later:
  You will need to run the fixnames.sh script to rename your cache files to the
@@ -40,12 +40,15 @@ Install:      (./configure --help will show extra options not described here)
 4) make install
 
 
-nget is developed on linux (glibc2) and win2000(with cygwin), and should
-compile without modifications on any system using g++ 2.95 or other up to date
-compliers.  gcc 2.7.x can no longer build nget. (Though I haven't tried too
-hard anymore).  gcc 2.7.x can however build ngetlite, so you can still use it
-to download on an older comp if you have a recent comp that you can use nget to
-write the listfiles on (-w option).
+nget is developed on linux (glibc2), and has been successfully compiled/tested
+on: linux x86(gcc 2.95.4, gcc 3.0.4, gcc 3.1), linux alpha(gcc 2.95.2),
+macosx(gcc 2.95.2), freebsd x86(gcc 2.95.4, gcc 3.0.4), solaris sparc(gcc
+2.95.2) and should compile without modifications on other systems using g++
+2.95+ or other up to date compliers.
+Older compilers like gcc 2.7.x can no longer build nget, but can (probably)
+still build ngetlite, so you can still use it to download on an older comp if
+you have a recent comp that you can use nget to write the listfiles on (-w
+option).
 
 
 Copying:
