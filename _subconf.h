@@ -58,5 +58,5 @@ using namespace std;
 #endif
 
 #ifdef WIN32
-#define sleep _sleep
+#define sleep(x) _sleep(x*1000)
 #endif
