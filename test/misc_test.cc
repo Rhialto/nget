@@ -1,4 +1,4 @@
-void set_user_error_status_and_do_fatal_user_error(void) {} // ugly. whee.
+void set_user_error_status_and_do_fatal_user_error(int) {} // ugly. whee.
 #include "misc.h"
 #include "path.h"
 #include "file.h"
