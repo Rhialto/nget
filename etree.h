@@ -23,6 +23,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include "argparser.h"
 
 class c_nntp_file;
 template <class ClassType>
@@ -32,5 +33,6 @@ struct pred {
 };
 typedef pred<const c_nntp_file> nntp_file_pred;
 nntp_file_pred * make_pred(const char *optarg, int gflags);
+nntp_file_pred * make_pred(const arglist_t &e_parts, int gflags);
 
 #endif

@@ -23,7 +23,6 @@
 #include "strreps.h"
 #include "getter.h"
 #include <stack>
-#include "argparser.h"
 
 #define MAKE_BINARY_OP(name,op) template <class T,class T2=T>			\
 struct Op_ ## name {			\
@@ -137,9 +136,12 @@ string invert_op(string o) {
 nntp_file_pred * make_pred(const char *optarg, int gflags){
 	arglist_t e_parts;
 	parseargs(e_parts, optarg);
+	return make_pred(e_parts, gflags);
+}
 
-	string *x=NULL,*y=NULL;
-	arglist_t::iterator i=e_parts.begin();
+nntp_file_pred * make_pred(const arglist_t &e_parts, int gflags){
+	const string *x=NULL,*y=NULL;
+	arglist_t::const_iterator i=e_parts.begin();
 	int re_flags = REG_EXTENDED | ((gflags&GETFILES_CASESENSITIVE)?0:REG_ICASE);
 	nntp_file_pred * p=NULL;
 	stack<nntp_file_pred *> pstack;

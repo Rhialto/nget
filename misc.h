@@ -27,6 +27,7 @@
 #include <stdio.h>
 
 #include <string>
+#include "_sstream.h"
 
 int doopen(int &handle,const char * name,int access,int mode=0);
 int dofopen(FILE * &f,const char * name,const char * mode,int domiscquiet=0);
@@ -39,6 +40,13 @@ char *goodgetcwd(char **p);
 
 #define TCONV_DEF_BUF_LEN 60
 size_t tconv(char * timestr, int max, time_t *curtime,const char * formatstr="%Y%m%dT%H%M%S", int local=1);
+
+template <class Type>
+string tostr(const Type &arg){
+    ostringstream buffer;
+    buffer << arg;
+    return buffer.str();
+}
 
 template <class int_type>
 string durationstr(int_type duration);

@@ -577,36 +577,26 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 						printf("no group specified\n");
 						set_user_error_status();
 					}else{
-						/*c_regex_nosub *reg=new c_regex_nosub(loptarg,REG_EXTENDED + ((gflags&GETFILES_CASESENSITIVE)?0:REG_ICASE));
-						  if (!reg)
-						  throw new c_error(EX_A_FATAL,"couldn't allocate regex");
-						  if (reg->geterror()){
-						  char buf[256];
-						  int e=reg->geterror();
-						  reg->strerror(buf,256);
-						  delete reg;
-						//throw new c_error(EX_A_FATAL,"regex error %i:%s",e,buf);
-						printf("regex error %i:%s\n",e,buf);break;
-						}
-						nntp_pred *p=ecompose2(new e_land<bool>,
-						new e_binder2nd<e_nntp_file_lines<e_ge<ulong> > >(linelimit),
-						new e_binder2nd_p<e_nntp_file_subject<e_eq<string,c_regex_nosub*> > >(reg));
-
-						nntp.filec=nntp.gcache->getfiles(nntp.filec,nntp.grange,p,gflags);
-						delete p;
-						if (!nntp.filec)
-						printf("nntp_retrieve: no match for %s\n",loptarg);
-						//									throw new c_error(EX_U_WARN,"nntp_retrieve: no match for %s",match);
-						//								nntp.nntp_queueretrieve(loptarg,linelimit,gflags);
-						qstatus=1;*/
+						arglist_t e_parts;
+						e_parts.push_back("subject");
+						e_parts.push_back(loptarg);
+						e_parts.push_back("=~");
 						ostringstream s; 
-						s << "subject \"" << loptarg << "\" =~";
-						if (options.linelimit > 0)
-							s << " lines " << options.linelimit << " >= &&" ;
-						if (options.maxlinelimit < ULONG_MAX)
-							s << " lines " << options.maxlinelimit << " <= &&" ;
+						//use push_front for lines tests, to exploit short circuit evaluation (since comparing integers is faster than regexs)
+						if (options.linelimit > 0) {
+							e_parts.push_front(">=");
+							e_parts.push_front(tostr(options.linelimit));
+							e_parts.push_front("lines");
+							e_parts.push_back("&&");
+						}
+						if (options.maxlinelimit < ULONG_MAX) {
+							e_parts.push_front("<=");
+							e_parts.push_front(tostr(options.maxlinelimit));
+							e_parts.push_front("lines");
+							e_parts.push_back("&&");
+						}
 						try {
-							nntp_file_pred *p=make_pred(s.str().c_str(), options.gflags);
+							nntp_file_pred *p=make_pred(e_parts, options.gflags);
 							getinfos.push_back(new c_nntp_getinfo(options.path, options.temppath, p, options.gflags));
 						}catch(RegexEx &e){
 							printCaughtEx(e);

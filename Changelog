@@ -8,6 +8,7 @@
   * Error on non-option command line args rather than ignoring them.  To place comments in listfiles, use # as the first char on a line, or with preceeding whitespace and not inside quotes.
   * Optimize cache/midinfo parsing a bit.
   * Extend server penalization so that any server that disconnects before successfully executing at least one command will be penalized.  This means that disconnects due to overquota, servers that connect but timeout before saying hello, etc, will also be penalized now.
+  * Fix needing to escape quotes inside -r strings.
 
 2002-06-17 v0.19.1:
   * Print error message rather than segv on flush without specifying a group first. (Reported by Christian Marillat)

@@ -228,6 +228,11 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run('-g test -r joystick'))
 		self.verifyoutput('0002')
 	
+	def test_r_quote(self):
+		self.addarticles('0001', 'yenc_single')
+		self.vfailIf(self.nget.run('-g test -r \'"\''))
+		self.verifyoutput('0001')
+	
 	def test_r_case(self):
 		self.vfailIf(self.nget.run('-g test -c -r jOyStIcK'))
 		self.verifyoutput([])
