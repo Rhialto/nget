@@ -3,6 +3,7 @@
   * Fix --without-zlib build.
   * Optimized cache file loading and dupe file checking speed.
   * Added cachedir config option and NGETCACHE env var.
+  * Added --test-multiserver to make -T show which servers have each file.
 
 2002-01-23 v0.16:
   * Print info line about each file before beginning retrieval.

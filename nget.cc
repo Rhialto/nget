@@ -137,7 +137,7 @@ void print_error_status(void){
 }
 
 
-#define NUM_OPTIONS 30
+#define NUM_OPTIONS 31
 #ifndef HAVE_LIBPOPT
 
 #ifndef HAVE_GETOPT_LONG
@@ -167,12 +167,17 @@ struct opt_help {
 static opt_help ohelp[NUM_OPTIONS+1];
 static int olongestlen=0;
 
+enum {
+	OPT_TEST_MULTI=1,
+	OPT_MIN_SHORTNAME
+};
+
 static void addoption(char *longo,int needarg,char shorto,char *adesc,char *desc){
 	static int cur=0;
 	assert(cur<NUM_OPTIONS);
 #ifdef HAVE_LIBPOPT
 	optionsTable[cur].longName=longo;
-	optionsTable[cur].shortName=shorto;
+	optionsTable[cur].shortName=(shorto>OPT_MIN_SHORTNAME)?shorto:0;
 	optionsTable[cur].argInfo=needarg?POPT_ARG_STRING:POPT_ARG_NONE;
 	optionsTable[cur].val=shorto;
 	optionsTable[cur].arg=NULL;
@@ -181,9 +186,11 @@ static void addoption(char *longo,int needarg,char shorto,char *adesc,char *desc
 	long_options[cur].has_arg=needarg;
 	long_options[cur].flag=0;
 	long_options[cur].val=shorto;
-	getopt_options+=shorto;
-	if (needarg)
-		getopt_options+=':';
+	if (shorto>OPT_MIN_SHORTNAME){
+		getopt_options+=shorto;
+		if (needarg)
+			getopt_options+=':';
+	}
 #endif //!HAVE_LIBPOPT
 	ohelp[cur].namelen=longo?strlen(longo):0;
 	ohelp[cur].arg=adesc;
@@ -208,6 +215,7 @@ static void addoptions(void)
 //	addoption("mark",1,'m',"MARKNAME","name of high water mark to test files against");
 //	addoption("testretrieve",1,'R',"REGEX","test what would have been retrieved");
 	addoption("testmode",0,'T',0,"test what would have been retrieved");
+	addoption("test-multiserver",1,OPT_TEST_MULTI,"OPT","make testmode display per-server completion info (no(default)/long/short)");
 	addoption("tries",1,'t',"INT","set max retries (-1 unlimits, default 20)");
 	addoption("delay",1,'s',"INT","seconds to wait between retry attempts(default 1)");
 	addoption("limit",1,'l',"INT","min # of lines a 'file' must have(default 0)");
@@ -255,13 +263,22 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.\n");
 			long_options[i].name;
 #endif
 			i++){
-		printf("-%c  ",
+		if(
 #ifdef HAVE_LIBPOPT
 				optionsTable[i].shortName
 #else
 				long_options[i].val
 #endif
-		);
+				>=OPT_MIN_SHORTNAME)
+			printf("-%c  ",
+#ifdef HAVE_LIBPOPT
+				optionsTable[i].shortName
+#else
+				long_options[i].val
+#endif
+			);
+		else
+			printf("    ");
 		if (
 #ifdef HAVE_LIBPOPT
 				optionsTable[i].argInfo!=POPT_ARG_NONE
@@ -330,7 +347,7 @@ nget_options::nget_options(void){
 	get_path();
 	get_temppath();
 }
-nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),qstatus(o.qstatus),makedirs(o.makedirs),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
+nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),qstatus(o.qstatus),test_multi(o.test_multi),makedirs(o.makedirs),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
 	/*	if (o.path){
 			path=new char[strlen(o.path)+1];
 			strcpy(path,o.path);
@@ -361,6 +378,23 @@ void nget_options::parse_dupe_flags(const char *opt){
 		}
 		opt++;
 	}
+}
+int nget_options::set_test_multi(const char *s){
+	if (!s) {
+		//printf("set_makedirs s=NULL\n");
+		return 0;
+	}
+	if (strcasecmp(s,"short")==0)
+		test_multi=SHOW_MULTI_SHORT;
+	else if (strcasecmp(s,"long")==0)
+		test_multi=SHOW_MULTI_LONG;
+	else if (strcasecmp(s,"no")==0)
+		test_multi=NO_SHOW_MULTI;
+	else{
+		printf("set_test_multi invalid option %s\n",s);
+		return 0;
+	}
+	return 1;
 }
 int nget_options::set_makedirs(const char *s){
 	if (!s) {
@@ -487,6 +521,9 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				case 'T':
 					options.gflags|=GETFILES_TESTMODE;
 					PDEBUG(DEBUG_MIN,"testmode now %i",options.gflags&GETFILES_TESTMODE > 0);
+					break;
+				case OPT_TEST_MULTI:
+					options.set_test_multi(loptarg);
 					break;
 				case 'M':
 					options.gflags|= GETFILES_MARK;
@@ -904,6 +941,8 @@ int main(int argc, char ** argv){
 			options.linelimit=0;
 			options.maxlinelimit=ULONG_MAX;
 			options.gflags=0;
+			options.test_multi=NO_SHOW_MULTI;
+			options.retr_show_multi=SHOW_MULTI_LONG;//always display the multi-server info when retrieving, just because I think thats better
 			options.qstatus=0;
 			options.group=NULL;
 			options.host=NULL;
@@ -957,6 +996,7 @@ int main(int argc, char ** argv){
 					options.gflags|= GETFILES_DUPEFILEMARK;
 				if (!cfg.data.getitemi("tempshortnames",&t) && t==1)
 					options.gflags|= GETFILES_TEMPSHORTNAMES;
+				options.set_test_multi(cfg.data.getitema("test_multiserver"));
 				options.set_makedirs(cfg.data.getitema("makedirs"));
 				
 				cfg.data.getitems("cachedir",&ngcachehome);//.ngetrc setting overrides default

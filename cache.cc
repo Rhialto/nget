@@ -151,6 +151,29 @@ void c_nntp_file::addpart(c_nntp_part *p){
 //	bytes+=p->apxbytes;lines+=p->apxlines;
 }
 
+void c_nntp_file::get_server_have_map(t_server_have_map &have_map) const{
+	t_nntp_file_parts::const_iterator pi(parts.begin());
+	for (;pi!=parts.end();++pi){
+		t_nntp_server_articles::const_iterator nsai(pi->second->articles.begin());
+		c_nntp_server_article *sa;
+		int serverid;
+		int partnum=pi->second->partnum;
+		c_nrange servers_already_found;
+
+		for (;nsai!=pi->second->articles.end();++nsai) {
+			serverid=nsai->first;
+			if (!servers_already_found.check(serverid)) {
+				sa=nsai->second;
+				if (have_map.find(serverid)==have_map.end())
+					have_map[serverid]=0;
+				if (partnum>0 && partnum<=req)
+					have_map[serverid]++;
+				servers_already_found.insert(serverid);
+			}
+		}
+	}
+}
+
 c_nntp_file::c_nntp_file(int r,ulong f,t_id fi,const char *s,const char *a,int po,int to):req(r),have(0),flags(f),fileid(fi),subject(s),author(a),partoff(po),tailoff(to){
 //	printf("aoeu1.1\n");
 }

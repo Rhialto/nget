@@ -65,10 +65,17 @@ void set_group_ok_status(int incr=1);
 void set_dupe_ok_status(int incr=1);
 void set_skipped_ok_status(int incr=1);
 
+enum t_show_multiserver {
+	NO_SHOW_MULTI,
+	SHOW_MULTI_LONG,
+	SHOW_MULTI_SHORT
+};
 struct nget_options {
 	int maxretry,retrydelay;
 	ulong linelimit,maxlinelimit;
 	int gflags,badskip,qstatus;
+	t_show_multiserver test_multi;
+	t_show_multiserver retr_show_multi; 
 	char makedirs;
 	c_group_info::ptr group;//,*host;
 //	c_data_section *host;
@@ -85,6 +92,7 @@ struct nget_options {
 	void get_path(void);
 	void get_temppath(void);
 	void parse_dupe_flags(const char *opt);
+	int set_test_multi(const char *s);
 	int set_makedirs(const char *s);
 };
 #endif

@@ -115,6 +115,8 @@ typedef map<int,c_nntp_part*,less<int> > t_nntp_file_parts;
 
 //#define FILEFLAG_READ 1
 
+typedef map<ulong,int,less<int> > t_server_have_map;
+
 class c_nntp_file : public c_refcounted<c_nntp_file>{
 	public:
 		t_nntp_file_parts parts;
@@ -127,6 +129,7 @@ class c_nntp_file : public c_refcounted<c_nntp_file>{
 		t_references references;
 		void addpart(c_nntp_part *p);
 		bool iscomplete(void) {return (have>=req) || (have<=1 && !references.empty() && lines()<1000);}
+		void get_server_have_map(t_server_have_map &have_map) const;
 //		ulong banum(void){assert(!parts.empty());return (*parts.begin()).second->articlenum;}
 		string bamid(void) const {assert(!parts.empty());return (*parts.begin()).second->messageid;}
 		time_t badate(void) const {assert(!parts.empty());return (*parts.begin()).second->date;}
@@ -144,6 +147,7 @@ class c_nntp_file : public c_refcounted<c_nntp_file>{
 		c_nntp_file(int r,ulong f,t_id fi,const char *s,const char *a,int po,int to);
 		virtual ~c_nntp_file();
 };
+
 #if 0
 typedef e_unary_function<c_nntp_file_ptr,bool> nntp_pred;
 

@@ -715,7 +715,7 @@ char * uu_fname_filter(void *v,char *fn){
 		throw new c_error(EX_U_WARN,"nntp_retrieve: no match for %s",match);
 }*/
 
-void print_nntp_file_info(c_nntp_file::ptr f) {
+void print_nntp_file_info(c_nntp_file::ptr f, t_show_multiserver show_multi) {
 	char tconvbuf[TCONV_DEF_BUF_LEN];
 	c_nntp_part *p=(*f->parts.begin()).second;
 	tconv(tconvbuf,TCONV_DEF_BUF_LEN,&p->date);
@@ -723,6 +723,27 @@ void print_nntp_file_info(c_nntp_file::ptr f) {
 		printf("%i",f->have);
 	else
 		printf("%i/%i",f->have,f->req);
+	if (show_multi!=NO_SHOW_MULTI){
+		t_server_have_map have_map;
+		f->get_server_have_map(have_map);
+		if (show_multi==SHOW_MULTI_SHORT)
+			printf(" ");
+		
+		for (t_server_have_map::iterator i=have_map.begin(); i!=have_map.end(); ++i){
+			c_server *s=nconfig.serv[i->first];
+			if (show_multi==SHOW_MULTI_LONG){
+				printf(" %s", s->alias.c_str());
+				if (i->second<f->have)
+					printf(":%i", i->second);
+			}
+			else{
+				if (i->second<f->have)
+					printf("%c", toupper(s->alias[0]));
+				else
+					printf("%c", s->alias[0]);
+			}
+		}
+	}
 	printf("\t%lil\t%s\t%s\t%s\t%s\n",f->lines(),tconvbuf,f->subject.c_str(),f->author.c_str(),p->messageid.c_str());
 }
 
@@ -761,7 +782,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 			f=fr->file;
 			if (optionflags & GETFILES_TESTMODE) {
 				if (midinfo->check(f->bamid())){
-					print_nntp_file_info(f);
+					print_nntp_file_info(f,options.test_multi);
 					nbytes+=f->bytes();
 					nfiles++;
 				}
@@ -773,7 +794,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 	} else if (optionflags & GETFILES_TESTMODE){
 		for(curf = filec->files.begin();curf!=filec->files.end();++curf){
 			fr=(*curf).second;
-			print_nntp_file_info(fr->file);
+			print_nntp_file_info(fr->file,options.test_multi);
 		}
 		if (optionflags & GETFILES_MARK)
 			printf("Would mark ");
@@ -820,7 +841,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 			fr=(*curf).second;
 			f=fr->file;
 			printf("Retrieving: ");
-			print_nntp_file_info(f);
+			print_nntp_file_info(f, options.retr_show_multi);
 //			bp=f->parts.begin()->second;
 			list<char *> fnbuf;
 			list<char *>::iterator fncurb;

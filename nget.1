@@ -47,6 +47,8 @@ when trying to change to a dir that does not exist.  Currently this option only 
 mkdir.  A future version of nget will support multi-level creating, like mkdir -p.
 .IP "-T/--testmode"
 Causes --retrieve to merely print out all matching files.
+.IP "--test-multiserver OPT"
+Causes testmode to display which servers have parts of each file.  OPT may be no to disable(default), long for a verbose output, and short for a more condensed form (In short mode, only the first letter of each server alias is printed, and it is upper-cased if that server does not have all the parts).
 .IP "-M/--mark"
 Mark matched files as retrieved.
 .IP "-U/--unmark"
@@ -134,6 +136,8 @@ Float: curservmult
 Boolean(0/1): case, complete, dupeidcheck, dupefilecheck, quiet, tempshortnames(1=Use 8.3 tempfile names (for old dos partitions, etc), 0=Use 17.3 tempfile names), unequal_line_error
 .br
 yes/no/ask: makedirs
+.br
+no/short/full: test_multiserver
 .P
 Host configuration is done in the halias section, with a subsection for each
 host containing its address, unique id, and optionally user, pass, fullxover, maxstreaming, and linelenience
