@@ -154,7 +154,8 @@ void dofile(const char *arg){
 	goto dofile_done;
 
 dofile_ferror:
-	printf("file error %s: %s\n",arg,strerror(errno));
+	if (ferror(listf))
+		printf("file error %s: %s\n",arg,strerror(errno));
 	goto dofile_error;
 
 dofile_error:
