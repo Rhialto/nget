@@ -19,6 +19,8 @@ timeout=180
 unequal_line_error=0
 //cachedir=/home/user/.nget4
 test_multiserver=no
+fullxover=0
+maxstreaming=64
 
 //hostname aliases
 {halias

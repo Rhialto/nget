@@ -104,6 +104,7 @@ class c_nget_config {
 		int usegz;
 		int unequal_line_error;
 		bool fullxover;
+		int maxstreaming;
 
 		c_server* getserver(ulong serverid){
 			t_server_list::iterator sli=serv.find(serverid);
@@ -154,6 +155,7 @@ class c_nget_config {
 			usegz=-1;
 			unequal_line_error=0;
 			fullxover=false;
+			maxstreaming=64;
 		}
 		~c_nget_config(){
 			t_server_list::iterator i;

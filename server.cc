@@ -87,6 +87,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 	if (cfg->getitema("fullxover"))
 		fullxover=cfg->getitema("fullxover");
 	cfg->getitemi("unequal_line_error",&unequal_line_error);
+	cfg->getitemi("maxstreaming",&maxstreaming);
 	//halias
 	assert(hinfo);
 	for (dli=hinfo->data.begin();dli!=hinfo->data.end();++dli){
@@ -113,7 +114,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 			printf("host %s invalid id '%s'\n",ds->key.c_str(),sida);
 			continue;
 		}
-		server=new c_server(tul,ds->key,ds->getitems("addr"),ds->getitems("user"),ds->getitems("pass"),ds->getitema("fullxover"),ds->getitema("linelenience"),ds->geti("maxstreaming",64));
+		server=new c_server(tul,ds->key,ds->getitems("addr"),ds->getitems("user"),ds->getitems("pass"),ds->getitema("fullxover"),ds->getitema("linelenience"),ds->geti("maxstreaming",maxstreaming));
 		serv[server->serverid]=server;
 	}
 	//hpriority
