@@ -5,17 +5,21 @@ LDFLAGS=@LDFLAGS@
 CXX=@CXX@
 LIBS=@LIBS@
 
+EXEEXT=@EXEEXT@
 srcdir=@srcdir@
+
+NGET=nget$(EXEEXT)
+NGETLITE=ngetlite$(EXEEXT)
 
 all: TestRunner
 
-../nget:
-	$(MAKE) -C .. nget
+../$(NGET):
+	$(MAKE) -C .. $(NGET)
 
-../ngetlite:
-	$(MAKE) -C .. ngetlite
+../$(NGETLITE):
+	$(MAKE) -C .. $(NGETLITE)
 
-test: all ../nget ../ngetlite
+test: all $(NGET) $(NGETLITE)
 	./test_nget.py
 
 OBJS=TestRunner.o ../file.o ../sockstuff.o ../nrange.o ../log.o ../dupe_file.o ../myregex.o ../strtoker.o ../misc.o
@@ -23,7 +27,7 @@ TestRunner: .depend $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LIBS) `cppunit-config --libs`
 
 dep depend .depend: TestRunner.cc
-	$(CXX) $(CXXFLAGS) -MM *.cc > .depend
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM *.cc > .depend
 
 clean:
 	-rm TestRunner *.o *.py[co] tricks/*.py[co]
