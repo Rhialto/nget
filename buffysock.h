@@ -25,7 +25,9 @@
 class sockbuffy :public c_buffy{
 	private:
 		virtual int bfill(uchar *b,int l){
-			return sock_read(sock,b,l);
+			int i=sock_read(sock,b,l);
+			if (i<0) throw TransportExError(Ex_INIT,"sock_read (%s)", strerror(errno));
+			return i;
 		}
 		int sock;
 	public:
