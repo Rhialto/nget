@@ -491,12 +491,12 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
 
 	def test_badskip_temppath_okpath(self):
-		self.vfailUnlessEqual(self.nget.run('-P badpath -g test -r joy -p %s -r foo'%(self.nget.tmpdir)), 2) #-p resets -P too
+		self.vfailUnlessExitstatus(self.nget.run('-P badpath -g test -r joy -p %s -r foo'%(self.nget.tmpdir)), 2) #-p resets -P too
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
 
 	def test_badskip_path_oktemppath(self):
-		self.vfailUnlessEqual(self.nget.run('-p badpath -g test -r joy -P %s -r foo'%(self.nget.tmpdir)), 2) #-P does not reset -p
+		self.vfailUnlessExitstatus(self.nget.run('-p badpath -g test -r joy -P %s -r foo'%(self.nget.tmpdir)), 2) #-P does not reset -p
 		self.verifyoutput([])
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 0)
 
@@ -557,7 +557,7 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput([])
 
 	def test_bad_argnotcomment(self):
-		self.vfailUnlessEqual(self.nget.run('-g test "#badarg" -r .'), 4) #comments should not work on command line, only in listfile
+		self.vfailUnlessExitstatus(self.nget.run('-g test "#badarg" -r .'), 4) #comments should not work on command line, only in listfile
 		self.verifyoutput([])
 
 	def test_list_comment(self):
