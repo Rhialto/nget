@@ -29,10 +29,7 @@
 
 
 static void add_to_nocase_map(t_nocase_map *nocase_map, const char *key, const char *name){
-	string lowername;
-	for (const char *cp=key; *cp; ++cp)
-		lowername.push_back(tolower(*cp));
-	nocase_map->insert(t_nocase_map::value_type(lowername, name));
+	nocase_map->insert(t_nocase_map::value_type(strtolower(key), name));
 }
 void LocalParFiles::addfrompath_par1(const string &path, t_nocase_map *nocase_map){
 	c_regex_r parfile_re("^(.+)\\.p(ar|[0-9]{2})(\\.[0-9]+\\.[0-9]+)?$", REG_EXTENDED|REG_ICASE);
@@ -46,9 +43,7 @@ void LocalParFiles::addfrompath_par1(const string &path, t_nocase_map *nocase_ma
 		if (!parfile_re.match(de->d_name, &rsubs)) {
 			string sethash;
 			string fullname = path_join(path, de->d_name);
-			string basename = rsubs.sub(1);
-			for (string::iterator i=basename.begin(); i!=basename.end(); ++i)
-				*i=tolower(*i);
+			string basename = strtolower(rsubs.sub(1));
 			if (parfile_get_sethash(fullname, sethash)) {
 				basefilenames[sethash].push_back(de->d_name);
 				addsubjmatch_par1(sethash, basename);
@@ -83,8 +78,7 @@ void LocalParFiles::addfrompath_par2(const string &path, t_nocase_map *nocase_ma
 			string basename = rsubs.sub(1);
 			if (!par2pxxre.match(basename.c_str(), &rsubs))
 				basename = rsubs.sub(1);
-			for (string::iterator i=basename.begin(); i!=basename.end(); ++i)
-				*i=tolower(*i);
+			lowerstr(basename);
 			if (par2file_get_sethash(fullname, sethash)) {
 				basefilenames[sethash].push_back(de->d_name);
 				addsubjmatch_par2(sethash, basename);

@@ -22,7 +22,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <ctype.h>
 #include <set>
 #include "myregex.h"
 #include "auto_map.h"
