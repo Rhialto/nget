@@ -1,5 +1,13 @@
 #include <cppunit/extensions/HelperMacros.h>
 
+class RCounter{
+	public:
+		int *aliveptr;
+		bool foo(void){return true;}
+		RCounter(int *a):aliveptr(a){++*aliveptr;}
+		~RCounter(){--*aliveptr;}
+};
+
 #include "auto_vector.h"
 
 class auto_vector_Test : public CppUnit::TestFixture {
@@ -11,13 +19,6 @@ class auto_vector_Test : public CppUnit::TestFixture {
 	CPPUNIT_TEST_SUITE_END();
 	protected:
 		int alive;
-		class RCounter{
-			public:
-				int *aliveptr;
-				bool foo(void){return true;}
-				RCounter(int *a):aliveptr(a){++*aliveptr;}
-				~RCounter(){--*aliveptr;}
-		};
 	public:
 		void setUp(void) {
 			alive = 0;
@@ -94,13 +95,6 @@ class auto_map_Test : public CppUnit::TestFixture {
 	CPPUNIT_TEST_SUITE_END();
 	protected:
 		int alive;
-		class RCounter{
-			public:
-				int *aliveptr;
-				bool foo(void){return true;}
-				RCounter(int *a):aliveptr(a){++*aliveptr;}
-				~RCounter(){--*aliveptr;}
-		};
 	public:
 		void setUp(void) {
 			alive = 0;
@@ -161,13 +155,6 @@ class auto_multimap_Test : public CppUnit::TestFixture {
 	CPPUNIT_TEST_SUITE_END();
 	protected:
 		int alive;
-		class RCounter{
-			public:
-				int *aliveptr;
-				bool foo(void){return true;}
-				RCounter(int *a):aliveptr(a){++*aliveptr;}
-				~RCounter(){--*aliveptr;}
-		};
 	public:
 		void setUp(void) {
 			alive = 0;
