@@ -87,37 +87,22 @@ class c_nntp_part {
 		time_t date;
 //		ulong apxbytes,apxlines;//approximate/hrmy.
 		string messageid;
-//		c_nntp_part(int pn, ulong an, time_t d, ulong b, ulong l):partnum(pn),articlenum(an),date(d),bytes(b),lines(l){};
-		/*ulong bytes(void){
-			t_nntp_server_articles::iterator nsai(articles.begin());
+		c_nntp_server_article *get_best_sa(void) const {
+			t_nntp_server_articles::const_iterator nsai(articles.begin());
 			c_nntp_server_article *sa;
-			ulong cbytes=0;
+			c_nntp_server_article *highest_sa=NULL;
 			float highprio=-10000.0,f;
 			for (;nsai!=articles.end();++nsai) {
 				sa=(*nsai).second;
 				if ((f=nconfig.trustsizes->getserverpriority(sa->serverid)) > highprio){
-					cbytes=sa->bytes;
+					highest_sa=sa;
 					highprio=f;
 				}
 			}
-			return cbytes;
-		}*/
-#define HAPPYSIZEFUNC(T)		ulong T(void) const {\
-			t_nntp_server_articles::const_iterator nsai(articles.begin());\
-			c_nntp_server_article *sa;\
-			ulong c=0;\
-			float highprio=-10000.0,f;\
-			for (;nsai!=articles.end();++nsai) {\
-				sa=(*nsai).second;\
-				if ((f=nconfig.trustsizes->getserverpriority(sa->serverid)) > highprio){\
-					c=sa->T;\
-					highprio=f;\
-				}\
-			}\
-			return c;\
+			return highest_sa;
 		}
-		HAPPYSIZEFUNC(bytes)
-		HAPPYSIZEFUNC(lines)
+		ulong bytes(void) const {return get_best_sa()->bytes;}
+		ulong lines(void) const {return get_best_sa()->lines;}
 		c_nntp_part(int pn, time_t d,const char *mid):partnum(pn),date(d),messageid(mid){};
 		c_nntp_part(c_nntp_header *h);
 		~c_nntp_part();
