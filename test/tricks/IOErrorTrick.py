@@ -5,9 +5,11 @@ from Trick import Trick
 
 import errno
 import os
+# The FCNTL module which used to have O_ACCMODE (and other O_* constants) no
+# longer does in python2.2, so we'll have to make due with this.
+O_ACCMODE = (os.O_RDWR | os.O_RDONLY | os.O_WRONLY)
 import re
 import socket
-import FCNTL
 
 import tricklib
 import ptrace
@@ -151,14 +153,14 @@ class IOError(Trick): #somewhat unfortunate, you must name <blah>Trick class as 
 		elif call == 'open':
 			getarg = Memory.getMemory(pid).get_string
 			fn = getarg(args[0])
-#			print pid,call,[fn]+args[1:],args[1]&FCNTL.O_ACCMODE
+#			print pid,call,[fn]+args[1:],args[1]&O_ACCMODE
 			fes = []
 			m = ''
-			flags = args[1] & FCNTL.O_ACCMODE
+			flags = args[1] & O_ACCMODE
 			for fe in self.ferrs:
-				if (flags == FCNTL.O_RDWR or
-						(flags == FCNTL.O_WRONLY and 'w' in fe.modes) or 
-						(flags == FCNTL.O_RDONLY and 'r' in fe.modes)):
+				if (flags == os.O_RDWR or
+						(flags == os.O_WRONLY and 'w' in fe.modes) or 
+						(flags == os.O_RDONLY and 'r' in fe.modes)):
 					if fe.match.search(fn):
 						fes.append(fe)
 			if fes:

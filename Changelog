@@ -5,6 +5,7 @@
   * Patched uulib (in nget+uulib) to avoid detecting some text posts as UUdata. (patch also available at http://nget.sf.net/patches/uulib-0.5.18-detect_text_as_uudata_fix.patch-v2)
   * Switch to using "GROUP g\nARTICLE n" in multi-group mode, rather than using ARTICLE <message-id>, since that is extremely slow on some news servers.
   * Fix exception with dupe file checking if a local filename starts with ?, due to forgetting to escape them in regex_escape_string. (Carsten Clasohm)
+  * Update subterfugue tests to work when subterfugue is using python >=2.2.
 
 2002-12-24 v0.23:
   * Add --decode arg so -k and -K can be negated.
