@@ -44,13 +44,16 @@ class c_lockfile{
 			PDEBUG(FLOCK_DEBUG_LEV,"attempting to lock %s",file.c_str());
 			int ret=lockfile_create(file.c_str(),10,0);
 			if (ret){
+				file = "";
 				throw ApplicationExFatal(Ex_INIT,"lockfile_create %s: %i (%s)",filename.c_str(),ret,strerror(errno));
 			}
 			PDEBUG(FLOCK_DEBUG_LEV,"locked %s",file.c_str());
 		}
 		~c_lockfile(){
-			lockfile_remove(file.c_str());
-			PDEBUG(FLOCK_DEBUG_LEV,"unlocked %s",file.c_str());
+			if (!file.empty()) {
+				lockfile_remove(file.c_str());
+				PDEBUG(FLOCK_DEBUG_LEV,"unlocked %s",file.c_str());
+			}
 		}
 };
 #elif HAVE_FLOCK
@@ -71,8 +74,11 @@ class c_lockfile{
 					throw ApplicationExFatal(Ex_INIT,"c_lockfile: open %s (%s)",filename.c_str(),strerror(errno));
 			}
 			int ret=flock(fd,(flag&WANT_SH_LOCK)?LOCK_SH:LOCK_EX);
-			if (ret)
-				throw ApplicationExFatal(Ex_INIT,"c_lockfile: flock %s: %i (%s)",filename.c_str(),ret,strerror(errno));
+			if (ret) {
+				int savederrno = errno;
+				close(fd); fd = -1;
+				throw ApplicationExFatal(Ex_INIT,"c_lockfile: flock %s: %i (%s)",filename.c_str(),ret,strerror(savederrno));
+			}
 			PDEBUG(FLOCK_DEBUG_LEV,"flocked %s (%i)",filename.c_str(),fd);
 //			sleep(10);
 		}
@@ -91,9 +97,10 @@ class c_lockfile{
 class c_lockfile{
 	public:
 		HANDLE hFile;
+		string filename;
 
-		c_lockfile(string filename,int flag): hFile(INVALID_HANDLE_VALUE){
-			filename += ".lock";//Windows does not allow removing the locked file, (when we rename the .tmp to the real name), so create a seperate lock file instead.
+		c_lockfile(string infilename,int flag): hFile(INVALID_HANDLE_VALUE){
+			filename = infilename + ".lock";//Windows does not allow removing the locked file, (when we rename the .tmp to the real name), so create a seperate lock file instead.
 			PDEBUG(FLOCK_DEBUG_LEV,"attempting to LockFile %s",filename.c_str());
 			//if (!fexists(filename.c_str()))
 			//	return;
@@ -104,8 +111,10 @@ class c_lockfile{
 			}
 			int tries=1;
 			while (!LockFile(hFile,0,0,0xFFFFFFFF,0)) {
-				if (tries++ >= 10)
+				if (tries++ >= 10) {
+					CloseHandle(hFile); hFile = INVALID_HANDLE_VALUE;
 					throw ApplicationExFatal(Ex_INIT,"c_lockfile: LockFile %s: giving up after %i tries",filename.c_str(), tries);
+				}
 				sleep(1);
 				PDEBUG(FLOCK_DEBUG_LEV,"try %i LockFile %s",tries,filename.c_str());
 			}
@@ -115,7 +124,8 @@ class c_lockfile{
 			if (hFile!=INVALID_HANDLE_VALUE) {
 				UnlockFile(hFile,0,0,0xFFFFFFFF,0);
 				CloseHandle(hFile);
-				PDEBUG(FLOCK_DEBUG_LEV,"unlocked %p",hFile);
+				DeleteFile(filename.c_str());
+				PDEBUG(FLOCK_DEBUG_LEV,"unlocked %s(%p)",filename.c_str(),hFile);
 			}
 		}
 };
