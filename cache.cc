@@ -791,8 +791,10 @@ int c_mid_info::load(string path,bool merge,bool lock){
 			line++;
 			if (!toker.tok(f->rbufp()) && toker.numtoks==3)
 				insert_full(toker[0],atol(toker[1]),atol(toker[2]));//TODO: shouldn't set changed flag if no new ones are actually merged.
-			else
+			else {
 				printf("c_mid_info::load: invalid line %i (%i toks)\n",line,toker.numtoks);
+				set_cache_warn_status();
+			}
 		}
 		f->close();
 	}else
