@@ -25,7 +25,7 @@
 #include "log.h"
 #include "md5.h"
 
-void LocalParFiles::addfrompath(const string &path) {
+void LocalParFiles::addfrompath(const string &path, t_nocase_map *nocase_map){
 	c_regex_r parfile_re((string("^(.+)\\.p(ar|[0-9]{2})(\\.[0-9]+\\.[0-9]+)?$")).c_str(), REG_EXTENDED|REG_ICASE);
 	c_regex_subs rsubs;
 	DIR *dir=opendir(path.c_str());
@@ -35,15 +35,18 @@ void LocalParFiles::addfrompath(const string &path) {
 	while ((de=readdir(dir))) {
 		if (!parfile_re.match(de->d_name, &rsubs))
 			addfile(rsubs.sub(1), de->d_name);
+		if (nocase_map) {
+			if (strcmp(de->d_name,"..")!=0 && strcmp(de->d_name,".")!=0){
+				string lowername;
+				for (const char *cp=de->d_name; *cp; ++cp)
+					lowername.push_back(tolower(*cp));
+				nocase_map->insert(t_nocase_map::value_type(lowername, de->d_name));
+			}
+		}
 	}
 	closedir(dir);
 }
 
-
-void ParInfo::refresh_localpars(void) {
-	localpars.clear();
-	localpars.addfrompath(path);
-}
 
 bool ParInfo::maybe_add_parfile(const c_nntp_file::ptr &f) {
 	if (f->maybe_a_textpost())
@@ -102,7 +105,9 @@ void ParInfo::get_pxxs(int num, const string &basename, c_nntp_files_u &fc) {
 }
 
 void ParInfo::maybe_get_pxxs(c_nntp_files_u &fc) {
-	refresh_localpars();
+	t_nocase_map nocase_map;
+	localpars.clear();
+	localpars.addfrompath(path, &nocase_map);
 
 	vector<c_nntp_file::ptr> unclaimedfiles;
 	for (t_parset_map::iterator psi=parsets.begin(); psi!=parsets.end(); ++psi){
@@ -138,7 +143,7 @@ void ParInfo::maybe_get_pxxs(c_nntp_files_u &fc) {
 			needed=1;
 			PDEBUG(DEBUG_MIN, "in %s/%s.p?? no goodpar found, trying to get one", path.c_str(), bfni->first.c_str());
 		} else {
-			int bad = parfile_check(goodpar, path);
+			int bad = parfile_check(goodpar, path, nocase_map);
 			needed = max(0, bad - (signed)goodvols.size());
 			PDEBUG(DEBUG_MIN, "in %s/%s.p??, %i goodpxxs, %i badp??s found, %i bad/missing files, trying to get %i more", path.c_str(), bfni->first.c_str(), goodvols.size(), badcount, bad, needed);
 		}
@@ -262,7 +267,7 @@ bool parfile_ok(const string &filename, uint32_t &vol_number) {
 	}
 }
 
-int parfile_check(const string &parfilename, const string &path) {
+int parfile_check(const string &parfilename, const string &path, const t_nocase_map &nocase_map) {
 	int needed=0;
 	c_file_fd f(parfilename.c_str(), "rb");
 	if (parfile_check_header(f))
@@ -294,26 +299,31 @@ int parfile_check(const string &parfilename, const string &path) {
 		if (!(status & 1)) //handle status bit0 = 0 - file is not saved in the parity volume set
 			continue; //if the file isn't in the parity set, then retrieving more pxxs won't help if it is bad, so don't bother checking it.
 		
-		string filename(path);
-		path_append(filename, "");
+		string filename;
 		for (unsigned int n=0; n<(entrysize-0x38)/2; ++n) {
 			if (buf[n*2]>127 || buf[n*2+1]) {
 				PERROR("in %s: can't handle non-ascii filename for file %u", parfilename.c_str(), i);
 				++needed;
 				filename="";
 			}else
-				filename += buf[n*2];
+				filename += tolower(buf[n*2]);
 		}
 		if (!filename.empty()) {
-			off_t actual_fsize;
-			if (fsize(filename.c_str(), &actual_fsize) || (uint64_t)actual_fsize!=filesize)
-				++needed;
-			else {
-				uchar actual_hash[16];
-				md5_file(filename.c_str(), actual_hash);
-				if (memcmp(file_hash, actual_hash, 16))
-					++needed;
+			pair<t_nocase_map::const_iterator,t_nocase_map::const_iterator> matchingfiles(nocase_map.equal_range(filename));
+			for (; matchingfiles.first!=matchingfiles.second; ++matchingfiles.first){
+				off_t actual_fsize;
+				string matchedfilename = path_join(path, matchingfiles.first->second);
+				if (fsize(matchedfilename.c_str(), &actual_fsize) || (uint64_t)actual_fsize!=filesize)
+					continue;//doesn't match, try another
+				else {
+					uchar actual_hash[16];
+					md5_file(matchedfilename.c_str(), actual_hash);
+					if (memcmp(file_hash, actual_hash, 16)==0)
+						break;//found a good match
+				}
 			}
+			if (matchingfiles.first==matchingfiles.second)
+				++needed;//no good matches found for this filename
 		}
 	}
 

@@ -493,6 +493,15 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
 		self.verifyoutput({'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','p2.par','_0file_output/1041648329.0.txt']})
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 7)
+	
+	def test_autoparhandling_differingcasefile(self):
+		self.addarticles('par02', 'input')
+		self.rmarticle_fromserver('par02','input','dat4',self.servers.servers[0])
+		self.rmarticle_fromserver('par02','input','dat5',self.servers.servers[0])
+		self.addarticles('par02', 'case_input')
+		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
+		self.verifyoutput({'par02':['p2-01.dat','p2-02.dat','p2-03.dat','_case_output/P2-04.dAt','_case_output/p2-05.DaT','p2.par']})
+		
 		
 	def test_autoparhandling_multiparset(self):
 		self.addarticles('par01', 'input')

@@ -27,8 +27,9 @@
 #include "auto_map.h"
 #include "cache.h"
 
+typedef multimap<string, string> t_nocase_map;
 bool parfile_ok(const string &filename, uint32_t &vol_number);
-int parfile_check(const string &filename, const string &path);
+int parfile_check(const string &filename, const string &path, const t_nocase_map &nocase_map);
 
 
 typedef multimap<time_t, c_nntp_file::ptr> t_server_file_list;
@@ -86,7 +87,7 @@ class LocalParFiles {
 			basefilenames[basename].push_back(filename);
 			addsubjmatch(basename);
 		}
-		void addfrompath(const string &path);
+		void addfrompath(const string &path, t_nocase_map *nocase_map=NULL);
 		void clear(void){
 			basefilenames.clear();
 			subjmatches.clear();
@@ -103,12 +104,11 @@ class ParInfo {
 		const string &path;
 	public:
 		ParInfo(const string &p):path(p){
-			refresh_localpars();
+			localpars.addfrompath(path);
 		}
 		ParSetInfo *parset(const string &basename) { 
 			return &parsets[basename]; // will insert a new ParSetInfo into parsets if needed.
 		}
-		void refresh_localpars(void);
 		bool maybe_add_parfile(const c_nntp_file::ptr &f);
 		void get_initial_pars(c_nntp_files_u &fc);
 		void get_pxxs(int num, const string &basename, c_nntp_files_u &fc);
