@@ -450,7 +450,7 @@ int c_prot_nntp::nntp_dowritelite_article(c_file &fw,c_nntp_part *part,char *fn)
 	t_nntp_server_articles_prioritized sap;
 	t_nntp_server_articles_prioritized::iterator sapi;
 	nntp_doarticle_prioritize(part,sap,false);
-	fw.putf("%i\n",sap.size());
+	fw.putf("%lu\n",(ulong)sap.size());
 	for (sapi = sap.begin(); sapi != sap.end(); ++sapi){
 		sa=(*sapi).second;
 		whost=nconfig.getserver(sa->serverid);
@@ -740,7 +740,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 		}
 		if (optionflags & GETFILES_MARK)
 			printf("Would mark ");
-		printf("%"PRIuFAST64" bytes in %u files\n",filec->bytes,filec->files.size());
+		printf("%"PRIuFAST64" bytes in %lu files\n",filec->bytes,(ulong)filec->files.size());
 	} else if (optionflags & GETFILES_MARK) {
 		for(curf = filec->files.begin();curf!=filec->files.end();++curf){
 			fr=(*curf).second;

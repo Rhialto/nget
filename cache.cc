@@ -624,7 +624,7 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midi
 				assert(0);//should never get here
 			}
 		}
-		PDEBUG(DEBUG_MIN,"read %lu parts (%lu sa) %i files",count,counta,files.size());
+		PDEBUG(DEBUG_MIN,"read %lu parts (%lu sa) %lu files",count,counta,(ulong)files.size());
 		if (countdeada){
 			printf("warning: read (and ignored) %lu articles with bad serverids\n",countdeada);
 			set_cache_warn_status();
@@ -647,7 +647,7 @@ c_nntp_cache::~c_nntp_cache(){
 			ulong count=0,counta=0;
 			try {
 				auto_ptr<c_file> fcloser(f);
-				if (quiet<2){printf("saving cache: %lu parts, %i files..",totalnum,files.size());fflush(stdout);}
+				if (quiet<2){printf("saving cache: %lu parts, %lu files..",totalnum,(ulong)files.size());fflush(stdout);}
 				c_nntp_file::ptr nf;
 				t_references::iterator ri;
 				t_nntp_file_parts::iterator pi;
@@ -718,7 +718,7 @@ c_nntp_cache::~c_nntp_cache(){
 		}
 	}
 
-	if (quiet<2){printf("freeing cache: %lu parts, %i files..\n",totalnum,files.size());}//fflush(stdout);}
+	if (quiet<2){printf("freeing cache: %lu parts, %lu files..\n",totalnum,(ulong)files.size());}//fflush(stdout);}
 
 	while (!server_info.empty()){
 		si=server_info.begin()->second;
@@ -817,10 +817,10 @@ int c_mid_info::save(void){
 	c_file *f=NULL;
 	c_lockfile locker(file,WANT_EX_LOCK);//lock before we read, so that multiple copies trying to save at once don't lose changes.
 	{
-		unsigned int count1=states.size();
+		unsigned long count1=states.size();
 		load(file,1,0);//merge any changes that might have happened
 		if (count1!=states.size()){
-			if (debug){printf("saving mid_info: merged something...(%i)\n",states.size()-count1);}
+			if (debug){printf("saving mid_info: merged something...(%lu)\n",(ulong)states.size()-count1);}
 		}
 	}
 	int nums=0;
@@ -828,7 +828,7 @@ int c_mid_info::save(void){
 	if((f=dofileopen(tmpfn,"wb"))){
 		try {
 			auto_ptr<c_file> fcloser(f);
-			if (debug){printf("saving mid_info: %i infos..",states.size());fflush(stdout);}
+			if (debug){printf("saving mid_info: %lu infos..",(ulong)states.size());fflush(stdout);}
 			t_message_state_list::iterator sli;
 			c_message_state::ptr ms;
 			for (sli=states.begin(); sli!=states.end(); ++sli){

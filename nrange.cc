@@ -87,7 +87,8 @@ void c_nrange::remove(ulong l, ulong h){
 		if (debug)printf("empty\n");
 		return;
 	}
-	int ssize=0,rtot=0,rpart=0,tmp=0,doneflag=0;
+	ulong ssize=0,rtot=0,rpart=0;
+	int tmp=0,doneflag=0;
 	if (debug)ssize=rlist.size();
 	t_rlist::iterator i=rlist.lower_bound(h),j;
 	if (i==rlist.end())
@@ -132,7 +133,7 @@ void c_nrange::remove(ulong l, ulong h){
 		}
 		j=i;
 	}
-	if (debug)printf("%i(%i tot:%i part:%i (%i->%i))\n",tmp,ssize-rlist.size(),rtot,rpart,ssize,rlist.size());
+	if (debug)printf("%i(%lu tot:%lu part:%lu (%lu->%lu))\n",tmp,ssize-(ulong)rlist.size(),rtot,rpart,ssize,(ulong)rlist.size());
 }
 int c_nrange::load(string fn,int merge=0){
 	if (!merge){
@@ -228,7 +229,7 @@ int c_nrange::save(){
 				O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
 #endif
 			)){
-		if (debug){printf("saving nrange: %i contiguous ranges..",rlist.size());fflush(stdout);}
+		if (debug){printf("saving nrange: %lu contiguous ranges..",(ulong)rlist.size());fflush(stdout);}
 		print(&f);
 		if (debug) printf(" done.\n");
 		f.close();
