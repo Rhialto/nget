@@ -2,6 +2,7 @@
   * Work around exception handling segfaults with older versions of gcc by not using multiple inheritance in exception classes. (reported by Waldemar la Tendresse)
   * Fix redefinition of SIZEOF_INT_FAST64_T compile warnings on systems without int_fast64_t.
   * Fix "Numerical result out of range" connection error that occured on some addresses due to using too small a buffer.
+  * Make install create directories if needed. (reported by Godmar Back)
 
 2002-05-02 v0.18.1:
   * Fix compile on 64bit arches (based on patch from Chris Lawrence.)

@@ -12,8 +12,13 @@ exec_prefix=@exec_prefix@
 bindir=@bindir@
 mandir=@mandir@
 install=@INSTALL@
+install_data=${install} -m 0644
+install_bin=${install} -s -m 0755
+install_dir=${install} -d
 
 all: .autostuff nget ngetlite
+
+INSTALLDIRS=$(bindir) $(mandir)/man1
 
 OBJS=nget.o prot_nntp.o sockpool.o sockstuff.o cache.o dupe_file.o file.o termstuff.o misc.o strtoker.o strreps.o myregex.o datfile.o etree.o nrange.o log.o server.o @UULIB@
 nget: $(OBJS) .depend 
@@ -39,13 +44,16 @@ filetest: filetest.o file.o sockstuff.o
 dep depend .depend:
 	$(CXX) $(CXXFLAGS) -MM *.cc > .depend
 
-install_nget: nget
-	$(install) -s -m 0755 nget $(bindir)
-	$(install) -m 0644 nget.1 $(mandir)/man1
+$(INSTALLDIRS):
+	$(install_dir) $@
 
-install_ngetlite: ngetlite
-	$(install) -s -m 0755 ngetlite $(bindir)
-	$(install) -m 0644 ngetlite.1 $(mandir)/man1
+install_nget: $(INSTALLDIRS) nget
+	$(install_bin) nget $(bindir)
+	$(install_data) nget.1 $(mandir)/man1
+
+install_ngetlite: $(INSTALLDIRS) ngetlite
+	$(install_bin) ngetlite $(bindir)
+	$(install_data) ngetlite.1 $(mandir)/man1
 
 install: install_nget install_ngetlite
 
