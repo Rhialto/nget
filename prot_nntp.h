@@ -67,7 +67,6 @@ class c_prot_nntp {
 		Connection *connection;
 		c_server::ptr force_host;
 		c_group_info::ptr group;
-//		c_nrange *grange;
 		c_mid_info *midinfo;
 		//c_nntp_cache *gcache;
 		c_nntp_cache::ptr gcache;

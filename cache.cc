@@ -187,9 +187,7 @@ c_nntp_file::~c_nntp_file(){
 }
 
 c_nntp_files_u* c_nntp_cache::getfiles(const string &path, const string &temppath, c_nntp_files_u * fc,c_mid_info *midinfo,generic_pred *pred,int flags){
-//c_nntp_files_u* c_nntp_cache::getfiles(c_nntp_files_u * fc,c_nrange *grange,const char *match, unsigned long linelimit,int flags){
 	if (fc==NULL) fc=new c_nntp_files_u;
-	//c_regex hreg(match,REG_EXTENDED + ((flags&GETFILES_CASESENSITIVE)?0:REG_ICASE));
 
 	dupe_file_checker flist;
 	if (!(flags&GETFILES_NODUPEFILECHECK))
@@ -200,15 +198,7 @@ c_nntp_files_u* c_nntp_cache::getfiles(const string &path, const string &temppat
 	c_nntp_file::ptr f;
 	for(fi = files.begin();fi!=files.end();++fi){
 		f=(*fi).second;
-		//if (f->lines>=linelimit && (flags&GETFILES_NODUPECHECK || !(f->flags&FILEFLAG_READ)) && (f->have>=f->req || flags&GETFILES_GETINCOMPLETE) && !hreg.match(f->subject.c_str())){//matches user spec
-		//if (f->lines>=linelimit && (flags&GETFILES_NODUPECHECK || !(grange->check(banum))) && (f->have>=f->req || flags&GETFILES_GETINCOMPLETE) && !hreg.match(f->subject.c_str())){//matches user spec
 		if ((flags&GETFILES_GETINCOMPLETE || f->iscomplete()) && (flags&GETFILES_NODUPEIDCHECK || !(midinfo->check(f->bamid()))) && (*pred)((ubyte*)f.gimmethepointer())){//matches user spec
-//			fc->additem(i);
-//			if (!(flags&GETFILES_NODUPECHECK) && f->isread())
-//				continue;
-
-//			if (fc->files.find(banum)!=fc->files.end())
-//				continue;
 			firange=fc->files.equal_range(f->badate());
 			for (;firange.first!=firange.second;++firange.first){
 				if ((*firange.first).second->file->bamid()==f->bamid())
@@ -221,9 +211,6 @@ c_nntp_files_u* c_nntp_cache::getfiles(const string &path, const string &temppat
 					midinfo->insert(f->bamid());
 				continue;
 			}
-//			f->inc_rcount();
-//			fc->files[banum]=f;
-			//fc->files.insert(t_nntp_files_u::value_type(f->badate(),f));
 			fc->addfile(f,path,temppath);
 		}
 file_match_loop_end: ;

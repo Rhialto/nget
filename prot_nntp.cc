@@ -273,15 +273,6 @@ void c_prot_nntp::nntp_dogroup(int getheaders){
 		assert(servinfo);
 		if (low>servinfo->low)
 			gcache->flushlow(servinfo,low,midinfo);
-/*		if (low>0){
-			ulong l=(high-low)/4;//keep 1/4 the current number of headers worth of old read info.. make configureable?
-			if (low>l){
-				l=low-l-1;
-				grange->remove(0,l);
-			}
-//			else
-//				l=0;
-		}*/
 		if (connection->server->fullxover){
 			c_nrange r;
 			gcache->getxrange(servinfo,low,high,&r);
@@ -302,8 +293,6 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 	group=ngroup;
 //	if (gcache) delete gcache;
 	cleanupcache();
-//	grange=new c_nrange(nghome + "/" + host + "/" + group + "_r");
-//	grange=new c_nrange(nghome + "/" + group + "_r");
 
 	midinfo=new c_mid_info((nghome + group->group + ",midinfo"));
 	//gcache=new c_nntp_cache(nghome,group->group + ",cache");
@@ -1056,7 +1045,6 @@ void c_prot_nntp::nntp_doopen(void){
 }
 
 void c_prot_nntp::cleanupcache(void){
-	//if(grange){delete grange;grange=NULL;}
 //	if(gcache){gcache->dec_rcount();/*delete gcache;*/gcache=NULL;}
 	gcache=NULL;//ref counted.
 	if (midinfo){delete midinfo;midinfo=NULL;}
@@ -1072,7 +1060,6 @@ void c_prot_nntp::initready(void){
 c_prot_nntp::c_prot_nntp(void){
 //	cbuf=new char[4096];
 //	cbuf_size=4096;
-	//grange=NULL;
 	gcache=NULL;
 //	ch=-1;
 #ifdef FILE_DEBUG
