@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <time.h>
 #include "log.h"
+#include "path.h"
 #include "lite.h"
 #include "litenntp.h"
 #include <string.h>
@@ -95,6 +96,10 @@ void dofile(const char *arg){
 		newstrcpy(group,buf);
 		Lfgets(buf);
 		newstrcpy(outfile,buf);
+		if (fexists(outfile)) {
+			printf("%s already exists, skipping\n", outfile);
+			partdone=1;
+		}
 		Lfgets(buf);
 		tempi=atoi(buf);
 		for (i=0;i<tempi;i++){

@@ -25,7 +25,6 @@ definataly gonna do:
 *fix EINTR (should try read again, not err (also should keep the same timeout within multiple tries?))
 *add log output ability
 *fix tempfiledir mixup where -w to write doesn't use the tempfile dir and such misses parts we already have
-*make ngetlite skip downloading parts we already have (but which are still listed as not gotten in the listfile)
 
 
 might do eventually:

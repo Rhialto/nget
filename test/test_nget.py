@@ -792,6 +792,16 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		print output
 		self.failUnless(re.search(r"^h0\tgroup.bbb[\r\n]+h0\tgroup.one\taaa \[h0\][\r\n]+h0\ttest$",output, re.M))
 		self.failIf(output.find(".two")>=0)
+	
+	def test_lite_tempfileexists(self):
+		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
+		self.vfailIf(self.nget.run("-w %s -g test -r joy"%litelist))
+		self.vfailIf(self.nget.run("-G test -K -r joy"))
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
+		self.vfailIf(self.nget.runlite(litelist))
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
+		self.vfailIf(self.nget.run("-N -G test -r ."))
+		self.verifyoutput('0002')
 
 
 class FatalUserErrorsTestCase(TestCase, DecodeTest_base):
