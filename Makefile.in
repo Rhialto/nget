@@ -1,3 +1,4 @@
+VERSION=0.15-pre1
 CXXFLAGS=@CXXFLAGS@ -Wall @UUINC@ @DEFS@
 
 CXX=@CXX@
@@ -50,6 +51,11 @@ install: install_nget install_ngetlite
 
 nget.txt ngetlite.txt: %.txt: %.1
 	man -l $< | sed -e 's/.//g' > $@
+
+win32dist: nget.txt ngetlite.txt
+	-rm nget ngetlite
+	$(MAKE) CXX="$(CXX) -static" nget ngetlite
+	zip -j -9 ../nget-$(VERSION).win32.zip COPYING Changelog FAQ README.win32 nget.txt ngetlite.txt nget.exe ngetlite.exe /bin/cygwin1.dll
 
 
 .autostuff: configure config.h.in config.h Makefile config.status
