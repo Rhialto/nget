@@ -53,6 +53,7 @@ class Connection {
 		}
 		int open(void) {
 			freshconnect=true;
+			curgroup=NULL;
 			return sock.open(server->addr.c_str(), "nntp");
 		}
 		bool isopen(void) const {
@@ -60,7 +61,6 @@ class Connection {
 		}
 		void close(int fast=0) {
 			if (sock.isopen()){
-				curgroup=NULL;
 				if (!fast)
 					putline(quiet<2,"QUIT");
 				else if (quiet<2)
