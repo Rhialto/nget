@@ -53,7 +53,9 @@ MY_CHECK_TERMSTUFF
 AC_donut_CHECK_PACKAGE_DEF(lockfile, lockfile_create, lockfile, lockfile.h)
 AC_donut_CHECK_PACKAGE_DEF(zlib, gzopen, z, zlib.h)
 AC_donut_CHECK_PACKAGE(pcre, pcre_compile, pcre, pcreposix.h, AC_CHECK_LIB(pcreposix,main))
-AC_donut_CHECK_PACKAGE_DEF(popt, poptGetContext, popt, popt.h, MY_CHECK_POPT_CONST)
+AC_donut_CHECK_PACKAGE_DEF(popt, poptGetContext, popt, popt.h, MY_CHECK_POPT_CONST,
+	AC_SEARCH_LIBS(getopt_long, gnugetopt) dnl only check for -lgnugetopt if not using popt
+)
 
 dnl check for uulib.  We need a bit of special handling to support the
 dnl nget+uulib source.

@@ -659,6 +659,12 @@ dnl     fixed
                 AC_DEFINE(HAVE_PKG_$1,1,[Define if you have $3 and $4])
         fi
 
+else
+        dnl pointless, but sh barfs if the else..fi is empty (when arg 6 is not used)
+        no_good=yes 
+
+        ifelse([$6], , , [$6])
+
 fi
 
 ])

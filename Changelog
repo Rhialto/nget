@@ -1,6 +1,7 @@
 2003-xx-xx v0.xx:
   * Allow the same server id to be used for multiple hosts to share header cache data. (Useful if you have multiple accounts on the same server.)
   * Don't print extraneous exception information on tcp errors.
+  * Also look for getopt_long in libgnugetopt.
 
 2003-10-04 v0.24.2:
   * Use gcc's automatic dependancy generation rather than a seperate depend rule.
