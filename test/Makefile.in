@@ -36,7 +36,7 @@ clean:
 	-rm TestRunner *.o *.py[co] tricks/*.py[co]
 
 distclean: clean
-	-rm config.status config.h config.cache config.log Makefile stamp-h .depend *.rej .cvsignore tricks/.cvsignore
+	-rm config.status config.h config.cache config.log Makefile stamp-h
 
 .PHONY: all dep depend clean install dist distclean test
 

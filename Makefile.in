@@ -122,13 +122,13 @@ clean:
 	-$(MAKE) -C par2 clean
 
 distclean: clean
-	-rm config.status config.h config.cache config.log Makefile stamp-h .depend *.rej .cvsignore tags nget.spec
-	-rm -r autom4te.cache
-	-find . -regex '.*\(~\|\.#.*\|CVS\)' -print0 | xargs -0 rm -r
 	-$(MAKE) -C uulib distclean
-#	-cp .depend.dist .depend
 	-$(MAKE) -C test distclean
 	-$(MAKE) -C par2 distclean
+	-rm config.status config.h config.cache config.log Makefile stamp-h nget.spec
+	-rm -r autom4te.cache
+	-find . \( -name 'CVS' -o -name '.cvsignore' -o -name '*~' -o -name '.*~' -o -name '.#*' -o -name '.*.sw[po]' -o -name '*.rej' -o -name '*.orig' -o -name '.depend' -o -name 'tags' \) -print0 | xargs -0 rm -r
+#	-cp .depend.dist .depend
 
 distclean-killuu: distclean
 	-rm -r uulib

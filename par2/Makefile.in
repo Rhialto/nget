@@ -42,7 +42,7 @@ clean:
 	-rm par2.a *.o
 
 distclean: clean
-	-rm Makefile .depend *.rej .cvsignore
+	-rm Makefile
 
 .PHONY: all dep depend clean dist distclean
 
