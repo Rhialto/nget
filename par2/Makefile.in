@@ -39,14 +39,11 @@ Makefile: Makefile.in ../config.status
 	cd .. && ./config.status
 
 clean:
-	-rm par2.a *.o
+	-rm par2.a *.o *.d
 
 distclean: clean
 	-rm Makefile
 
-.PHONY: all dep depend clean dist distclean
+.PHONY: all clean dist distclean
 
-dep depend .depend:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM *.cpp > .depend
-
-include .depend
+-include *.d

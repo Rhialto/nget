@@ -31,11 +31,11 @@ INSTALLDIRS=$(bindir) $(mandir)/man1
 W32DISTFILES=COPYING Changelog FAQ README.win32 nget.txt ngetlite.txt _ngetrc $(NGET) $(NGETLITE)
 
 OBJS=nget.o prot_nntp.o texthandler.o sockpool.o sockstuff.o cache.o grouplist.o dupe_file.o file.o file_gz.o termstuff.o path.o misc.o strtoker.o strreps.o myregex.o datfile.o argparser.o etree.o nrange.o log.o server.o par.o knapsack.o par2/par2.a @UULIB@
-$(NGET): $(OBJS) .depend 
+$(NGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
 
 LITEOBJS=lite.o litenntp.o log.o sockstuff.o strreps.o file.o path.o
-$(NGETLITE): $(LITEOBJS) .depend 
+$(NGETLITE): $(LITEOBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LITEOBJS) -o $@ $(LITELIBS)
 
 par2/par2.a: par2/*.cpp par2/*.h
@@ -47,10 +47,6 @@ par2/par2.a: par2/*.cpp par2/*.h
 
 test:
 	$(MAKE) -C test test
-
-dep depend .depend:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM *.cc > .depend
-#	$(CC) $(CFLAGS) $(CPPFLAGS) -MM *.c >> .depend
 
 $(INSTALLDIRS):
 	$(install_dir) $@
@@ -116,7 +112,7 @@ config.status: configure
 #	cd ..;tar -czhf nget/distro/nget-`egrep "nget v[0-9.]+ -" nget/nget.cc | sed "s/.*v\([0-9.]\+\).*/\1/"`.tar.gz nget/README nget/Changelog nget/COPYING nget/*.cc nget/*.h nget/Makefile nget/nget.1
 
 clean:
-	-rm $(NGET) $(NGETLITE) *.o nget.txt ngetlite.txt _ngetrc
+	-rm $(NGET) $(NGETLITE) *.o *.d nget.txt ngetlite.txt _ngetrc
 	-$(MAKE) -C uulib clean
 	-$(MAKE) -C test clean
 	-$(MAKE) -C par2 clean
@@ -127,15 +123,11 @@ distclean: clean
 	-$(MAKE) -C par2 distclean
 	-rm config.status config.h config.cache config.log Makefile stamp-h nget.spec
 	-rm -r autom4te.cache
-	-find . \( -name 'CVS' -o -name '.cvsignore' -o -name '*~' -o -name '.*~' -o -name '.#*' -o -name '.*.sw[po]' -o -name '*.rej' -o -name '*.orig' -o -name '.depend' -o -name 'tags' \) -print0 | xargs -0 rm -r
-#	-cp .depend.dist .depend
+	-find . \( -name 'CVS' -o -name '.cvsignore' -o -name '*~' -o -name '.*~' -o -name '.#*' -o -name '.*.sw[po]' -o -name '*.rej' -o -name '*.orig' -o -name 'tags' \) -print0 | xargs -0 rm -r
 
 distclean-killuu: distclean
 	-rm -r uulib
-		 
 
-#ifeq (.depend,$(wildcard .depend))
-include .depend
-#endif
+-include *.d
 
-.PHONY: all dep depend clean install dist distclean .autostuff test
+.PHONY: all clean install dist distclean .autostuff test

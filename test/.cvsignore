@@ -1,2 +1,2 @@
-Makefile .depend TestRunner
+Makefile *.d TestRunner
 *.py[co]

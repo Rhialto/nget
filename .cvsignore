@@ -1,4 +1,4 @@
 configure config.log config.h.in config.h config.cache config.status autom4te.cache
-stamp-h stamp-h.in .depend Makefile nget.spec
+stamp-h stamp-h.in *.d Makefile nget.spec
 nget ngetlite nrangetest filetest filetest2
 nget.txt ngetlite.txt _ngetrc

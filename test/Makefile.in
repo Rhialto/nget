@@ -23,21 +23,18 @@ test: all $(NGET) $(NGETLITE)
 	./test_nget.py
 
 OBJS=TestRunner.o dupe_file_test.o misc_test.o nrangetest.o  rcount_test.o auto_container_test.o  strtoker_test.o knapsack_test.o ../file.o ../sockstuff.o ../nrange.o ../log.o ../dupe_file.o ../myregex.o ../strtoker.o ../misc.o ../path.o ../knapsack.o
-TestRunner: .depend $(OBJS)
+TestRunner: $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LIBS) `cppunit-config --libs`
-
-dep depend .depend: TestRunner.cc
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM *.cc > .depend
 
 Makefile: Makefile.in ../config.status
 	cd .. && ./config.status
 
 clean:
-	-rm TestRunner *.o *.py[co] tricks/*.py[co]
+	-rm TestRunner *.o *.d *.py[co] tricks/*.py[co]
 
 distclean: clean
 	-rm config.status config.h config.cache config.log Makefile stamp-h
 
-.PHONY: all dep depend clean install dist distclean test
+.PHONY: all clean install dist distclean test
 
-include .depend
+-include *.d

@@ -168,9 +168,17 @@ AC_raf_FUNC_WHICH_GETSERVBYNAME_R
 AC_PROTOTYPE_RECV
 AC_FUNC_MKDIR
 
-dnl enable warnings if using gcc
+dnl enable warnings and automatic dependancies if using gcc
 if test "$GXX" = "yes"; then
-	CXXFLAGS="$CXXFLAGS -Wall"
+	CXXFLAGS="$CXXFLAGS -Wall -MMD"
+
+	AC_MSG_CHECKING(if $CXX accepts -MP)
+	if $CXX -MP 2>&1 | grep -q -- -MP ; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		CXXFLAGS="$CXXFLAGS -MP"
+	fi
 fi
 
 AC_OUTPUT(Makefile test/Makefile par2/Makefile nget.spec,[echo timestamp > stamp-h])
