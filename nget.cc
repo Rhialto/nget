@@ -547,9 +547,15 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 						printf("no group specified\n");
 						set_user_error_status();
 					}else{
-						nntp_file_pred *p=make_pred(loptarg, options.gflags);
-						if (p){
+						try {
+							nntp_file_pred *p=make_pred(loptarg, options.gflags);
 							getinfos.push_back(new c_nntp_getinfo(options.path, options.temppath, p, options.gflags));
+						}catch(RegexEx &e){
+							printCaughtEx(e);
+							set_user_error_status();
+						}catch(UserEx &e){
+							printCaughtEx(e);
+							set_user_error_status();
 						}
 					}
 				}
@@ -588,9 +594,15 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 							s << " lines " << options.linelimit << " >= &&" ;
 						if (options.maxlinelimit < ULONG_MAX)
 							s << " lines " << options.maxlinelimit << " <= &&" ;
-						nntp_file_pred *p=make_pred(s.str().c_str(), options.gflags);
-						if (p){
+						try {
+							nntp_file_pred *p=make_pred(s.str().c_str(), options.gflags);
 							getinfos.push_back(new c_nntp_getinfo(options.path, options.temppath, p, options.gflags));
+						}catch(RegexEx &e){
+							printCaughtEx(e);
+							set_user_error_status();
+						}catch(UserEx &e){
+							printCaughtEx(e);
+							set_fatal_error_status();//if make_pred breaks during -r, it can't be the users fault, since they only supply the regex
 						}
 					}
 				}

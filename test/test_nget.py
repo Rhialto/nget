@@ -507,6 +507,18 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
 
+	def test_badskip_emptyexpression(self):
+		self.vfailUnlessEqual(self.nget.run('-g test -R "" -r joy'), 4)
+		self.verifyoutput(['0002'])
+	
+	def test_badskip_retrievebadregex(self):
+		self.vfailUnlessEqual(self.nget.run('-g test -r "*" -r joy'), 4)
+		self.verifyoutput(['0002'])
+	
+	def test_badskip_retrievenogroup(self):
+		self.vfailUnlessEqual(self.nget.run('-r . -g test -r joy'), 4)
+		self.verifyoutput(['0002'])
+	
 	def test_cache_reloading_after_host(self):
 		self.vfailIf(self.nget.run('-g test -r foo -h host0 -D -r foo'))
 		self.verifyoutput(['0001'])
