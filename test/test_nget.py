@@ -860,6 +860,17 @@ class XoverTestCase(TestCase, DecodeTest_base):
 		self.run_all("-g test -r .")
 		self.verifyoutput_all('0002')
 
+	def test_newarticle_reverse(self):
+		self.addarticle_toserver('0002', 'uuencode_multi', '002', self.servers.servers[0])
+
+		self.run_all("-g test -r .")
+		self.verifynonewfiles()
+		
+		self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[0])
+
+		self.run_all("-g test -r .")
+		self.verifyoutput_all('0002')
+
 	def test_oldarticle(self):
 		self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[0], anum=2)
 
