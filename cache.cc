@@ -636,7 +636,7 @@ void c_nntp_cache_reader::check_counts(void) {
 	}
 }
 
-c_nntp_cache::c_nntp_cache(c_mid_info *midinfo):totalnum(0), saveit(0){
+c_nntp_cache::c_nntp_cache(void):totalnum(0), saveit(0){
 	fileread=-1;
 }
 c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midinfo):totalnum(0),group(group_){

@@ -306,7 +306,7 @@ class c_nntp_cache : public c_refcounted<c_nntp_cache>{
 		void getxrange(c_nntp_server_info *servinfo, ulong newlow, ulong newhigh, c_nrange *range) const;
 		void getxrange(c_nntp_server_info *servinfo, c_nrange *range) const;
 		void getfiles(c_nntp_files_u *fc, c_mid_info *midinfo, const t_nntp_getinfo_list &getinfos);
-		c_nntp_cache(c_mid_info*midinfo);
+		c_nntp_cache(void);
 		c_nntp_cache(string path,c_group_info::ptr group,c_mid_info*midinfo);
 		virtual ~c_nntp_cache();
 };

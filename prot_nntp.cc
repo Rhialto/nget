@@ -1039,7 +1039,7 @@ void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_l
 	if (!midinfo) {
 		midinfo=new c_mid_info((nghome + group->group + ",midinfo"));
 	}
-	gcache=new c_nntp_cache(midinfo);
+	gcache=new c_nntp_cache();
 
 	nntp_xgroup(group, patinfos, options);
 
