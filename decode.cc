@@ -27,8 +27,7 @@
 #include "myregex.h"
 #include "status.h"
 #include "_sstream.h"
-
-#include <glob.h>
+#include <dirent.h>
 
 #ifndef PROTOTYPES
 #define PROTOTYPES //required for uudeview.h to prototype function args.
@@ -119,39 +118,29 @@ string make_dupe_name(const string &path, const string &fn, c_nntp_file::ptr f) 
 }
 
 int find_duplicate(const string &nfn, const string &orgfn) {
-	string escfn;
-
-	//glob-escape fn
-	for (unsigned int i = 0; i < orgfn.length(); i++){
-		if (orgfn[i] == '?' || orgfn[i] == '*' || orgfn[i] == '[')
-			escfn += '\\' + orgfn[i];
-		else
-			escfn += orgfn[i];
-	}
-
-	escfn += '*';
-
-	//find similar filenames with same prefix
-	glob_t g;
-
-	if (0 != glob(escfn.c_str(), 0, NULL, &g)){
-		//no expansion or error. Whatever.
-		return 0;
-	}
-
+	string path(orgfn), orgfntail;
+	path_split(path,orgfntail);
+	
 	int found = 0;
-
-	//find previously partly decoded files, or other files that happen to have the same name.
-	for (unsigned int i = 0; i < g.gl_pathc; i++){
-		if (0 == strcmp(nfn.c_str(), g.gl_pathv[i]))
-			continue; //it's the new file itself.
-		if (filecompare(nfn.c_str(),g.gl_pathv[i])){
+	DIR *dir=opendir(path.c_str());
+	struct dirent *de;
+	if (!dir)
+		throw PathExFatal(Ex_INIT,"opendir: %s(%i)",strerror(errno),errno);
+	while ((de=readdir(dir))) {
+		if (strcmp(de->d_name,"..")==0) continue;
+		if (strcmp(de->d_name,".")==0) continue;
+		string de_fnp = path_join(path,de->d_name);
+		if (de_fnp==nfn)
+			continue; //it's the new file itself
+		if (!strstartswith(de_fnp, orgfn))
+			continue; //not a matching file.
+		PDEBUG(DEBUG_MED,"find_duplicate: comparing %s and %s\n", nfn.c_str(), de_fnp.c_str());
+		if (filecompare(nfn.c_str(),de_fnp.c_str())){
 			found = 1;
 			break;
 		}
 	}
-
-	globfree(&g);
+	closedir(dir);
 	return found;
 }
 
