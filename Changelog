@@ -7,6 +7,7 @@
   * Don't show doarticle linecount warning for servers that report # of bytes counted with LF endings, then send with CRLF.
   * Some portability fixes. (Now builds on SunOS.)
   * Handle server_articles left in the cache that have no server with a matching serverid in .ngetrc.
+  * .ngetrc now has a global fullxover option to set the default for all host entries that don't specify their own.
 
 2002-01-23 v0.16:
   * Print info line about each file before beginning retrieval.

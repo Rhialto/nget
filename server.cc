@@ -50,6 +50,29 @@ int parse_int_pair(const char *s, int *l, int *h){
 	return 0;
 }
 
+c_server::c_server(ulong id, string alia, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea):alias(alia),addr(add),user(use),pass(pas){
+	serverid=id;
+	if (fullxove)
+		fullxover=atoi(fullxove);
+	else
+		fullxover=nconfig.fullxover;
+	if (maxstrea<0) {
+		printf("invalid maxstreaming %i for host %s\n",maxstrea,addr.c_str());
+		maxstreaming = 0;
+	}else
+		maxstreaming = maxstrea;
+	if (ll){
+		int l,h;
+		if (!parse_int_pair(ll,&l,&h)){
+			lineleniencelow=l;lineleniencehigh=h;
+		}else{
+			printf("invalid linelenience %s for host %s\n",ll,addr.c_str());
+			lineleniencelow=lineleniencehigh=0;
+		}
+	}else{
+		lineleniencelow=lineleniencehigh=0;
+	}
+}
 
 void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_section *pinfo,c_data_section *ginfo){
 	c_server *server;
@@ -61,6 +84,8 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 	//cfg
 	assert(cfg);
 	cfg->getitemi("usegz",&usegz);
+	if (cfg->getitema("fullxover"))
+		fullxover=cfg->getitema("fullxover");
 	cfg->getitemi("unequal_line_error",&unequal_line_error);
 	//halias
 	assert(hinfo);

@@ -39,30 +39,7 @@ class c_server {
 		int maxstreaming;
 		int lineleniencelow,lineleniencehigh;
 
-		c_server(ulong id, string alia, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea):alias(alia),addr(add),user(use),pass(pas){
-//			serverid=atoul(id.c_str());
-			serverid=id;
-			if (fullxove)
-				fullxover=atoi(fullxove);
-			else
-				fullxover=0;
-			if (maxstrea<0) {
-				printf("invalid maxstreaming %i for host %s\n",maxstrea,addr.c_str());
-				maxstreaming = 0;
-			}else
-				maxstreaming = maxstrea;
-			if (ll){
-				int l,h;
-				if (!parse_int_pair(ll,&l,&h)){
-					lineleniencelow=l;lineleniencehigh=h;
-				}else{
-					printf("invalid linelenience %s for host %s\n",ll,addr.c_str());
-					lineleniencelow=lineleniencehigh=0;
-				}
-			}else{
-				lineleniencelow=lineleniencehigh=0;
-			}
-		}
+		c_server(ulong id, string alia, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea);
 };
 typedef map<ulong,c_server*> t_server_list;
 //typedef map<ulong,c_data_section*,less<ulong> > t_server_list;
@@ -126,6 +103,7 @@ class c_nget_config {
 		float curservmult;
 		int usegz;
 		int unequal_line_error;
+		bool fullxover;
 
 		c_server* getserver(ulong serverid){
 			t_server_list::iterator sli=serv.find(serverid);
@@ -175,6 +153,7 @@ class c_nget_config {
 			curservmult=2.0;
 			usegz=-1;
 			unequal_line_error=0;
+			fullxover=false;
 		}
 		~c_nget_config(){
 			t_server_list::iterator i;
