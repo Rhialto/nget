@@ -22,7 +22,6 @@ uu_msg(1):Note: No encoded data found in ec3317e3-71cf792d.011
 
 definataly gonna do:
 *make MID_INFO_MIN_KEEP, etc config options
-*update STL includes/etc to use new non-.h files, and std namespace
 *fix EINTR (should try read again, not err (also should keep the same timeout within multiple tries?))
 *add log output ability
 *fix tempfiledir mixup where -w to write doesn't use the tempfile dir and such misses parts we already have
@@ -35,7 +34,6 @@ might do eventually:
    Hm, actually it might not be that hard.. since mids are globally unique, it
    could just use the same midinfo for _all_ groups?  sound good/bad?
  * ditch/fix uulib?   Are there any alternatives?
- * make -@ relative to start dir rather than -p dir? (when not using .nget3/lists/ dir)
  * allow -p/-P to create dirs (ala mkdir -P).  Perhaps enabled by config option
    or other switch?
  * per group (.ngetrc) config setting for "base directory", then -p/-P could be
