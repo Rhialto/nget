@@ -42,7 +42,7 @@ filetest: filetest.o file.o sockstuff.o
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
 
 dep depend .depend:
-	$(CXX) $(CXXFLAGS) -MM *.cc > .depend
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM *.cc > .depend
 
 $(INSTALLDIRS):
 	$(install_dir) $@
