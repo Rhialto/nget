@@ -36,7 +36,7 @@ subject, author, lines, bytes, have, req, date, messageid(or mid).  Note that th
 argument does not affect the option, if you want to limit based on number
 of lines, add it as part of the expression.
 .IP "-@/--list LISTFILE"
-Specify a file to load a list of command line args from.  Looks in ~/.nget3/lists/ dir by default.
+Specify a file to load a list of command line args from.  Looks in ~/.nget4/lists/ dir by default.
 .IP "-p/--path DIRECTORY"
 Path to store subsequent retrieves.  Also sets -P.  Relative to path which nget was started in.
 (Except in the case of inside a -@, which will be relative to the cwd at the
@@ -104,7 +104,7 @@ Write a list of parts to retrieve with ngetlite.
 .IP "-?/--help"
 Show help.
 .SH CONFIGURATION
-Upon startup, nget will read ~/.nget3/.ngetrc for default configuration values and host/group
+Upon startup, nget will read ~/.nget4/.ngetrc for default configuration values and host/group
 aliases.  An example .ngetrc should have been included with nget.
 .P
 Options are specified one per line in the form:
@@ -340,19 +340,20 @@ directory at the same time..)
 .SH ENVIRONMENT
 .PP
 .IP "HOME"
-Where to put .nget3 directory. (put nget files $HOME/.nget3/)
+Where to put .nget4 directory. (put nget files $HOME/.nget4/)
 .IP "NGETHOME"
 Override HOME var (put nget files in $NGETHOME)
 .SH FILES
 .PP
-.IP "~/.nget3/"
-All configuration and cache files are stored here.  Changed to .nget3/ because
-config/cache formats changed in nget 0.8. (the 3 in the directory name is for file
-format version 3, not nget version 3.)
-.IP "~/.nget3/.ngetrc"
+.IP "~/.nget4/"
+All configuration and cache files are stored here.  Changed to .nget4/ because
+cache format changed in nget 0.16.
+(The 4 in the directory name is for file format version 4, not nget version 4.)
+To upgrade a .nget3 directory to .nget4, simply run "mv ~/.nget3 ~/.nget4 ; rm ~/.nget4/*,cache*"
+.IP "~/.nget4/.ngetrc"
 Configuration file.  If you store authentication information here, be sure to
 set it readable only by owner.
-.IP "~/.nget3/lists/"
+.IP "~/.nget4/lists/"
 Default directory for listfiles.
 .SH BUGS
 The config examples would be easier to read if they were indented, but I'm no man page guru.

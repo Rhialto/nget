@@ -16,7 +16,7 @@ Install:
 1) d/l uulibsrc from http://www.fpx.de/fp/Software/UUDeview/
 1.1) unpack it and run its ./configure && make
 1.2) ./configure --with-uulib=/dir/that/has/uulib
-   (see "locking note" below if you want to store your .nget3/ on a vfat/etc fs)
+   (see "locking note" below if you want to store your .nget4/ on a vfat/etc fs)
 1.2a) depending upon your compiler you may need to do something like:
   CXXFLAGS="-fhandle-exceptions -O2 -g" ./configure ....  (should be
   autodetected be configure in nget >= 0.8)
@@ -32,7 +32,7 @@ cygwin's regex for some reason I haven't fully investigated yet.)
 (./configure --help will show extra options not described here)
 
 vfat locking note:
-If you build nget with liblockfile, and try to store your .nget3 directory on a
+If you build nget with liblockfile, and try to store your .nget4 directory on a
 fat/vfat/etc filesystem, you will have hang problems.  liblockfile requires
 symlinks to work, and these filesystems do not support them.  If you want to
 use these filesystems, run configure with the --without-lockfile arg, and it

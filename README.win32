@@ -8,7 +8,7 @@ Some env vars must be set:
 set TMPDIR=c:\windows\temp  (or wherever you want)
 
 2) for locating/storing config and cache files:
-set HOME=c:\home (or whatever) and create c:\home\.nget3\.ngetrc
+set HOME=c:\home (or whatever) and create c:\home\.nget4\.ngetrc
  -or-
 set NGETHOME=c:\nget (or whatever) and create c:\nget\.ngetrc
 
