@@ -49,13 +49,15 @@ if you need a special flag try CXXFLAGS="-flag-to-enable-exceptions" ./configure
 )
 
 AC_DEFUN(MY_CHECK_FOMIT_FRAME_POINTER,[
- if echo "$CXX $CXXFLAGS" | grep -q fomit-frame-pointer ; then
+ AC_MSG_CHECKING([attempted use of -fomit-frame-pointer on x86])
+ result=no
+ if echo "$CXX $CXXFLAGS" | grep fomit-frame-pointer ; then
   if test -n "$host_alias" ; then
    my_host="$host_alias"
   else
    my_host=`uname -m`
   fi
-  if echo "$my_host" | grep -q 86 ; then
+  if echo "$my_host" | grep 86 ; then
    AC_MSG_WARN([cannot build with -fomit-frame-pointer on x86.
 gcc does not handle exceptions properly in code compiled with
 -fomit-frame-pointer on x86 platforms.  See:
@@ -65,8 +67,10 @@ Removing -fomit-frame-pointer from the compiler flags.
 ])
    CXX=`echo $CXX | sed "s/-fomit-frame-pointer//"`
    CXXFLAGS=`echo $CXXFLAGS | sed "s/-fomit-frame-pointer//"`
+   result=removed
   fi
  fi
+ AC_MSG_RESULT($result)
 ])
 
 AC_DEFUN(MY_DISABLE_OPT,[
