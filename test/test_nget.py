@@ -30,6 +30,8 @@ if os.sep in ngetexe or (os.altsep and os.altsep in ngetexe):
 
 zerofile_fn_re = re.compile(r'(\d+)\.(\d+)\.txt$')
 
+broken_system_return = os.system("NTDOEUNTBKFOOOBAR")==0
+
 def textcmp(a, b):
 	return open(a,'rb').read().splitlines()==open(b,'rb').read().splitlines()
 
@@ -42,6 +44,10 @@ class TestCase(unittest.TestCase):
 			else:
 				msg = '(%r)'%(expr,)
 			raise self.failureException, msg
+	def vfailUnlessExitstatus(self, first, second, msg=None):
+		# os.system on windows 95/98 seems to always return 0.. so just skip testing the exit status in that case. blah.
+		if not broken_system_return:
+			self.vfailUnlessEqual(first, second, msg)
 	def vfailUnlessEqual(self, first, second, msg=None):
 		"Include the exprs in the error message even if msg is given"
 		if first != second:
@@ -139,7 +145,7 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 	def do_test_decodeerror(self, testnum, dirname):
 		self.addarticles(testnum, dirname)
 
-		self.vfailUnlessEqual(self.nget.run("-g test -r ."), 1, "nget process did not detect decode error")
+		self.vfailUnlessExitstatus(self.nget.run("-g test -r ."), 1, "nget process did not detect decode error")
 	
 	def get_auto_args(self):
 		#use some magic so we don't have to type out everything twice
@@ -192,7 +198,7 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.addarticles('0002', 'uuencode_multi')
 		self.vfailIf(self.nget.run("-g test"))
 		self.servers.servers[0].rmarticle(article.mid)
-		self.vfailUnlessEqual(self.nget.run("-G test -r ."), 8, "nget process did not detect retrieve error")
+		self.vfailUnlessExitstatus(self.nget.run("-G test -r ."), 8, "nget process did not detect retrieve error")
 		self.verifyoutput('0002') #should have gotten the articles the server still has.
 
 
@@ -472,15 +478,15 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput(['0002'])
 
 	def test_list_enoent(self):
-		self.vfailUnlessEqual(self.nget.run('-@ foobar'), 4)
+		self.vfailUnlessExitstatus(self.nget.run('-@ foobar'), 4)
 	
 	def test_badskip_path(self):
-		self.vfailUnlessEqual(self.nget.run('-p badpath -g test -r joy -p %s -r foo'%(self.nget.tmpdir)), 2)
+		self.vfailUnlessExitstatus(self.nget.run('-p badpath -g test -r joy -p %s -r foo'%(self.nget.tmpdir)), 2)
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
 
 	def test_badskip_temppath(self):
-		self.vfailUnlessEqual(self.nget.run('-P badpath -g test -r joy -P %s -r foo'%(self.nget.tmpdir)), 2)
+		self.vfailUnlessExitstatus(self.nget.run('-P badpath -g test -r joy -P %s -r foo'%(self.nget.tmpdir)), 2)
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
 
@@ -495,44 +501,44 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 0)
 
 	def test_badskip_host(self):
-		self.vfailUnlessEqual(self.nget.run('-h badhost -g test -r joy -h host0 -r foo'), 4)
+		self.vfailUnlessExitstatus(self.nget.run('-h badhost -g test -r joy -h host0 -r foo'), 4)
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 0)
 		self.verifyoutput([])#bad -h should turn -g into -G, so that should have failed to get anything.
 		self.vfailIf(self.nget.run('-g test')) #retrieve headers first and try again
-		self.vfailUnlessEqual(self.nget.run('-h badhost -g test -r joy -h host0 -r foo'), 4)
+		self.vfailUnlessExitstatus(self.nget.run('-h badhost -g test -r joy -h host0 -r foo'), 4)
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
 
 	def test_badskip_pathhost(self):
-		self.vfailUnlessEqual(self.nget.run('-g test -h badhost -p badpath -r . -p %s -r . -h host0 -r foo'%(self.nget.tmpdir)), 6)
+		self.vfailUnlessExitstatus(self.nget.run('-g test -h badhost -p badpath -r . -p %s -r . -h host0 -r foo'%(self.nget.tmpdir)), 6)
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
 
 	def test_badskip_hostpath(self):
-		self.vfailUnlessEqual(self.nget.run('-g test -h badhost -p badpath -r . -h host0 -r . -p %s -r foo'%(self.nget.tmpdir)), 6)
+		self.vfailUnlessExitstatus(self.nget.run('-g test -h badhost -p badpath -r . -h host0 -r . -p %s -r foo'%(self.nget.tmpdir)), 6)
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
 
 	def test_badskip_okthenbadpath(self):
-		self.vfailUnlessEqual(self.nget.run('-g test -r foo -p badpath -r .'), 2)
+		self.vfailUnlessExitstatus(self.nget.run('-g test -r foo -p badpath -r .'), 2)
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
 
 	def test_badskip_okthenbadhost(self):
-		self.vfailUnlessEqual(self.nget.run('-g test -r foo -h badhost -r .'), 4)
+		self.vfailUnlessExitstatus(self.nget.run('-g test -r foo -h badhost -r .'), 4)
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
 
 	def test_badskip_emptyexpression(self):
-		self.vfailUnlessEqual(self.nget.run('-g test -R "" -r joy'), 4)
+		self.vfailUnlessExitstatus(self.nget.run('-g test -R "" -r joy'), 4)
 		self.verifyoutput(['0002'])
 	
 	def test_badskip_retrievebadregex(self):
-		self.vfailUnlessEqual(self.nget.run('-g test -r "*" -r joy'), 4)
+		self.vfailUnlessExitstatus(self.nget.run('-g test -r "*" -r joy'), 4)
 		self.verifyoutput(['0002'])
 	
 	def test_badskip_retrievenogroup(self):
-		self.vfailUnlessEqual(self.nget.run('-r . -g test -r joy'), 4)
+		self.vfailUnlessExitstatus(self.nget.run('-r . -g test -r joy'), 4)
 		self.verifyoutput(['0002'])
 	
 	def test_cache_reloading_after_host(self):
@@ -541,13 +547,13 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 2)
 
 	def test_flush_nogroup(self):
-		self.vfailUnlessEqual(self.nget.run('-F host0'), 4)
+		self.vfailUnlessExitstatus(self.nget.run('-F host0'), 4)
 	
 	def test_flush_badserver(self):
-		self.vfailUnlessEqual(self.nget.run('-g test -F badserv'), 4)
+		self.vfailUnlessExitstatus(self.nget.run('-g test -F badserv'), 4)
 
 	def test_bad_arg(self):
-		self.vfailUnlessEqual(self.nget.run('-g test badarg -r .'), 4)
+		self.vfailUnlessExitstatus(self.nget.run('-g test badarg -r .'), 4)
 		self.verifyoutput([])
 
 	def test_bad_argnotcomment(self):
@@ -567,7 +573,7 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		f = open(lpath, 'w')
 		f.write('-g test "#comment -r . baaha"\n -r .')
 		f.close()
-		self.vfailUnlessEqual(self.nget.run('-@ %s'%lpath), 4)
+		self.vfailUnlessExitstatus(self.nget.run('-@ %s'%lpath), 4)
 		self.verifyoutput([])
 
 
@@ -715,7 +721,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		servers = [nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)]
 		self.nget = util.TestNGet(ngetexe, servers) 
 		servers[0].server_close()
-		self.vfailUnlessEqual(self.nget.run("-g test -r ."), 16, "nget process did not detect connection error")
+		self.vfailUnlessExitstatus(self.nget.run("-g test -r ."), 16, "nget process did not detect connection error")
 	
 	def test_DeadServerRetr(self):
 		self.servers = nntpd.NNTPD_Master(1)
@@ -725,7 +731,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run("-g test"))
 		self.servers.stop()
 		del self.servers
-		self.vfailUnlessEqual(self.nget.run("-G test -r ."), 8, "nget process did not detect connection error")
+		self.vfailUnlessExitstatus(self.nget.run("-G test -r ."), 8, "nget process did not detect connection error")
 	
 	def test_DeadServerPenalization(self):
 		self.servers = nntpd.NNTPD_Master(1)
@@ -787,7 +793,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.servers = nntpd.NNTPD_Master(2)
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'maxconnections':1, 'penaltystrikes':1})
 		self.servers.start()
-		self.vfailUnlessEqual(self.nget.run("-g test -g test -g test"), 16)
+		self.vfailUnlessExitstatus(self.nget.run("-g test -g test -g test"), 16)
 		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
 		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
 
@@ -815,7 +821,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.rmarticles('0001', 'uuencode_single')
 		self.rmarticles('0002', 'uuencode_multi3')
 		self.rmarticles('0003', 'newspost_uue_0')
-		self.vfailUnlessEqual(self.nget.run("-G test -r ."), 8)
+		self.vfailUnlessExitstatus(self.nget.run("-G test -r ."), 8)
 		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
 		self.vfailUnlessEqual(self.servers.servers[1].conns, 3)
 
@@ -904,7 +910,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.servers.start()
 		self.addarticles_toserver('0002', 'uuencode_multi', self.servers.servers[0])
 		self.vfailIf(self.nget.run("-g test"))
-		self.vfailUnlessEqual(self.nget.run("-h host1 -G test -r ."), 8, "nget process did not detect retrieve error")
+		self.vfailUnlessExitstatus(self.nget.run("-h host1 -G test -r ."), 8, "nget process did not detect retrieve error")
 		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
 		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
 
@@ -1076,7 +1082,7 @@ class AuthTestCase(TestCase, DecodeTest_base):
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, hostoptions=[{'user':'ralph', 'pass':'WRONG'}])
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
-		self.vfailUnlessEqual(self.nget.run("-g test -r ."), 16, "nget process did not detect auth error")
+		self.vfailUnlessExitstatus(self.nget.run("-g test -r ."), 16, "nget process did not detect auth error")
 
 	def test_NoAuth(self):
 		self.servers = nntpd.NNTPD_Master(1)
@@ -1085,7 +1091,7 @@ class AuthTestCase(TestCase, DecodeTest_base):
 		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
-		self.vfailUnlessEqual(self.nget.run("-g test -r ."), 16, "nget process did not detect auth error")
+		self.vfailUnlessExitstatus(self.nget.run("-g test -r ."), 16, "nget process did not detect auth error")
 
 #if os.system('sf --help'):
 if os.system('sf date'):
