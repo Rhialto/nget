@@ -1,4 +1,4 @@
-2003-??-?? v0.24:
+2003-08-31 v0.24:
   * Add automatic handling of parfiles.  nget will automatically download only as many .Pxx or .volX+X.par2 files as needed. (You still need an external program such as parchive or par2cmdline to restore them)
   * Add autopar exitstatus, changed path error code to be 4. (Same as user error code, since its basically a user error and there weren't any free bits.)
   * Change 0-file handling to show the 0 part as a seperate post than the binary it was posted with. (Avoids missing 0-files when they are posted with a binary that gets dropped due to dupefile checking or autopar handling)
