@@ -40,7 +40,7 @@ class strtoker {
 		char * operator[](int i){return toks[i];}
 		int tok(char *str);
 		strtoker(int num,char tok);
-		~strtoker(){delete toks;}
+		~strtoker(){delete [] toks;}
 };
 
 #endif
