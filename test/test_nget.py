@@ -2303,4 +2303,11 @@ class CppUnitTestCase(TestCase):
 		self.vfailIf(util.exitstatus(os.system(os.path.join(os.curdir,'TestRunner'))), "CppUnit TestRunner returned an error")
 
 if __name__ == '__main__':
-	unittest.main()
+	#little hack to allow to run only tests matching a certain prefix
+	#run with ./test_nget.py [unittest args] [TestCases...] -X<testMethodPrefix>
+	if len(sys.argv)>1 and sys.argv[-1].startswith('-X'):
+		myTestLoader=unittest.TestLoader()
+		myTestLoader.testMethodPrefix=sys.argv[-1][2:]
+		unittest.main(argv=sys.argv[:-1], testLoader=myTestLoader)
+	else:
+		unittest.main()
