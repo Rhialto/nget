@@ -176,6 +176,15 @@ pred<ClassType> * make_pred(const arglist_t &e_parts, int gflags) {
 	return pstack.top();
 }
 
+inline bool operator == (const t_references &a, const c_regex_nosub &r) {
+	for (t_references::const_iterator i = a.begin(); i!=a.end(); ++i)
+		if (*i == r)
+			return true;
+	return false;
+}
+inline bool operator != (const t_references &a, const c_regex_nosub &r) {
+	return (!(a==r));
+}
 nntp_file_pred *nntp_file_comparison_maker(const string &i, const string *x, const string *y, int re_flags) {
 	const char *n = x->c_str();
 	if (strcasecmp(n, "subject")==0)
@@ -197,6 +206,8 @@ nntp_file_pred *nntp_file_comparison_maker(const string &i, const string *x, con
 	else if (strcasecmp(n, "age")==0)
 		//rather than taking a relative age and converting each date into a relative age and then comparing, decode_textage returns an absolute date (time_t) which simplifies comparisons, but to get intuitive usage we have to invert <,> operators.
 		return comparison<const c_nntp_file>(invert_op(i), &c_nntp_file::badate, decode_textage(y->c_str()));
+	else if (strcasecmp(n, "references")==0)
+		return comparison_re<const c_nntp_file>(i, &c_nntp_file::references, y->c_str(), re_flags);
 	else
 		return NULL;
 }
