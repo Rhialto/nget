@@ -17,8 +17,6 @@ look into using a memory debugger
 *derr on uulib messages - file already exists derr.. is the current hack good enough?
 
 
-*make error on connect when retrieving headers retry or try a different host instead of bombing or whatever?
-
 *redo byte lenience?
 *store d/l path in -w files (for -W)
 *make -W switch to read in -w files and decode it all. (also if downloading any, update the file )
