@@ -1,0 +1,12 @@
+From: donut@charon
+Newsgroups: test
+Subject: par2 2nd test 2of4 - p2.vol0+1.par2 (0/1)
+User-Agent: Newspost/2.1 (http://newspost.unixcab.org/)
+Date: Fri, 25 Jul 2003 01:14:12 GMT
+Message-ID: <0.1059095652.0550@dumbnntpd>
+
+Here is zero file.
+Of par2.
+The zero file of par2 2nd test.
+Thats what this is.
+Yep.
