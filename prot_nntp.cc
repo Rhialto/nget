@@ -1208,9 +1208,9 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 						usepath="";
 					else usepath=fr->temppath.c_str();
 					if (optionflags & GETFILES_TEMPSHORTNAMES)
-						asprintf(&fn,"%s%lx.%03i",usepath,f->fileid,(*curp).first);
+						asprintf(&fn,"%s%lx.%03i",usepath,f->getfileid(),(*curp).first);
 					else
-						asprintf(&fn,"%sngettemp-%lx.%03i",usepath,f->fileid,(*curp).first);
+						asprintf(&fn,"%sngettemp-%lx.%03i",usepath,f->getfileid(),(*curp).first);
 				}
 				if (!fexists(fn)){
 					ainfo.partreq = f->req;

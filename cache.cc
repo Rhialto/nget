@@ -65,29 +65,32 @@ int c_nntp_header::parsepnum(const char *str,const char *soff){
 	return -1;
 }
 
-void c_nntp_header::setfileid(char *refstr, unsigned int refstrlen){
+t_id c_nntp_file::getfileid(void) const {
 #ifdef CHECKSUM
-	fileid=CHECKSUM(0L, Z_NULL, 0);
-	fileid=CHECKSUM(fileid,(Byte*)subject.c_str(),subject.size());
-	fileid=CHECKSUM(fileid,(Byte*)author.c_str(),author.size());
-	if (refstrlen)
-		fileid=CHECKSUM(fileid,(Byte*)refstr,refstrlen);
+	t_id fileid=CHECKSUM(0L, Z_NULL, 0);
+	fileid=CHECKSUM(fileid,(Byte*)subject.data(),subject.size());
+	fileid=CHECKSUM(fileid,(Byte*)author.data(),author.size());
+	for (t_references::const_iterator ri = references.begin(); ri != references.end(); ++ri)
+		fileid=CHECKSUM(fileid,(Byte*)ri->data(),ri->size());
+	if (req<=0){
+		const string &mid=bamid();
+		fileid=CHECKSUM(fileid,(Byte*)mid.data(),mid.size());
+	}
 #else
 	hash<char *> H;
-	fileid=H(subject.c_str())+H(author.c_str());//prolly not as good as crc32, but oh well.
-	char *p = refstr;
-	while (p - refstr < refstrlen) {
-		fileid+=H(p);
-		p+=strlen(p) + 1;
-	}
+	t_id fileid=H(subject.c_str())+H(author.c_str());//prolly not as good as crc32, but oh well.
+	for (t_references::const_iterator ri = references.begin(); ri != references.end(); ++ri)
+		fileid+=H(ri->c_str());
+	if (req<=0)
+		fileid+=H(bamid().c_str());
 #endif
+	return fileid;
 }
 void c_nntp_header::set(char * str,const char *a,ulong anum,time_t d,ulong b,ulong l,const char *mid, char *refstr){
 	assert(str);
 	assert(a);
 	author=a;articlenum=anum;date=d;bytes=b;lines=l;
 	messageid=mid;
-	int refstrlen=refstr?strlen(refstr):0;
 
 	references.clear();
 	if (refstr && *refstr) {
@@ -110,7 +113,6 @@ void c_nntp_header::set(char * str,const char *a,ulong anum,time_t d,ulong b,ulo
 					subject.append("*");
 					subject.append(s);
 				}
-				setfileid(refstr, refstrlen);
 				return;
 			}
 	}
@@ -118,7 +120,6 @@ void c_nntp_header::set(char * str,const char *a,ulong anum,time_t d,ulong b,ulo
 //	partnum=0;
 	partnum=-1;
 	subject=str;
-	setfileid(refstr, refstrlen);
 }
 
 c_nntp_server_article::c_nntp_server_article(ulong _server,const c_group_info::ptr &_group,ulong _articlenum,ulong _bytes,ulong _lines):serverid(_server),group(_group),articlenum(_articlenum),bytes(_bytes),lines(_lines){}
@@ -215,7 +216,7 @@ void c_nntp_file::get_server_have_map(t_server_have_map &have_map) const{
 	}
 }
 
-c_nntp_file::c_nntp_file(int r,ulong f,t_id fi,const char *s,const char *a,int po,int to):c_nntp_file_base(fi, r, po, a, s),have(0),flags(f),tailoff(to){
+c_nntp_file::c_nntp_file(int r,ulong f,const char *s,const char *a,int po,int to):c_nntp_file_base(r, po, a, s),have(0),flags(f),tailoff(to){
 //	printf("aoeu1.1\n");
 }
 c_nntp_file::c_nntp_file(c_nntp_header *h):c_nntp_file_base(*h),have(0),flags(0),tailoff(h->tailoff){
@@ -642,9 +643,9 @@ c_nntp_file::ptr c_nntp_cache_reader::read_file(void) {
 			}
 		}
 		else if (mode==FILE_MODE){//new file mode
-			i = f->btoks('\t',t,7);
-			if (i==7){
-				nf=new c_nntp_file(atoi(t[0]),atoul(t[1]),atoul(t[2]),t[3],t[4],atoi(t[5]),atoi(t[6]));
+			i = f->btoks('\t',t,6);
+			if (i==6){
+				nf=new c_nntp_file(atoi(t[0]),atoul(t[1]),t[2],t[3],atoi(t[4]),atoi(t[5]));
 				mode=REFERENCES_MODE;
 			}else{
 				printf("invalid line %lu mode %i (%i toks)\n",curline,mode,i);
@@ -744,7 +745,7 @@ c_nntp_cache::~c_nntp_cache(){
 					nf=(*i).second;
 					assert(!nf.isnull());
 					assert(!nf->parts.empty());
-					f->putf("%i\t%lu\t%lu\t%s\t%s\t%i\t%i\n",nf->req,nf->flags,nf->fileid,nf->subject.c_str(),nf->author.c_str(),nf->partoff,nf->tailoff);//FILE_MODE
+					f->putf("%i\t%lu\t%s\t%s\t%i\t%i\n",nf->req,nf->flags,nf->subject.c_str(),nf->author.c_str(),nf->partoff,nf->tailoff);//FILE_MODE
 					for(ri = nf->references.begin();ri!=nf->references.end();++ri){
 						if ((*ri)[0]=='.') f->putf("."); //escape possible invalid references that might start with .
 						f->putf("%s\n",ri->c_str());//REFERENCES_MODE

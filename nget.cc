@@ -1007,12 +1007,12 @@ int main(int argc, const char ** argv){
 				if (!home)
 					throw ConfigExFatal(Ex_INIT,"HOME or NGETHOME environment var not set.");
 				nghome = home;
-				if (direxists(path_join(home,".nget4","")))
-					nghome=path_join(home,".nget4","");
-				else if (direxists(path_join(home,"_nget4","")))
-					nghome=path_join(home,"_nget4","");
+				if (direxists(path_join(home,".nget5","")))
+					nghome=path_join(home,".nget5","");
+				else if (direxists(path_join(home,"_nget5","")))
+					nghome=path_join(home,"_nget5","");
 				else
-					throw ConfigExFatal(Ex_INIT,"neither %s nor %s exist", path_join(home,".nget4","").c_str(), path_join(home,"_nget4","").c_str());
+					throw ConfigExFatal(Ex_INIT,"neither %s nor %s exist", path_join(home,".nget5","").c_str(), path_join(home,"_nget5","").c_str());
 			}
 		}
 		ngcachehome = nghome;

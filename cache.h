@@ -41,7 +41,7 @@
 #include "nrange.h"
 #include "dupe_file.h"
 
-#define CACHE_VERSION "NGET4"
+#define CACHE_VERSION "NGET5"
 #define CACHE_SORTVER (1)
 
 typedef vector<string> t_references;
@@ -50,19 +50,16 @@ typedef unsigned long t_id;
 
 class c_nntp_file_base {
 	public:
-		t_id fileid;
 		int req;
 		int partoff;
 		string author;
 		string subject;
 		t_references references;
-		c_nntp_file_base(t_id fi, int r, int po, const char *a, const char *s): fileid(fi), req(r), partoff(po), author(a), subject(s) {}
+		c_nntp_file_base(int r, int po, const char *a, const char *s): req(r), partoff(po), author(a), subject(s) {}
 //		c_nntp_file_base(t_id fi, int r, int po, const string &a, const string &s, const t_references& refs): fileid(fi), req(r), partoff(po), author(a), subject(s), references(refs) {}
 //		c_nntp_file_base(const c_nntp_file_base &fb): fileid(fb.fileid), req(fb.req), partoff(fb.partoff), author(fb.author), subject(fb.subject), references(fb.references) {}
 		c_nntp_file_base() {}
 		bool operator< (const c_nntp_file_base &fb) const {
-			if (fileid<fb.fileid) return true;
-			if (fileid>fb.fileid) return false;
 			if (req<fb.req) return true;
 			if (req>fb.req) return false;
 			if (partoff<fb.partoff) return true;
@@ -76,14 +73,13 @@ class c_nntp_file_base {
 			return false;
 		}
 		bool operator== (const c_nntp_file_base &fb) const {
-			return (fileid==fb.fileid && req==fb.req && partoff==fb.partoff && author==fb.author && subject==fb.subject && references==fb.references);
+			return (req==fb.req && partoff==fb.partoff && author==fb.author && subject==fb.subject && references==fb.references);
 		}
 };
 
 class c_nntp_header : public c_nntp_file_base {
 	private:
 		int parsepnum(const char *str,const char *soff);
-		void setfileid(char *refstr, unsigned int refstrlen);
 	public:
 		ulong serverid;
 		c_group_info::ptr group;
@@ -173,10 +169,11 @@ class c_nntp_file : public c_nntp_file_base, public c_refcounted<c_nntp_file>{
 			}\
 			return b;\
 		}
+		t_id getfileid(void) const;
 		HAPPYSIZEFUNC2(bytes)
 		HAPPYSIZEFUNC2(lines)
 		c_nntp_file(c_nntp_header *h);
-		c_nntp_file(int r,ulong f,t_id fi,const char *s,const char *a,int po,int to);
+		c_nntp_file(int r,ulong f,const char *s,const char *a,int po,int to);
 		virtual ~c_nntp_file();
 };
 

@@ -521,6 +521,12 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -l 20 -L 200 -r .'))
 		self.verifyoutput('0005')
 	
+	def test_r_K_samesubject(self):
+		self.addarticles('par01', 'samesubject_input')
+		self.vfailIf(self.nget_run('-g test -K -r posting.data.files'))
+		self.vfailIf(self.nget_run('-G test -N -r posting.data.files'))
+		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat']})
+	
 	def test_dupef(self):
 		self.vfailIf(self.nget_run('-g test -r foo'))
 		self.verifyoutput('0001')
