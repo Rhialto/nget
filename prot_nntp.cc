@@ -1023,13 +1023,13 @@ void c_prot_nntp::nntp_auth(void){
 void c_prot_nntp::nntp_doauth(const char *user, const char *pass){
 	int i;
 
-	if(!user){
+	if(!user || !*user){
 		throw UserExFatal(Ex_INIT,"nntp_doauth: no authorization info known");
 	}
 	putline(quiet<2,"AUTHINFO USER %s",user);
 	i=getreply(quiet<2);
 	if (i==350 || i==381){
-		if(!pass){
+		if(!pass || !*pass){
 			throw UserExFatal(Ex_INIT,"nntp_doauth: no password known");
 		}
 		if (quiet<2)
