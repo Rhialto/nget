@@ -5,17 +5,21 @@
 #include "rcount_test.h"
 #include "misc_test.h"
 
-#include <cppunit/TextTestRunner.h>
+#include <cppunit/TestSuite.h>
+#include <cppunit/TextTestResult.h>
+#include <iostream>
 
 int main(void){
-	TextTestRunner runner;
-	runner.addTest(nrangeTest::suite());
-	runner.addTest(nrangeEqTest::suite());
-	runner.addTest(dupe_file_Test::suite());
-	runner.addTest(strtoker_Test::suite());
-	runner.addTest(rcount_Test::suite());
-	runner.addTest(misc_Test::suite());
-	runner.run();
+	TestSuite suite;
+	TextTestResult result;
+	suite.addTest(nrangeTest::suite());
+	suite.addTest(nrangeEqTest::suite());
+	suite.addTest(dupe_file_Test::suite());
+	suite.addTest(strtoker_Test::suite());
+	suite.addTest(rcount_Test::suite());
+	suite.addTest(misc_Test::suite());
+	suite.run(&result);
+	cout << result;
 
-	return 0;
+	return result.wasSuccessful()?0:1;
 }
