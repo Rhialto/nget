@@ -93,7 +93,7 @@ c_file * maybegzopen(const char *fn, const char *mode) {
 }
 
 TextHandler::~TextHandler() {
-	if (infocount==0 && decodeinfocount && !save_text_for_binaries)
+	if (infocount==0 && decodeinfocount && !save_text_for_binaries && !save_whole_tempfile)
 		return;
 	switch (texthandling) {
 		case TEXT_FILES: {
