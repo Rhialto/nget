@@ -25,7 +25,8 @@
 #include "config.h"
 
 #ifndef HAVE_ASPRINTF
-int asprintf(char **str,const char *format,...);
+int asprintf(char **str,const char *format,...)
+        __attribute__ ((format (printf, 2, 3)));
 #endif
 
 #ifndef HAVE_VASPRINTF

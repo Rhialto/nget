@@ -40,7 +40,8 @@ class c_prot_nntp {
 		char *curuser;
 		char *curpass;
 
-		int stdputline(int echo,const char * str,...);
+		int stdputline(int echo,const char * str,...)
+			__attribute__ ((format (printf, 3, 4)));
 		int putline(int echo, const char * str,...)
 			__attribute__ ((format (printf, 3, 4)));
 		int doputline(int echo,const char * str,va_list ap);
