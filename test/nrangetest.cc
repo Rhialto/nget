@@ -9,6 +9,9 @@ class nrangeTest : public CppUnit::TestFixture {
 		CPPUNIT_TEST(testInsertMiddle);
 		CPPUNIT_TEST(testInsertNothing);
 		CPPUNIT_TEST(testInsertMulti);
+		CPPUNIT_TEST(testInsertMulti2);
+		CPPUNIT_TEST(testInsertMulti3);
+		CPPUNIT_TEST(testInsertMulti4);
 		CPPUNIT_TEST(testRemove);
 		CPPUNIT_TEST(testRemoveBeg);
 		CPPUNIT_TEST(testRemoveEnd);
@@ -96,6 +99,61 @@ class nrangeTest : public CppUnit::TestFixture {
 			CPPUNIT_ASSERT(range->check(3));
 			CPPUNIT_ASSERT(range->check(4));
 			CPPUNIT_ASSERT(!range->check(5));
+		}
+		void testInsertMulti2(void) {
+			range->insert(10,15);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT(range->num_ranges() == 1);
+			CPPUNIT_ASSERT(range->get_total() == 6);
+			CPPUNIT_ASSERT(range->low() == 10);
+			CPPUNIT_ASSERT(range->high() == 15);
+			range->insert(3,7);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT(range->num_ranges() == 2);
+			CPPUNIT_ASSERT(range->get_total() == 11);
+			CPPUNIT_ASSERT(range->low() == 3);
+			CPPUNIT_ASSERT(range->high() == 15);
+			for (int i=0;i<3;i++) CPPUNIT_ASSERT(!range->check(i));
+			for (int i=8;i<10;i++) CPPUNIT_ASSERT(!range->check(i));
+			for (int i=16;i<18;i++) CPPUNIT_ASSERT(!range->check(i));
+			for (int i=3;i<=7;i++) CPPUNIT_ASSERT(range->check(i));
+			for (int i=10;i<=15;i++) CPPUNIT_ASSERT(range->check(i));
+		}
+		void testInsertMulti3(void) {
+			range->insert(10,15);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT(range->num_ranges() == 1);
+			CPPUNIT_ASSERT(range->get_total() == 6);
+			CPPUNIT_ASSERT(range->low() == 10);
+			CPPUNIT_ASSERT(range->high() == 15);
+			range->insert(3,12);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT(range->num_ranges() == 1);
+			CPPUNIT_ASSERT(range->get_total() == 13);
+			CPPUNIT_ASSERT(range->low() == 3);
+			CPPUNIT_ASSERT(range->high() == 15);
+			for (int i=0;i<3;i++) CPPUNIT_ASSERT(!range->check(i));
+			for (int i=16;i<18;i++) CPPUNIT_ASSERT(!range->check(i));
+			for (int i=3;i<=15;i++) CPPUNIT_ASSERT(range->check(i));
+		}
+		void testInsertMulti4(void) {
+			range->insert(11,16);
+			range->insert(8);
+			range->insert(3);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT(range->num_ranges() == 3);
+			CPPUNIT_ASSERT(range->get_total() == 8);
+			CPPUNIT_ASSERT(range->low() == 3);
+			CPPUNIT_ASSERT(range->high() == 16);
+			range->insert(4,12);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT(range->num_ranges() == 1);
+			CPPUNIT_ASSERT(range->get_total() == 14);
+			CPPUNIT_ASSERT(range->low() == 3);
+			CPPUNIT_ASSERT(range->high() == 16);
+			for (int i=0;i<3;i++) CPPUNIT_ASSERT(!range->check(i));
+			for (int i=17;i<19;i++) CPPUNIT_ASSERT(!range->check(i));
+			for (int i=3;i<=16;i++) CPPUNIT_ASSERT(range->check(i));
 		}
 		void testRemove(void) {
 			range->insert(1,3);
