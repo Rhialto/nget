@@ -8,8 +8,6 @@ uu_msg(1):Note: No encoded data found in ec3317e3-71cf792d.011
 * fix the everpresent "Operation now in progress" and make it report the real error 
 This may be the timeout error, actually.
 
-*add option for servers that tell you size of file with 1 eol char (but send message with 2)
-
 -p/-P when dir doesn't exist should just ignore all commands until a correct dir is encountered (and set a seperate error code to be exited with)
 
 *create .ngetrc on first run from NNTPSERVER or -h if specified instead.  (and add new servers not seen before when used with -h?  need to keep comments somehow though...)
