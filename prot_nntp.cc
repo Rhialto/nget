@@ -1252,15 +1252,17 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 				qtotinfo.filesdone++;
 				filec.bytes=qtotinfo.bytesleft;//update bytes in case we have an exception and need to restart.
 
-				//check if this was the last file to be downloaded to its path, and if so do autoparhandling
-				int path_files_left=0;
-				for (t_nntp_files_u::iterator dfi = filec.files.begin(); dfi!=filec.files.end(); ++dfi){
-					const c_nntp_file_retr::ptr &dfr = (*dfi).second;
-					if (dfr->path == fr->path)//fr will still be set to the just erased file_retr, here
-						path_files_left++;
-				}
-				if (path_files_left==0) {
-					parhandler.maybe_get_pxxs(fr->path, filec);
+				if (!(optionflags&GETFILES_NOAUTOPAR)) {
+					//check if this was the last file to be downloaded to its path, and if so do autoparhandling
+					int path_files_left=0;
+					for (t_nntp_files_u::iterator dfi = filec.files.begin(); dfi!=filec.files.end(); ++dfi){
+						const c_nntp_file_retr::ptr &dfr = (*dfi).second;
+						if (dfr->path == fr->path)//fr will still be set to the just erased file_retr, here
+							path_files_left++;
+					}
+					if (path_files_left==0) {
+						parhandler.maybe_get_pxxs(fr->path, filec);
+					}
 				}
 			}
 			if (filec.files.empty())
