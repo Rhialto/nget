@@ -26,6 +26,8 @@
 #include <sys/types.h>
 #include <stdio.h>
 
+#include <string>
+
 void init_my_timezone(void);//must be called before decode_(mdtm|textdate)
 
 int doopen(int &handle,const char * name,int access,int mode=0);
@@ -39,6 +41,9 @@ char *goodgetcwd(char **p);
 
 #define TCONV_DEF_BUF_LEN 60
 size_t tconv(char * timestr, int max, time_t *curtime,const char * formatstr="%Y%m%dT%H%M%S", int local=1);
+
+template <class int_type>
+string durationstr(int_type duration);
 
 time_t decode_textdate(const char * cbuf, bool local=true);
 int decode_textmonth(const char * buf);

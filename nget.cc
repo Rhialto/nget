@@ -38,6 +38,7 @@ extern "C" {
 #include <string.h>
 #include <time.h>
 #include "misc.h"
+#include "termstuff.h"
 #include "strreps.h"
 #include "sockstuff.h"
 #include "prot_nntp.h"
@@ -862,6 +863,7 @@ int main(int argc, char ** argv){
 					options.gflags|= GETFILES_TEMPSHORTNAMES;
 				options.set_makedirs(cfg.data.getitema("makedirs"));
 			}
+			init_term_stuff();
 			options.get_path();
 			nntp.initready();
 			do_args(argc,argv,options,0);

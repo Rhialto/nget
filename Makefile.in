@@ -13,7 +13,7 @@ install=@INSTALL@
 
 all: .autostuff nget ngetlite
 
-OBJS=nget.o prot_nntp.o sockstuff.o cache.o file.o misc.o strtoker.o strreps.o myregex.o datfile.o etree.o nrange.o log.o server.o @EXTRAOBJS@ @UULIB@
+OBJS=nget.o prot_nntp.o sockstuff.o cache.o file.o termstuff.o misc.o strtoker.o strreps.o myregex.o datfile.o etree.o nrange.o log.o server.o @EXTRAOBJS@ @UULIB@
 nget: $(OBJS) .depend 
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LIBS)
 

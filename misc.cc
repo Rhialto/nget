@@ -34,6 +34,10 @@
 #include <sys/stat.h>
 #include "myregex.h"
 
+#include <string>
+#include <sstream>
+#include <iomanip>
+
 #ifdef HAVE_CONFIG_H
 #ifndef HAVE_LOCALTIME_R
 struct tm * localtime_r(const time_t *t,struct tm * tmu){
@@ -155,6 +159,24 @@ size_t tconv(char * timestr, int max, time_t *curtime,const char * formatstr, in
 //	return timestr;
 }
 
+template <class int_type>
+string durationstr(int_type duration){
+	int_type s = duration%60, m = duration/60%60, h = duration/60/60;
+	ostringstream oss; 
+	oss.fill('0');
+	if (h)
+		oss << h << 'h' << setw(2) << m << 'm' << setw(2) << s << 's';
+//		return snprintf(timestr,max,"%ih%02im%02is",h,m,s);
+	else if (m)
+		oss << m << 'm' << setw(2) << s << 's';
+	else
+		oss << s << 's';
+	return oss.str();
+//		return snprintf(timestr,max,"%im%02is",h,m,s);
+//	return snprintf(timestr,max,"%is",h,m,s);
+}
+template string durationstr(ulong);
+template string durationstr(long);
 
 char *text_month[13]={"Jan", "Feb", "Mar", "Apr",
 	"May", "Jun", "Jul", "Aug",

@@ -35,6 +35,7 @@
 #endif
 
 #include "misc.h"
+#include "termstuff.h"
 #include "strreps.h"
 #include <stdlib.h>
 #include <errno.h>
@@ -138,8 +139,8 @@ inline void c_prot_nntp::nntp_print_retrieving_headers(ulong lll,ulong hhh,ulong
 	time_t dtime=lasttime-starttime;
 	long Bps=(dtime>0)?bbb/dtime:0;
 	long Bph=(done>0)?bbb/done:0;
-	if (!quiet)printf("\r");
-	printf("Retrieving headers %lu-%lu: %li %3li%% %liB/s %lis ",lll,hhh,done,(tot!=0)?(done*100/tot):0,Bps,(Bps>0)?((hhh-ccc)*Bph)/(Bps):0);
+	if (!quiet) clear_line_and_return();
+	printf("Retrieving headers %lu-%lu: %li %3li%% %liB/s %s",lll,hhh,done,(tot!=0)?(done*100/tot):0,Bps,durationstr((Bps>0)?((hhh-ccc)*Bph)/(Bps):0).c_str());
 	fflush(stdout);//@@@@
 }
 /*
@@ -254,7 +255,7 @@ void c_prot_nntp::doxover(ulong low, ulong high){
 		if (lowest==0)
 			lowest=an=low;
 		nntp_print_retrieving_headers(lowest,high,an,bytes);
-		printf("(%li)\n",realnum);
+		printf(" (%li)\n",realnum);
 	}
 }
 //unfortunatly, XOVER doesn't allow for more than one range per xover command.
@@ -369,16 +370,16 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders){
 inline void arinfo::print_retrieving_articles(time_t curtime, quinfo*tot){
 	dtime=curtime-starttime;
 	Bps=(dtime>0)?bytesdone/dtime:0;
-	if (!quiet)printf("\r");
-	printf("article %li: %li/%liL %li/%liB %3li%% %liB/s %lis ",
+	if (!quiet) clear_line_and_return();
+	printf("article %li: %li/%liL %li/%liB %3li%% %liB/s %s",
 			anum,linesdone,linestot,bytesdone,bytestot,
 			(linestot!=0)?(linesdone*100/linestot):0,Bps,
-			(linesdone>=linestot)?dtime:((Bps>0)?(bytestot-bytesdone)/(Bps):-1));
+			durationstr((linesdone>=linestot)?dtime:((Bps>0)?(bytestot-bytesdone)/(Bps):-1)).c_str());
 	if (tot)
-		printf("%li/%li %lis ",tot->filesdone,tot->filestot,
+		printf(" %li/%li %s",tot->filesdone,tot->filestot,
 				//(tot->bytesdone>=tot->bytestot)?curtime-tot->starttime:((Bps>0)?(tot->bytestot-tot->bytesdone)/(Bps):-1));
 //				(linesdone>=linestot)?curtime-tot->starttime:((Bps>0)?(tot->bytestot-tot->bytesdone)/(Bps):-1));
-				(linesdone>=linestot)?curtime-tot->starttime:((Bps>0)?(tot->bytesleft-bytesdone)/(Bps):-1));
+				durationstr((linesdone>=linestot)?curtime-tot->starttime:((Bps>0)?(tot->bytesleft-bytesdone)/(Bps):-1)).c_str());
 	fflush(stdout);
 }
 
