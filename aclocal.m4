@@ -49,25 +49,33 @@ if you need a special flag try CXXFLAGS="-flag-to-enable-exceptions" ./configure
 )
 
 AC_DEFUN(MY_CHECK_FOMIT_FRAME_POINTER,[
- AC_MSG_CHECKING([attempted use of -fomit-frame-pointer on x86])
+ AC_MSG_CHECKING([for improper use of -fomit-frame-pointer])
  result=no
- if echo "$CXX $CXXFLAGS" | grep fomit-frame-pointer ; then
+ if echo "$CXX $CXXFLAGS" | grep fomit-frame-pointer > /dev/null ; then
   if test -n "$host_alias" ; then
    my_host="$host_alias"
   else
    my_host=`uname -m`
   fi
-  if echo "$my_host" | grep 86 ; then
-   AC_MSG_WARN([cannot build with -fomit-frame-pointer on x86.
-gcc does not handle exceptions properly in code compiled with
+  if echo "$my_host" | grep 86 > /dev/null ; then
+   if test "$GXX" = "yes"; then
+    case `$CXX -dumpversion` in
+     [
+     [012].* | 3.[012]* | 3.3 | 3.3.0* )
+     ]dnl quote the tests with []'s to prevent m4 from eating the []'s in the tests.
+       AC_MSG_WARN([cannot build with -fomit-frame-pointer on x86.
+Old versions of gcc do not handle exceptions properly in code compiled with
 -fomit-frame-pointer on x86 platforms.  See:
 http://gcc.gnu.org/cgi-bin/gnatsweb.pl?cmd=view&pr=2447&database=gcc
 
 Removing -fomit-frame-pointer from the compiler flags.
 ])
-   CXX=`echo $CXX | sed "s/-fomit-frame-pointer//"`
-   CXXFLAGS=`echo $CXXFLAGS | sed "s/-fomit-frame-pointer//"`
-   result=removed
+       CXX=`echo $CXX | sed "s/-fomit-frame-pointer//"`
+       CXXFLAGS=`echo $CXXFLAGS | sed "s/-fomit-frame-pointer//"`
+       result=removed
+       ;;
+    esac
+   fi
   fi
  fi
  AC_MSG_RESULT($result)
