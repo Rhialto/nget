@@ -76,7 +76,7 @@ class auto_vector : public vector<T*> {
 		}
 	private:
 		void delete_all(void) {
-			for (iterator i=begin(); i!=end(); ++i)
+			for (typename vector<T*>::iterator i=begin(); i!=end(); ++i)
 				delete *i;
 		}
 		auto_vector(const auto_vector &v); //private copy constructor to disallow copying
