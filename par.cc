@@ -19,6 +19,7 @@
 #include "par.h"
 #include <map>
 #include <set>
+#include <memory>
 #include <dirent.h>
 #include <sys/stat.h>
 #include "path.h"
