@@ -28,10 +28,20 @@ def exitstatus(st):
 		return os.WEXITSTATUS(st)
 	return 'unknown',st
 
+def spawnstatus(st):
+	if st<0:
+		return 'signal',-st
+	return st
+
 def vsystem(cmd):
 	print 'running %r'%cmd
 	return exitstatus(os.system(cmd))
-	
+
+def vspawn(cmd, args, spawn=getattr(os,"spawnvp",os.spawnv)):
+	print 'running %r %r'%(cmd,args)
+	return spawnstatus(spawn(os.P_WAIT, cmd, [cmd]+args))
+
+
 class TestNGet:
 	def __init__(self, nget, servers, priorities=None, options=None, hostoptions=None):
 		self.exe = nget
@@ -85,6 +95,11 @@ class TestNGet:
 
 		#print 'begin ngetrc:\n',open(os.path.join(self.rcdir, '_ngetrc'), 'r').read()
 		#print '--end ngetrc'
+	
+	def runv(self, args):
+		os.environ['NGETHOME'] = self.rcdir
+		#return vspawn(self.exe, ["-p",self.tmpdir]+args)
+		return vspawn(self.exe, args)
 	
 	def run(self, args, pre=""):
 		os.environ['NGETHOME'] = self.rcdir
