@@ -1241,32 +1241,32 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 						free(nfn);
 					}else
 						r=UUInfoFile(uul,NULL,uu_info_callback);
-					r=UUDecodeFile(uul,NULL);
-					if (r==UURET_EXISTS){
-						uustatus.derr--; //HACK since this error will also cause a uu_warning thingy, which will incr derr, but we don't want that.
+					//check if dest file exists before attempting decode, avoids having to hack around the uu_error that occurs when the destfile exists and overwriting is disabled.
+					char orig_fnp[PATH_MAX];
+					fname_filter(orig_fnp, fr->path.c_str(), uul->filename);
+					if (!fexists(orig_fnp)) 
+						r=UUDecodeFile(uul,NULL);
+					else {
 						//all the following ugliness with fname_filter is due to uulib forgetting that we already filtered the name and giving us the original name instead.
+						// Generate a new filename to use
 						char nfn[PATH_MAX];
 						sprintf(nfn+fname_filter(nfn, NULL, uul->filename), ".%lu.%i", f->badate(),rand());
-						// memorize the old file name
-						char old_fnp[PATH_MAX];
-						char *nfnp;
-						fname_filter(old_fnp, fr->path.c_str(), uul->filename);
-						// Generate a new filename to use
-						asprintf(&nfnp,"%s/%s",fr->path.c_str(),nfn);
 						UURenameFile(uul,nfn);
 						r=UUDecodeFile(uul,NULL);
 						// did it decode correctly?
 						if (r == UURET_OK){
+							char *nfnp;
+							asprintf(&nfnp,"%s/%s",fr->path.c_str(),nfn);
 							// if identical, delete the one we just downloaded
-							if (filecompare(old_fnp,nfnp)){
+							if (filecompare(orig_fnp,nfnp)){
 								printf("Duplicate File Removed %s\n", nfn);
 								unlink(nfnp);
 								set_dupe_ok_status();
 							}else
 								set_dupe_warn_status();
+							// cleanup
+							free(nfnp);
 						}
-						// cleanup
-						free(nfnp);
 					}
 					if (r!=UURET_OK){
 						uustatus.derr++;
