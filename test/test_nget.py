@@ -2405,7 +2405,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 			self.nget.clean_all()
 
 	def test_DeadServer(self):
-		servers = [nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)]
+		servers = [nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)]
 		self.nget = util.TestNGet(ngetexe, servers) 
 		servers[0].server_close()
 		self.vfailUnlessExitstatus(self.nget.run("-g test -r ."), 16, "nget process did not detect connection error")
@@ -2436,7 +2436,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput('0002')
 	
 	def test_SleepingServerPenalization(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DelayBeforeWriteNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), DelayBeforeWriteNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, priorities=[3,1], options={'tries':1, 'timeout':1, 'penaltystrikes':2, 'maxconnections':1})
 		self.servers.start()
 		self.addarticles('0002','uuencode_multi3')
@@ -2448,7 +2448,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 3)
 
 	def test_OverXOverQuotaDiscoingServerPenalization(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverXOverQuotaDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), OverXOverQuotaDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':1, 'penaltystrikes':2, 'maxconnections':1})
 		self.servers.start()
 		self.addarticles('0002','uuencode_multi3')
@@ -2459,7 +2459,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 2)
 
 	def test_OverXOverQuotaServerPenalization(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverXOverQuotaNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), OverXOverQuotaNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':1, 'penaltystrikes':2})
 		self.servers.start()
 		self.addarticles('0002','uuencode_multi3')
@@ -2470,7 +2470,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
 
 	def test_OverArticleQuotaDiscoingServerPenalization(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), OverArticleQuotaDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, priorities=[3,1], options={'tries':1, 'penaltystrikes':2, 'maxconnections':1})
 		self.servers.start()
 		self.addarticles('0002','uuencode_multi3')
@@ -2483,7 +2483,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 3)
 
 	def test_OverArticleQuotaShutdowningServerPenalization(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaShutdowningNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), OverArticleQuotaShutdowningNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, priorities=[3,1], options={'tries':1, 'penaltystrikes':2, 'maxconnections':1})
 		self.servers.start()
 		self.addarticles('0002','uuencode_multi3')
@@ -2496,7 +2496,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 3)
 
 	def test_OverArticleQuotaServerPenalization(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), OverArticleQuotaNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, priorities=[3,1], options={'tries':1, 'penaltystrikes':2})
 		self.servers.start()
 		self.addarticles('0002','uuencode_multi3')
@@ -2508,7 +2508,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
 
 	def test_lite_OverArticleQuotaDiscoingServerHandling(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), OverArticleQuotaDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, priorities=[3,1], options={'tries':1, 'penaltystrikes':2, 'maxconnections':1})
 		self.servers.start()
 		self.addarticles('0002','uuencode_multi3')
@@ -2523,7 +2523,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 4)
 
 	def test_lite_OverArticleQuotaDiscoingSingleServerHandling(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaDiscoingNNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), OverArticleQuotaDiscoingNNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':1, 'penaltystrikes':2})
 		self.servers.start()
 		self.addarticles('0002','uuencode_multi3')
@@ -2536,7 +2536,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 4)
 
 	def test_lite_OverArticleQuotaShutdowningSingleServerHandling(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaShutdowningNNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), OverArticleQuotaShutdowningNNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':1, 'penaltystrikes':2})
 		self.servers.start()
 		self.addarticles('0002','uuencode_multi3')
@@ -2549,7 +2549,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 4)
 
 	def test_lite_OverArticleQuotaServerHandling(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), OverArticleQuotaNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, priorities=[3,1], options={'tries':1, 'penaltystrikes':2})
 		self.servers.start()
 		self.addarticles('0002','uuencode_multi3')
@@ -2564,7 +2564,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 4)
 
 	def test_lite_OverArticleQuotaSingleServerHandling(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaNNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), OverArticleQuotaNNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':1, 'penaltystrikes':2})
 		self.servers.start()
 		self.addarticles('0002','uuencode_multi3')
@@ -2577,7 +2577,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 
 	def test_TemporarilyUnavailableNNTPServer(self):
-		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer(("127.0.0.1",0), TemporarilyUnavailableNNTPRequestHandler, nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer((nntpd.serveraddr,0), TemporarilyUnavailableNNTPRequestHandler, nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':3})
 		self.servers.servers[0].setLimit("handle",2)
 		self.servers.start()
@@ -2588,7 +2588,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
 
 	def test_TemporarilyUnavailableNNTPServerPenalty(self):
-		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer(("127.0.0.1",0), TemporarilyUnavailableNNTPRequestHandler, nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer((nntpd.serveraddr,0), TemporarilyUnavailableNNTPRequestHandler, nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':3,'penaltystrikes':2})
 		self.servers.servers[0].setLimit("handle",2)
 		self.servers.start()
@@ -2599,7 +2599,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
 
 	def test_lite_TemporarilyUnavailableNNTPServer(self):
-		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler, TemporarilyUnavailableNNTPRequestHandler, nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler, TemporarilyUnavailableNNTPRequestHandler, nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.servers[0].setLimit("handle",1)
 		self.addarticles('0002','uuencode_multi3')
@@ -2614,7 +2614,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 
 	def test_Article400DiscoingNNTPServer(self):
-		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer(("127.0.0.1",0), Article400DiscoingNNTPRequestHandler, nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer((nntpd.serveraddr,0), Article400DiscoingNNTPRequestHandler, nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':3})
 		self.servers.servers[0].setLimit("handle",2)
 		self.servers.start()
@@ -2624,7 +2624,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
 
 	def test_Article400DiscoingNNTPServerPenalty(self):
-		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer(("127.0.0.1",0), Article400DiscoingNNTPRequestHandler, nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer((nntpd.serveraddr,0), Article400DiscoingNNTPRequestHandler, nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':3,'penaltystrikes':2})
 		self.servers.servers[0].setLimit("handle",2)
 		self.servers.start()
@@ -2634,7 +2634,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 
 	def test_lite_Article400DiscoingNNTPServer(self):
-		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer(("127.0.0.1",0), Article400DiscoingNNTPRequestHandler, nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer((nntpd.serveraddr,0), Article400DiscoingNNTPRequestHandler, nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.servers[0].setLimit("handle",3)
 		self.servers.start()
@@ -2694,7 +2694,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 
 	def test_OneLiveServer(self):
 		self.servers = nntpd.NNTPD_Master(1)
-		deadserver = nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)
+		deadserver = nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)
 		self.nget = util.TestNGet(ngetexe, [deadserver]+self.servers.servers+[deadserver], priorities=[3, 1, 3])
 		deadserver.server_close()
 		self.servers.start()
@@ -2716,7 +2716,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput('0002')
 	
 	def test_DiscoServer(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), DiscoingNNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
 		self.servers.start()
 
@@ -2726,7 +2726,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 		
 	def test_TwoDiscoServers(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), DiscoingNNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
 		self.servers.start()
 
@@ -2736,7 +2736,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 
 	def test_ForceDiscoServer(self):
 		"Test if errors are handled correctly in article retrieval with force_host"
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), DiscoingNNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
 		self.servers.start()
 
@@ -2748,7 +2748,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 3)
 
 	def test_TwoXOverDiscoServers(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), XOver1LineDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), XOver1LineDiscoingNNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), XOver1LineDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), XOver1LineDiscoingNNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':3})
 		self.servers.start()
 
@@ -2760,7 +2760,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 
 	def test_ForceXOverDiscoServer(self):
 		"Test if errors are handled correctly in header retrieval with force_host"
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), XOver1LineDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), XOver1LineDiscoingNNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), XOver1LineDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), XOver1LineDiscoingNNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':3})
 		self.servers.start()
 
@@ -2877,7 +2877,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.failUnless(output.find("h0 1 (1/3): ")>=0)
 	
 	def test_AbruptTimeout(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
 		self.servers.start()
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
@@ -2887,7 +2887,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput('0002')
 
 	def test_ErrorTimeout(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), ErrorDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), ErrorDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
 		self.servers.start()
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
@@ -2909,7 +2909,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput('0002')
 	
 	def test_XOverStreaming_BuggyServerWhichDropsTheEndsOfReplies(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), XOverStreamingDropsDataNNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), XOverStreamingDropsDataNNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':1, 'timeout':3, 'tries':2})
 		self.servers.start()
 		#set up article list with holes in it so next run will use xover streaming
@@ -2926,7 +2926,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput(['0001','0002','0003'])
 
 	def test_timeout(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DelayAfterArticle2NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), DelayAfterArticle2NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'timeout':1})
 		self.servers.start()
 		self.addarticles('0002','uuencode_multi3')
@@ -2935,7 +2935,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
 
 	def test_idletimeout(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DelayBeforeArticleNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), DelayBeforeArticleNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'idletimeout':1})
 		self.servers.start()
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
@@ -2959,7 +2959,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput('0002')
 
 	def test_maxconnections_2(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DelayBeforeCommandNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), DelayBeforeCommandNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), DelayBeforeCommandNNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), DelayBeforeCommandNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), DelayBeforeCommandNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), DelayBeforeCommandNNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'maxconnections':2})
 		self.servers.start()
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[2])
@@ -3365,30 +3365,30 @@ else:
 
 		def test_socket_error(self):
 			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw',-2)]"), 16)
-			self.check_for_errormsg(r'error.*127.0.0.1.*socket')
+			self.check_for_errormsg(r'error.*'+nntpd.serveraddr+'.*socket')
 
 		def test_connect_error(self):
 			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw',-1)]"), 16)
-			self.check_for_errormsg(r'error.*127.0.0.1.*connect')
+			self.check_for_errormsg(r'error.*'+nntpd.serveraddr+'.*connect')
 
 		def test_sock_write_error(self):
 			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('w',0)]"), 16)
-			self.check_for_errormsg(r'error.*write.*127.0.0.1')
+			self.check_for_errormsg(r'error.*write.*'+nntpd.serveraddr)
 
 		def test_sock_read_error(self):
 			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('r',0)]"), 16)
-			self.check_for_errormsg(r'error.*read.*127.0.0.1')
+			self.check_for_errormsg(r'error.*read.*'+nntpd.serveraddr)
 
 		def test_sock_close_error_onexit(self):
 			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw','c')]"), 0) #error on sock close doesn't really need an error return, since it can't cause any problems.  (Any problem causing errors would be caught before sock.close() gets called.)
-			self.check_for_errormsg(r'error.*127.0.0.1')#'TransportEx.*127.0.0.1')
+			self.check_for_errormsg(r'error.*'+nntpd.serveraddr)#'TransportEx.*'+nntpd.serveraddr)
 		
 		def test_sock_close_error(self):
 			#somewhat hacky stuff since we need 2 servers for this test only.
 			self.tearDown()
 			self.do_setUp(2, {'options':{'tries':1, 'maxconnections':1}})
 			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw','c')]"), 0) #error on sock close doesn't really need an error return, since it can't cause any problems.  (Any problem causing errors would be caught before sock.close() gets called.)
-			self.check_for_errormsg(r'error.*127.0.0.1', dupe=1)#'TransportEx.*127.0.0.1')
+			self.check_for_errormsg(r'error.*'+nntpd.serveraddr, dupe=1)#'TransportEx.*'+nntpd.serveraddr)
 
 
 	class LiteErrorTest_base(SubterfugueTest_base):
@@ -3436,26 +3436,26 @@ else:
 		def test_socket_error(self):
 			#self.failUnlessEqual(
 			self.runlite(self.litelist, "IOError:s=[('rw',-2)]")#, 64)
-			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+			self.check_for_errormsg(r'TransportEx.*'+nntpd.serveraddr)
 
 		def test_connect_error(self):
 			#self.failUnlessEqual(self.runlite(self.litelist, "IOError:s=[('rw',-1)]"), 64)
 			self.runlite(self.litelist, "IOError:s=[('rw',-1)]")
-			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+			self.check_for_errormsg(r'TransportEx.*'+nntpd.serveraddr)
 
 		def test_sock_write_error(self):
 			#self.failUnlessEqual(
 			self.runlite(self.litelist, "IOError:s=[('w',0)]")#, 64)
-			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+			self.check_for_errormsg(r'TransportEx.*'+nntpd.serveraddr)
 
 		def test_sock_read_error(self):
 			#self.failUnlessEqual(
 			self.runlite(self.litelist, "IOError:s=[('r',0)]")#, 64)
-			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+			self.check_for_errormsg(r'TransportEx.*'+nntpd.serveraddr)
 
 		def test_sock_close_error(self):
 			self.failUnlessEqual(self.runlite(self.litelist, "IOError:s=[('rw','c')]"), 0) #error on sock close doesn't really need an error return, since it can't cause any problems.  (Any problem causing errors would be caught before sock.close() gets called.)
-			self.check_for_errormsg(r'127.0.0.1')#'TransportEx.*127.0.0.1')
+			self.check_for_errormsg(r''+nntpd.serveraddr)#'TransportEx.*'+nntpd.serveraddr)
 
 
 

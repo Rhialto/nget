@@ -21,6 +21,21 @@ import os, select
 import time
 import threading
 import SocketServer
+import socket
+
+#allow testing with ipv6.
+if os.environ.get('TEST_NGET_IPv6'):
+	serveraddr="::1"
+	serveraf=socket.AF_INET6
+else:
+	serveraddr="127.0.0.1"
+	serveraf=socket.AF_INET
+
+def addressstr(address):
+	host,port=address[:2]
+	if ':' in host:
+		return '[%s]:%s'%(host,port)
+	return '%s:%s'%(host,port)
 
 def chomp(line):
 	if line[-2:] == '\r\n': return line[:-2]
@@ -113,7 +128,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 	def handle(self):
 		self.server.incrcount("_conns")
 		readline = self.rfile.readline
-		self.nwrite("200 Hello World, %s"%(':'.join(map(str,self.client_address))))
+		self.nwrite("200 Hello World, %s"%addressstr(self.client_address))
 		self.group = None
 		self._tmpuser = None
 		self.authed = self.server.auth['']
@@ -290,6 +305,7 @@ class StoppableThreadingTCPServer(SocketServer.ThreadingTCPServer):
 			s1.close()
 		else:
 			self.controlr, self.controlw = os.pipe()
+		self.address_family=serveraf
 		SocketServer.ThreadingTCPServer.__init__(self, addr, handler)
 
 	def stop_serving(self):
@@ -366,7 +382,7 @@ class NNTPD_Master:
 		self.threads = []
 		if type(servers_num)==type(1): #servers_num is integer number of servers to start
 			for i in range(servers_num):
-				self.servers.append(NNTPTCPServer(("127.0.0.1", 0))) #port 0 selects a port automatically.
+				self.servers.append(NNTPTCPServer((serveraddr, 0))) #port 0 selects a port automatically.
 		else: #servers_num is a list of servers already created
 			self.servers.extend(servers_num)
 			

@@ -77,7 +77,7 @@ def main():
 	for o,a in opts:
 		if o=='-p':
 			port = int(a)
-	servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",port), NNTPRequestHandler)])
+	servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,port), NNTPRequestHandler)])
 	for a in args:
 		servers.servers[0].addarticle(["test"], nntpd.FileArticle(open(a)))
 	servers.start()

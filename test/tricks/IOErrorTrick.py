@@ -183,7 +183,7 @@ class IOError(Trick): #somewhat unfortunate, you must name <blah>Trick class as 
 			do = 0
 			if subcall == 1:            # socket
 				# FIX: might fail
-				if ptrace.peekdata(pid, args[1]) == socket.AF_INET:
+				if ptrace.peekdata(pid, args[1]) in (socket.AF_INET, socket.AF_INET6):
 					do = -2
 			elif subcall == 3:                # connect
 				do = -1

@@ -15,7 +15,7 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import os, random, sys, shutil
+import os, random, sys, shutil, nntpd
 
 def exitstatus(st):
 	if not hasattr(os, 'WEXITSTATUS'): #the os.W* funcs are only on *ix
@@ -40,7 +40,6 @@ def vsystem(cmd):
 def vspawn(cmd, args, spawn=getattr(os,"spawnvp",os.spawnv)):
 	print 'running %r %r'%(cmd,args)
 	return spawnstatus(spawn(os.P_WAIT, cmd, [cmd]+args))
-
 
 class TestNGet:
 	def __init__(self, nget, servers, **kw):
@@ -71,7 +70,7 @@ class TestNGet:
 		rc.write("{halias\n")
 		for i in range(0, len(servers)):
 			defaulthostoptions = {
-				'addr': ':'.join(map(str,servers[i].socket.getsockname())),
+				'addr': nntpd.addressstr(servers[i].socket.getsockname()),
 				'shortname': 'h%i'%i,
 				'id': str(i+1),
 			}
