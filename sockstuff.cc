@@ -37,9 +37,6 @@
 #include <fcntl.h>
 
 #include "log.h"
-#ifdef WRFTP
-#include "main.h"
-#endif
 #include "strreps.h"
 
 int sock_timeout=3*60;
