@@ -1034,7 +1034,7 @@ void c_prot_nntp::nntp_doauth(const char *user, const char *pass){
 		}
 		putline(0,"AUTHINFO PASS %s",pass);
 		if (quiet<2)
-			printf(">AUTHINFO PASS *\n");
+			printf("%s << AUTHINFO PASS *\n", connection->server->shortname.c_str());
 		i=getreply(quiet<2);
 	}
 	chkreply(i);
