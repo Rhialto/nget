@@ -3,6 +3,7 @@
   * Add a configure check to remove -fomit-frame-pointer from compile flags on x86, as it breaks exception handling. (reported by Jose Antonio Becerra Permuy)
   * Remember to update the incomplete status when flushing parts of a file and doing a -r without reloading the cache first.
   * Added fullxover=2 setting that handles servers that both add and remove articles out of order.
+  * Fix an invalid line error while loading cache in PART_MODE (mode 1) from causing an endless loop by advancing to SERVER_ARTICLE_MODE without a valid part. (reported by Pharos)
 
 2002-07-11 v0.20:
   * Use timegm func in date string parser if available, fixes possibility of some times being parsed an hour off due to daylight savings time.

@@ -590,11 +590,11 @@ c_nntp_file::ptr c_nntp_cache_reader::read_file(void) {
 					np=new c_nntp_part(atoi(t[0]),atoul(t[1]),t[2]);
 					nf->addpart(np);//add at '.' section (above) ... o r not.
 					count++;
+					mode=SERVER_ARTICLE_MODE;//start adding server_articles
 				}else{
 					printf("invalid line %lu mode %i (%i toks)\n",curline,mode,i);
 					set_cache_warn_status();
 				}
-				mode=SERVER_ARTICLE_MODE;//start adding server_articles
 			}
 		}
 		else if (mode==FILE_MODE){//new file mode
