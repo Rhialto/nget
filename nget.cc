@@ -164,7 +164,7 @@ void set_user_error_status_and_do_fatal_user_error(int incr=1) {
 		throw FatalUserException();
 }
 
-#define NUM_OPTIONS 37
+#define NUM_OPTIONS 38
 #ifndef HAVE_LIBPOPT
 
 #ifndef HAVE_GETOPT_LONG
@@ -213,6 +213,7 @@ enum {
 	OPT_TEST_MULTI=2,
 	OPT_TEXT_HANDLING,
 	OPT_SAVE_TEXT_FOR_BINARIES,
+	OPT_DECODE,
 	OPT_MIN_SHORTNAME
 };
 
@@ -272,8 +273,9 @@ static void addoptions(void)
 	addoption("maxlines",1,'L',"INT","max # of lines a 'file' must have(default -1)");
 	addoption("incomplete",0,'i',0,"retrieve files with missing parts");
 	addoption("complete",0,'I',0,"retrieve only files with all parts(default)");
-	addoption("keep",0,'k',0,"keep temp files");
-	addoption("keep2",0,'K',0,"keep temp files and don't even try to decode them");
+	addoption("decode",0,OPT_DECODE,0,"decode and delete temp files (default)");
+	addoption("keep",0,'k',0,"decode, but keep temp files");
+	addoption("no-decode",0,'K',0,"keep temp files and don't even try to decode them");
 	addoption("case",0,'c',0,"match casesensitively");
 	addoption("nocase",0,'C',0,"match incasesensitively(default)");
 	addoption("dupecheck",1,'d',"FLAGS","check to make sure you haven't already downloaded files(default -dfiM)");
@@ -779,6 +781,9 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				break;
 			case 'K':
 				options.gflags|= GETFILES_NODECODE;
+				break;
+			case OPT_DECODE:
+				options.gflags&= ~(GETFILES_NODECODE|GETFILES_KEEPTEMP);
 				break;
 			case 'c':
 				options.gflags|= GETFILES_CASESENSITIVE;

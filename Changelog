@@ -1,3 +1,7 @@
+2002-xx-xx v0.xx:
+  * Add --decode arg so -k and -K can be disabled.
+  * Change -K's long arg from --keep2 to --no-decode to be more descriptive.
+
 2002-10-28 v0.22.1:
   * Fix segv on saving text file if no uulib info was recorded.
   * Fix bug introduced in 0.22 where a textfile would be generated even if there were decode errors.

@@ -375,6 +375,11 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-a -g test -r joy'))
 		self.verifyoutput(['0002'])
 
+	def test_decode_overrides_k_and_K(self):
+		self.vfailIf(self.nget_run('-k -g test --decode -r joy'))
+		self.vfailIf(self.nget_run('-K -g test --decode -r foo'))
+		self.verifyoutput(['0002','0001'])
+
 class NoCacheRetrieveTestCase(TestCase, RetrieveTest_base):
 	def setUp(self):
 		RetrieveTest_base.setUp(self)
