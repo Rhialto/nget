@@ -109,7 +109,6 @@ struct nget_options {
 
 	void do_get_path(string &s);
 	nget_options(void);
-	nget_options(nget_options &o);
 	void get_path(void);
 	void get_temppath(void);
 	void parse_dupe_flags(const char *opt);

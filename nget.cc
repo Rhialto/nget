@@ -407,16 +407,6 @@ nget_options::nget_options(void){
 	get_path();
 	get_temppath();
 }
-nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),test_multi(o.test_multi),retr_show_multi(o.retr_show_multi),makedirs(o.makedirs),cmdmode(o.cmdmode),groups(o.groups),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite),texthandling(o.texthandling),save_text_for_binaries(o.save_text_for_binaries),mboxfname(o.mboxfname){
-	/*	if (o.path){
-			path=new char[strlen(o.path)+1];
-			strcpy(path,o.path);
-		}else
-			path=NULL;*/
-	//printf("copy path=%s(%p-%p)\n",path,this,path);
-}
-//	void del_path(void){if (path){/*printf("deleteing %s(%p-%p)\n",path,this,path);*/free(path);path=NULL;}}
-	//void get_path(void){/*printf("get_path\n");*/del_path();goodgetcwd(&path);}
 void nget_options::get_path(void){do_get_path(path);}
 void nget_options::get_temppath(void){
 	do_get_path(temppath);
