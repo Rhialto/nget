@@ -96,6 +96,8 @@ class c_group_info {//: public c_refcounted<c_group_info>{
 };
 typedef map<const char *,c_group_info::ptr, ltstr> t_group_info_list;
 
+typedef map<string, string> t_metagroup_list;
+
 class c_nget_config {
 	private:
 			struct serv_match_by_name {
@@ -104,11 +106,13 @@ class c_nget_config {
 					return (server.second->alias==mname || server.second->addr==mname);
 				}
 			};
+		void dogetgroups(vector<c_group_info::ptr> &groups, const char *names);
 	public:
 		t_server_list serv;
 		t_server_priority_grouping_list prioritygroupings;
 		c_server_priority_grouping *trustsizes;
 		t_group_info_list groups;
+		t_metagroup_list metagroups;
 		float curservmult;
 		int usegz;
 		int unequal_line_error;
@@ -170,38 +174,16 @@ class c_nget_config {
 				return (*spgli).second;
 			return NULL;
 		}
-		c_group_info::ptr addgroup(string alias, string name, string prio, int usegz=-2){
-			if (name.empty())return NULL;
-			if (prio.empty())prio="default";
-			c_server_priority_grouping *priog=getpriogrouping(prio);
-			if (!priog){
-				printf("group %s(%s), prio %s not found\n",name.c_str(),alias.c_str(),prio.c_str());
-				return NULL;
-			}
-			assert(priog);
-			c_group_info::ptr group(new c_group_info(alias,name,priog,usegz));
-			if (group){
-				if (!alias.empty())
-					groups.insert(t_group_info_list::value_type(group->alias.c_str(),group));
-				groups.insert(t_group_info_list::value_type(group->group.c_str(),group));
-			}
-			return group;
-		}
+		void addgroup_or_metagroup(const string &alias, const string &name);
+		c_group_info::ptr addgroup(const string &alias, const string &name, string prio, int usegz=-2);
+		void addmetagroup(const string &alias, const string &name);
 		c_group_info::ptr getgroup(const char * groupname){
 			t_group_info_list::iterator gili=groups.find(groupname);
 			if (gili!=groups.end())
 				return (*gili).second;
 			return addgroup("",groupname,"");//do we even need to addgroup?  since groups are refcounted, could just return a new one.. nothing really needs it to be in the list..
 		}
-		void getgroups(vector<c_group_info::ptr> &groups, const char *names) {
-			groups.clear();
-			char *foo = new char[strlen(names)+1];
-			char *cur = foo, *name = NULL;
-			strcpy(foo, names);
-			while ((name = goodstrtok(&cur, ',')))
-				groups.push_back(getgroup(name));
-			delete [] foo;
-		}
+		void getgroups(vector<c_group_info::ptr> &groups, const char *names);
 		void setlist(c_data_section *cfg,c_data_section *hinfo,c_data_section *pinfo,c_data_section *ginfo);
 		c_nget_config(){
 			curservmult=2.0;

@@ -191,7 +191,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 		for (dli=ginfo->data.begin();dli!=ginfo->data.end();++dli){
 			di=(*dli).second;
 			if (di->type!=1){
-				addgroup(di->key,di->str,"");
+				addgroup_or_metagroup(di->key,di->str);
 			}else{
 				//				ds=dynamic_cast<c_data_section*>(di);
 				ds=(c_data_section*)(di);//TODO: ok, this is bad, but dynamic_cast doesn't work. ??
@@ -201,4 +201,56 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 				addgroup(ds->key,ds->getitems("group"),ds->getitems("prio"),ds->geti("usegz",-2));
 			}
 		}
+}
+
+void c_nget_config::addgroup_or_metagroup(const string &alias, const string &name){
+	if (name.find(',')!=string::npos)
+		addmetagroup(alias,name);
+	else
+		addgroup(alias,name,"");
+}
+
+void c_nget_config::addmetagroup(const string &alias, const string &name){
+	metagroups.insert(t_metagroup_list::value_type(alias,name));
+}
+
+c_group_info::ptr c_nget_config::addgroup(const string &alias, const string &name, string prio, int usegz){
+	if (name.empty())return NULL;
+	if (prio.empty())prio="default";
+	c_server_priority_grouping *priog=getpriogrouping(prio);
+	if (!priog){
+		printf("group %s(%s), prio %s not found\n",name.c_str(),alias.c_str(),prio.c_str());
+		return NULL;
+	}
+	assert(priog);
+	c_group_info::ptr group(new c_group_info(alias,name,priog,usegz));
+	if (group){
+		if (!alias.empty())
+			groups.insert(t_group_info_list::value_type(group->alias.c_str(),group));
+		groups.insert(t_group_info_list::value_type(group->group.c_str(),group));
+	}
+	return group;
+}
+
+void c_nget_config::dogetgroups(vector<c_group_info::ptr> &groups, const char *names) {
+	char *foo = new char[strlen(names)+1];
+	char *cur = foo, *name = NULL;
+	strcpy(foo, names);
+	while ((name = goodstrtok(&cur, ','))) {
+		t_metagroup_list::const_iterator mgi=metagroups.find(name);
+		if (mgi!=metagroups.end())
+			dogetgroups(groups, mgi->second.c_str());
+		else
+			groups.push_back(getgroup(name));
+	}
+	delete [] foo;
+}
+
+void c_nget_config::getgroups(vector<c_group_info::ptr> &groups, const char *names) {
+	groups.clear();
+	vector<c_group_info::ptr> tmpgroups;
+	dogetgroups(tmpgroups, names);
+	for (vector<c_group_info::ptr>::const_iterator gi=tmpgroups.begin(); gi!=tmpgroups.end(); ++gi)
+		if (find(groups.begin(), groups.end(), *gi)==groups.end())
+			groups.push_back(*gi); // return only unique groups
 }

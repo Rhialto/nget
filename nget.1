@@ -395,8 +395,11 @@ Newsgroup aliases are defined in the galias section.  An alias can be a simple
 alias=fullname data item, or  a subsection containing group=, prio=, and usegz= items.
 The per-group usegz setting will override the global setting.
 .P
+An alias can also refer to multiple groups (either fullnames or further aliases).
+.P
 For example, the following galias section defines an alias of "abpl" for the
-group "alt.binaries.pictures.linux", and "chocobo" for the group "alt.chocobo".
+group "alt.binaries.pictures.linux", "chocobo" for the group "alt.chocobo", and
+ospics for both alt.binaries.pictures.linux and alt.binaries.pictures.freebsd.
 In addition, the chocobo group is assigned to use the chocoprios priority
 grouping when deciding what server to retrieve from.
 .RS
@@ -411,6 +414,8 @@ grouping when deciding what server to retrieve from.
 .B   prio=chocoprios
 .RE
 .B  }
+.br
+.B  ospics=abpl,alt.binaries.pictures.freebsd
 .RE
 .B }
 .RE

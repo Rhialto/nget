@@ -112,6 +112,7 @@
 #  group=alt.chocobo.wark.wark.wark
 #  prio=chocoboprios
 # }
+# chocobos=chocobo,wark
 # {idunno
 #  group=alt.idunno.why.but.this.one.isnt.compressed
 #  usegz=0
