@@ -1043,21 +1043,21 @@ int main(int argc, const char ** argv){
 				cfg.get("limit",options.linelimit,0UL,ULONG_MAX);
 				cfg.get("tries",options.maxretry,1,INT_MAX);
 				cfg.get("delay",options.retrydelay,0,INT_MAX);
-				if (!cfg.get("case",t,0,1) && t==1)
+				if (cfg.get("case",t,0,1) && t==1)
 					options.gflags|= GETFILES_CASESENSITIVE;
-				if (!cfg.get("complete",t,0,1) && t==0)
+				if (cfg.get("complete",t,0,1) && t==0)
 					options.gflags|= GETFILES_GETINCOMPLETE;
-				if (!cfg.get("dupeidcheck",t,0,1) && t==0)
+				if (cfg.get("dupeidcheck",t,0,1) && t==0)
 					options.gflags|= GETFILES_NODUPEIDCHECK;
-				if (!cfg.get("dupefilecheck",t,0,1) && t==0)
+				if (cfg.get("dupefilecheck",t,0,1) && t==0)
 					options.gflags|= GETFILES_NODUPEFILECHECK;
-				if (!cfg.get("dupefilemark",t,0,1) && t==1)
+				if (cfg.get("dupefilemark",t,0,1) && t==1)
 					options.gflags|= GETFILES_DUPEFILEMARK;
-				if (!cfg.get("tempshortnames",t,0,1) && t==1)
+				if (cfg.get("tempshortnames",t,0,1) && t==1)
 					options.gflags|= GETFILES_TEMPSHORTNAMES;
-				if (!cfg.get("save_binary_info",t,0,1) && t==1)
+				if (cfg.get("save_binary_info",t,0,1) && t==1)
 					options.save_text_for_binaries=true;
-				if (!cfg.get("autopar",t,0,1) && t==0)
+				if (cfg.get("autopar",t,0,1) && t==0)
 					options.gflags|= GETFILES_NOAUTOPAR;
 				options.set_test_multi(cfg.geta("test_multiserver"));
 				options.set_text_handling(cfg.geta("text"));
