@@ -76,7 +76,7 @@ class c_nntp_server_article {
 		c_nntp_server_article(ulong serverid,ulong articlenum,ulong bytes,ulong lines);
 };
 typedef multimap<ulong,c_nntp_server_article*,less<ulong> > t_nntp_server_articles;
-typedef multimap<float,c_nntp_server_article*,less<float> > t_nntp_server_articles_prioritized;
+typedef multimap<float,c_nntp_server_article*,greater<float> > t_nntp_server_articles_prioritized;
 class c_nntp_part {
 	public:
 		int partnum;

@@ -463,10 +463,10 @@ int c_prot_nntp::nntp_dowritelite_article(c_file &fw,c_nntp_part *part,char *fn)
 	c_server *whost;
 	c_nntp_server_article *sa=NULL;
 	t_nntp_server_articles_prioritized sap;
-	t_nntp_server_articles_prioritized::reverse_iterator sapi;
+	t_nntp_server_articles_prioritized::iterator sapi;
 	nntp_doarticle_prioritize(part,sap,NULL);
 	fw.putf("%i\n",sap.size());
-	for (sapi = sap.rbegin(); sapi != sap.rend(); ++sapi){
+	for (sapi = sap.begin(); sapi != sap.end(); ++sapi){
 		sa=(*sapi).second;
 		whost=nconfig.serv[sa->serverid];
 		fw.putf("%s\n%lu\n%lu\n%lu\n",whost->addr.c_str(),sa->articlenum,sa->bytes,sa->lines);
@@ -546,7 +546,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 	c_file_fd f;
 	c_nntp_server_article *sa=NULL;
 	t_nntp_server_articles_prioritized sap;
-	t_nntp_server_articles_prioritized::reverse_iterator sapi;
+	t_nntp_server_articles_prioritized::iterator sapi;
 	t_nntp_server_articles_prioritized::iterator sap_erase_i;
 	t_nntp_server_articles_prioritized::iterator curservsapi=sap.end();
 	nntp_doarticle_prioritize(part,sap,&curservsapi);
@@ -557,7 +557,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 			if (options.retrydelay)
 				sleep(options.retrydelay);
 		}
-		for (sapi = sap.rbegin(); sapi != sap.rend();){
+		for (sapi = sap.begin(); sapi != sap.end();){
 			sa=(*sapi).second;
 			assert(sa);
 			if (curserverid!=sa->serverid){
@@ -597,7 +597,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 				printCaughtEx(e);
 				if (e.isfatal()) {
 					printf("fatal error, won't try %s again\n",host->addr.c_str());
-					sap_erase_i = sapi.base();
+					sap_erase_i = sapi;
 					++sapi;
 					sap.erase(sap_erase_i);
 				}else{
