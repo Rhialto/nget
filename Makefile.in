@@ -43,12 +43,6 @@ $(NGETLITE): $(LITEOBJS) .depend
 test:
 	$(MAKE) -C test test
 
-filetest2: filetest2.o file.o sockstuff.o
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
-
-filetest: filetest.o file.o sockstuff.o
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
-
 dep depend .depend:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM *.cc > .depend
 
