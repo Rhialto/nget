@@ -163,7 +163,7 @@ class Par1Info : public ParXInfoBase {
 		Par1Info(const string &p,const string &t):ParXInfoBase(p,t){
 			localpars.addfrompath_par1(path);
 		}
-		bool maybe_add_parfile(const c_nntp_file::ptr &f);
+		bool maybe_add_parfile(const c_nntp_file::ptr &f, bool want_incomplete);
 		int maybe_get_pxxs(c_nntp_files_u &fc);
 };
 
@@ -174,7 +174,7 @@ class Par2Info : public ParXInfoBase {
 		Par2Info(const string &p,const string &t):ParXInfoBase(p,t){
 			localpars.addfrompath_par2(path);
 		}
-		bool maybe_add_parfile(const c_nntp_file::ptr &f);
+		bool maybe_add_parfile(const c_nntp_file::ptr &f, bool want_incomplete);
 		int maybe_get_pxxs(c_nntp_files_u &fc);
 };
 
@@ -187,8 +187,8 @@ class ParInfo {
 	public:
 		ParInfo(const string &p,const string &t):path(p), par1info(p,t), par2info(p,t) {
 		}
-		bool maybe_add_parfile(const c_nntp_file::ptr &f) {
-			return par1info.maybe_add_parfile(f) || par2info.maybe_add_parfile(f);
+		bool maybe_add_parfile(const c_nntp_file::ptr &f, bool want_incomplete) {
+			return par1info.maybe_add_parfile(f, want_incomplete) || par2info.maybe_add_parfile(f, want_incomplete);
 		}
 		void get_initial_pars(c_nntp_files_u &fc) {
 			par1info.get_initial_pars(fc);
@@ -214,7 +214,7 @@ class ParHandler {
 		t_parinfo_map::mapped_type parinfo(const string &path, const string &temppath);
 		t_parinfo_map::mapped_type parinfo(const string &path);
 	public:
-		bool maybe_add_parfile(const c_nntp_file::ptr &f, const string &path, const string &temppath);
+		bool maybe_add_parfile(const c_nntp_file::ptr &f, const string &path, const string &temppath, bool want_incomplete);
 		void get_initial_pars(c_nntp_files_u &fc);
 		void maybe_get_pxxs(const string &path, c_nntp_files_u &fc);
 };

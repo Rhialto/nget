@@ -244,9 +244,14 @@ static void nntp_cache_getfile(c_nntp_files_u *fc, ParHandler *parhandler, meta_
 	c_nntp_getinfo::ptr info;
 	for (gii=giibegin; gii!=giiend; ++gii) {
 		info = *gii;
-		if ((info->flags&GETFILES_GETINCOMPLETE || f->iscomplete()) && (info->flags&GETFILES_NODUPEIDCHECK || !(midinfo->check(f->bamid()))) && (*info->pred)(f.gimmethepointer())){//matches user spec
+		if ( (!(info->flags&GETFILES_AUTOPAR_DISABLING_FLAGS) || info->flags&GETFILES_GETINCOMPLETE || f->iscomplete()) // --autopar or -i or file_is_complete
+				&& (info->flags&GETFILES_NODUPEIDCHECK || !(midinfo->check(f->bamid()))) // -dI or file_not_in_midinfo
+				&& (*info->pred)(f.gimmethepointer()) // matches user spec
+				){
 			if (!(info->flags&GETFILES_AUTOPAR_DISABLING_FLAGS)) {
-				if (parhandler->maybe_add_parfile(f, info->path, info->temppath))
+				if (parhandler->maybe_add_parfile(f, info->path, info->temppath, info->flags&GETFILES_GETINCOMPLETE))
+					continue;
+				if (!(info->flags&GETFILES_GETINCOMPLETE || f->iscomplete())) // autopar_didnt_want_it and -I and file_incomplete
 					continue;
 			}
 			firange=fc->files.equal_range(f->badate());

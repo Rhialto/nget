@@ -669,6 +669,16 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -ir par.test'))
 		self.verifyoutput({'par01':['01.dat','03.dat','04.dat','05.dat','a b.par','a b.p02']})
 	
+	def test_autoparhandling_incompletepxxonly(self):
+		self.addarticles('par01', 'input', fname='dat[1345]')
+		self.addarticles('par01', 'multipart', fname='par1-1')
+		self.vfailUnlessExitstatus(self.nget_run('-g test -ir par.test'), 3)
+	
+	def test_autoparhandling_incompletepxxonly2(self):
+		self.addarticles('par01', 'input', fname='dat[1345]')
+		self.addarticles('par01', 'multipart', fname='par1-1')
+		self.vfailIf(self.nget_run('-g test -r par.test')) # maybe this should cause autopar exit error?
+	
 	def test_autoparhandling_reply(self):
 		self.addarticles('par01', 'input')
 		self.addarticles('par01', 'reply')
@@ -984,6 +994,32 @@ class RetrieveTest_base(DecodeTest_base):
 		self.addarticles('par2-01', 'multipart', fname="par3-1")
 		self.vfailIf(self.nget_run('-g test -ir par2.test'))
 		self.verifyoutput({'par2-01':['c d 01.dat','c d 04.dat','c d 05.dat','c d.par2','c d.vol07+08.par2']})
+		
+	def test_autopar2handling_incompletepxx2(self):
+		self.addarticles('par2-01', 'input', fname='dat[2345]')
+		self.addarticles('par2-01', 'input', fname='par')
+		self.addarticles('par2-01', 'input', fname='par[45]')
+		self.addarticles('par2-01', 'multipart', fname="par3-1")
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par2.test'), 1)
+		
+	def test_autopar2handling_incompletepxx3(self):
+		self.addarticles('par2-01', 'input', fname='dat[2345]')
+		self.addarticles('par2-01', 'input', fname='par')
+		self.addarticles('par2-01', 'input', fname='par[245]')
+		self.addarticles('par2-01', 'multipart', fname="par3-1")
+		self.vfailIf(self.nget_run('-g test -r par2.test'))
+		self.verifyoutput({'par2-01':['c d 02.dat','c d 03.dat','c d 04.dat','c d 05.dat','c d.par2','c d.vol01+02.par2']}) #vol01+02 should be prefered since it has less "size", even if it has more "value" than needed.
+		
+	def test_autopar2handling_incompletepxxonly(self):
+		self.addarticles('par2-01', 'input', fname='dat[2345]')
+		self.addarticles('par2-01', 'input', fname='par')
+		self.addarticles('par2-01', 'multipart', fname="par3-1")
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par2.test'), 1)
+		
+	def test_autopar2handling_incompletepxxonly2(self):
+		self.addarticles('par2-01', 'input', fname='dat[2345]')
+		self.addarticles('par2-01', 'multipart', fname="par3-1")
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par2.test'), 1)
 		
 	def test_autopar2handling_reply(self):
 		self.addarticles('par2-01', 'input')

@@ -118,9 +118,12 @@ void LocalParFiles::check_badbasenames(void) {
 }
 
 
-bool Par1Info::maybe_add_parfile(const c_nntp_file::ptr &f) {
+bool Par1Info::maybe_add_parfile(const c_nntp_file::ptr &f, bool want_incomplete) {
 	if (f->maybe_a_textpost())
 		return false;//try to avoid mistaking text posts that have .pxx stuff in the title for binary par posts.
+
+	if (!want_incomplete && !f->iscomplete())
+		return false;
 
 	c_regex_subs rsubs;
 	for (t_subjmatches_map::iterator smi=localpars.subjmatches.begin(); smi!=localpars.subjmatches.end(); ++smi) {
@@ -221,7 +224,7 @@ int Par1Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 #ifndef NDEBUG
 		bool r=
 #endif
-			maybe_add_parfile(*ufi);
+			maybe_add_parfile(*ufi, true);
 		assert(r);
 	}
 
@@ -279,7 +282,7 @@ int Par1Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 }
 
 
-bool Par2Info::maybe_add_parfile(const c_nntp_file::ptr &f) {
+bool Par2Info::maybe_add_parfile(const c_nntp_file::ptr &f, bool want_incomplete) {
 	if (f->maybe_a_textpost())
 		return false;//try to avoid mistaking text posts that have .pxx stuff in the title for binary par posts.
 
@@ -387,7 +390,7 @@ int Par2Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 #ifndef NDEBUG
 		bool r=
 #endif
-			maybe_add_parfile(*ufi);
+			maybe_add_parfile(*ufi, true);
 		assert(r);
 	}
 
@@ -463,8 +466,8 @@ ParHandler::t_parinfo_map::mapped_type ParHandler::parinfo(const string &path) {
 	return (*i).second;
 }
 
-bool ParHandler::maybe_add_parfile(const c_nntp_file::ptr &f, const string &path, const string &temppath) {
-	return parinfo(path,temppath)->maybe_add_parfile(f);
+bool ParHandler::maybe_add_parfile(const c_nntp_file::ptr &f, const string &path, const string &temppath, bool want_incomplete) {
+	return parinfo(path,temppath)->maybe_add_parfile(f, want_incomplete);
 }
 
 void ParHandler::get_initial_pars(c_nntp_files_u &fc) {
