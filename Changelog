@@ -10,7 +10,7 @@
   * Add more documentation of win32 build/usage, and win32 binaries zip.
   * Error on retrieving headers will retry and try other servers instead of giving up.
   * Errors other than "article not available" on retrieving articles are handled correctly.
-  * Added unequal_line_error config option and made default be a warning rather than an error. (since the "unequal line count" error was more of an annoyance than anything.
+  * Added unequal_line_error config option and made default be a warning rather than an error. (since the "unequal line count" error was more of an annoyance than anything.)
   * Added an exit error status for article retrieval errors.
   
 2001-08-02 - v0.14:
