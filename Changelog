@@ -6,6 +6,7 @@
   * Add NGETRC environment variable to specify alternate config file directly.
   * Extend removal of identical dupe downloaded files to also cover incomplete/broken files. (Based on patch from Bram)
   * Add "update" and "updateage" -R keywords to select based upon when items were added to the cache.
+  * Fix par2 handling not finding incomplete/broken files with non-lowercase names.
 
 2003-12-27 v0.26:
   * Add simplest possible example to manpage.

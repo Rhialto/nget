@@ -1208,6 +1208,13 @@ class RetrieveTest_base(DecodeTest_base):
 		self.addarticles('par2-01', 'multipart', fname="dat4-[123]")
 		self.vfailUnlessExitstatus(self.nget_run('-g test -r par2.test'), 1) #autopar should automatically try incomplete data files if there isn't enough par2 packets, even if user didn't use -i.
 		
+	def test_autopar2handling_incompletefile_case(self):
+		self.addarticles('par2-01', 'weirdcase_input', fname='dat[1235]')
+		self.addarticles('par2-01', 'weirdcase_input', fname='par')
+		self.addarticles('par2-01', 'weirdcase_input', fname='par2')
+		self.addarticles('par2-01', 'multipart', fname="dat4-[123]")
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par2.test'), 1) #autopar should automatically try incomplete data files if there isn't enough par2 packets, even if user didn't use -i.
+		
 	def test_autopar2handling_incompletefile2(self):
 		self.addarticles('par2-01', 'input', fname='dat[1235]')
 		self.addarticles('par2-01', 'multipart', fname="dat4-[123]")

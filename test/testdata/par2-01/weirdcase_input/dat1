@@ -1,0 +1,12 @@
+From: donut@charon (Matthew Mueller,,,)
+Sender: donut@charon
+User-Agent: ypost/0.46 (http://www.yencode.org/)
+Date: Tue, 06 Apr 2004 01:02:55 GMT
+Newsgroups: test
+Subject: [par2 test] "c D 01.DAt" 8 yEnc bytes
+Lines: 3
+Message-ID: <4.1081213375.96@dumbnntpd>
+
+=ybegin line=128 size=8 name=c D 01.DAt
+[\]^_`ab
+=yend size=8 crc32=9AE0DAAF

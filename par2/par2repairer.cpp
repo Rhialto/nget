@@ -18,6 +18,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "par2cmdline.h"
+#include "../misc.h"
 #include "../log.h"
 
 #ifdef _MSC_VER
@@ -1109,7 +1110,7 @@ bool Par2Repairer::VerifyExtraFiles(const list<CommandLine::ExtraFile> &extrafil
       // strip off the path
       DiskFile::SplitFilename(filename, path, name);
       // find matches for that name
-      pair<multimap<string,string>::const_iterator, multimap<string,string>::const_iterator> matchingfiles(extrafilenamemap.equal_range(name));
+      pair<multimap<string,string>::const_iterator, multimap<string,string>::const_iterator> matchingfiles(extrafilenamemap.equal_range(strtolower(name)));
       for (;
            matchingfiles.first!=matchingfiles.second && completefilecount<sourcefiles.size();
            ++matchingfiles.first)
