@@ -2,6 +2,15 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.52)
 AC_INIT(nget.cc)
 AC_CONFIG_HEADER(config.h)    
+AH_TOP([#ifndef _NGET_CONFIG_H_
+#define _NGET_CONFIG_H_
+])
+AH_BOTTOM([
+/* tests for some features that depend on other features */
+#include "_subconf.h"
+
+#endif /* _NGET_CONFIG_H_ */
+])
 
 AC_LANG_CPLUSPLUS
 
@@ -149,7 +158,7 @@ AC_ARG_WITH(uulib,
 if test "$uumanual" = "yes"; then
 	UUINC=-I$UUDIR
 	UULIB=$UUDIR/libuu.a
-	AC_DEFINE(HAVE_LIBUU)
+	AC_DEFINE(HAVE_LIBUU,,[Define if you have the uu library (-luu).])
 else
 	NOUU=#
 	AC_CHECK_LIB(uulib, UUInitialize)
@@ -169,7 +178,7 @@ AC_ARG_ENABLE(filecompare,
 [ --disable-filecompare    Do not test to see if a duplicate downloaded file is
                           the same as the original, keep all duplicates.],
 	if test "$enableval" != "no"; then
-		AC_DEFINE(USE_FILECOMPARE)
+		AC_DEFINE(USE_FILECOMPARE,,[compare duplicate files?])
 	fi
 ,
 		AC_DEFINE(USE_FILECOMPARE)
@@ -185,7 +194,7 @@ AC_ARG_ENABLE(checksum,
                           instead.],
 	if test "$enableval" != "no"; then
 		if test "$enableval" != "yes"; then
-			AC_DEFINE_UNQUOTED(CHECKSUM,$enableval)
+			AC_DEFINE_UNQUOTED(CHECKSUM,$enableval,[checksum method to use])
 		else
 			AC_DEFINE(CHECKSUM,crc32)
 		fi
@@ -213,12 +222,12 @@ if test "$nget_noopt" = "yes"; then
 	MY_DISABLE_OPT
 fi
 if test "$nget_ndebug" = "yes"; then
-	AC_DEFINE(NDEBUG)
+	AC_DEFINE(NDEBUG,,[debug mode?])
 fi
 dnl AC_ARG_ENABLE(debug_cache,
 dnl [ --enable-debug_cache     Enable consistancy checks when loading and saving header cache],
 dnl 	if test "$enableval" != "no"; then
-dnl 		AC_DEFINE(DEBUG_CACHE)
+dnl 		AC_DEFINE(DEBUG_CACHE,,[check consistancy ])
 dnl 	fi
 dnl )
 
