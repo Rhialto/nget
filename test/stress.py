@@ -39,7 +39,7 @@ parser = OptionParser(option_class=MyOption)
 #parser.add_option("-t", "--threads",
 #		action="store", type="int", dest="threads",
 #		help="number of threads of nget to run")
-parser.add_option(None, "--nget",
+parser.add_option("--nget",
 		action="store", type="string", dest="nget", default=os.path.join(os.pardir,'nget'))
 parser.add_option("-l", "--minlines",
 		action="store", type="int", dest="minlines", default=5)
@@ -53,11 +53,11 @@ parser.add_option("-S", "--maxsize",
 		action="store", type="int", dest="maxsize", default=1024*1024)
 parser.add_option("-T", "--totalsize",
 		action="store", type="int", dest="totalsize", default=8*1024*1024)
-parser.add_option(None, "--servers",
+parser.add_option("--servers",
 		action="store", type="int", dest="numservers", default=3)
-parser.add_option(None, "--groups",
+parser.add_option("--groups",
 		action="store", type="string", dest="groups", default='foo')
-parser.add_option(None, "--seed",
+parser.add_option("--seed",
 		action="store", type="long", dest="seed", default=long(time.time()*256))
 
 (options, args) = parser.parse_args()
