@@ -125,6 +125,21 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 		else:
 			raise NNTPSyntaxError, args
 			
+	def cmd_listgroup(self, args):
+		if args:
+			group = self.server.groups.get(args)
+			if not group:
+				raise NNTPNoSuchGroupError, args
+			self.group = group
+		if not self.group:
+			raise NNTPNoGroupSelectedError
+		self.nwrite("211 list follows")
+		anums = self.group.articles.keys()
+		anums.sort()
+		for an in anums:
+			self.nwrite(str(an))
+		self.nwrite(".")
+
 	def cmd_group(self, args):
 		self.group = self.server.groups.get(args)
 		if not self.group:

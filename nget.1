@@ -177,8 +177,11 @@ Default for quiet option. (0=normal, 1=-q)
 .IP "unequal_line_error (boolean, default=0)"
 If set, downloaded articles whose actual number of lines does not match the expected value will be regarded as an error and ignored.
 If 0, a warning will be generated but the article will be accepted.
-.IP "fullxover (boolean, default=0)"
-On each refresh of the header cache, check holes in the article list to see if any new articles have appeared there.  The NNTP spec says this shouldn't happen, but some servers do it anyway.
+.IP "fullxover (int, default=0)"
+Controls wether nget will check for articles added or removed out of order when updating header cache.
+fullxover=0 will follow the nntp spec and assume articles are always added and removed in the correct order.
+fullxover=1 will assume articles may be added out of order, but are still removed in order.
+fullxover=2 handles articles being added and removed in any order.
 .IP "makedirs (special, default=no)"
 Create non-existant directories specified by -p/-P? (yes/no/ask)
 .IP "test_multiserver (special, default=no)"
@@ -199,7 +202,7 @@ The shortname to use for this server.
 Username for the server, if it requires authorization.
 .IP "pass (string)"
 Password for the server, if it requires authorization.
-.IP "fullxover (boolean)"
+.IP "fullxover (int)"
 Override global fullxover setting for this server only.
 .IP "maxstreaming (int)"
 Override global maxstreaming setting for this server only.

@@ -306,6 +306,9 @@ int c_nntp_cache::additem(c_nntp_header *h){
 void c_nntp_cache::getxrange(c_nntp_server_info *servinfo,ulong newlow,ulong newhigh, c_nrange *range) const {
 	range->clear();
 	range->insert(newlow<servinfo->low?newlow:servinfo->low,newhigh);
+	getxrange(servinfo, range);
+}
+void c_nntp_cache::getxrange(c_nntp_server_info *servinfo, c_nrange *range) const {
 	t_nntp_files::const_iterator i;
 	c_nntp_file::ptr nf;
 	t_nntp_file_parts::const_iterator pi;
@@ -330,8 +333,15 @@ void c_nntp_cache::getxrange(c_nntp_server_info *servinfo,ulong newlow,ulong new
 	}
 }
 ulong c_nntp_cache::flushlow(c_nntp_server_info *servinfo, ulong newlow, c_mid_info *midinfo){
-	ulong count=0,countp=0,countf=0;
 	assert(newlow>0);
+	c_nrange flushrange;
+	flushrange.insert(0, newlow-1);
+	ulong r = flush(servinfo, flushrange, midinfo);
+	servinfo->low=newlow;
+	return r;
+}
+ulong c_nntp_cache::flush(c_nntp_server_info *servinfo, c_nrange flushrange, c_mid_info *midinfo){
+	ulong count=0,countp=0,countf=0;
 	t_nntp_files::iterator i,in;
 	c_nntp_file::ptr nf;
 	t_nntp_file_parts::iterator pi,pic;
@@ -340,7 +350,12 @@ ulong c_nntp_cache::flushlow(c_nntp_server_info *servinfo, ulong newlow, c_mid_i
 	t_nntp_server_articles::iterator sai;
 	c_nntp_server_article *sa;
 	c_mid_info rel_midinfo("");
-	if (quiet<2) {printf("Flushing headers %lu-%lu(%lu):",servinfo->low,newlow-1,newlow-servinfo->low);fflush(stdout);}
+	//restrict the message to the range of headers we actually have, since showing 0-4294967295 or something isn't too useful ;0
+	flushrange.remove(0,servinfo->low-1);
+	flushrange.remove(servinfo->high+1,ULONG_MAX);
+	if (flushrange.empty())
+		return 0;
+	if (quiet<2) {printf("Flushing headers %lu-%lu(%lu):", flushrange.low(), flushrange.high(), flushrange.get_total());fflush(stdout);}
 	for(in = files.begin();in!=files.end();){
 		i=in;
 		++in;
@@ -358,7 +373,7 @@ ulong c_nntp_cache::flushlow(c_nntp_server_info *servinfo, ulong newlow, c_mid_i
 				++sarange.first;
 				sa=(*sai).second;
 				assert(sa);
-				if (sa->articlenum<newlow){
+				if (flushrange.check(sa->articlenum)){
 					delete sa;
 					np->articles.erase(sai);
 					if (np->articles.empty()){
@@ -386,7 +401,6 @@ ulong c_nntp_cache::flushlow(c_nntp_server_info *servinfo, ulong newlow, c_mid_i
 	}
 	servinfo->num-=count;
 	totalnum-=countp;
-	servinfo->low=newlow;
 #ifndef NDEBUG
 	for(in = files.begin();in!=files.end();++in){
 		nf=(*in).second;
@@ -398,7 +412,7 @@ ulong c_nntp_cache::flushlow(c_nntp_server_info *servinfo, ulong newlow, c_mid_i
 			sai=np->articles.find(servinfo->serverid);
 			if (sai!=np->articles.end()){
 				sa=(*sai).second;
-				assert(sa->articlenum>=newlow);
+				assert(!flushrange.check(sa->articlenum));
 			}
 		}
 	}

@@ -591,54 +591,59 @@ class XoverTestCase(TestCase, DecodeTest_base):
 		self.servers = nntpd.NNTPD_Master(1)
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':0}) 
 		self.fxnget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':1}) 
+		self.fx2nget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':2}) 
 		self.servers.start()
 		
 	def tearDown(self):
 		self.servers.stop()
 		self.nget.clean_all()
 		self.fxnget.clean_all()
+		self.fx2nget.clean_all()
 
 	def verifynonewfiles(self):
 		nf = os.listdir(self.nget.tmpdir)
 		fxnf = os.listdir(self.fxnget.tmpdir)
-		self.failIf(nf or fxnf, "new files: %s %s"%(nf, fxnf))
+		fx2nf = os.listdir(self.fx2nget.tmpdir)
+		self.failIf(nf or fxnf or fx2nf, "new files: %s %s %s"%(nf, fxnf, fx2nf))
 
+	def run_all(self, args):
+		self.vfailIf(self.nget.run(args))
+		self.vfailIf(self.fxnget.run(args))
+		self.vfailIf(self.fx2nget.run(args))
+		
+	def verifyoutput_all(self, testnum):
+		self.verifyoutput(testnum)
+		self.verifyoutput(testnum, tmpdir=self.fxnget.tmpdir)
+		self.verifyoutput(testnum, tmpdir=self.fx2nget.tmpdir)
+		
 	def test_newarticle(self):
 		self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[0])
 
-		self.vfailIf(self.nget.run("-g test -r ."))
-		self.vfailIf(self.fxnget.run("-g test -r ."))
+		self.run_all("-g test -r .")
 		self.verifynonewfiles()
 		
 		self.addarticle_toserver('0002', 'uuencode_multi', '002', self.servers.servers[0])
 
-		self.vfailIf(self.nget.run("-g test -r ."))
-		self.vfailIf(self.fxnget.run("-g test -r ."))
-
-		self.verifyoutput('0002')
-		self.verifyoutput('0002', tmpdir=self.fxnget.tmpdir)
+		self.run_all("-g test -r .")
+		self.verifyoutput_all('0002')
 
 	def test_oldarticle(self):
 		self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[0], anum=2)
 
-		self.vfailIf(self.nget.run("-g test -r ."))
-		self.vfailIf(self.fxnget.run("-g test -r ."))
+		self.run_all("-g test -r .")
 		self.verifynonewfiles()
 		
 		self.addarticle_toserver('0002', 'uuencode_multi', '002', self.servers.servers[0], anum=1)
 
-		self.vfailIf(self.nget.run("-g test -r ."))
-		self.vfailIf(self.fxnget.run("-g test -r ."))
+		self.run_all("-g test -r .")
 
-		self.verifyoutput('0002')
-		self.verifyoutput('0002', tmpdir=self.fxnget.tmpdir)
+		self.verifyoutput_all('0002')
 
 	def test_insertedarticle(self):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=3)
 
-		self.vfailIf(self.nget.run("-g test -r ."))
-		self.vfailIf(self.fxnget.run("-g test -r ."))
+		self.run_all("-g test -r .")
 		self.verifynonewfiles()
 		
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=2)
@@ -646,19 +651,34 @@ class XoverTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifynonewfiles() #fullxover=0 should not be able to find new article
 		self.vfailIf(self.fxnget.run("-g test -r ."))
+		self.vfailIf(self.fx2nget.run("-g test -r ."))
 
 		self.verifyoutput('0002', tmpdir=self.fxnget.tmpdir)
+		self.verifyoutput('0002', tmpdir=self.fx2nget.tmpdir)
+	
+	def test_removedarticle(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		article = self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=2)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=3)
+
+		self.run_all("-g test")
+		self.verifynonewfiles()
+		
+		self.servers.servers[0].rmarticle(article.mid)
+
+		self.vfailIf(self.fx2nget.run("-g test -r ."))
+		self.verifynonewfiles()#fullxover=2 should notice the missing article and thus not try to get the now incomplete file
+		self.vfailUnlessExitstatus(self.nget.run("-g test -r ."), 8)
+		self.vfailUnlessExitstatus(self.fxnget.run("-g test -r ."), 8)
 	
 	def test_largearticlenumbers(self):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=2147483647)
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=4294967295L)
 
-		self.vfailIf(self.nget.run("-g test -r ."))
-		self.vfailIf(self.fxnget.run("-g test -r ."))
+		self.run_all("-g test -r .")
 
-		self.verifyoutput('0002')
-		self.verifyoutput('0002', tmpdir=self.fxnget.tmpdir)
+		self.verifyoutput_all('0002')
 
 	def test_lite_largearticlenumbers(self):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)

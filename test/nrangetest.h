@@ -28,10 +28,13 @@ class nrangeTest : public TestCase {
 			range->insert(1);
 			CPPUNIT_ASSERT(!range->empty());
 			CPPUNIT_ASSERT(range->get_total() == 1);
+			CPPUNIT_ASSERT(range->low() == range->high() == 1);
 			range->insert(2);
 			CPPUNIT_ASSERT(!range->empty());
 			CPPUNIT_ASSERT(range->num_ranges() == 1);
 			CPPUNIT_ASSERT(range->get_total() == 2);
+			CPPUNIT_ASSERT(range->low() == 1);
+			CPPUNIT_ASSERT(range->high() == 2);
 			CPPUNIT_ASSERT(!range->check(0));
 			CPPUNIT_ASSERT(range->check(1));
 			CPPUNIT_ASSERT(range->check(2));
@@ -43,6 +46,7 @@ class nrangeTest : public TestCase {
 			CPPUNIT_ASSERT(!range->empty());
 			CPPUNIT_ASSERT(range->num_ranges() == 1);
 			CPPUNIT_ASSERT(range->get_total() == 1);
+			CPPUNIT_ASSERT(range->low() == range->high() == 1);
 			CPPUNIT_ASSERT(!range->check(0));
 			CPPUNIT_ASSERT(range->check(1));
 			CPPUNIT_ASSERT(!range->check(2));
@@ -51,9 +55,13 @@ class nrangeTest : public TestCase {
 			range->insert(1);
 			range->insert(3);
 			CPPUNIT_ASSERT(range->get_total() == 2);
+			CPPUNIT_ASSERT(range->low() == 1);
+			CPPUNIT_ASSERT(range->high() == 3);
 			range->insert(2);
 			CPPUNIT_ASSERT(range->get_total() == 3);
 			CPPUNIT_ASSERT(range->num_ranges() == 1);
+			CPPUNIT_ASSERT(range->low() == 1);
+			CPPUNIT_ASSERT(range->high() == 3);
 			CPPUNIT_ASSERT(!range->check(0));
 			CPPUNIT_ASSERT(range->check(1));
 			CPPUNIT_ASSERT(range->check(2));
@@ -64,10 +72,14 @@ class nrangeTest : public TestCase {
 			range->insert(1,2);
 			CPPUNIT_ASSERT(!range->empty());
 			CPPUNIT_ASSERT(range->get_total() == 2);
+			CPPUNIT_ASSERT(range->low() == 1);
+			CPPUNIT_ASSERT(range->high() == 2);
 			range->insert(3,4);
 			CPPUNIT_ASSERT(!range->empty());
 			CPPUNIT_ASSERT(range->num_ranges() == 1);
 			CPPUNIT_ASSERT(range->get_total() == 4);
+			CPPUNIT_ASSERT(range->low() == 1);
+			CPPUNIT_ASSERT(range->high() == 4);
 			CPPUNIT_ASSERT(!range->check(0));
 			CPPUNIT_ASSERT(range->check(1));
 			CPPUNIT_ASSERT(range->check(2));
@@ -80,6 +92,8 @@ class nrangeTest : public TestCase {
 			range->remove(2);
 			CPPUNIT_ASSERT(range->num_ranges() == 2);
 			CPPUNIT_ASSERT(range->get_total() == 2);
+			CPPUNIT_ASSERT(range->low() == 1);
+			CPPUNIT_ASSERT(range->high() == 3);
 			CPPUNIT_ASSERT(!range->check(0));
 			CPPUNIT_ASSERT(range->check(1));
 			CPPUNIT_ASSERT(!range->check(2));
@@ -91,6 +105,8 @@ class nrangeTest : public TestCase {
 			range->remove(1);
 			CPPUNIT_ASSERT(range->num_ranges() == 1);
 			CPPUNIT_ASSERT(range->get_total() == 2);
+			CPPUNIT_ASSERT(range->low() == 2);
+			CPPUNIT_ASSERT(range->high() == 3);
 			CPPUNIT_ASSERT(!range->check(0));
 			CPPUNIT_ASSERT(!range->check(1));
 			CPPUNIT_ASSERT(range->check(2));
@@ -102,6 +118,8 @@ class nrangeTest : public TestCase {
 			range->remove(3);
 			CPPUNIT_ASSERT(range->num_ranges() == 1);
 			CPPUNIT_ASSERT(range->get_total() == 2);
+			CPPUNIT_ASSERT(range->low() == 1);
+			CPPUNIT_ASSERT(range->high() == 2);
 			CPPUNIT_ASSERT(!range->check(0));
 			CPPUNIT_ASSERT(range->check(1));
 			CPPUNIT_ASSERT(range->check(2));
@@ -113,6 +131,8 @@ class nrangeTest : public TestCase {
 			range->remove(0);
 			CPPUNIT_ASSERT(range->num_ranges() == 1);
 			CPPUNIT_ASSERT(range->get_total() == 2);
+			CPPUNIT_ASSERT(range->low() == 1);
+			CPPUNIT_ASSERT(range->high() == 2);
 			CPPUNIT_ASSERT(!range->check(0));
 			CPPUNIT_ASSERT(range->check(1));
 			CPPUNIT_ASSERT(range->check(2));
@@ -123,10 +143,55 @@ class nrangeTest : public TestCase {
 			range->remove(3);
 			CPPUNIT_ASSERT(range->num_ranges() == 1);
 			CPPUNIT_ASSERT(range->get_total() == 2);
+			CPPUNIT_ASSERT(range->low() == 1);
+			CPPUNIT_ASSERT(range->high() == 2);
 			CPPUNIT_ASSERT(!range->check(0));
 			CPPUNIT_ASSERT(range->check(1));
 			CPPUNIT_ASSERT(range->check(2));
 			CPPUNIT_ASSERT(!range->check(3));
+		}
+		void testInvertEmpty(void) {
+			c_nrange i;
+			i.invert(*range);
+			CPPUNIT_ASSERT(i.num_ranges() == 1);
+			CPPUNIT_ASSERT(i.get_total() == ULONG_MAX+1);
+			CPPUNIT_ASSERT(i.low() == 0);
+			CPPUNIT_ASSERT(i.high() == ULONG_MAX);
+			CPPUNIT_ASSERT(i.check(0));
+			CPPUNIT_ASSERT(i.check(5));
+			CPPUNIT_ASSERT(i.check(ULONG_MAX));
+		}
+		void testInvertEnds(void) {
+			range->insert(0);
+			range->insert(5);
+			range->insert(ULONG_MAX);
+			c_nrange i;
+			i.invert(*range);
+			CPPUNIT_ASSERT(i.num_ranges() == 2);
+			CPPUNIT_ASSERT(i.get_total() == ULONG_MAX-2);
+			CPPUNIT_ASSERT(i.low() == 1);
+			CPPUNIT_ASSERT(i.high() == ULONG_MAX-1);
+			CPPUNIT_ASSERT(!i.check(0));
+			CPPUNIT_ASSERT(i.check(1));
+			CPPUNIT_ASSERT(i.check(4));
+			CPPUNIT_ASSERT(!i.check(5));
+			CPPUNIT_ASSERT(i.check(6));
+			CPPUNIT_ASSERT(i.check(ULONG_MAX)-1);
+			CPPUNIT_ASSERT(!i.check(ULONG_MAX));
+		}
+		void testInvertNoEnds(void) {
+			range->insert(1);
+			range->insert(5);
+			range->insert(9);
+			c_nrange i;
+			i.invert(*range);
+			CPPUNIT_ASSERT(i.num_ranges() == 4);
+			CPPUNIT_ASSERT(i.get_total() == ULONG_MAX-2);
+			CPPUNIT_ASSERT(i.low() == 0);
+			CPPUNIT_ASSERT(i.high() == ULONG_MAX);
+			for (int j=0; j<15; ++j)
+				CPPUNIT_ASSERT(i.check(j)!=range->check(j));
+			CPPUNIT_ASSERT(i.check(ULONG_MAX));
 		}
 		static Test *suite(void) {
 			TestSuite *suite = new TestSuite;
@@ -141,6 +206,9 @@ class nrangeTest : public TestCase {
 			ADDTEST(testRemoveEnd);
 			ADDTEST(testRemoveNothingBeg);
 			ADDTEST(testRemoveNothingEnd);
+			ADDTEST(testInvertEmpty);
+			ADDTEST(testInvertEnds);
+			ADDTEST(testInvertNoEnds);
 #undef ADDTEST
 			return suite;
 		}

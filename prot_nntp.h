@@ -84,6 +84,7 @@ class c_prot_nntp {
 		int chkreply_setok(int reply);
 		void doxover(ulong low, ulong high);
 		void doxover(c_nrange *r);
+		void dolistgroup(c_nrange &existing, ulong lowest, ulong highest, ulong total);
 		void nntp_retrieve(c_group_info::ptr group, const t_nntp_getinfo_list &getinfos, const nget_options &options);
 		void nntp_group(c_group_info::ptr group, int getheaders, const nget_options &options);
 		void nntp_dogroup(int getheaders);

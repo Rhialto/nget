@@ -24,6 +24,7 @@
 #endif
 #include <sys/types.h>
 #include <map>
+#include <stdexcept>
 
 
 typedef map<ulong, ulong> t_rlist;//we are going to use high as the key, and low as the value
@@ -38,6 +39,14 @@ class c_nrange{
 			for (t_rlist::const_iterator i=rlist.begin();i!=rlist.end();++i)
 				tot += i->first - i->second + 1;
 			return tot;
+		}
+		ulong low(void) const {
+			if (rlist.empty()) throw runtime_error("low() of empty nrange");
+			return rlist.begin()->second;
+		}
+		ulong high(void) const {
+			if (rlist.empty()) throw runtime_error("high() of empty nrange");
+			return rlist.rbegin()->first;
 		}
 		t_rlist::size_type num_ranges(void) const {return rlist.size();}
 		bool empty(void) const {return rlist.empty();}
@@ -57,7 +66,8 @@ class c_nrange{
 				//changed=1;
 			}
 		}
-		c_nrange(c_nrange &r):/*changed(r.changed),*/rlist(r.rlist){}
+		void invert(const c_nrange &r);
+		c_nrange(const c_nrange &r):/*changed(r.changed),*/rlist(r.rlist){}
 		c_nrange(){};
 		bool operator==(const c_nrange &b) const {return rlist==b.rlist;}
 		bool operator!=(const c_nrange &b) const {return rlist!=b.rlist;}

@@ -2,6 +2,7 @@
   * Remove configure check for gcc<=2.7 since it can't really build nget anymore and the test was incorrectly detecting some gcc versions.
   * Add a configure check to remove -fomit-frame-pointer from compile flags on x86, as it breaks exception handling. (reported by Jose Antonio Becerra Permuy)
   * Remember to update the incomplete status when flushing parts of a file and doing a -r without reloading the cache first.
+  * Added fullxover=2 setting that handles servers that both add and remove articles out of order.
 
 2002-07-11 v0.20:
   * Use timegm func in date string parser if available, fixes possibility of some times being parsed an hour off due to daylight savings time.

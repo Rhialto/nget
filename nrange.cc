@@ -134,3 +134,19 @@ void c_nrange::remove(ulong l, ulong h){
 	}
 	if (debug)printf("%i(%lu tot:%lu part:%lu (%lu->%lu))\n",tmp,ssize-(ulong)rlist.size(),rtot,rpart,ssize,(ulong)rlist.size());
 }
+
+void c_nrange::invert(const c_nrange &r){
+	if (r.empty()) {
+		insert(varmin,varmax);
+		return;
+	}
+	ulong n=varmin;
+	t_rlist::const_iterator i;
+	for (i=r.rlist.begin(); i!=r.rlist.end(); ++i) {
+		if (n!=i->second)
+			insert(n, i->second-1);
+		n=i->first+1;
+	}
+	if (n!=varmin)//if r contains varmax, then n=varmax+1=varmin, so don't try to add anything.
+		insert(n, varmax);
+}

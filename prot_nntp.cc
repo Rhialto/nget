@@ -103,9 +103,20 @@ int c_prot_nntp::getreply(int echo){
 	return code;
 }
 
-class XoverProgress {
+class Progress {
 	public:
 		time_t lasttime, starttime, curt;
+		bool needupdate(void) {
+			time(&curt);
+			return !quiet && curt>lasttime;
+		};
+		Progress(void) {
+			lasttime = 0;
+			starttime = time(NULL);
+		};
+};
+class XoverProgress : public Progress {
+	public:
 		void print_retrieving_headers(ulong low,ulong high,ulong done,ulong realtotal,ulong total,ulong bytes,int doneranges,int streamed,int totalranges){
 			time(&lasttime);
 			time_t dtime=lasttime-starttime;
@@ -116,14 +127,6 @@ class XoverProgress {
 			if (totalranges>1)
 				printf(" (%i/%i/%i)",doneranges,doneranges+streamed,totalranges);
 			fflush(stdout);//@@@@
-		};
-		bool needupdate(void) {
-			time(&curt);
-			return !quiet && curt>lasttime;
-		};
-		XoverProgress(void) {
-			lasttime = 0;
-			starttime = time(NULL);
 		};
 };
 /*
@@ -258,6 +261,43 @@ void c_prot_nntp::doxover(ulong low, ulong high){
 	doxover(&r);
 }
 
+class ListgroupProgress : public Progress {
+	public:
+		void print_retrieving_article_list(ulong low, ulong high, ulong done, ulong total, ulong bytes, bool finished=false){
+			time(&lasttime);
+			time_t dtime=lasttime-starttime;
+			long Bps=(dtime>0)?bytes/dtime:0;
+			long Bph=(done>0)?bytes/done:3;//if no headers have been retrieved yet, set the bytes per header to 3 just to get some sort of timeleft display.  (3=strlen(".\r\n"))
+			if (!quiet) clear_line_and_return();
+			printf("Retrieving article list %lu-%lu : %lu/%lu %3li%% %liB/s %s",low,high,done,total,finished?100:done*100/total,Bps,durationstr(finished?dtime:(Bps>0)?((total-done)*Bph)/(Bps):0).c_str());
+
+			fflush(stdout);//@@@@
+		}
+};
+void c_prot_nntp::dolistgroup(c_nrange &existing, ulong lowest, ulong highest, ulong total) {
+	ListgroupProgress progress;
+	chkreply(stdputline(debug>=DEBUG_MED,"LISTGROUP"));
+	ulong bytes=0, count=0, an;
+	char *eptr;
+	do {
+		if (progress.needupdate())
+			progress.print_retrieving_article_list(lowest,highest,count,total,bytes);
+		bytes+=getline(debug>=DEBUG_ALL);
+		if (cbuf[0]=='.')break;
+		an = strtoul(cbuf, &eptr, 10);
+		if (*cbuf=='\0' || *eptr!='\0') {
+			printf("error retrieving article number\n");
+			continue;
+		}
+		existing.insert(an);
+		count++;
+	}while (1);
+	if(quiet<2){
+		progress.print_retrieving_article_list(lowest,highest,count,total,bytes,true);
+		printf("\n");
+	}
+}
+
 void c_prot_nntp::nntp_dogroup(int getheaders){
 	assert(connection);
 	if (connection->curgroup!=group || getheaders){	
@@ -282,24 +322,39 @@ void c_prot_nntp::nntp_dogroup(int getheaders){
 
 		c_nntp_server_info* servinfo=gcache->getserverinfo(connection->server->serverid);
 		assert(servinfo);
-		if (low>servinfo->low)
-			gcache->flushlow(servinfo,low,midinfo);
-		if (connection->server->fullxover){
-			c_nrange r;
-			gcache->getxrange(servinfo,low,high,&r);
-			doxover(&r);
-		}else{
-			c_nrange r;
+		if (servinfo->high!=0 && connection->server->fullxover==2){
+			c_nrange existing;
+			dolistgroup(existing, low, high, num);
 
-			if (servinfo->high==0)
-				r.insert(low, high);
-			else {
-				if (servinfo->high<high)
-					r.insert(servinfo->high+1, high);
-				if (servinfo->low>low)
-					r.insert(low, servinfo->low-1);
+			c_nrange nonexistant;
+			nonexistant.invert(existing);
+			gcache->flush(servinfo,nonexistant,midinfo);
+			servinfo->low=existing.empty()?low:existing.low();//####this ok?
+			
+			c_nrange r(existing);
+			gcache->getxrange(servinfo,&r);//remove the article numbers we already have, leaving only the ones we still need to get.
+
+			doxover(&r);	
+		}else{
+			if (low>servinfo->low)
+				gcache->flushlow(servinfo,low,midinfo);
+			if (connection->server->fullxover){
+				c_nrange r;
+				gcache->getxrange(servinfo,low,high,&r);
+				doxover(&r);
+			}else{
+				c_nrange r;
+
+				if (servinfo->high==0)
+					r.insert(low, high);
+				else {
+					if (servinfo->high<high)
+						r.insert(servinfo->high+1, high);
+					if (servinfo->low>low)
+						r.insert(low, servinfo->low-1);
+				}
+				doxover(&r);
 			}
-			doxover(&r);
 		}
 	}
 };

@@ -37,7 +37,7 @@ class c_server : public c_refcounted<c_server>{
 		string shortname;
 		string addr;
 		string user,pass;
-		bool fullxover;
+		int fullxover;
 		int maxstreaming;
 		int lineleniencelow,lineleniencehigh;
 		int idletimeout;
@@ -110,7 +110,7 @@ class c_nget_config {
 		float curservmult;
 		int usegz;
 		int unequal_line_error;
-		bool fullxover;
+		int fullxover;
 		int maxstreaming;
 		int idletimeout;
 		int maxconnections;
@@ -194,7 +194,7 @@ class c_nget_config {
 			curservmult=2.0;
 			usegz=-1;
 			unequal_line_error=0;
-			fullxover=false;
+			fullxover=0;
 			maxstreaming=64;
 			idletimeout=5*60;
 			maxconnections=-1;
