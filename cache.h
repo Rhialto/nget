@@ -293,11 +293,9 @@ class c_mid_info {
 		}
 		void clear(void){
 			if (!states.empty()){
-				while (!states.empty()){
-					c_message_state *s=states.begin()->second;
-					states.erase(states.begin());
-					delete s;
-				}
+				for (t_message_state_list::iterator i = states.begin(); i!=states.end(); ++i)
+					delete i->second;
+				states.clear();
 				changed=1;
 			}
 		}
