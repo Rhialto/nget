@@ -181,7 +181,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 		self.group = self.server.groups.get(args)
 		if not self.group:
 			raise NNTPNoSuchGroupError, args
-		self.nwrite("200 %i %i %i group %s selected"%(self.group.high-self.group.low+1, self.group.low, self.group.high, args))
+		self.nwrite("211 %i %i %i group %s selected"%(self.group.high-self.group.low+1, self.group.low, self.group.high, args))
 	def cmd_xover(self, args):
 		if not self.group:
 			raise NNTPNoGroupSelectedError
@@ -192,7 +192,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			low = high = long(rng[0])
 		keys = [k for k in self.group.articles.keys() if k>=low and k<=high]
 		keys.sort()
-		self.nwrite("200 XOVER "+str(rng))
+		self.nwrite("224 Overview information follows "+str(rng))
 		for anum in keys:
 			article = self.group.articles[anum]
 			self.nwrite(str(anum)+'\t%(subject)s\t%(author)s\t%(date)s\t%(mid)s\t%(references)s\t%(bytes)s\t%(lines)s'%vars(article))
@@ -203,14 +203,16 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 				article = self.server.articles[args]
 			except KeyError:
 				raise NNTPNoSuchArticleMID, args
+			anum=0
 		else:
 			if not self.group:
 				raise NNTPNoGroupSelectedError
 			try:
-				article = self.group.articles[long(args)]
+				anum=long(args)
+				article = self.group.articles[anum]
 			except KeyError:
 				raise NNTPNoSuchArticleNum, args
-		self.nwrite("200 Article "+args)
+		self.nwrite("220 %i %s Article follows"%(anum,article.mid))
 		self.nwrite(article.text)
 		self.nwrite('.')
 	def cmd_mode(self, args):
