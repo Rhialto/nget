@@ -29,7 +29,6 @@ void parseargs(arglist_t &argl, const char *optarg, bool ignorecomments){
 				continue;
 			}
 		if (ignorecomments && !quote && *cur=='#' && curpart.empty()) {
-			printf("ignoring: %s\n",cur);
 			return;
 		}
 		switch(*cur){
