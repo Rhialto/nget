@@ -163,7 +163,7 @@ int Par1Info::get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nn
 			}
 		}
 		if ((signed)availvols.size()<num){
-			PERROR("get_pxxs: Only %i/%i needed volumes available for parset %s, giving up", availvols.size(), num, hexstr(key).c_str());
+			PERROR("get_pxxs: Only %i/%i needed volumes available for parset %s, giving up", (int)availvols.size(), num, hexstr(key).c_str());
 			return 0;
 		}
 	}
@@ -239,7 +239,7 @@ int Par1Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 		} else {
 			int bad = parfile_check(goodpar, path, nocase_map);
 			needed = max(0, bad - (signed)goodvols.size());
-			PDEBUG(DEBUG_MIN, "parset %s in %s: %i goodpxxs, %i badp??s, %i bad/missing files, trying to get %i more", hexstr(bfni->first).c_str(), path.c_str(), goodvols.size(), badcount, bad, needed);
+			PDEBUG(DEBUG_MIN, "parset %s in %s: %i goodpxxs, %i badp??s, %i bad/missing files, trying to get %i more", hexstr(bfni->first).c_str(), path.c_str(), (int)goodvols.size(), badcount, bad, needed);
 		}
 		if (needed) {
 			int parset_added = get_pxxs(needed, goodvols, bfni->first, fc);//modifies goodvols, but we don't care.
@@ -327,7 +327,7 @@ int Par2Info::get_recoverypackets(int num, set<uint32_t> &havepackets, const str
 		}
 	}
 	if (nconfig.autopar_optimistic && (signed)availpackets.size()<num){
-		PERROR("get_recoverypackets: Only %i/%i needed packets available for par2set %s, giving up", availpackets.size(), num, hexstr(key).c_str());
+		PERROR("get_recoverypackets: Only %i/%i needed packets available for par2set %s, giving up", (int)availpackets.size(), num, hexstr(key).c_str());
 		return 0;
 	}
 #ifndef NDEBUG
@@ -398,7 +398,7 @@ int Par2Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 				
 				if (r == eRepairNotPossible)
 					needed_packets = par2.missingblockcount - par2.recoverypacketmap.size();
-				PDEBUG(DEBUG_MIN, "par2set %s in %s: %i recovery packets, %i bad/missing source blocks, trying to get %i more", hexstr(bfni->first).c_str(), path.c_str(), goodpackets.size(), par2.missingblockcount, needed_packets);
+				PDEBUG(DEBUG_MIN, "par2set %s in %s: %i recovery packets, %i bad/missing source blocks, trying to get %i more", hexstr(bfni->first).c_str(), path.c_str(), (int)goodpackets.size(), par2.missingblockcount, needed_packets);
 				break;
 			}
 		}
