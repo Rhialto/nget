@@ -163,8 +163,10 @@ class DecodeTest_base:
 						outputs.append(os.path.join("testdata",testnum,parts[0],parts[1]))
 		else:
 			for testnum in testnums:
-				parts = testnum.split('/',1)
-				if len(parts)==2:
+				parts = testnum.split('/',2)
+				if len(parts)==3:
+					outputs.extend(glob.glob(os.path.join("testdata",parts[0],parts[1],parts[2])))
+				elif len(parts)==2:
 					outputs.extend(glob.glob(os.path.join("testdata",parts[0],parts[1],"*")))
 				else:
 					outputs.extend(glob.glob(os.path.join("testdata",testnum,"_output","*")))
@@ -367,6 +369,17 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		output = filter(lambda s: not s.startswith('testfile.txt'), output)
 		self.failUnless(len(output)==1, "extra output: %s"%output)
 		self.failUnless(output[0].endswith(".-01"), "wrong output: %s"%output)
+	
+	def test_ignore_text(self):
+		self.addarticles('0003', 'newspost_uue_0')
+		self.vfailIf(self.nget.run("-g test --text=ignore -r ."))
+		self.verifyoutput(['0003/_output/testfile.txt'])
+
+	def test_ignore_text_cfg(self):
+		self.addarticles('0003', 'newspost_uue_0')
+		self.nget.writerc(self.servers.servers, options={'text':'ignore'})
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.verifyoutput(['0003/_output/testfile.txt'])
 
 	def test_uuencode_incomplete1(self):
 		self.addarticles('0002', 'uuencode_multi3', fname='00[12]')
