@@ -86,8 +86,8 @@ int c_prot_nntp::chkreply(int reply){
 }
 
 int c_prot_nntp::chkreply_setok(int reply){
-	//only set the server_ok flag if the command was successful, or if it had a "normal" error status (like group not found, article expired, etc)
-	if (reply/100==2 || reply/100==4)
+	//only set the server_ok flag if the command had a "normal" error status (like group not found, article expired, etc).  If the command sequence completes successfully, then the server_ok will be set before releasing the ConnectionHolder.
+	if (reply/100==4)
 		connection->server_ok = true;
 	return chkreply(reply);
 }
@@ -235,6 +235,7 @@ void c_prot_nntp::nntp_grouplist(int update, const nget_options &options){
 					nntp_dogrouplist();
 					nntp_dogroupdescriptions();//####make this a seperate option?
 					succeeded++;
+					connection->server_ok=true;
 				} catch (baseCommEx &e) {
 					printCaughtEx(e);
 					if (e.isfatal()) {
@@ -617,6 +618,7 @@ void c_prot_nntp::nntp_xgroup(c_group_info::ptr group, const t_xpat_list &patinf
 					doxpat(r, *i, num, low, high);
 				doxover(&r);
 				succeeded++;
+				connection->server_ok=true;
 			} catch (baseCommEx &e) {
 				printCaughtEx(e);
 				if (e.isfatal()) {
@@ -682,6 +684,7 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 					nntp_doopen();
 					nntp_dogroup(getheaders);
 					succeeded++;
+					connection->server_ok=true;
 				} catch (baseCommEx &e) {
 					printCaughtEx(e);
 					if (e.isfatal()) {
@@ -899,6 +902,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 				nntp_dogroup(0);
 				chkreply_setok(stdputline(debug>=DEBUG_MED,"ARTICLE %lu",sa->articlenum));
 				nntp_dogetarticle(ari,toti,buf);
+				connection->server_ok=true;
 			} catch (baseCommEx &e) {
 				printCaughtEx(e);
 				if (e.isfatal()) {

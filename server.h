@@ -129,9 +129,9 @@ class c_nget_config {
 		void unpenalize(c_server::ptr server) const {
 			server->penalty_count = 0;
 		}
-		void penalize(c_server::ptr server) const {
+		bool penalize(c_server::ptr server) const {
 			if (penaltystrikes<=0)
-				return;//penalization disabled
+				return false;//penalization disabled
 			++server->penalty_count;
 			if (server->penalty_count == penaltystrikes) {
 				server->penalty_time = initialpenalty;
@@ -141,6 +141,7 @@ class c_nget_config {
 			}
 			server->last_penalty = time(NULL);
 			PDEBUG(DEBUG_MED, "penalized %s: count %i, last %li, time %li", server->alias.c_str(), server->penalty_count, server->last_penalty, server->penalty_time);
+			return server->penalty_count >= penaltystrikes;
 		}
 		const char * getservername(ulong serverid) const {
 			c_server::ptr s=getserver(serverid);

@@ -75,10 +75,6 @@ void SockPool::connection_erase(t_connection_map::iterator i) {
 	} catch (FileEx &e) {//ignore transport errors while closing
 		printCaughtEx_nnl(e);printf(" (ignored)\n");
 	}
-	if (i->second->server_ok)
-		nconfig.unpenalize(i->second->server);
-	else
-		nconfig.penalize(i->second->server);
 	delete i->second;
 	connections.erase(i);
 }
@@ -128,7 +124,14 @@ Connection* SockPool::connect(ulong serverid) {
 
 void SockPool::release(Connection *connection) {
 	assert(connection);
-	if (connection->isopen())
+	bool keepopen = connection->isopen();
+	if (connection->server_ok) {
+		nconfig.unpenalize(connection->server);
+		connection->server_ok=false; //reset so that problems later on with this connection can still be caught.
+	} else
+		if (nconfig.penalize(connection->server))
+			keepopen=false;
+	if (keepopen)
 		connection->touch();
 	else
 		connection_erase(connections.find(connection->server->serverid));
