@@ -39,7 +39,7 @@ void dupe_file_checker::addfile(const string &path, const char *filename) {
 		fm->size=stbuf.st_size;
 	else
 		fm->size=0;
-	flist.push_front(fm);
+	flist.insert(filematchmap::value_type(fm->size, fm));
 }
 
 void dupe_file_checker::addfrompath(const string &path){
@@ -56,25 +56,23 @@ void dupe_file_checker::addfrompath(const string &path){
 }
 
 int dupe_file_checker::checkhavefile(const char *f, const string &messageid, ulong bytes){
-	filematchlist::iterator curl;
+	filematchmap::iterator curl = flist.upper_bound(bytes/2); //find first fm with size*2 > bytes
 	file_match *fm;
-	for (curl=flist.begin();curl!=flist.end();++curl){
-		fm=*curl;
-		if (fm->size*2>bytes && fm->size<bytes && (fm->reg.match(f)==0/* || fm->reg.match((messageid+".txt").c_str())==0*/)){//TODO: handle text files saved.
-			//			printf("0\n");
+	for (;curl!=flist.end() && curl->first<bytes;++curl){ //keep going as long as size < bytes
+		fm=curl->second;
+		if ((fm->reg.match(f)==0/* || fm->reg.match((messageid+".txt").c_str())==0*/)){//TODO: handle text files saved.
 			printf("already have %s\n",f);
 			return 1;
 		}
-		//		printf("1\n");
 	}
 
 	return 0;
 }
 
 void dupe_file_checker::clear(void){
-	filematchlist::iterator curl;
+	filematchmap::iterator curl;
 	for (curl=flist.begin();curl!=flist.end();++curl)
-		delete *curl;
+		delete curl->second;
 	flist.clear();
 }
 

@@ -26,7 +26,7 @@
 
 #include <sys/types.h>
 #include <string>
-#include SLIST_H
+#include <multimap.h>
 
 #include "myregex.h"
 
@@ -36,11 +36,11 @@ class file_match {
 		ulong size;
 		file_match(const char *m,int a):reg(m,a){};
 };
-typedef slist<file_match *> filematchlist;
+typedef multimap<ulong, file_match *> filematchmap;
 
 class dupe_file_checker {
 	private:
-		filematchlist flist;
+		filematchmap flist;
 	public:
 		void addfrompath(const string &path);
 		void addfile(const string &path, const char *filename);
