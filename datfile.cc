@@ -53,10 +53,11 @@ c_data_item *c_data_section::additem(c_data_item *item){
 }
 void c_data_section::cleanup(void){
 	data_list::iterator i;
-	i=data.begin();
-	while ((i!=data.end())){
-		delete (*i).second;
-		++i;
+	while (!data.empty()) {
+		i=data.begin();
+		c_data_item *di = (*i).second;
+		data.erase(i);
+		delete di;
 	}
 }
 
