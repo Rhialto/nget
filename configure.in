@@ -25,7 +25,9 @@ MY_CHECK_EXCEPTIONS
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h getopt.h hash_map ext/hash_map hash_map.h sstream regex.h term.h inttypes.h winsock.h sys/socket.h process.h windows.h)
+AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h getopt.h sstream regex.h term.h inttypes.h winsock.h sys/socket.h process.h windows.h)
+
+MY_CHECK_HASH_MAP
 
 dnl due to windows' linking methods, you need the correct prototype to find some funcs, eg LockFile
 MY_SEARCH_LIBS(LockFile,[#include <windows.h>], [LockFile(0,0,0,0,0);], [kernel32], [library containing LockFile])

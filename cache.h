@@ -145,7 +145,7 @@ class c_nntp_file : public c_refcounted<c_nntp_file>{
 
 
 //typedef hash_map<const char*, c_nntp_file*, hash<const char*>, eqstr> t_nntp_files;
-#ifdef USE_HASH_MAP
+#ifdef HAVE_WORKING_HASH_MAP
 typedef hash_multimap<t_id, c_nntp_file::ptr> t_nntp_files;
 #else
 typedef multimap<t_id, c_nntp_file::ptr> t_nntp_files;
@@ -195,7 +195,7 @@ class c_message_state : public c_refcounted<c_message_state>{
 		c_message_state(string mid,time_t da,time_t dr):messageid(mid),date_added(da),date_removed(dr){}
 };
 
-#ifdef USE_HASH_MAP
+#ifdef HAVE_WORKING_HASH_MAP
 typedef hash_map<const char*, c_message_state::ptr, hash<const char*>, eqstr> t_message_state_list;
 #else
 typedef map<const char*, c_message_state::ptr, ltstr> t_message_state_list;

@@ -78,7 +78,7 @@ class c_data_item
 		virtual ~c_data_item(){}
 };
 
-#ifdef USE_HASH_MAP
+#ifdef HAVE_WORKING_HASH_MAP
 typedef hash_map<const char*, c_data_item*, hash<const char*>, eqstr> data_list ;
 #else
 typedef map<const char*, c_data_item*, ltstr> data_list ;

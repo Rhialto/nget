@@ -89,6 +89,45 @@ AC_DEFUN(MY_DISABLE_OPT,[
  changequote([, ])dnl
 ])
 
+AC_DEFUN([MY_TRY_COMPILE_HASH_MAP],[
+	AC_TRY_COMPILE([
+#ifdef HAVE_HASH_MAP
+#include <hash_map>
+#elif HAVE_EXT_HASH_MAP
+#include <ext/hash_map>
+#elif HAVE_HASH_MAP_H
+#include <hash_map.h>
+#endif
+using namespace std;
+$1
+	],      [
+	hash_map<int, long> h;
+	hash_multimap<int, long> h2;
+	],
+	[$2],
+	[$3]
+	)
+])
+
+AC_DEFUN([MY_CHECK_HASH_MAP],[
+	AC_CHECK_HEADERS(hash_map ext/hash_map hash_map.h)
+	AC_CACHE_CHECK([working hash_map], ac_cv_working_hash_map, [
+		MY_TRY_COMPILE_HASH_MAP([],
+		[ac_cv_working_hash_map=yes],[
+			MY_TRY_COMPILE_HASH_MAP([using namespace __gnu_cxx;],
+			[ac_cv_working_hash_map=yes-in_gnu_cxx_namespace],
+			[ac_cv_working_hash_map=no]
+			)
+		])
+	])
+
+if test "$ac_cv_working_hash_map" = "yes"; then 
+	AC_DEFINE(HAVE_WORKING_HASH_MAP,1,[define if system has a usable hash_map])
+elif test "$ac_cv_working_hash_map" = "yes-in_gnu_cxx_namespace"; then
+	AC_DEFINE(HAVE_WORKING_HASH_MAP,1,[define if system has a usable hash_map])
+	AC_DEFINE(HASH_MAP_NEED_GNU_CXX_NAMESPACE,1,[define if hash_map classes are in __gnu_cxx namespace])
+fi
+])
 
 AC_DEFUN([MY_SEARCH_LIBS],[
 AC_CACHE_CHECK([for $5], [my_cv_$1],

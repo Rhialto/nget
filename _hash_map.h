@@ -23,16 +23,18 @@
 #include "config.h"
 #endif
 
-#define USE_HASH_MAP 1
+#ifdef HAVE_WORKING_HASH_MAP
 #ifdef HAVE_HASH_MAP
 #include <hash_map>
 #elif HAVE_EXT_HASH_MAP
 #include <ext/hash_map>
-using namespace __gnu_cxx;
 #elif HAVE_HASH_MAP_H
 #include <hash_map.h>
-#else
-#undef USE_HASH_MAP
+#endif
+#ifdef HASH_MAP_NEED_GNU_CXX_NAMESPACE
+using namespace __gnu_cxx;
+#endif
+#else //!HAVE_WORKING_HASH_MAP
 #include <map>
 #endif
 
