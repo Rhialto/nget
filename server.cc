@@ -123,8 +123,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 			PERROR("h not a section");
 			continue;
 		}
-		//				ds=dynamic_cast<c_data_section*>(di);
-		ds=(c_data_section*)(di);//TODO: ok, this is bad, but dynamic_cast doesn't work. ??
+		ds=static_cast<c_data_section*>(di);
 		if (!ds){
 			PERROR("h !ds");continue;
 		}
@@ -152,8 +151,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 				PERROR("p not a section");
 				continue;
 			}
-			//				ds=dynamic_cast<c_data_section*>(di);
-			ds=(c_data_section*)(di);//TODO: ok, this is bad, but dynamic_cast doesn't work. ??
+			ds=static_cast<c_data_section*>(di);
 			if (!ds){
 				PERROR("p !ds");continue;
 			}
@@ -193,8 +191,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 			if (di->type!=1){
 				addgroup_or_metagroup(di->key,di->str);
 			}else{
-				//				ds=dynamic_cast<c_data_section*>(di);
-				ds=(c_data_section*)(di);//TODO: ok, this is bad, but dynamic_cast doesn't work. ??
+				ds=static_cast<c_data_section*>(di);
 				if (!ds){
 					PERROR("g !ds");continue;
 				}
