@@ -535,7 +535,11 @@ void c_prot_nntp::nntp_dogetarticle(arinfo*ari,quinfo*toti,list<string> &buf){
 		printf("\n");
 	}
 
-	if ((ari->bytesdone > ari->bytestot+3 || ari->bytesdone+3 < ari->bytestot) || ari->linesdone!=ari->linestot){//some servers report # of bytes a bit off of what we expect.
+	//some servers report # of bytes a bit off of what we expect.
+	if (!((ari->bytesdone <= ari->bytestot+3 && ari->bytesdone >= ari->bytestot-3) ||
+			//some servers also report # of bytes counted with LF endings, then send with CRLF
+			(ari->bytesdone <= ari->bytestot+3+ari->linesdone || ari->bytesdone >= ari->bytestot-3+ari->linesdone)) ||
+			ari->linesdone!=ari->linestot){
 		printf("doarticle %lu: %lu!=%lu || %lu!=%lu\n",ari->anum,ari->bytesdone,ari->bytestot,ari->linesdone,ari->linestot);
 	}
 #ifdef FILE_DEBUG
