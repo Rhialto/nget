@@ -16,11 +16,11 @@ all: .autostuff nget ngetlite
 
 OBJS=nget.o prot_nntp.o sockstuff.o cache.o file.o termstuff.o misc.o strtoker.o strreps.o myregex.o datfile.o etree.o nrange.o log.o server.o @EXTRAOBJS@ @UULIB@
 nget: $(OBJS) .depend 
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LIBS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
 
 LITEOBJS=lite.o litenntp.o log.o sockstuff.o strreps.o
 ngetlite: $(LITEOBJS) .depend 
-	$(CXX) $(CXXFLAGS) $(LITEOBJS) -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LITEOBJS) -o $@
 
 @NOUU@@UULIB@:
 @NOUU@	(cd @UUDIR@; ./configure)
