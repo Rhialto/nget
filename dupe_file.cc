@@ -1,6 +1,6 @@
 /*
     dupe_file.* - dupe file detection code
-    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,19 +29,11 @@
 void dupe_file_checker::add(const char *filename, ulong size){
 	file_match *fm;
 	string buf;
-	const char *cp = filename;
-	if (isalnum(*cp)){ //only add word boundry match if we are actually next to a word, or else there isn't a word boundry to match at all.
+	if (isalnum(filename[0])) //only add word boundry match if we are actually next to a word, or else there isn't a word boundry to match at all.
 		buf+=regex_match_word_beginning();
-	}
-	while (*cp){
-		if (strchr("{}()|[]\\.+*^$",*cp))
-			buf+='\\';//escape special chars
-		buf+=*cp;
-		cp++;
-	}
-	if (isalnum(*(cp-1))){
+	regex_escape_string(filename, buf);
+	if (isalnum(buf[buf.size()-1]))
 		buf+=regex_match_word_end();
-	}
 	fm=new file_match(buf.c_str(),REG_EXTENDED|REG_ICASE|REG_NOSUB,size);
 	flist.insert(filematchmap::value_type(fm->size, fm));
 }

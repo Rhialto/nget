@@ -1,6 +1,6 @@
 /*
     myregex.* - regex() wrapper class
-    Copyright (C) 1999-2000  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -57,6 +57,14 @@ const string& regex_match_word_beginning(void) {
 const string& regex_match_word_end(void){
 	if (!regex_initialized) regex_init();
 	return regex_match_word_end_str;
+}
+
+void regex_escape_string(const string &s, string &buf){
+	for (string::const_iterator cp=s.begin(); cp!=s.end(); ++cp) {
+		if (strchr("{}()|[]\\.+*^$",*cp))
+			buf+='\\';//escape special chars
+		buf+=*cp;
+	}
 }
 
 c_regex_base::c_regex_base(const char * pattern,int cflags){

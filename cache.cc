@@ -1,6 +1,6 @@
 /*
     cache.* - nntp header cache code
-    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 #include "mylockfile.h"
 #include "strtoker.h"
 #include "path.h"
+#include "par.h"
 
 int c_nntp_header::parsepnum(const char *str,const char *soff){
 	const char *p;
@@ -226,14 +227,17 @@ c_nntp_getinfo::c_nntp_getinfo(const string &pat, const string &temppat, const v
 	}
 }
 
-
-static void nntp_cache_getfile(c_nntp_files_u *fc, meta_mid_info *midinfo, const t_nntp_getinfo_list &getinfos, const c_nntp_file::ptr &f) {
+static void nntp_cache_getfile(c_nntp_files_u *fc, ParHandler *parhandler, meta_mid_info *midinfo, const t_nntp_getinfo_list &getinfos, const c_nntp_file::ptr &f) {
 	pair<t_nntp_files_u::const_iterator,t_nntp_files_u::const_iterator> firange;
 	t_nntp_getinfo_list::const_iterator gii, giibegin=getinfos.begin(), giiend=getinfos.end();
 	c_nntp_getinfo::ptr info;
 	for (gii=giibegin; gii!=giiend; ++gii) {
 		info = *gii;
 		if ((info->flags&GETFILES_GETINCOMPLETE || f->iscomplete()) && (info->flags&GETFILES_NODUPEIDCHECK || !(midinfo->check(f->bamid()))) && (*info->pred)(f.gimmethepointer())){//matches user spec
+			if (!(info->flags&(GETFILES_NOAUTOPAR|GETFILES_TESTMODE|GETFILES_MARK|GETFILES_UNMARK))) {
+				if (parhandler->maybe_add_parfile(info->path, f))
+					continue;
+			}
 			firange=fc->files.equal_range(f->badate());
 			for (;firange.first!=firange.second;++firange.first){
 				if ((*firange.first).second->file->bamid()==f->bamid())
@@ -251,10 +255,10 @@ static void nntp_cache_getfile(c_nntp_files_u *fc, meta_mid_info *midinfo, const
 	}
 }
 
-void c_nntp_cache::getfiles(c_nntp_files_u *fc, meta_mid_info *midinfo, const t_nntp_getinfo_list &getinfos) { 
+void c_nntp_cache::getfiles(c_nntp_files_u *fc, ParHandler *parhandler, meta_mid_info *midinfo, const t_nntp_getinfo_list &getinfos) { 
 	t_nntp_files::const_iterator fi;
 	for(fi = files.begin();fi!=files.end();++fi){
-		nntp_cache_getfile(fc, midinfo, getinfos, (*fi).second);
+		nntp_cache_getfile(fc, parhandler, midinfo, getinfos, (*fi).second);
 	}
 }
 
@@ -787,7 +791,7 @@ static inline bool ltfp(const c_nntp_file::ptr &f1, const c_nntp_file::ptr &f2) 
 	return *f1 < *f2;
 }
 	
-void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, const vector<c_group_info::ptr> &groups, meta_mid_info*midinfo, const t_nntp_getinfo_list &getinfos){
+void nntp_cache_getfiles(c_nntp_files_u *fc, ParHandler *parhandler, bool *ismultiserver, string path, const vector<c_group_info::ptr> &groups, meta_mid_info*midinfo, const t_nntp_getinfo_list &getinfos){
 	set<ulong> usedservers;
 	auto_vector<c_file> cachefiles;
 	vector<t_nntp_server_info> server_infos;
@@ -876,7 +880,7 @@ void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c
 			++i;
 		}
 		//printf("post-loop. nfiles.size=%u, merged=%lu, numfiles=%lu\n", nfiles.size(), mergedfiles, numfiles);
-		nntp_cache_getfile(fc, midinfo, getinfos, mergef);
+		nntp_cache_getfile(fc, parhandler, midinfo, getinfos, mergef);
 		mergedfiles++;
 		mergedcount+=mergef->parts.size();
 	}
@@ -890,7 +894,7 @@ void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c
 		(*cfi)->close();
 }
 
-void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c_group_info::ptr group, meta_mid_info*midinfo, const t_nntp_getinfo_list &getinfos){
+void nntp_cache_getfiles(c_nntp_files_u *fc, ParHandler *parhandler, bool *ismultiserver, string path, c_group_info::ptr group, meta_mid_info*midinfo, const t_nntp_getinfo_list &getinfos){
 
 	string file=path_join(path,group->group + ",cache");
 	setfilenamegz(file,group->usegz);
@@ -909,7 +913,7 @@ void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c
 		c_nntp_file::ptr nf;
 
 		while ((nf=reader.read_file())) {
-			nntp_cache_getfile(fc, midinfo, getinfos, nf);
+			nntp_cache_getfile(fc, parhandler, midinfo, getinfos, nf);
 			numfiles++;
 		}
 

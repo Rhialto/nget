@@ -33,13 +33,6 @@
 #include "nget.h"
 #include "sockpool.h"
 
-#define GETFILES_NODECODE		8
-#define GETFILES_KEEPTEMP		16
-#define GETFILES_TEMPSHORTNAMES 32
-#define GETFILES_NOCONNECT		64
-#define GETFILES_TESTMODE		512
-#define GETFILES_MARK			1024
-#define GETFILES_UNMARK			2048
 
 struct quinfo {
 	int_fast64_t bytesleft;
@@ -92,7 +85,7 @@ class c_prot_nntp {
 		void dolistgroup(c_nrange &existing, ulong lowest, ulong highest, ulong total);
 		void nntp_retrieve(const vector<c_group_info::ptr> &groups, const t_nntp_getinfo_list &getinfos, const nget_options &options);
 		void nntp_retrieve(const vector<c_group_info::ptr> &rgroups, const t_nntp_getinfo_list &getinfos, const t_xpat_list &patinfos, const nget_options &options);
-		void nntp_doretrieve(c_nntp_files_u &filec, const nget_options &options);
+		void nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler, const nget_options &options);
 		void nntp_simple_prioritize(c_server_priority_grouping *priogroup, list<c_server::ptr> &doservers);
 		void nntp_group(const c_group_info::ptr &group, int getheaders, const nget_options &options);
 		void nntp_xgroup(const c_group_info::ptr &group, const t_xpat_list &patinfos, const nget_options &options);

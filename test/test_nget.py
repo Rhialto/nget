@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #    test_nget.py - test of nget
-#    Copyright (C) 2002  Matthew Mueller <donut@azstarnet.com>
+#    Copyright (C) 2002-2003  Matthew Mueller <donut@azstarnet.com>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -108,6 +108,10 @@ class DecodeTest_base:
 				continue
 			server.addarticle(groups, nntpd.FileArticle(open(fn, 'rb')))
 
+	def rmarticle_fromserver(self, testnum, dirname, aname, server):
+		article = nntpd.FileArticle(open(os.path.join("testdata",testnum,dirname,aname), 'rb'))
+		server.rmarticle(article.mid)
+
 	def rmarticles_fromserver(self, testnum, dirname, server):
 		for fn in glob.glob(os.path.join("testdata",testnum,dirname,"*")):
 			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
@@ -134,9 +138,19 @@ class DecodeTest_base:
 		if type(testnums)==type(""):
 			testnums=[testnums]
 		outputs=[]
-		for testnum in testnums:
-			outputs.extend(glob.glob(os.path.join("testdata",testnum,"_output","*")))
+		if type(testnums)==type({}):
+			for testnum,expected in testnums.items():
+				for n in expected:
+					parts = n.split('/')
+					if len(parts)==1:
+						outputs.append(os.path.join("testdata",testnum,"_output",n))
+					elif len(parts)==2:
+						outputs.append(os.path.join("testdata",testnum,parts[0],parts[1]))
+		else:
+			for testnum in testnums:
+				outputs.extend(glob.glob(os.path.join("testdata",testnum,"_output","*")))
 		for fn in outputs:
+			assert os.path.exists(fn)
 			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
 				continue
 			tail = os.path.split(fn)[1]
@@ -397,6 +411,108 @@ class RetrieveTest_base(DecodeTest_base):
 		os.mkdir(tmp2dir)
 		self.vfailIf(self.nget_run('-dI -G test --dupepath %s -p %s -r .'%(self.nget.tmpdir, tmp2dir)))
 		self.verifyoutput(['0001','0002','0003'],tmpdir=tmp2dir)
+	
+	def test_noautoparhandling(self):
+		self.addarticles('par01', 'input')
+		self.vfailIf(self.nget_run('-g test --no-autopar -r par.test'))
+		self.verifyoutput('par01')
+
+	def test_autoparhandling(self):
+		self.addarticles('par01', 'input')
+		self.vfailIf(self.nget_run('-g test -r par.test'))
+		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par']})
+	
+	def test_autoparhandling_existingpar(self):
+		self.addarticles('par01', 'input')
+		self.vfailIf(self.nget_run('-g test -r "par.test.*a b.par"'))
+		self.vfailIf(self.nget_run('-G test -r par.test'))
+		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par']})
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 6)
+
+	def test_autoparhandling_existingpxx(self):
+		self.addarticles('par01', 'input')
+		self.rmarticle_fromserver('par01','input','par',self.servers.servers[0])
+		self.vfailIf(self.nget_run('-g test -r "par.test.*a b.p01"'))
+		self.vfailIf(self.nget_run('-G test -r par.test'))
+		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.p01']})
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 6)
+
+	def test_autoparhandling_missingfile(self):
+		self.addarticles('par01', 'input')
+		self.rmarticle_fromserver('par01','input','dat2',self.servers.servers[0])
+		self.rmarticle_fromserver('par01','input','dat4',self.servers.servers[0])
+		self.vfailIf(self.nget_run('-g test -r par.test'))
+		self.verifyoutput({'par01':['01.dat','03.dat','05.dat','a b.par','a b.p01','a b.p02']})
+		
+	def test_autoparhandling_corruptfile(self):
+		self.addarticles('par01', 'input')
+		self.rmarticle_fromserver('par01','input','dat2',self.servers.servers[0])
+		self.rmarticle_fromserver('par01','input','dat4',self.servers.servers[0])
+		self.addarticles('par01', 'corrupt_input')
+		self.vfailIf(self.nget_run('-g test -r par.test'))
+		self.verifyoutput({'par01':['01.dat','_corrupt_output/02.dat','03.dat','_corrupt_output/04.dat','05.dat','a b.par','a b.p01','a b.p02']})
+		
+	def test_autoparhandling_corruptpxx(self):
+		self.addarticles('par01', 'input')
+		self.rmarticle_fromserver('par01','input','dat2',self.servers.servers[0])
+		self.rmarticle_fromserver('par01','input','dat4',self.servers.servers[0])
+		self.rmarticle_fromserver('par01','input','par1',self.servers.servers[0])
+		self.rmarticle_fromserver('par01','input','par3',self.servers.servers[0])
+		self.addarticles('par01', 'corrupt_pxxs')
+		self.vfailIf(self.nget_run('-g test -r par.test'))
+		self.verifyoutput({'par01':['01.dat','03.dat','05.dat','a b.par','_corrupt_pxxs_output/a b.p01','_corrupt_pxxs_output/a b.p03','a b.p02','a b.p04']})
+	
+	def test_autoparhandling_reply(self):
+		self.addarticles('par01', 'input')
+		self.addarticles('par01', 'reply')
+		self.vfailIf(self.nget_run('-g test -r par.test'))
+		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par','_reply_output/1041725934.0.txt']})
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 7)
+		
+	def test_autoparhandling_reply_existingpar(self):
+		self.addarticles('par01', 'input')
+		self.addarticles('par01', 'reply')
+		self.vfailIf(self.nget_run('-g test -r "par.test.*a b.par"'))
+		self.vfailIf(self.nget_run('-G test -r par.test'))
+		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par','_reply_output/1041725934.0.txt']})
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 7)
+
+	def test_autoparhandling_multiparset(self):
+		self.addarticles('par01', 'input')
+		self.addarticles('par02', 'input')
+		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
+		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par'],
+			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','p2.par']})
+		
+	def test_autoparhandling_multiparset_existingpar(self):
+		self.addarticles('par01', 'input')
+		self.addarticles('par02', 'input')
+		self.vfailIf(self.nget_run('-g test -r "par.*test.*\.par"'))
+		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
+		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par'],
+			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','p2.par']})
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 12)
+		
+	def test_autoparhandling_multiparset_missingapar(self):
+		self.addarticles('par01', 'input')
+		self.rmarticle_fromserver('par01','input','par',self.servers.servers[0])
+		self.addarticles('par02', 'input')
+		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
+		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.p01'],
+			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','p2.par']})
+		
+	def test_autoparhandling_multiparset_missingfile(self):
+		self.addarticles('par01', 'input')
+		self.rmarticle_fromserver('par01','input','dat2',self.servers.servers[0])
+		self.rmarticle_fromserver('par01','input','dat4',self.servers.servers[0])
+		self.addarticles('par02', 'input')
+		self.rmarticle_fromserver('par02','input','dat1',self.servers.servers[0])
+		self.rmarticle_fromserver('par02','input','dat3',self.servers.servers[0])
+		self.rmarticle_fromserver('par02','input','dat5',self.servers.servers[0])
+		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
+		self.verifyoutput({'par01':['01.dat','03.dat','05.dat','a b.par','a b.p01','a b.p02'],
+			'par02':['p2-02.dat','p2-04.dat','p2.par','p2.p01','p2.p02','p2.p03']})
+		
 
 class NoCacheRetrieveTestCase(TestCase, RetrieveTest_base):
 	def setUp(self):

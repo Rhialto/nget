@@ -1,6 +1,6 @@
 /*
     nget - command line nntp client
-    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -69,6 +69,21 @@ void set_group_ok_status(int incr=1);
 void set_dupe_ok_status(int incr=1);
 void set_skipped_ok_status(int incr=1);
 void set_grouplist_ok_status(int incr=1);
+
+#define GETFILES_CASESENSITIVE	1
+#define GETFILES_GETINCOMPLETE	2
+#define GETFILES_NODUPEIDCHECK	4
+#define GETFILES_NODUPEFILECHECK	128
+#define GETFILES_DUPEFILEMARK	256
+#define GETFILES_NOAUTOPAR		4096
+
+#define GETFILES_NODECODE		8
+#define GETFILES_KEEPTEMP		16
+#define GETFILES_TEMPSHORTNAMES 32
+#define GETFILES_NOCONNECT		64
+#define GETFILES_TESTMODE		512
+#define GETFILES_MARK			1024
+#define GETFILES_UNMARK			2048
 
 enum t_show_multiserver {
 	NO_SHOW_MULTI,

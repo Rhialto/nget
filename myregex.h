@@ -1,6 +1,6 @@
 /*
     myregex.* - regex() wrapper class
-    Copyright (C) 1999-2000  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2000,2002-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -47,6 +47,7 @@ DEFINE_EX_SUBCLASS(RegexEx, ApplicationExFatal, true);
 
 const string& regex_match_word_beginning(void);
 const string& regex_match_word_end(void);
+void regex_escape_string(const string &s, string &buf);
 
 //  use strerror for a textual description of problem.  same as regerror(), but without the first arg(s).
 

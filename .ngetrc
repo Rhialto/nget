@@ -32,6 +32,7 @@
 #fatal_user_errors=0
 #text=files
 #save_binary_info=0
+#autopar=1
 
 //hostname aliases
 {halias

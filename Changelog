@@ -1,3 +1,6 @@
+2003-??-?? v0.24:
+  * Add automatic handling of parfiles.  nget will automatically download only as many .Pxx files as needed. (You still need an external program such as parchive to restore them)
+
 2002-12-24 v0.23:
   * Add --decode arg so -k and -K can be negated.
   * Change -K's long arg from --keep2 to --no-decode to be more descriptive.

@@ -1,6 +1,6 @@
 /*
     file.* - file io classes
-    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -78,9 +78,20 @@ ssize_t c_file::putf(const char *data,...){
 	return r;
 }
 ssize_t c_file::read(void *data,size_t len){
-	int i=doread(data,len);
+	ssize_t i=doread(data,len);
 	if (i<0) throw FileEx(Ex_INIT,"read %s (%s)", name(), dostrerror());
 	return i;
+}
+void c_file::readfull(void *data,size_t len){
+	size_t cur=0;
+	ssize_t i;
+	while (cur < len) {
+		i=doread((char*)data+cur, len-cur);
+		if (i<0) throw FileEx(Ex_INIT,"readfull %s (%s)", name(), dostrerror());
+		else if (i==0) throw FileEx(Ex_INIT,"readfull %s: unexpected EOF", name());
+		cur += i;
+	}
+	assert(cur == len);
 }
 ssize_t c_file::write(const void *data,size_t len){
 	size_t sent=0;
@@ -184,6 +195,12 @@ inline ssize_t c_file_fd::dowrite(const void *data,size_t len){
 }
 inline ssize_t c_file_fd::doread(void *data,size_t len){
 	return ::read(fd,data,len);
+}
+int c_file_fd::seek(int offset, int whence){
+	int r = lseek(fd, offset, whence);
+	if (r<0)
+		throw FileEx(Ex_INIT,"seek %s: %s", name(), dostrerror());
+	return r;
 }
 
 

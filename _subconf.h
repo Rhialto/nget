@@ -26,11 +26,16 @@
 #undef SHORT_TEMPNAMES
 #endif*/
 
+#ifdef __cplusplus
 using namespace std;
+#endif
 
 #ifdef HAVE_INTTYPES_H
 # ifndef __STDC_FORMAT_MACROS
 # define __STDC_FORMAT_MACROS
+# endif
+# ifndef __STDC_CONSTANT_MACROS
+# define __STDC_CONSTANT_MACROS
 # endif
 # include <inttypes.h>
 #elif HAVE_STDINT_H
@@ -56,6 +61,40 @@ using namespace std;
 #  define PRIuFAST64 "lu"
 # endif
 #endif
+
+#ifndef HAVE_INT32_T
+# define int32_t int
+#endif
+#ifndef HAVE_UINT32_T
+# define uint32_t unsigned int
+#endif
+#ifndef HAVE_INT64_T
+# define int64_t int_fast64_t
+#endif
+#ifndef HAVE_UINT64_T
+# define uint64_t uint_fast64_t
+# if (SIZEOF_INT_FAST64_T!=8)
+#  error "my uint64_t isn't 8 bytes."
+# endif
+#endif
+
+
+#define	SWAP16(type)  ((((type) >> 8) & 0x00ff) | \
+					(((type) << 8) & 0xff00))
+
+#define	SWAP32(type)  ((((type) >>24) & 0x000000ff) | \
+					(((type) >> 8) & 0x0000ff00) | \
+					(((type) << 8) & 0x00ff0000) | \
+					(((type) <<24) & 0xff000000))
+
+#define	SWAP64(type)  ((((type) >>56) & 0x00000000000000ff) | \
+					(((type) >>40) & 0x000000000000ff00) | \
+					(((type) <<24) & 0x0000000000ff0000) | \
+					(((type) >> 8) & 0x00000000ff000000) | \
+					(((type) << 8) & UINT64_C(0x000000ff00000000)) | \
+					(((type) >>24) & UINT64_C(0x0000ff0000000000)) | \
+					(((type) <<40) & UINT64_C(0x00ff000000000000)) | \
+					(((type) <<56) & UINT64_C(0xff00000000000000)))
 
 #ifdef WIN32
 #define sleep(x) _sleep(x*1000)

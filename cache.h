@@ -1,6 +1,6 @@
 /*
     cache.* - nntp header cache code
-    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #include "config.h"
 #endif
 #include <sys/types.h>
+#include <ctype.h>
 #include <string>
 #include <map>
 #include "_hash_map.h"
@@ -153,7 +154,9 @@ class c_nntp_file : public c_nntp_file_base, public c_refcounted<c_nntp_file>{
 		int tailoff;
 		void addpart(c_nntp_part *p);
 		void mergefile(c_nntp_file::ptr &f);
-		bool iscomplete(void) const {return (have>=req) || (have<=1 && !references.empty() && lines()<1000);}
+		bool is_a_reply(void) const {return (!references.empty()) || (subject.size()>=4 && tolower(subject[0])=='r' && tolower(subject[1])=='e' && subject[2]==':' && subject[3]==' ');}
+		bool maybe_a_textpost(void) const {return (have<=1 && is_a_reply() && lines()<1000);}
+		bool iscomplete(void) const {return (have>=req) || maybe_a_textpost();}
 		void get_server_have_map(t_server_have_map &have_map) const;
 //		ulong banum(void){assert(!parts.empty());return (*parts.begin()).second->articlenum;}
 		string bamid(void) const {assert(!parts.empty());return (*parts.begin()).second->messageid;}
@@ -202,11 +205,6 @@ class c_nntp_files_u {
 		~c_nntp_files_u();
 };
 
-#define GETFILES_CASESENSITIVE	1
-#define GETFILES_GETINCOMPLETE	2
-#define GETFILES_NODUPEIDCHECK	4
-#define GETFILES_NODUPEFILECHECK	128
-#define GETFILES_DUPEFILEMARK		256
 
 class c_nntp_server_info {
 	public:
@@ -359,6 +357,7 @@ class c_nntp_getinfo : public c_refcounted<c_nntp_getinfo>{
 };
 typedef list<c_nntp_getinfo::ptr> t_nntp_getinfo_list;
 
+class ParHandler;
 class c_nntp_cache : public c_refcounted<c_nntp_cache>{
 	public:
 		string file;
@@ -377,13 +376,13 @@ class c_nntp_cache : public c_refcounted<c_nntp_cache>{
 		ulong flushlow(c_nntp_server_info *servinfo, ulong newlow, meta_mid_info *midinfo);
 		void getxrange(c_nntp_server_info *servinfo, ulong newlow, ulong newhigh, c_nrange *range) const;
 		void getxrange(c_nntp_server_info *servinfo, c_nrange *range) const;
-		void getfiles(c_nntp_files_u *fc, meta_mid_info *midinfo, const t_nntp_getinfo_list &getinfos);
+		void getfiles(c_nntp_files_u *fc, ParHandler *parhandler, meta_mid_info *midinfo, const t_nntp_getinfo_list &getinfos);
 		c_nntp_cache(void);
 		c_nntp_cache(string path,c_group_info::ptr group,meta_mid_info*midinfo);
 		virtual ~c_nntp_cache();
 };
 
-void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c_group_info::ptr group, meta_mid_info*midinfo, const t_nntp_getinfo_list &getinfos);
-void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, const vector<c_group_info::ptr> &groups, meta_mid_info*midinfo, const t_nntp_getinfo_list &getinfos);
+void nntp_cache_getfiles(c_nntp_files_u *fc, ParHandler *parhandler, bool *ismultiserver, string path, c_group_info::ptr group, meta_mid_info*midinfo, const t_nntp_getinfo_list &getinfos);
+void nntp_cache_getfiles(c_nntp_files_u *fc, ParHandler *parhandler, bool *ismultiserver, string path, const vector<c_group_info::ptr> &groups, meta_mid_info*midinfo, const t_nntp_getinfo_list &getinfos);
 
 #endif

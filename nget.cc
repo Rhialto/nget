@@ -1,6 +1,6 @@
 /*
     nget - command line nntp client
-    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -164,7 +164,7 @@ void set_user_error_status_and_do_fatal_user_error(int incr=1) {
 		throw FatalUserException();
 }
 
-#define NUM_OPTIONS 40
+#define NUM_OPTIONS 42
 #ifndef HAVE_LIBPOPT
 
 #ifndef HAVE_GETOPT_LONG
@@ -216,6 +216,8 @@ enum {
 	OPT_DECODE,
 	OPT_TIMEOUT,
 	OPT_DUPEPATH,
+	OPT_AUTOPAR,
+	OPT_NOAUTOPAR,
 	OPT_MIN_SHORTNAME
 };
 
@@ -285,6 +287,8 @@ static void addoptions(void)
 	addoption("nocase",0,'C',0,"match incasesensitively(default)");
 	addoption("dupecheck",1,'d',"FLAGS","check to make sure you haven't already downloaded files(default -dfiM)");
 	addoption("nodupecheck",0,'D',0,"don't check if you already have files(shortcut for -dFIM)");
+	addoption("autopar",0,OPT_AUTOPAR,0,"only download as many par files as needed (default)");
+	addoption("no-autopar",0,OPT_NOAUTOPAR,0,"disable special par file handling");
 	addoption("mark",0,'M',0,"mark matching articles as retrieved");
 	addoption("unmark",0,'U',0,"mark matching articles as not retrieved (implies -dI)");
 	addoption("writelite",1,'w',"LITEFILE","write out a ngetlite list file");
@@ -294,7 +298,7 @@ static void addoptions(void)
 };
 static void print_help(void){
 	printf("nget v"PACKAGE_VERSION" - nntp command line fetcher\n");
-	printf("Copyright 1999-2002 Matthew Mueller <donut@azstarnet.com>\n");
+	printf("Copyright 1999-2003 Matthew Mueller <donut@azstarnet.com>\n");
 	printf("\n\
 This program is free software; you can redistribute it and/or modify\n\
 it under the terms of the GNU General Public License as published by\n\
@@ -764,6 +768,12 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					}
 				}
 				break;
+			case OPT_AUTOPAR:
+				options.gflags&= ~GETFILES_NOAUTOPAR;
+				break;
+			case OPT_NOAUTOPAR:
+				options.gflags|= GETFILES_NOAUTOPAR;
+				break;
 			case 'i':
 				options.gflags|= GETFILES_GETINCOMPLETE;
 				break;
@@ -1153,6 +1163,8 @@ int main(int argc, const char ** argv){
 					options.gflags|= GETFILES_TEMPSHORTNAMES;
 				if (!cfg.data.getitemi("save_binary_info",&t) && t==1)
 					options.save_text_for_binaries=true;
+				if (!cfg.data.getitemi("autopar",&t) && t==0)
+					options.gflags|= GETFILES_NOAUTOPAR;
 				options.set_test_multi(cfg.data.getitema("test_multiserver"));
 				options.set_text_handling(cfg.data.getitema("text"));
 				options.set_makedirs(cfg.data.getitema("makedirs"));

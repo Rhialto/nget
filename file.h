@@ -1,6 +1,6 @@
 /*
     file.* - file io classes
-    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -83,6 +83,19 @@ class c_file {
 	ssize_t vputf(const char *buf, va_list ap);
 	ssize_t write(const void *data,size_t len);
 	ssize_t read(void *data,size_t len);
+	void readfull(void *data,size_t len);
+	void read_le_u32(uint32_t *i){
+		readfull(i, 4);
+#ifdef WORDS_BIGENDIAN
+		*i = SWAP32(*i);
+#endif
+	}
+	void read_le_u64(uint64_t *i){
+		readfull(i, 8);
+#ifdef WORDS_BIGENDIAN
+		*i = SWAP64(*i);
+#endif
+	}
 	//buffered funcs: must call initrbuf first.
 	int bgets(void){return rbuffer->bgets();}//buffered gets, should be faster than normal gets, definatly for tcp or gz. maybe not for stream.
 	char *bgetsp(void){rbuffer->bgets(); return rbuffer->cbufp();}
@@ -111,6 +124,7 @@ class c_file_fd : public c_file {
 	virtual int doclose(void);
 	virtual const char *dostrerror(void);
   public:
+	int seek(int offset, int whence);
 	virtual int isopen(void) const;
 	c_file_fd(const char *name,int flags,int mode=S_IRWXU|S_IRWXG|S_IRWXO);
 	c_file_fd(const char *name,const char * mode);

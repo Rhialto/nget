@@ -1,6 +1,6 @@
 /*
     prot_nntp.* - nntp protocol handler
-    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -51,6 +51,7 @@
 #include "dupe_file.h"
 #include "myregex.h"
 #include "texthandler.h"
+#include "par.h"
 
 extern SockPool sockpool;
 
@@ -1114,6 +1115,7 @@ void print_nntp_file_info(c_nntp_file::ptr f, t_show_multiserver show_multi) {
 
 void c_prot_nntp::nntp_retrieve(const vector<c_group_info::ptr> &rgroups, const t_nntp_getinfo_list &getinfos, const t_xpat_list &patinfos, const nget_options &options) {
 	c_nntp_files_u filec;
+	ParHandler parhandler;
 	if (rgroups.size()!=1) {
 		cleanupcache();
 		group = NULL;
@@ -1132,25 +1134,26 @@ void c_prot_nntp::nntp_retrieve(const vector<c_group_info::ptr> &rgroups, const 
 	for (vector<c_group_info::ptr>::const_iterator gi=rgroups.begin(); gi!=rgroups.end(); gi++)
 		nntp_xgroup(*gi, patinfos, options);
 
-	gcache->getfiles(&filec, midinfo, getinfos);
+	gcache->getfiles(&filec, &parhandler, midinfo, getinfos);
 
 	gcache=NULL;
 	
-	nntp_doretrieve(filec, options);
+	nntp_doretrieve(filec, parhandler, options);
 }
 
 void c_prot_nntp::nntp_retrieve(const vector<c_group_info::ptr> &rgroups, const t_nntp_getinfo_list &getinfos, const nget_options &options){
 	c_nntp_files_u filec;
+	ParHandler parhandler;
 	if (rgroups.size()!=1) {
 		cleanupcache();
 		group = NULL;
 		midinfo=new meta_mid_info(nghome, rgroups);
-		nntp_cache_getfiles(&filec, &gcache_ismultiserver, ngcachehome, rgroups, midinfo, getinfos);
+		nntp_cache_getfiles(&filec, &parhandler, &gcache_ismultiserver, ngcachehome, rgroups, midinfo, getinfos);
 	} else {
 		assert(rgroups.front());
 		if (gcache) {
 			assert(group == rgroups.front());
-			gcache->getfiles(&filec, midinfo, getinfos);
+			gcache->getfiles(&filec, &parhandler, midinfo, getinfos);
 			//attempt to free up some mem since all the data we need is now in filec, we don't need the whole cache.  Unfortunatly due to STL's memory allocators this doesn't really return the memory to the OS, but at least its available for any further STL allocations while retrieving.
 			gcache=NULL;
 		} else {
@@ -1162,10 +1165,10 @@ void c_prot_nntp::nntp_retrieve(const vector<c_group_info::ptr> &rgroups, const 
 				midinfo=new meta_mid_info(nghome, rgroups);
 			}
 
-			nntp_cache_getfiles(&filec, &gcache_ismultiserver, ngcachehome, group, midinfo, getinfos);
+			nntp_cache_getfiles(&filec, &parhandler, &gcache_ismultiserver, ngcachehome, group, midinfo, getinfos);
 		}
 	}
-	nntp_doretrieve(filec, options);
+	nntp_doretrieve(filec, parhandler, options);
 }
 
 
@@ -1182,7 +1185,9 @@ const char *uutypetoa(int uudet) {
 	}
 }
 
-void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &options) {
+void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler, const nget_options &options) {
+	parhandler.get_initial_pars(filec);
+	
 	if (filec.files.empty())
 		return;
 
@@ -1246,6 +1251,17 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 				filec.files.erase(curf);
 				qtotinfo.filesdone++;
 				filec.bytes=qtotinfo.bytesleft;//update bytes in case we have an exception and need to restart.
+
+				//check if this was the last file to be downloaded to its path, and if so do autoparhandling
+				int path_files_left=0;
+				for (t_nntp_files_u::iterator dfi = filec.files.begin(); dfi!=filec.files.end(); ++dfi){
+					const c_nntp_file_retr::ptr &dfr = (*dfi).second;
+					if (dfr->path == fr->path)//fr will still be set to the just erased file_retr, here
+						path_files_left++;
+				}
+				if (path_files_left==0) {
+					parhandler.maybe_get_pxxs(fr->path, filec);
+				}
 			}
 			if (filec.files.empty())
 				break;

@@ -1,0 +1,12 @@
+From: donut@charon (Matthew Mueller,,,)
+Sender: donut@charon
+User-Agent: ypost/0.46 (http://www.yencode.org/)
+Date: Wed, 01 Jan 2003 01:55:43 GMT
+Newsgroups: test
+Subject: [par test] "04.dat" 10 yEnc bytes
+Lines: 3
+Message-ID: <4.1041386143.99@dumbnntpd>
+
+=ybegin line=128 size=10 name=04.dat
+••–—˜™š›œ4
+=yend size=10 crc32=93D2CE7E

@@ -1,4 +1,4 @@
-.TH nget 1 "24 Dec 2002"
+.TH nget 1 "04 Jan 2003"
 .SH NAME
 nget \- retrieve files from NNTP (usenet news) hosts
 .SH SYNOPSIS
@@ -135,6 +135,12 @@ Keep temp files, and don't try to decode them.
 Match case sensitively.
 .IP "-C/--nocase"
 Match case insensitively.
+.IP "--autopar"
+Enable automatic parfile handling. (default)
+Only download as many par files as needed to replace missing or corrupt files.
+.IP "--no-autopar"
+Disable automatic parfile handling.
+All parfiles that match the expression will be downloaded.
 .IP "-d/--dupecheck FLAGS"
 Check to make sure you don't already have files.  This is done in two ways.
 The first ("f") is by compiling a list of all files in the current directory, then
@@ -270,6 +276,8 @@ Default for incomplete file filter. (0=-i/--incomplete, 1=-I/--complete)
 Default for already downloaded file filter. (0=-dI, 1=-di)
 .IP "dupefilecheck (boolean, default=1)"
 Default for duplicate file filter. (0=-dF, 1=-df)
+.IP "autopar (boolean, default=1)"
+Default for automatic par handling. (0=--no-autopar, 1=--autopar)
 .IP "quiet (boolean, default=0)"
 Default for quiet option. (0=normal, 1=-q)
 .IP "tempshortnames (boolean, default=0)"

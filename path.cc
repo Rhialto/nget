@@ -1,6 +1,6 @@
 /*
     path.* - attempt to have portable path manipulation
-    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -82,6 +82,13 @@ bool direxists(const string &p) {
 int fexists(const char * f){
 	struct stat statbuf;
 	return (!stat(f,&statbuf));
+}
+int fsize(const char * f, off_t *size){
+	struct stat statbuf;
+	if (stat(f,&statbuf))
+		return -1;
+	*size=statbuf.st_size;
+	return 0;
 }
 string fcheckpath(const char *fn, string path){
 	if (!is_abspath(fn)) {

@@ -21,6 +21,7 @@
 #include "grouplist.h"
 #include "myregex.h"
 #include "misc.h"
+#include "nget.h"
 #include "strreps.h"
 #include "getter.h"
 #include <stack>

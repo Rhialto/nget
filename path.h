@@ -1,6 +1,6 @@
 /*
     path.* - attempt to have portable path manipulation
-    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include <sys/types.h>
 #include <string>
 #include <list>
 
@@ -43,6 +44,7 @@ void path_split(string &head, string &tail);
 
 bool direxists(const string &p);
 int fexists(const char * f);
+int fsize(const char * f, off_t *size);
 string fcheckpath(const char *fn,string path);
 int testmkdir(const char * dir,int mode);
 char *goodgetcwd(char **p);
