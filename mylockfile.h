@@ -86,7 +86,7 @@ class c_lockfile{
 };
 #elif HAVE_LOCKFILE
 #include <windows.h>
-#include "misc.h"
+#include "path.h"
 class c_lockfile{
 	public:
 		HANDLE hFile;

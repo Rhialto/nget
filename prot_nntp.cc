@@ -36,6 +36,7 @@
 #endif
 
 #include "misc.h"
+#include "path.h"
 #include "termstuff.h"
 #include "strreps.h"
 #include <stdlib.h>

@@ -32,7 +32,7 @@ OBJS=nget.o prot_nntp.o sockpool.o sockstuff.o cache.o dupe_file.o file.o file_g
 $(NGET): $(OBJS) .depend 
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
 
-LITEOBJS=lite.o litenntp.o log.o sockstuff.o strreps.o file.o
+LITEOBJS=lite.o litenntp.o log.o sockstuff.o strreps.o file.o path.o
 $(NGETLITE): $(LITEOBJS) .depend 
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LITEOBJS) -o $@ $(LITELIBS)
 

@@ -22,19 +22,15 @@
 #include "misc.h"
 #include "strreps.h"
 #include "log.h"
-#include "path.h"
 #include "file.h"
 
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <errno.h>
 #include "myregex.h"
 
-#include <string>
 #include "_sstream.h"
 #include <iomanip>
-#include "_fileconf.h"
 
 #ifndef HAVE_TIMEGM
 time_t timegm (const struct tm *gmtimein) {
@@ -61,62 +57,6 @@ time_t timegm (const struct tm *gmtimein) {
 	return t; 	
 }
 #endif
-
-bool direxists(const char *p) {
-	bool ret=false;
-	char *oldp;
-	goodgetcwd(&oldp);
-	if (chdir(p)==0)
-		ret=true;
-	if (chdir(oldp)) {
-		free(oldp);
-		throw ApplicationExFatal(Ex_INIT, "could not return to oldp: %s (%s)",oldp,strerror(errno));
-	}
-	free(oldp);
-	return ret;
-}
-int fexists(const char * f){
-	struct stat statbuf;
-	return (!stat(f,&statbuf));
-}
-string fcheckpath(const char *fn, string path){
-	if (!is_abspath(fn)) {
-		string pfn = path_join(path,fn);
-		if (fexists(pfn.c_str()))
-			return pfn;
-	}
-	return fn;
-}
-
-int testmkdir(const char * dir,int mode){
-	struct stat statbuf;
-	if (stat(dir,&statbuf)){
-		return (mkdir(dir,mode));
-	} else if (!S_ISDIR(statbuf.st_mode)){
-		return ENOTDIR;
-	}
-	return 0;
-}
-char *goodgetcwd(char **p){
-	/*int t=-1;
-	*p=NULL;//first we try to take advantage of the GNU extension to allocate it for us.
-	while (!(*p=getcwd(*p,t))) {
-		t+=100;
-		if (!(*p=(char*)realloc(*p,t))){
-			PERROR("realloc error %s",strerror(errno));exit(1);
-		}
-	}*/
-	int t=0;
-	*p=NULL;//ack, that extension seems to like segfaulting when you free() its return.. blah.
-	do {
-		t+=48;
-		if (!(*p=(char*)realloc(*p,t))){
-			PERROR("goodgetcwd: realloc error %s (size=%i)",strerror(errno), t);exit(128);
-		}
-	}while(!(*p=getcwd(*p,t)));
-	PDEBUG(DEBUG_MED,"goodgetcwd %i %s(%p-%p)",t,*p,p,*p);
-	return *p;
-}
 
 
 size_t tconv(char * timestr, int max, time_t *curtime,const char * formatstr, int local) {

@@ -30,12 +30,6 @@
 #include "_sstream.h"
 
 
-bool direxists(const char *p);
-int fexists(const char * f);
-string fcheckpath(const char *fn,string path);
-int testmkdir(const char * dir,int mode);
-char *goodgetcwd(char **p);
-
 #define TCONV_DEF_BUF_LEN 60
 size_t tconv(char * timestr, int max, time_t *curtime,const char * formatstr="%Y%m%dT%H%M%S", int local=1);
 
