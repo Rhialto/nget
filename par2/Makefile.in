@@ -1,0 +1,52 @@
+CXXFLAGS=@CXXFLAGS@ @DEFS@
+CPPFLAGS=@CPPFLAGS@ -I..
+LDFLAGS=@LDFLAGS@
+
+AR=@AR@
+CXX=@CXX@
+RANLIB=@RANLIB@
+LIBS=@LIBS@
+
+srcdir=@srcdir@
+
+all: par2.a
+
+par2.a: commandline.o \
+		crc.o \
+		creatorpacket.o \
+		criticalpacket.o \
+		datablock.o \
+		descriptionpacket.o \
+		diskfile.o \
+		filechecksummer.o \
+		mainpacket.o \
+		md5.o \
+		par1fileformat.o \
+		par1repairer.o \
+		par1repairersourcefile.o \
+		par2fileformat.o \
+		par2repairer.o \
+		par2repairersourcefile.o \
+		recoverypacket.o \
+		verificationhashtable.o \
+		verificationpacket.o
+	rm -f $@
+	$(AR) r $@ $^
+	-$(RANLIB) $@
+
+
+Makefile: Makefile.in ../config.status
+	cd .. && ./config.status
+
+clean:
+	-rm par2.a *.o
+
+distclean: clean
+	-rm Makefile .depend *.rej .cvsignore
+
+.PHONY: all dep depend clean dist distclean
+
+dep depend .depend:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM *.cpp > .depend
+
+include .depend
