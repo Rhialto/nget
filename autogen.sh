@@ -7,6 +7,6 @@ echo "running autoconf"
 autoconf
 echo "running autoheader"
 autoheader
-echo "running ./configure" "$@"
-./configure "$@"
+echo "running ./configure --enable-maintainer-mode" "$@"
+./configure --enable-maintainer-mode "$@"
 
