@@ -1,0 +1,12 @@
+From: donut@charon (Matthew Mueller,,,)
+Sender: donut@charon
+User-Agent: ypost/0.46 (http://www.yencode.org/)
+Date: Wed, 01 Jan 2003 01:55:37 GMT
+Newsgroups: test
+Subject: Posting data files.
+Lines: 3
+Message-ID: <11.1041386137.84@dumbnntpd>
+
+=ybegin line=128 size=10 name=01.dat
+[\]^_`abc4
+=yend size=10 crc32=E0117757
