@@ -341,6 +341,35 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput(['0002','0001','0003'])
 		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
 
+	def test_list(self):
+		ldir = os.path.join(self.nget.rcdir, 'lists')
+		os.mkdir(ldir)
+		lpath = os.path.join(ldir, 'list.foo')
+		f = open(lpath, 'w')
+		f.write('-g test -r .')
+		f.close()
+		self.vfailIf(self.nget.run('-@ list.foo'))
+		self.verifyoutput(['0002','0001','0003'])
+
+	def test_list_abspath(self):
+		lpath = os.path.join(self.nget.rcdir, 'list.foo')
+		f = open(lpath, 'w')
+		f.write('-g test -r .')
+		f.close()
+		self.vfailIf(self.nget.run('-@ %s'%lpath))
+		self.verifyoutput(['0002','0001','0003'])
+
+	def test_list_multiline(self):
+		lpath = os.path.join(self.nget.rcdir, 'list.foo')
+		f = open(lpath, 'w')
+		f.write('-g\ntest\n-r\n.')
+		f.close()
+		self.vfailIf(self.nget.run('-@ %s'%lpath))
+		self.verifyoutput(['0002','0001','0003'])
+
+	def test_list_enoent(self):
+		self.vfailUnlessEqual(self.nget.run('-@ foobar'), 4)
+
 
 class XoverTestCase(TestCase, DecodeTest_base):
 	def setUp(self):
