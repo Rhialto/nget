@@ -304,6 +304,22 @@ nget_options::nget_options(void){
 	do_get_path(startpath);
 	get_path();
 	get_temppath();
+
+	makedirs=0;
+	maxretry=20;
+	retrydelay=1;
+	badskip=0;
+	linelimit=0;
+	maxlinelimit=ULONG_MAX;
+	gflags=0;
+	test_multi=NO_SHOW_MULTI;
+	retr_show_multi=SHOW_MULTI_LONG;//always display the multi-server info when retrieving, just because I think thats better
+	cmdmode=RETRIEVE_MODE;
+	host=NULL;
+	texthandling=TEXT_FILES;
+	save_text_for_binaries=false;
+	mboxfname="nget.mbox";
+	fullxover=-1;
 }
 void nget_options::get_path(void){do_get_path(path);}
 void nget_options::get_temppath(void){
@@ -1008,21 +1024,6 @@ int main(int argc, const char ** argv){
 		}
 		else {
 			nget_options options;
-			options.makedirs=0;
-			options.maxretry=20;
-			options.retrydelay=1;
-			options.badskip=0;
-			options.linelimit=0;
-			options.maxlinelimit=ULONG_MAX;
-			options.gflags=0;
-			options.test_multi=NO_SHOW_MULTI;
-			options.retr_show_multi=SHOW_MULTI_LONG;//always display the multi-server info when retrieving, just because I think thats better
-			options.cmdmode=RETRIEVE_MODE;
-			options.host=NULL;
-			options.texthandling=TEXT_FILES;
-			options.save_text_for_binaries=false;
-			options.mboxfname="nget.mbox";
-			options.fullxover=-1;
 			{
 				string ngetrcfn = nghome + ".ngetrc";
 				if (!fexists(ngetrcfn)) {
