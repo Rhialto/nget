@@ -51,7 +51,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 	def cmd_group(self, args):
 		self.group = self.server.groups.get(args)
 		if self.group:
-			self.nwrite("200 %i %i %i group %s selected"%(self.group.high-self.group.low+1, self.group.low, self.group.high, args))
+			self.nwrite("200 %i %i %i group %s selected"%(self.group.high-self.group.low, self.group.low, self.group.high-1, args))
 		else:
 			self.nwrite("411 no such news group")
 	def cmd_xover(self, args):
