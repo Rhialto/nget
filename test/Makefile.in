@@ -13,6 +13,9 @@ NGETLITE=../ngetlite$(EXEEXT)
 
 all: TestRunner
 
+
+$(NGET) $(NGETLITE): ../*.cc ../*.h
+
 ../%:
 	$(MAKE) -C .. $(subst ../,,$@)
 

@@ -38,10 +38,10 @@ LITEOBJS=lite.o litenntp.o log.o sockstuff.o strreps.o file.o path.o
 $(NGETLITE): $(LITEOBJS) .depend 
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LITEOBJS) -o $@ $(LITELIBS)
 
-par2/par2.a:
+par2/par2.a: par2/*.cpp par2/*.h
 	$(MAKE) -C par2 par2.a
 
-@NOUU@@UULIB@:
+@NOUU@@UULIB@: @UUDIR@/*.c @UUDIR@/*.h
 @NOUU@	(cd @UUDIR@ && ./configure)
 @NOUU@	$(MAKE) -C @UUDIR@ libuu.a
 
