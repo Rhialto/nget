@@ -728,13 +728,18 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 							{
 								const char *paths[2]={(nghome + "lists/").c_str(),NULL};
 								const char *filename=fsearchpath(loptarg,paths,FSEARCHPATH_ALLOWDIRS);
-								if (filename) try {
+								if (!filename) {
+									printf("error opening %s: %s(%i)\n",loptarg,strerror(errno),errno);errno=0;
+									set_user_error_status();
+									break;
+								}
+								list<s_arglist> arglist;
+								s_arglist larg;
+								int totargc=0;
+								try {
 									c_file_fd f(filename,O_RDONLY);
 									f.initrbuf();
-									int totargc=0;
 									int pr;
-									s_arglist larg;
-									list<s_arglist> arglist;
 									while (f.bgets()>0){
 										if(!(pr=poptParseArgvString(f.rbufp(),&larg.argc,POPT_ARGV_p_T &larg.argv))){
 											arglist.push_back(larg);
@@ -745,40 +750,41 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 										}
 									}
 									f.close();
-									if (!arglist.empty()){
-										int tc=0,ic=0;
-										s_arglist targ;
-										larg.argc=totargc;
-										larg.argv=(char**)malloc((totargc+1)*sizeof(char**));
-										list<s_arglist>::iterator it=arglist.begin();
-										for (;it!=arglist.end();++it){
-											targ=*it;
-											for(ic=0;ic<targ.argc;ic++,tc++)
-												larg.argv[tc]=targ.argv[ic];
-										}
-
-										do_args(larg.argc,larg.argv,options,1);
-										if (options.host){//####here we reset the stuff that may have been screwed in our recursiveness.  Perhaps it should reset it before returning, or something.. but I guess this'll do for now, since its the only place its called recursively.
-											nntp.nntp_open(options.host);
-											if (!options.group.isnull())
-												nntp.nntp_group(options.group,0,options);
-										}
-										if (!chdir(options.path.c_str())){
-											printf("path:%s\n",options.path.c_str());
-										}else{
-											printf("could not change to %s\n",options.path.c_str());
-											set_path_error_status();
-											return -1;
-										}
-										for (it=arglist.begin();it!=arglist.end();++it)
-											free((*it).argv);
-										free(larg.argv);
-									}
 								}catch (FileNOENTEx &e){
 									printf("error opening %s: %s(%i)\n",filename?:loptarg,strerror(errno),errno);errno=0;
 									set_user_error_status();
+									break;
 								}
-								if (filename && filename!=loptarg)
+								if (!arglist.empty()){
+									int tc=0,ic=0;
+									s_arglist targ;
+									larg.argc=totargc;
+									larg.argv=(char**)malloc((totargc+1)*sizeof(char**));
+									list<s_arglist>::iterator it=arglist.begin();
+									for (;it!=arglist.end();++it){
+										targ=*it;
+										for(ic=0;ic<targ.argc;ic++,tc++)
+											larg.argv[tc]=targ.argv[ic];
+									}
+
+									do_args(larg.argc,larg.argv,options,1);
+									if (options.host){//####here we reset the stuff that may have been screwed in our recursiveness.  Perhaps it should reset it before returning, or something.. but I guess this'll do for now, since its the only place its called recursively.
+										nntp.nntp_open(options.host);
+										if (!options.group.isnull())
+											nntp.nntp_group(options.group,0,options);
+									}
+									if (!chdir(options.path.c_str())){
+										printf("path:%s\n",options.path.c_str());
+									}else{
+										printf("could not change to %s\n",options.path.c_str());
+										set_path_error_status();
+										return -1;
+									}
+									for (it=arglist.begin();it!=arglist.end();++it)
+										free((*it).argv);
+									free(larg.argv);
+								}
+								if (filename!=loptarg)
 									free(const_cast<char*>(filename));//const_cast away the warning
 							}
 #else
