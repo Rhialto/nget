@@ -20,6 +20,7 @@
 #define AUTO_MAP_H__
 
 #include "rcount.h"
+#include <assert.h>
 #include <map>
 
 template <class K, class T, template <class BK, class BT> class Base>
