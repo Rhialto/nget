@@ -57,6 +57,18 @@ struct e_generic_re : public e_generic<bin_fun_re> {
 };
 
 //these cannot use generic_type, since they need to go into pointers and stuff
+struct e_nntp_mid : public e_generic_re {
+	e_nntp_mid(const bin_fun_re *aO,int aofs,arg2_type v):e_generic_re(aO, aofs, v){};
+	virtual ret_type operator()(const arg_type v) const {
+		c_nntp_file*f=(c_nntp_file*)v;
+		if (f->parts.empty()) {
+			string foobar("");
+			return (*O)(foobar,val2);
+		}
+		return (*O)((*f->parts.begin()).second->messageid,val2);
+	};
+};
+
 struct e_nntp_date : public e_generic<e_binary_function<time_t,time_t,bool> > {
 	e_nntp_date(const op_type *aO,int aofs,arg2_type v):e_generic<e_binary_function<time_t,time_t,bool> >(aO,aofs,v){};
 	virtual ret_type operator()(const arg_type v) const {
@@ -131,6 +143,9 @@ static generic_pred* make_e_nntp_bytes(const void *op,const void*v) {
 /*static generic_pred* make_e_nntp_banum(const void *op,const void*v) {
 	return new e_nntp_banum((e_binary_function<ulong,ulong,bool>*)op, 0, (ulong)v);
 }*/
+static generic_pred* make_e_nntp_mid(const void *op,const void*v) {
+	return new e_nntp_mid((bin_fun_re*)op, 0, (c_regex_nosub*)v);
+}
 struct {
 	char * name;
 	int type;
@@ -148,9 +163,10 @@ struct {
 	{"have",E_INT,(ubyte*)(&((c_nntp_file*)NULL)->have)-(ubyte*)NULL,NULL},
 	{"date",E_TIME_T,0,make_e_nntp_date},
 //	{"anum",E_ULONG,0,make_e_nntp_banum},
+	{"messageid",E_STRING,0,make_e_nntp_mid},
+	{"mid",E_STRING,0,make_e_nntp_mid}, //same as messageid
 	{0,0,0,0}
 };
-//TODO: add messageid search (to replace anum)
 
 generic_pred * make_pred(const char *optarg){
 	list<string> e_parts;
