@@ -1,3 +1,8 @@
+#ifndef _NGET_CONFIG_H_
+#define _NGET_CONFIG_H_
+
+@TOP@
+
 /* Define if you have the uu library (-luu).  */
 #undef HAVE_LIBUU
 
@@ -49,3 +54,5 @@
 
 /* tests for some features that depend on other features */
 #include "_subconf.h"
+
+#endif /* _NGET_CONFIG_H_ */
