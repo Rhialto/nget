@@ -90,28 +90,45 @@ AC_DEFUN(MY_DISABLE_OPT,[
 ])
 
 
-AC_DEFUN([MY_CHECK_TERMSTUFF],
-[AC_CACHE_CHECK([for working term library], [my_cv_working_termstuff],
+AC_DEFUN([MY_SEARCH_LIBS],[
+AC_CACHE_CHECK([for $5], [my_cv_$1],
 [ac_func_search_save_LIBS=$LIBS
-my_includes=["#include <term.h>
-#include <stdio.h>"]
-my_func=["tputs(clr_bol, 1, putchar);"]
-my_cv_working_termstuff=no
-AC_TRY_LINK($my_includes, $my_func, [my_cv_working_termstuff="none required"])
-if test "$my_cv_working_termstuff" = no; then
-  for ac_lib in termcap curses ncurses; do
+my_cv_$1=no
+AC_TRY_LINK([$2], [$3], [my_cv_$1="none required"])
+if test "$my_cv_$1" = no; then
+  for ac_lib in $4; do
     LIBS="-l$ac_lib $ac_func_search_save_LIBS"
-    AC_TRY_LINK($my_includes, $my_func,
-                     [my_cv_working_termstuff="-l$ac_lib"
+    AC_TRY_LINK([$2], [$3],
+                     [my_cv_$1="-l$ac_lib"
 break])
   done
 fi
 LIBS=$ac_func_search_save_LIBS])
-AS_IF([test "$my_cv_working_termstuff" != no],
-  [test "$my_cv_working_termstuff" = "none required" || LIBS="$my_cv_working_termstuff $LIBS"
-  AC_DEFINE(HAVE_WORKING_TERMSTUFF,1,[Do we have a working term.h, tputs, and clr_bol?])])dnl
+AS_IF([test "$my_cv_$1" != no],
+  [test "$my_cv_$1" = "none required" || LIBS="$my_cv_$1 $LIBS"
+  AC_DEFINE(HAVE_[]translit([$1], [a-z], [A-Z]),1,[Do we have $5?])])dnl
 ])
 
+AC_DEFUN([MY_CHECK_TERMSTUFF],[MY_SEARCH_LIBS(working_termstuff,
+[#include <term.h>
+#include <stdio.h>],
+[tputs(clr_bol, 1, putchar);],
+[termcap curses ncurses],
+[a working term.h, tputs, and clr_bol])
+])
+
+AC_DEFUN([MY_CHECK_SOCKET],[MY_SEARCH_LIBS(socket,
+[#include <sys/types.h>
+#ifdef HAVE_WINSOCK_H
+#include <winsock.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif],
+[socket(AF_INET, SOCK_STREAM, 0);],
+[socket wsock32],
+[library containing socket])
+])
 
 dnl @synopsis AC_caolan_FUNC_WHICH_GETHOSTBYNAME_R
 dnl
@@ -261,6 +278,312 @@ elif test $ac_cv_func_which_getservbyname_r = four; then
 fi
 
 ])
+
+
+dnl @synopsis AC_PROTOTYPE(function, includes, code, TAG1, values1 [, TAG2, values2 [...]])
+dnl
+dnl Try all the combinations of <TAG1>, <TAG2>... to successfully compile <code>.
+dnl <TAG1>, <TAG2>, ... are substituted in <code> and <include> with values found in
+dnl <values1>, <values2>, ... respectively. <values1>, <values2>, ... contain a list of
+dnl possible values for each corresponding tag and all combinations are tested.
+dnl When AC_TRY_COMPILE(include, code) is successfull for a given substitution, the macro
+dnl stops and defines the following macros: FUNCTION_TAG1, FUNCTION_TAG2, ... using AC_DEFINE()
+dnl with values set to the current values of <TAG1>, <TAG2>, ...
+dnl If no combination is successfull the configure script is aborted with a message.
+dnl
+dnl Intended purpose is to find which combination of argument types is acceptable for a
+dnl given function <function>. It is recommended to list the most specific types first.
+dnl For instance ARG1, [size_t, int] instead of ARG1, [int, size_t].
+dnl
+dnl Generic usage pattern:
+dnl
+dnl 1) add a call in configure.in
+dnl
+dnl  AC_PROTOTYPE(...)
+dnl
+dnl 2) call autoheader to see which symbols are not covered
+dnl
+dnl 3) add the lines in acconfig.h
+dnl
+dnl  /* Type of Nth argument of function */
+dnl  #undef FUNCTION_ARGN
+dnl
+dnl 4) Within the code use FUNCTION_ARGN instead of an hardwired type
+dnl
+dnl Complete example:
+dnl
+dnl 1) configure.in
+dnl
+dnl  AC_PROTOTYPE(getpeername,
+dnl  [
+dnl   #include <sys/types.h>
+dnl   #include <sys/socket.h>
+dnl  ],
+dnl  [
+dnl   int a = 0;
+dnl   ARG2 * b = 0;
+dnl   ARG3 * c = 0;
+dnl   getpeername(a, b, c);
+dnl  ],
+dnl  ARG2, [struct sockaddr, void],
+dnl  ARG3, [socklen_t, size_t, int, unsigned int, long unsigned int])
+dnl
+dnl 2) call autoheader
+dnl
+dnl  autoheader: Symbol `GETPEERNAME_ARG2' is not covered by ./acconfig.h
+dnl  autoheader: Symbol `GETPEERNAME_ARG3' is not covered by ./acconfig.h
+dnl
+dnl 3) acconfig.h
+dnl
+dnl  /* Type of second argument of getpeername */
+dnl  #undef GETPEERNAME_ARG2
+dnl
+dnl  /* Type of third argument of getpeername */
+dnl  #undef GETPEERNAME_ARG3
+dnl
+dnl 4) in the code
+dnl      ...
+dnl      GETPEERNAME_ARG2 name;
+dnl      GETPEERNAME_ARG3 namelen;
+dnl      ...
+dnl      ret = getpeername(socket, &name, &namelen);
+dnl      ...
+dnl
+dnl Implementation notes: generating all possible permutations of
+dnl the arguments is not easily done with the usual mixture of shell and m4,
+dnl that is why this macro is almost 100% m4 code. It generates long but simple
+dnl to read code.
+dnl
+dnl @version $Id: ac_prototype.m4,v 1.2 2000/08/11 06:28:24 simons Exp $
+dnl @author Loic Dachary <loic@senga.org>
+dnl
+
+AC_DEFUN([AC_PROTOTYPE],[
+dnl
+dnl Upper case function name
+dnl
+ pushdef([function],translit([$1], [a-z], [A-Z]))
+dnl
+dnl Collect tags that will be substituted
+dnl
+ pushdef([tags],[AC_PROTOTYPE_TAGS(builtin([shift],builtin([shift],builtin([shift],$@))))])
+dnl
+dnl Wrap in a 1 time loop, when a combination is found break to stop the combinatory exploration
+dnl
+ for i in 1
+ do
+   AC_PROTOTYPE_LOOP(AC_PROTOTYPE_REVERSE($1, AC_PROTOTYPE_SUBST($2,tags),AC_PROTOTYPE_SUBST($3,tags),builtin([shift],builtin([shift],builtin([shift],$@)))))
+   AC_MSG_ERROR($1 unable to find a working combination)
+ done
+ popdef([tags])
+ popdef([function])
+])
+
+dnl
+dnl AC_PROTOTYPE_REVERSE(list)
+dnl
+dnl Reverse the order of the <list>
+dnl
+AC_DEFUN([AC_PROTOTYPE_REVERSE],[ifelse($#,0,,$#,1,[[$1]],[AC_PROTOTYPE_REVERSE(builtin([shift],$@)),[$1]])])
+
+dnl
+dnl AC_PROTOTYPE_SUBST(string, tag)
+dnl
+dnl Substitute all occurence of <tag> in <string> with <tag>_VAL.
+dnl Assumes that tag_VAL is a macro containing the value associated to tag.
+dnl
+AC_DEFUN([AC_PROTOTYPE_SUBST],[ifelse($2,,[$1],[AC_PROTOTYPE_SUBST(patsubst([$1],[$2],[$2[]_VAL]),builtin([shift],builtin([shift],$@)))])])
+
+dnl
+dnl AC_PROTOTYPE_TAGS([tag, values, [tag, values ...]])
+dnl
+dnl Generate a list of <tag> by skipping <values>.
+dnl
+AC_DEFUN([AC_PROTOTYPE_TAGS],[ifelse($1,,[],[$1, AC_PROTOTYPE_TAGS(builtin([shift],builtin([shift],$@)))])])
+
+dnl
+dnl AC_PROTOTYPE_DEFINES(tags)
+dnl
+dnl Generate a AC_DEFINE(function_tag, tag_VAL) for each tag in <tags> list
+dnl Assumes that function is a macro containing the name of the function in upper case
+dnl and that tag_VAL is a macro containing the value associated to tag.
+dnl
+AC_DEFUN([AC_PROTOTYPE_DEFINES],[ifelse($1,,[],[AC_DEFINE(function[]_$1, $1_VAL, Type of function $1) AC_PROTOTYPE_DEFINES(builtin([shift],$@))])])
+
+dnl
+dnl AC_PROTOTYPE_STATUS(tags)
+dnl
+dnl Generates a message suitable for argument to AC_MSG_* macros. For each tag
+dnl in the <tags> list the message tag => tag_VAL is generated.
+dnl Assumes that tag_VAL is a macro containing the value associated to tag.
+dnl
+AC_DEFUN([AC_PROTOTYPE_STATUS],[ifelse($1,,[],[$1 => $1_VAL AC_PROTOTYPE_STATUS(builtin([shift],$@))])])
+
+dnl
+dnl AC_PROTOTYPE_EACH(tag, values)
+dnl
+dnl Call AC_PROTOTYPE_LOOP for each values and define the macro tag_VAL to
+dnl the current value.
+dnl
+AC_DEFUN([AC_PROTOTYPE_EACH],[
+  ifelse($2,, [
+  ], [
+    pushdef([$1_VAL], $2)
+    AC_PROTOTYPE_LOOP(rest)
+    popdef([$1_VAL])
+    AC_PROTOTYPE_EACH($1, builtin([shift], builtin([shift], $@)))
+  ])
+])
+
+dnl
+dnl AC_PROTOTYPE_LOOP([tag, values, [tag, values ...]], code, include, function)
+dnl
+dnl If there is a tag/values pair, call AC_PROTOTYPE_EACH with it.
+dnl If there is no tag/values pair left, tries to compile the code and include
+dnl using AC_TRY_COMPILE. If it compiles, AC_DEFINE all the tags to their
+dnl current value and exit with success.
+dnl
+AC_DEFUN([AC_PROTOTYPE_LOOP],[
+ ifelse(builtin([eval], $# > 3), 1,
+   [
+     pushdef([rest],[builtin([shift],builtin([shift],$@))])
+     AC_PROTOTYPE_EACH($2,$1)
+     popdef([rest])
+   ], [
+     AC_MSG_CHECKING($3 AC_PROTOTYPE_STATUS(tags))
+dnl
+dnl Activate fatal warnings if possible, gives better guess
+dnl
+     ac_save_CPPFLAGS="$CPPFLAGS"
+	 dnl nget is c++, so we can hardcode this since autoconf barfs on the tests
+     if test "$GXX" = "yes" ; then CPPFLAGS="$CPPFLAGS -Werror" ; fi
+dnl     ifelse(AC_LANG,CPLUSPLUS,if test "$GXX" = "yes" ; then CPPFLAGS="$CPPFLAGS -Werror" ; fi)
+dnl     ifelse(AC_LANG,C,if test "$GCC" = "yes" ; then CPPFLAGS="$CPPFLAGS -Werror" ; fi)
+     AC_TRY_COMPILE($2, $1, [
+      CPPFLAGS="$ac_save_CPPFLAGS"
+      AC_MSG_RESULT(ok)
+      AC_PROTOTYPE_DEFINES(tags)
+      break;
+     ], [
+      CPPFLAGS="$ac_save_CPPFLAGS"
+      AC_MSG_RESULT(not ok)
+     ])
+   ]
+ )
+])
+
+
+dnl @synopsis AC_PROTOTYPE_SETSOCKOPT
+dnl
+dnl Requires the AC_PROTOTYPE macro.
+dnl
+dnl Find the type of argument three of setsockopt. User
+dnl must include the following in acconfig.h:
+dnl
+dnl /* Type of third argument of setsockopt */
+dnl #undef SETSOCKOPT_ARG4
+dnl
+dnl @version $Id: ac_prototype_setsockopt.m4,v 1.1 2000/08/11 06:28:24 simons Exp $
+dnl @author Loic Dachary <loic@senga.org>
+dnl
+AC_DEFUN([AC_PROTOTYPE_SETSOCKOPT],[
+AC_PROTOTYPE(setsockopt,
+ [
+  #include <sys/types.h>
+#ifdef WIN32
+  #include <winsock.h>
+#else
+  #include <sys/socket.h>
+#endif
+ ],
+ [
+  int a = 0;
+  ARG4 b = 0;
+  setsockopt(a, SOL_SOCKET, SO_REUSEADDR, b, sizeof(a));
+ ],
+ ARG4, [const void*, const char*, void*, char*])
+])
+
+AC_DEFUN([AC_PROTOTYPE_RECV],[
+AC_PROTOTYPE(recv,
+ [
+  #include <sys/types.h>
+#ifdef WIN32
+  #include <winsock.h>
+#else
+  #include <sys/socket.h>
+#endif
+ ],
+ [
+  ARG2 b = 0;
+  recv(0, b, 0, 0);
+ ],
+ ARG2, [const void*, const char*, void*, char*])
+])
+
+
+dnl @synopsis AC_FUNC_MKDIR
+dnl
+dnl Check whether mkdir() is mkdir or _mkdir, and whether it takes one or two
+dnl arguments.
+dnl
+dnl This macro can define HAVE_MKDIR, HAVE__MKDIR, and MKDIR_TAKES_ONE_ARG,
+dnl which are expected to be used as follow:
+dnl
+dnl   #if HAVE_MKDIR
+dnl   # if MKDIR_TAKES_ONE_ARG
+dnl      /* Mingw32 */
+dnl   #  define mkdir(a,b) mkdir(a)
+dnl   # endif
+dnl   #else
+dnl   # if HAVE__MKDIR
+dnl      /* plain Win32 */
+dnl   #  define mkdir(a,b) _mkdir(a)
+dnl   # else
+dnl   #  error "Don't know how to create a directory on this system."
+dnl   # endif
+dnl   #endif
+dnl
+dnl @version $Id: ac_func_mkdir.m4,v 1.1 2001/03/02 11:39:22 simons Exp $
+dnl @author Alexandre Duret-Lutz <duret_g@epita.fr>
+dnl
+AC_DEFUN([AC_FUNC_MKDIR],
+[AC_CHECK_FUNCS([mkdir _mkdir])
+AC_CACHE_CHECK([whether mkdir takes one argument],
+                [ac_cv_mkdir_takes_one_arg],
+[AC_TRY_COMPILE([
+#include <sys/stat.h>
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+],[mkdir (".");],
+[ac_cv_mkdir_takes_one_arg=yes],[ac_cv_mkdir_takes_one_arg=no])])
+if test x"$ac_cv_mkdir_takes_one_arg" = xyes; then
+  AC_DEFINE([MKDIR_TAKES_ONE_ARG],1,
+            [Define if mkdir takes only one argument.])
+fi
+])
+
+dnl Note:
+dnl =====
+dnl I have not implemented the following suggestion because I don't have
+dnl access to such a broken environment to test the macro.  So I'm just
+dnl appending the comments here in case you have, and want to fix
+dnl AC_FUNC_MKDIR that way.
+dnl
+dnl |Thomas E. Dickey (dickey@herndon4.his.com) said:
+dnl |  it doesn't cover the problem areas (compilers that mistreat mkdir
+dnl |  may prototype it in dir.h and dirent.h, for instance).
+dnl |
+dnl |Alexandre:
+dnl |  Would it be sufficient to check for these headers and #include
+dnl |  them in the AC_TRY_COMPILE block?  (and is AC_HEADER_DIRENT
+dnl |  suitable for this?)
+dnl |
+dnl |Thomas:
+dnl |  I think that might be a good starting point (with the set of recommended
+dnl |  ifdef's and includes for AC_HEADER_DIRENT, of course).
+
 
 dnl @synopsis AC_donut_CHECK_PACKAGE(PACKAGE, FUNCTION, LIBRARY, HEADERFILE [, ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
 dnl

@@ -23,6 +23,7 @@
 #include "prot_nntp.h"
 #include <list>
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 
 #ifndef PROTOTYPES
@@ -755,7 +756,7 @@ void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_l
 
 	if (optionflags & GETFILES_UNMARK) {
 		ulong nbytes=0;
-		uint nfiles=0;
+		unsigned int nfiles=0;
 		for(curf = filec.files.begin();curf!=filec.files.end();++curf){
 			fr=(*curf).second;
 			f=fr->file;

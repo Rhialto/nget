@@ -50,6 +50,32 @@
 
 int sock_timeout=3*60;
 
+#ifdef HAVE_WINSOCK_H
+static void sockstuff_cleanup(void){
+	WSACleanup();
+}
+void sockstuff_init(void){
+	WORD wVersionRequested;
+	WSADATA wsaData;
+	int r;
+
+	wVersionRequested = MAKEWORD(2, 0);
+	if ((r=WSAStartup( wVersionRequested, &wsaData)))
+	{
+		throw FileEx(Ex_INIT,"WSAStartup error: %i",r);
+	}
+	if ( LOBYTE( wsaData.wVersion ) != 2 ||
+			HIBYTE( wsaData.wVersion ) != 0 ) {
+		/* We couldn't find a usable WinSock DLL. */
+		WSACleanup( );
+		throw FileEx(Ex_INIT,"bad winsock version %i.%i", LOBYTE( wsaData.wVersion ) , HIBYTE( wsaData.wVersion ));
+	}
+
+	atexit(sockstuff_cleanup);
+}
+#endif
+
+
 /* Take a service name, and a service type, and return a port number.  If the
 service name is not found, it tries it as a decimal number.  The number
 returned is byte ordered for the network. */
@@ -245,12 +271,12 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 	//  printf("Connecting to %s on port %d.\n",inet_ntoa(*addr),htons(port));
 
 	if (type == SOCK_STREAM) {
-#ifdef HAVE_SELECT
+#if defined(HAVE_SELECT) && defined(HAVE_FCNTL)
 		fcntl(sock,F_SETFL,O_NONBLOCK);//we can set the sock to nonblocking, and use select to enforce a timeout.
 #endif
 		connected = connect(sock, (struct sockaddr *) &address,
 				sizeof(address));
-#ifdef HAVE_SELECT
+#if defined(HAVE_SELECT) && defined(HAVE_FCNTL)
 		if (connected<0 && errno==EINPROGRESS){
 			fd_set w;
 			struct timeval tv;
@@ -264,17 +290,17 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 				socklen_t erl=sizeof(erp);
 				if (getsockopt(sock,SOL_SOCKET,SO_ERROR,&erp,&erl)){
 					PERROR("getsockopt: %s",strerror(errno));
-					close(sock);
+					sock_close(sock);
 					return -1;
 				}
 				if (erp) {
 					PERROR("connect: %s",strerror(erp));
-					close(sock);
+					sock_close(sock);
 					return -1;
 				}
 			}else{
 				PERROR("connection timed out\n");
-				close(sock);
+				sock_close(sock);
 				return -1;
 			}
 			fcntl(sock,F_SETFL,0);//set to blocking again (I hope)
@@ -283,7 +309,7 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 #endif
 		if (connected < 0) {
 			PERROR("connect: %s",strerror(errno));
-			close(sock);
+			sock_close(sock);
 			return -1;
 		}
 		return sock;
@@ -291,7 +317,7 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 	/* Otherwise, must be for udp, so bind to address. */
 	if (bind(sock, (struct sockaddr *) &address, sizeof(address)) < 0) {
 		PERROR("bind: %s",strerror(errno));
-		close(sock);
+		sock_close(sock);
 		return -1;
 	}
 	return sock;
@@ -345,13 +371,13 @@ int get_connection1(int socket_type, u_short port) {
 		return(-1);
 	}
 
-	setsockopt(gc_listening_socket, SOL_SOCKET, SO_REUSEADDR, &gc_reuse_addr,
+	setsockopt(gc_listening_socket, SOL_SOCKET, SO_REUSEADDR, (SETSOCKOPT_ARG4)&gc_reuse_addr,
 			sizeof(gc_reuse_addr));
 
 	if (bind(gc_listening_socket, (struct sockaddr *) &gc_address, 
 				sizeof(gc_address)) < 0) {
 		PERROR("bind: %s",strerror(errno));
-		close(gc_listening_socket);
+		sock_close(gc_listening_socket);
 		return (-2);
 	}
 	if (socket_type == SOCK_STREAM)
@@ -370,7 +396,7 @@ int get_connection2(int socket_type,int gc_listening_socket)
 				   some reason.  Only abort execution if a real error occured. */
 				if (errno != EINTR) {
 					PERROR("accept: %s",strerror(errno));
-					close(gc_listening_socket);
+					sock_close(gc_listening_socket);
 					return (-3);
 				} else {
 					PERROR("accept1: %s",strerror(errno));
@@ -378,10 +404,10 @@ int get_connection2(int socket_type,int gc_listening_socket)
 				}
 			}
 
-			//	close(gc_listening_socket); /* Close our copy of this socket */
+			//	sock_close(gc_listening_socket); /* sock_close our copy of this socket */
 
 		}
-		close(gc_listening_socket);
+		sock_close(gc_listening_socket);
 		return connected_socket;
 	}
 	else
@@ -393,13 +419,13 @@ int get_connection2(int socket_type,int gc_listening_socket)
 
 /* This is just like the write() system call, accept that it will
 make sure that all data is transmitted. */
-int sock_write(int sockfd, const char *buf, size_t count) {
+int sock_write_ensured(int sockfd, const char *buf, size_t count) {
 	size_t bytes_sent = 0;
 	int this_write;
 
 	while (bytes_sent < count) {
 		//    do
-		this_write = write(sockfd, buf, count - bytes_sent);
+		this_write = sock_write(sockfd, buf, count - bytes_sent);
 		//    while ( (this_write < 0) && (errno == EINTR) );
 		if (this_write <= 0)
 			return this_write;
@@ -422,7 +448,8 @@ int sock_read(int sockfd, void *buf, size_t count){
 	FD_SET(sockfd,&r);
 	if ((i=select(sockfd+1,&r,NULL,NULL,&tv))>0){
 #endif
-		return read(sockfd,buf,count);
+		//return read(sockfd,buf,count);
+		return recv(sockfd, (RECV_ARG2)buf, count, 0);
 #ifdef HAVE_SELECT
 	}
 	if (i==0)
@@ -486,7 +513,7 @@ int sock_gets(int sockfd, char *str, size_t count) {
 /* This function writes a character string out to a socket.  It will 
    return -1 if the connection is closed while it is trying to write. */
 int sock_puts(int sockfd, const char *str) {
-	return sock_write(sockfd, str, strlen(str));
+	return sock_write_ensured(sockfd, str, strlen(str));
 }
 
 
@@ -500,7 +527,7 @@ int sockvprintf(int sockfd, const char *str, va_list ap) {
 	return i;
 #else
 	vsprintf(fpbuf,str,ap);
-	return sock_write(sockfd, fpbuf, strlen(fpbuf));
+	return sock_write_ensured(sockfd, fpbuf, strlen(fpbuf));
 #endif
 }
 int sockprintf(int sockfd, const char *str, ...) {

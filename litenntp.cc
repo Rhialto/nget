@@ -30,6 +30,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "strreps.h"
+//needed for getpid on mingw32
+#ifdef HAVE_PROCESS_H
+#include <process.h>
+#endif
 
 int c_prot_nntp::putline(int echo,const char * str,...){
 	va_list ap;
@@ -118,7 +122,13 @@ void c_prot_nntp::doarticle(ulong anum,ulong bytes,ulong lines,const char *outfi
 	long glr;
 	char *lp;
 	char tempfilename[100];
-	sprintf(tempfilename,"%s.%i",tempfilename_base,getpid());
+	sprintf(tempfilename,"%s.%i",tempfilename_base,
+#ifdef HAVE_GETPID
+			getpid()
+#else
+			rand()
+#endif
+			);
 	FILE *f=fopen(tempfilename,"w");
 	if (f==NULL)
 		throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu fopen %s: %s", anum, tempfilename, strerror(errno));

@@ -21,6 +21,7 @@
 #endif
 #include <stdio.h>
 #include <errno.h>
+#include <time.h>
 #include "log.h"
 #include "lite.h"
 #include "litenntp.h"
@@ -171,8 +172,15 @@ int main (int argc, char ** argv){
 	if (timeout_str)
 		sock_timeout=atoi(timeout_str);
 	
+	try {
+		sockstuff_init();
+	} catch (baseEx &e) {
+		printCaughtEx(e);
+		return 1;
+	}
 	quiet=0;debug=1;
 
+	srand(time(NULL));
 	if (argc<2) showhelp();
 	for (int i=1;i<argc;i++){
 		dofile(argv[i]);

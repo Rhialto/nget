@@ -32,7 +32,7 @@ class sockbuffy :public c_buffy{
 		int sock;
 	public:
 		int write(const char *buf, size_t count){
-			return sock_write(sock,buf,count);
+			return sock_write_ensured(sock,buf,count);
 		}
 		int vprintf(const char *str, va_list ap){
 			return sockvprintf(sock, str, ap);
@@ -56,7 +56,7 @@ class sockbuffy :public c_buffy{
 		}
 		int close(void){
 			if (isopen()){
-				int ret=::close(sock);
+				int ret=sock_close(sock);
 				sock=-1;
 				return ret;
 			}else

@@ -203,10 +203,6 @@ inline char * c_file_gz::dogets(char *data,size_t len){
 }
 #endif
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
 c_file_fd::c_file_fd(int dfd, const char *name):c_file(name){
 	fd=::dup(dfd);
 	if (fd<0)
@@ -242,8 +238,10 @@ c_file_fd::c_file_fd(const char *name,const char *mode):c_file(name){
 		THROW_OPEN_ERROR("open %s (%s)", name, strerror(errno));
 }
 int c_file_fd::doflush(void){
+#ifdef HAVE_FSYNC
 	if (fd>=0)
 		return fsync(fd);
+#endif
 	return 0;
 }
 int c_file_fd::doclose(void){
@@ -316,13 +314,15 @@ c_file_tcp::c_file_tcp(const char *host,const char * port):c_file(host){
 		throw FileEx(Ex_INIT,"open %s (%s)", name(), strerror(errno));
 }
 int c_file_tcp::doflush(void){
+#ifdef HAVE_FSYNC
 	if (sock>=0)
 		return fsync(sock);
+#endif
 	return 0;
 }
 int c_file_tcp::doclose(void){
 	int i=0;
-	i=::close(sock);
+	i=sock_close(sock);
 	sock=-1;
 	return i;
 }
@@ -330,8 +330,8 @@ inline int c_file_tcp::isopen(void)const{
 	return (sock>=0);
 }
 inline ssize_t c_file_tcp::dowrite(const void *data,size_t len){
-	//don't need to use sock_write anymore since c_file::write handles the looping.
-	return ::write(sock,(char*)data, len);
+	//don't need to use sock_write_ensured since c_file::write handles the looping.
+	return sock_write(sock,(char*)data, len);
 }
 inline ssize_t c_file_tcp::doread(void *data,size_t len){
 	return sock_read(sock,data,len);

@@ -23,10 +23,10 @@ MY_CHECK_EXCEPTIONS
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h getopt.h hash_map ext/hash_map hash_map.h sstream regex.h term.h inttypes.h)
+AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h getopt.h hash_map ext/hash_map hash_map.h sstream regex.h term.h inttypes.h winsock.h sys/socket.h process.h)
 
-dnl SunOS needs seperate libs for network stuff.
-AC_SEARCH_LIBS(socket, socket)
+dnl SunOS/win32 needs seperate libs for network stuff.
+MY_CHECK_SOCKET
 AC_SEARCH_LIBS(gethostbyname, nsl)
 
 dnl All the libraries we check for after this point are not needed by ngetlite, so save its LIBS now.
@@ -38,7 +38,7 @@ MY_CHECK_TERMSTUFF
 
 AC_donut_CHECK_PACKAGE_DEF(lockfile, lockfile_create, lockfile, lockfile.h)
 AC_donut_CHECK_PACKAGE_DEF(zlib, gzopen, z, zlib.h)
-AC_donut_CHECK_PACKAGE(pcre, pcre_compile, pcre, pcreposix.h, AC_CHECK_LIB(pcreposix,pcreposix_regcomp))
+AC_donut_CHECK_PACKAGE(pcre, pcre_compile, pcre, pcreposix.h, AC_CHECK_LIB(pcreposix,main))
 AC_donut_CHECK_PACKAGE_DEF(popt, poptGetContext, popt, popt.h, MY_CHECK_POPT_CONST)
 
 dnl check for uulib.  We need a bit of special handling to support the
@@ -144,6 +144,7 @@ AC_CHECK_TYPE(uchar, unsigned char)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
+AC_CHECK_TYPE(ssize_t, int)
 AC_HEADER_TIME
 AC_STRUCT_TM
 
@@ -152,10 +153,13 @@ AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
 dnl AC_FUNC_VPRINTF
 
-AC_CHECK_FUNCS(mkdir mktime regcomp strerror atoul asprintf vasprintf vdprintf timegm gmtime_r localtime_r inet_aton getaddrinfo getnameinfo getopt_long flock setlinebuf)
+AC_CHECK_FUNCS(mktime regcomp strerror atoul asprintf vasprintf vdprintf timegm gmtime_r localtime_r inet_aton getaddrinfo getnameinfo getopt_long flock setlinebuf fcntl fsync getpid)
 
 AC_caolan_FUNC_WHICH_GETHOSTBYNAME_R
 AC_raf_FUNC_WHICH_GETSERVBYNAME_R
+AC_PROTOTYPE_SETSOCKOPT
+AC_PROTOTYPE_RECV
+AC_FUNC_MKDIR
 
 MY_CHECK_OPTIMIZATION
 

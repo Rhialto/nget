@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 #include <map>
+#include <time.h>
 #include "datfile.h"
 #include "rcount.h"
 

@@ -22,12 +22,27 @@
 #include "config.h"
 #endif
 #include <sys/types.h>
+#ifdef HAVE_WINSOCK_H
+#include <winsock.h>
+void sockstuff_init(void);
+inline int sock_close(int s) {return closesocket(s);}
+#else
+#include <unistd.h>
+#define sockstuff_init()
+inline int sock_close(int s) {return close(s);}
+#endif
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #include <netdb.h>
-//#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 #include <stdarg.h>
+
+inline int sock_write(int sockfd, const char *buf, size_t count) {
+	//return write(sockfd, buf, count);
+	return send(sockfd, buf, count, 0);
+}
 
 extern int sock_timeout;
 
@@ -43,7 +58,7 @@ int getsocketaddress(int s, struct sockaddr_in *addr);
 int get_connection1(int socket_type, u_short port);
 int get_connection2(int socket_type,int gc_listening_socket);
 //int get_connection2(int socket_type);
-int sock_write(int sockfd, const char *buf, size_t count);
+int sock_write_ensured(int sockfd, const char *buf, size_t count);
 int sock_read(int sockfd, void *buf, size_t count);
 bool sock_datawaiting(int sockfd);
 int sock_gets(int sockfd, char *str, size_t count);

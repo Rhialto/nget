@@ -33,6 +33,8 @@ using namespace std;
 # define __STDC_FORMAT_MACROS
 # endif
 # include <inttypes.h>
+#elif HAVE_STDINT_H
+# include <stdint.h>
 #endif
 #ifndef HAVE_INT_FAST64_T
 # undef SIZEOF_INT_FAST64_T
@@ -53,4 +55,8 @@ using namespace std;
 # else
 #  define PRIuFAST64 "lu"
 # endif
+#endif
+
+#ifdef WIN32
+#define sleep _sleep
 #endif

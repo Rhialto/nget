@@ -27,13 +27,12 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <sys/stat.h>
 #include "myregex.h"
 
 #include <string>
 #include "_sstream.h"
 #include <iomanip>
+#include "_fileconf.h"
 
 #ifndef HAVE_TIMEGM
 time_t timegm (const struct tm *gmtimein) {

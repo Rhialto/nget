@@ -39,6 +39,7 @@ extern "C" {
 #include <string.h>
 #include <time.h>
 #include "_sstream.h"
+#include "_fileconf.h"
 
 #include "misc.h"
 #include "termstuff.h"
@@ -849,12 +850,17 @@ int main(int argc, const char ** argv){
 #endif
 	atexit(print_error_status);
 	try {
+		sockstuff_init();
 		//	atexit(cache_dbginfo);
 		addoptions();
 		signal(SIGTERM,term_handler);
+#ifdef SIGHUP
 		signal(SIGHUP,term_handler);
+#endif
 		signal(SIGINT,term_handler);
+#ifdef SIGQUIT
 		signal(SIGQUIT,term_handler);
+#endif
 		{
 			char *home;
 			home=getenv("NGETHOME");
