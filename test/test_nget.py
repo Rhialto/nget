@@ -211,7 +211,7 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 0)
 
 
-class RetrieveTestCase(TestCase, DecodeTest_base):
+class RetrieveTest_base(DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
@@ -223,6 +223,120 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 	def tearDown(self):
 		self.servers.stop()
 		self.nget.clean_all()
+	
+	def test_r(self):
+		self.vfailIf(self.nget_run('-g test -r joystick'))
+		self.verifyoutput('0002')
+	
+	def test_r_quote(self):
+		self.addarticles('0001', 'yenc_single')
+		self.vfailIf(self.nget_run('-g test -r \'"\''))
+		self.verifyoutput('0001')
+	
+	def test_r_case(self):
+		self.vfailIf(self.nget_run('-g test -c -r jOyStIcK'))
+		self.verifyoutput([])
+	
+	def test_r_nocase(self):
+		self.vfailIf(self.nget_run('-g test -C -r jOyStIcK'))
+		self.verifyoutput('0002')
+	
+	def test_multi_r_samepath(self):
+		self.vfailIf(self.nget_run('-g test -r joystick -r foo'))
+		self.verifyoutput(['0001','0002'])
+
+	def test_multi_r_trysame(self):
+		d1, d2 = os.path.join(self.nget.tmpdir,'d1'), os.path.join(self.nget.tmpdir,'d2')
+		map(os.mkdir, (d1, d2))
+		self.vfailIf(self.nget_run('-p %s -g test -r joystick -r foo -p %s -r joystick -r foo'%(d1, d2)))
+		self.verifyoutput(['0001','0002'], d1)
+		self.verifyoutput([], d2)
+
+	def test_multi_r_trydiff(self):
+		d1, d2 = os.path.join(self.nget.tmpdir,'d1'), os.path.join(self.nget.tmpdir,'d2')
+		map(os.mkdir, (d1, d2))
+		self.vfailIf(self.nget_run('-p %s -g test -r joystick -p %s -r joystick -r foo'%(d1, d2)))
+		self.verifyoutput(['0002'], d1)
+		self.verifyoutput(['0001'], d2)
+	
+	def test_r_l_toohigh(self):
+		self.vfailIf(self.nget_run('-g test -l 434 -r .'))
+		self.verifyoutput([])
+
+	def test_r_l(self):
+		self.vfailIf(self.nget_run('-g test -l 433 -r .'))
+		self.verifyoutput('0002')
+
+	def test_r_L_toolow(self):
+		self.vfailIf(self.nget_run('-g test -L 15 -r .'))
+		self.verifyoutput([])
+
+	def test_r_L(self):
+		self.vfailIf(self.nget_run('-g test -L 16 -r .'))
+		self.verifyoutput('0001')
+
+	def test_r_l_L(self):
+		self.vfailIf(self.nget_run('-g test -l 20 -L 200 -r .'))
+		self.verifyoutput('0003')
+	
+	def test_dupef(self):
+		self.vfailIf(self.nget_run('-g test -r foo'))
+		self.verifyoutput('0001')
+		self.vfailIf(self.nget_run('-G test -U -D -r foo')) #remove from midinfo so that we can test if the file dupe check catches it
+		self.vfailIf(self.nget_run('-G test -r foo'))
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
+
+	def test_dupef_D(self):
+		self.vfailIf(self.nget_run('-g test -r foo'))
+		self.verifyoutput('0001')
+		self.vfailIf(self.nget_run('-G test -U -D -r foo'))
+		self.vfailIf(self.nget_run('-G test -D -r foo'))
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 2)
+
+	def test_dupei(self):
+		self.vfailIf(self.nget_run('-g test -r .'))
+		self.verifyoutput(['0002','0001','0003'])
+		self.nget.clean_tmp()
+		self.vfailIf(self.nget_run('-g test -r .'))
+		self.verifyoutput([])
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 6)
+
+	def test_dupei_D(self):
+		self.vfailIf(self.nget_run('-g test -r .'))
+		self.verifyoutput(['0002','0001','0003'])
+		self.nget.clean_tmp()
+		self.vfailIf(self.nget_run('-g test -D -r .'))
+		self.verifyoutput(['0002','0001','0003'])
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 12)
+	
+	def test_available_overrides_group(self):
+		self.vfailIf(self.nget_run('-g test -A -T -r .'))
+		self.verifyoutput([])
+	
+	def test_group_overrides_available(self):
+		self.vfailIf(self.nget_run('-a -g test -r joy'))
+		self.verifyoutput(['0002'])
+
+class NoCacheRetrieveTestCase(TestCase, RetrieveTest_base):
+	def setUp(self):
+		RetrieveTest_base.setUp(self)
+	def tearDown(self):
+		if self.servers.servers[0].count("group")>0:
+			assert self.servers.servers[0].count("xpat")>0
+		RetrieveTest_base.tearDown(self)
+	def nget_run(self, cmd):
+		newcmd = re.sub('-[Gg] ', '-x ', cmd)
+		return self.nget.run(newcmd)
+
+class RetrieveTestCase(TestCase, RetrieveTest_base):
+	def setUp(self):
+		RetrieveTest_base.setUp(self)
+	def tearDown(self):
+		assert self.servers.servers[0].count("xpat")==0
+		RetrieveTest_base.tearDown(self)
+	def nget_run(self, cmd):
+		return self.nget.run(cmd)
 
 	def test_mid(self):
 		self.vfailIf(self.nget.run('-g test -R "mid .a67ier.6l5.1.bar. =="'))
@@ -244,64 +358,9 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run('-g test -R "author Matthew =="'))
 		self.verifyoutput('0002')
 	
-	def test_r(self):
-		self.vfailIf(self.nget.run('-g test -r joystick'))
-		self.verifyoutput('0002')
-	
-	def test_r_quote(self):
-		self.addarticles('0001', 'yenc_single')
-		self.vfailIf(self.nget.run('-g test -r \'"\''))
-		self.verifyoutput('0001')
-	
-	def test_r_case(self):
-		self.vfailIf(self.nget.run('-g test -c -r jOyStIcK'))
-		self.verifyoutput([])
-	
-	def test_r_nocase(self):
-		self.vfailIf(self.nget.run('-g test -C -r jOyStIcK'))
-		self.verifyoutput('0002')
-	
-	def test_multi_r_samepath(self):
-		self.vfailIf(self.nget.run('-g test -r joystick -r foo'))
-		self.verifyoutput(['0001','0002'])
-
-	def test_multi_r_trysame(self):
-		d1, d2 = os.path.join(self.nget.tmpdir,'d1'), os.path.join(self.nget.tmpdir,'d2')
-		map(os.mkdir, (d1, d2))
-		self.vfailIf(self.nget.run('-p %s -g test -r joystick -r foo -p %s -r "joystick|foo"'%(d1, d2)))
-		self.verifyoutput(['0001','0002'], d1)
-		self.verifyoutput([], d2)
-
-	def test_multi_r_trydiff(self):
-		d1, d2 = os.path.join(self.nget.tmpdir,'d1'), os.path.join(self.nget.tmpdir,'d2')
-		map(os.mkdir, (d1, d2))
-		self.vfailIf(self.nget.run('-p %s -g test -r joystick -p %s -r "joystick|foo"'%(d1, d2)))
-		self.verifyoutput(['0002'], d1)
-		self.verifyoutput(['0001'], d2)
-
 	def test_subject(self):
 		self.vfailIf(self.nget.run('-g test -R "subject joystick =="'))
 		self.verifyoutput('0002')
-	
-	def test_r_l_toohigh(self):
-		self.vfailIf(self.nget.run('-g test -l 434 -r .'))
-		self.verifyoutput([])
-
-	def test_r_l(self):
-		self.vfailIf(self.nget.run('-g test -l 433 -r .'))
-		self.verifyoutput('0002')
-
-	def test_r_L_toolow(self):
-		self.vfailIf(self.nget.run('-g test -L 15 -r .'))
-		self.verifyoutput([])
-
-	def test_r_L(self):
-		self.vfailIf(self.nget.run('-g test -L 16 -r .'))
-		self.verifyoutput('0001')
-
-	def test_r_l_L(self):
-		self.vfailIf(self.nget.run('-g test -l 20 -L 200 -r .'))
-		self.verifyoutput('0003')
 
 	def test_lines_le_toolow(self):
 		self.vfailIf(self.nget.run('-g test -R "lines 15 <="'))
@@ -386,37 +445,6 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 	def test_R_stack4(self):
 		self.vfailIf(self.nget.run('-g test -R "lines 2 > lines 200 < bytes 1000 > bytes 90000 < && && &&"'))
 		self.verifyoutput(['0003'])
-	
-	def test_dupef(self):
-		self.vfailIf(self.nget.run('-g test -r joy'))
-		self.verifyoutput('0002')
-		self.vfailIf(self.nget.run('-G test -U -D -r joy')) #remove from midinfo so that we can test if the file dupe check catches it
-		self.vfailIf(self.nget.run('-G test -r joy'))
-		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
-
-	def test_dupef_D(self):
-		self.vfailIf(self.nget.run('-g test -r joy'))
-		self.verifyoutput('0002')
-		self.vfailIf(self.nget.run('-G test -U -D -r joy'))
-		self.vfailIf(self.nget.run('-G test -D -r joy'))
-		self.verifyoutput('0002')
-		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
-
-	def test_dupei(self):
-		self.vfailIf(self.nget.run('-g test -r .'))
-		self.verifyoutput(['0002','0001','0003'])
-		self.nget.clean_tmp()
-		self.vfailIf(self.nget.run('-G test -r .'))
-		self.verifyoutput([])
-		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
-
-	def test_dupei_D(self):
-		self.vfailIf(self.nget.run('-g test -r .'))
-		self.verifyoutput(['0002','0001','0003'])
-		self.nget.clean_tmp()
-		self.vfailIf(self.nget.run('-G test -D -r .'))
-		self.verifyoutput(['0002','0001','0003'])
-		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 
 	def test_p_mkdir(self):
 		path = os.path.join(self.nget.tmpdir,'aaa','bbb','ccc')
@@ -686,16 +714,6 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		print output
 		self.failUnless(re.search(r"^h0\tgroup.bbb[\r\n]+h0\tgroup.one\taaa \[h0\][\r\n]+h0\ttest$",output, re.M))
 		self.failIf(output.find(".two")>=0)
-	
-	def test_available_overrides_group(self):
-		self.vfailIf(self.nget.run('-g test -A -T -r .'))
-		self.verifyoutput([])
-		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
-	
-	def test_group_overrides_available(self):
-		self.vfailIf(self.nget.run('-a -g test -r joy'))
-		self.verifyoutput(['0002'])
-		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
 
 
 class FatalUserErrorsTestCase(TestCase, DecodeTest_base):

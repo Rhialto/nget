@@ -263,6 +263,14 @@ class c_mid_info {
 		~c_mid_info();
 };
 
+class c_xpat : public c_refcounted<c_xpat>{
+	public:
+		string field;
+		string wildmat;
+		c_xpat(const string &fiel,const string &wildma):field(fiel), wildmat(wildma){ }
+};
+typedef list<c_xpat::ptr> t_xpat_list;
+
 class c_nntp_getinfo : public c_refcounted<c_nntp_getinfo>{
 	public:
 		string path;
@@ -298,6 +306,7 @@ class c_nntp_cache : public c_refcounted<c_nntp_cache>{
 		void getxrange(c_nntp_server_info *servinfo, ulong newlow, ulong newhigh, c_nrange *range) const;
 		void getxrange(c_nntp_server_info *servinfo, c_nrange *range) const;
 		void getfiles(c_nntp_files_u *fc, c_mid_info *midinfo, const t_nntp_getinfo_list &getinfos);
+		c_nntp_cache(c_mid_info*midinfo);
 		c_nntp_cache(string path,c_group_info::ptr group,c_mid_info*midinfo);
 		virtual ~c_nntp_cache();
 };

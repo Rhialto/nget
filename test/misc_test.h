@@ -11,6 +11,23 @@ using namespace CppUnit;
 class misc_Test : public TestCase {
 	public:
 		misc_Test(void):TestCase("misc_Test"){}
+		void testRegex2Wildmat(void) {
+			CPPUNIT_ASSERT_EQUAL(string("*"), regex2wildmat(""));
+			CPPUNIT_ASSERT_EQUAL(string("*foo*"), regex2wildmat("foo"));
+			CPPUNIT_ASSERT_EQUAL(string("*a*"), regex2wildmat("a"));
+			CPPUNIT_ASSERT_EQUAL(string("a"), regex2wildmat("^a$"));
+			CPPUNIT_ASSERT_EQUAL(string(""), regex2wildmat("^$"));
+			CPPUNIT_ASSERT_EQUAL(string("*a*b*"), regex2wildmat("a.*b"));
+			CPPUNIT_ASSERT_EQUAL(string("*a?b*"), regex2wildmat("a.b"));
+			CPPUNIT_ASSERT_EQUAL(string("*[aA][bB][cC]*"), regex2wildmat("abc",true));
+			CPPUNIT_ASSERT_EQUAL(string("*[abc]*"), regex2wildmat("[abc]"));
+			CPPUNIT_ASSERT_EQUAL(string("*[aAbBcC]*"), regex2wildmat("[abc]",true));
+			CPPUNIT_ASSERT_EQUAL(string("*[]]*"), regex2wildmat("[]]"));
+			CPPUNIT_ASSERT_EQUAL(string("*[\\]]*"), regex2wildmat("[\\]]"));
+			CPPUNIT_ASSERT_EQUAL(string("*[\\[]*"), regex2wildmat("[\\[]"));
+			CPPUNIT_ASSERT_EQUAL(string("*\\[*"), regex2wildmat("\\["));
+			CPPUNIT_ASSERT_EQUAL(string("*(*"), regex2wildmat("\\("));
+		}
 		void testFileCompareSame(void) {
 			CPPUNIT_ASSERT(filecompare("TestRunner.cc", "TestRunner.cc"));
 		}
@@ -127,6 +144,7 @@ class misc_Test : public TestCase {
 		static Test *suite(void) {
 			TestSuite *suite = new TestSuite;
 #define ADDTEST(n) suite->addTest(new TestCaller<misc_Test>(#n, &misc_Test::n))
+			ADDTEST(testRegex2Wildmat);
 			ADDTEST(testFileCompareSame);
 			ADDTEST(testFileCompareDiff);
 			ADDTEST(testFileCompareNonExistA);

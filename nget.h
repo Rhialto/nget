@@ -74,6 +74,11 @@ enum t_show_multiserver {
 	SHOW_MULTI_LONG,
 	SHOW_MULTI_SHORT
 };
+enum t_cmd_mode {
+	RETRIEVE_MODE,
+	GROUPLIST_MODE,
+	NOCACHE_RETRIEVE_MODE,
+};
 struct nget_options {
 	int maxretry,retrydelay;
 	ulong linelimit,maxlinelimit;
@@ -81,7 +86,7 @@ struct nget_options {
 	t_show_multiserver test_multi;
 	t_show_multiserver retr_show_multi; 
 	int makedirs;
-	bool grouplistmode;
+	t_cmd_mode cmdmode;
 	c_group_info::ptr group;//,*host;
 //	c_data_section *host;
 	c_server::ptr host;

@@ -40,6 +40,8 @@ string tostr(const Type &arg){
     return buffer.str();
 }
 
+string regex2wildmat(const string &repat, bool ignorecase=false);
+
 template <class int_type>
 string durationstr(int_type duration);
 

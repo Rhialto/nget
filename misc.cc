@@ -32,6 +32,82 @@
 #include "_sstream.h"
 #include <iomanip>
 
+
+string regex2wildmat(const string &repat, bool ignorecase){
+	if (repat.empty())
+		return "*";
+	string wildmat;
+	unsigned int pos=0;
+	if (repat[0]=='^')
+		pos++;
+	else
+		wildmat += '*'; //wildmats are anchored by default, while regexs are the opposite
+	while (pos<repat.size()) {
+		char c = repat[pos];
+		++pos;
+		if (c == '.') {
+			if (pos<repat.size() && repat[pos] == '*') {
+				wildmat += '*';
+				++pos;
+			}else
+				wildmat += '?';
+		}
+		else if (c == '\\') {
+			if (pos>=repat.size())
+				throw UserExFatal(Ex_INIT,"error converting regex(%s) to wildmat on char %i: %c", repat.c_str(), pos, c);
+			char nc = repat[pos];
+			if (nc == '*' || nc == '?' || nc == '[' || nc == ']') {
+				wildmat += c;
+				wildmat += nc;
+				++pos;
+			}
+			else if (nc == '(' || nc == ')' || nc == '{' || nc == '}' || nc == '|' || nc == '.') {
+				wildmat += nc;
+				++pos;
+			}
+			else if (nc == '<' || nc == '>' || isalnum(nc))
+				throw UserExFatal(Ex_INIT,"error converting regex(%s) to wildmat on char %i: %c", repat.c_str(), pos, c);
+			else {
+				wildmat += nc;
+				++pos;
+			}
+		}
+		else if (c == '?' || c == '*' || c == '+' || c == '(' || c == ')' || c == '{' || c == '}' || c == '|')
+			throw UserExFatal(Ex_INIT,"error converting regex(%s) to wildmat on char %i: %c", repat.c_str(), pos, c);
+		else if (pos==repat.size() && c == '$')
+			break;//wildmats are anchored by default, while regexs are the opposite
+		else if (ignorecase && isalpha(c)) {
+			wildmat += '[';
+			wildmat += tolower(c);
+			wildmat += toupper(c);
+			wildmat += ']';
+		} else if (c == '[') {
+			wildmat += '[';
+			int nc = -1;
+			unsigned int opos=pos;
+			while (pos<repat.size()) {
+				nc = repat[pos++];
+				if (nc == ']' && opos+1!=pos){
+					wildmat += ']';
+					break;
+				} else if (ignorecase && isalpha(nc)) {
+					wildmat += tolower(nc);
+					wildmat += toupper(nc);
+				} else
+					wildmat += nc;
+			}
+			if (nc!=']')
+				throw UserExFatal(Ex_INIT,"error converting regex(%s) to wildmat on char %i: %c", repat.c_str(), pos, nc);
+		} else {
+			wildmat += c;
+		}
+		if (pos==repat.size())
+			wildmat += '*';//wildmats are anchored by default, while regexs are the opposite
+	}
+	//printf("converted %s->%s\n",repat.c_str(),wildmat.c_str());//######
+	return wildmat;
+}
+
 #ifndef HAVE_TIMEGM
 time_t timegm (const struct tm *gmtimein) {
 	/* The timegm manpage suggests a strategy of setting the TZ env var to ""

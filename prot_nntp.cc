@@ -466,27 +466,33 @@ void c_prot_nntp::dolistgroup(c_nrange &existing, ulong lowest, ulong highest, u
 	}
 }
 
-void c_prot_nntp::nntp_dogroup(int getheaders){
+void c_prot_nntp::nntp_dogroup(ulong &num, ulong &low, ulong &high) {
 	assert(connection);
+	int reply = stdputline(quiet<2,"GROUP %s",group->group.c_str());
+	if (reply/100==4) // if group doesn't exist, set ok flag.  Otherwise let XOVER/ARTICLE reply set it. (If we always set it here, failure of xover/article would never result in penalization.  But if we only set it after xover/article, then a host could be incorrectly penalized just because it didn't have the group (eg, if maxconnections=1 so it closed connection before any other commands could succeed and setok))
+		chkreply_setok(reply);
+	else
+		chkreply(reply);
+	connection->curgroup=group;
+
+	char *p;
+	p=strchr(cbuf,' ')+1;
+	num=atoul(p);
+	p=strchr(p,' ')+1;
+	low=atoul(p);
+	p=strchr(p,' ')+1;
+	high=atoul(p);
+	//printf("%i, %i, %i\n",num,low,high);
+}
+
+void c_prot_nntp::nntp_dogroup(int getheaders){
+	ulong num,low,high;
 	if (connection->curgroup!=group || getheaders){	
-		int reply = stdputline(quiet<2,"GROUP %s",group->group.c_str());
-		if (reply/100==4) // if group doesn't exist, set ok flag.  Otherwise let XOVER/ARTICLE reply set it. (If we always set it here, failure of xover/article would never result in penalization.  But if we only set it after xover/article, then a host could be incorrectly penalized just because it didn't have the group (eg, if maxconnections=1 so it closed connection before any other commands could succeed and setok))
-			chkreply_setok(reply);
-		else
-			chkreply(reply);
-		connection->curgroup=group;
+		nntp_dogroup(num,low,high);
 	}
+
 	if (getheaders){
 		assert(gcache);
-		char *p;
-		ulong num,low,high;
-		p=strchr(cbuf,' ')+1;
-		num=atoul(p);
-		p=strchr(p,' ')+1;
-		low=atoul(p);
-		p=strchr(p,' ')+1;
-		high=atoul(p);
-		//printf("%i, %i, %i\n",num,low,high);
 
 		c_nntp_server_info* servinfo=gcache->getserverinfo(connection->server->serverid);
 		assert(servinfo);
@@ -544,6 +550,99 @@ void c_prot_nntp::nntp_simple_prioritize(c_server_priority_grouping *priogroup, 
 			}
 		}
 	}
+}
+
+
+void c_prot_nntp::doxpat(c_nrange &r, c_xpat::ptr xpat, ulong total, ulong lowest, ulong highest) {
+	assert(gcache);
+	assert(connection);
+
+	nntp_dogroup(0);
+	chkreply_setok(stdputline(debug>=DEBUG_MED,"XPAT %s %lu-%lu %s", xpat->field.c_str(), lowest, highest, xpat->wildmat.c_str()));
+	
+	ListgroupProgress progress;
+	ulong bytes=0, realnum=0;
+	ulong an;
+	char *eptr;
+
+	do {
+		if (progress.needupdate())
+			progress.print_retrieving_article_list(lowest,highest,realnum,total,bytes,false);
+		bytes+=getline(debug>=DEBUG_ALL);
+		if (cbuf[0]=='.')break;
+		an = strtoul(cbuf, &eptr, 10);
+		if (*cbuf=='\0' || *eptr!=' ') {
+			printf("error retrieving article number\n");
+			continue;
+		}
+		r.insert(an);
+		realnum++;
+		if (progress.needupdate())
+			progress.print_retrieving_article_list(lowest,highest,realnum,total,bytes,false);
+		
+	}while (1);
+	if(quiet<2 /*&& an*/){
+		progress.print_retrieving_article_list(lowest,highest,realnum,total,bytes,true);
+		printf("\n");
+	}
+}
+
+void c_prot_nntp::nntp_xgroup(c_group_info::ptr group, const t_xpat_list &patinfos, const nget_options &options) {
+	c_server::ptr s;
+	list<c_server::ptr> doservers;
+	nntp_simple_prioritize(group->priogrouping, doservers);
+
+	int redone=0, succeeded=0, attempted=doservers.size();
+	while (!doservers.empty() && redone<options.maxretry) {
+		if (redone){
+			printf("nntp_xgroup: trying again. %i\n",redone);
+			if (options.retrydelay)
+				sleep(options.retrydelay);
+		}
+		list<c_server::ptr>::iterator dsi = doservers.begin();
+		list<c_server::ptr>::iterator ds_erase_i;
+		while (dsi != doservers.end()){
+			s=(*dsi);
+			assert(s);
+			PDEBUG(DEBUG_MED,"nntp_xgroup: serv(%lu) %f>=%f",s->serverid,group->priogrouping->getserverpriority(s->serverid),group->priogrouping->defglevel);
+			try {
+				ConnectionHolder holder(&sockpool, &connection, s->serverid);
+				nntp_doopen();
+				ulong num,low,high;
+				nntp_dogroup(num,low,high);
+				c_nrange r;
+				for (t_xpat_list::const_iterator i = patinfos.begin(); i != patinfos.end(); ++i)
+					doxpat(r, *i, num, low, high);
+				doxover(&r);
+				succeeded++;
+			} catch (baseCommEx &e) {
+				printCaughtEx(e);
+				if (e.isfatal()) {
+					printf("fatal error, won't try %s again\n", s->alias.c_str());
+					//fall through to removing server from list below.
+				}else{
+					//if this is the last retry, don't say that we will try it again.
+					if (redone+1 < options.maxretry)
+						printf("will try %s again\n", s->alias.c_str());
+					++dsi;
+					continue;//don't remove server from list
+				}
+			}
+			ds_erase_i = dsi;
+			++dsi;
+			doservers.erase(ds_erase_i);
+		}
+		redone++;
+	}
+	if (succeeded) {
+		set_group_warn_status(attempted - succeeded);
+		set_group_ok_status();
+	}else {
+		set_group_error_status();
+		printf("no servers queried successfully\n");
+	}
+
+	gcache_ismultiserver = gcache->ismultiserver();
 }
 
 void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nget_options &options){
@@ -931,12 +1030,34 @@ char * make_text_file_name(c_nntp_file_retr::ptr fr, bool usepath=0) {
 	return nfn;
 }
 
+void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_list &getinfos, const t_xpat_list &patinfos, const nget_options &options) {
+	c_nntp_files_u filec;
+	if (rgroup != group) {
+		cleanupcache();
+		group = rgroup;
+	}
+	if (!midinfo) {
+		midinfo=new c_mid_info((nghome + group->group + ",midinfo"));
+	}
+	gcache=new c_nntp_cache(midinfo);
+
+	nntp_xgroup(group, patinfos, options);
+
+	gcache->getfiles(&filec, midinfo, getinfos);
+
+	gcache=NULL;
+	
+	nntp_doretrieve(filec, options);
+}
+
 void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_list &getinfos, const nget_options &options){
 	c_nntp_files_u filec;
 	assert(rgroup);
 	if (gcache) {
 		assert(group == rgroup);
 		gcache->getfiles(&filec, midinfo, getinfos);
+		//attempt to free up some mem since all the data we need is now in filec, we don't need the whole cache.  Unfortunatly due to STL's memory allocators this doesn't really return the memory to the OS, but at least its available for any further STL allocations while retrieving.
+		gcache=NULL;
 	} else {
 		if (rgroup != group) {
 			cleanupcache();
@@ -948,6 +1069,10 @@ void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_l
 		
 		nntp_cache_getfiles(&filec, &gcache_ismultiserver, ngcachehome, group, midinfo, getinfos);
 	}
+	nntp_doretrieve(filec, options);
+}
+
+void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &options) {
 	if (filec.files.empty())
 		return;
 
@@ -956,12 +1081,6 @@ void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_l
 	//c_nntp_file *f;
 	c_nntp_file::ptr f;
 	c_nntp_file_retr::ptr fr;
-
-	//hmm, maybe not now. //well, now we need to keep it around again, so we can set the read flag.  At least with the new cache implementation its not quite such a memory hog.
-//	if (gcache){
-//		gcache->dec_rcount();/*delete gcache;*/gcache=NULL;//we don't need this anymore, so free up some (a lot) of mem
-		gcache=NULL;
-//	}
 
 	if (optionflags & GETFILES_UNMARK) {
 		ulong nbytes=0;

@@ -88,10 +88,15 @@ class c_prot_nntp {
 		int chkreply_setok(int reply);
 		void doxover(ulong low, ulong high);
 		void doxover(c_nrange *r);
+		void doxpat(c_nrange &r, c_xpat::ptr xpat, ulong num, ulong low, ulong high);
 		void dolistgroup(c_nrange &existing, ulong lowest, ulong highest, ulong total);
 		void nntp_retrieve(c_group_info::ptr group, const t_nntp_getinfo_list &getinfos, const nget_options &options);
+		void nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_list &getinfos, const t_xpat_list &patinfos, const nget_options &options);
+		void nntp_doretrieve(c_nntp_files_u &filec, const nget_options &options);
 		void nntp_simple_prioritize(c_server_priority_grouping *priogroup, list<c_server::ptr> &doservers);
 		void nntp_group(c_group_info::ptr group, int getheaders, const nget_options &options);
+		void nntp_xgroup(c_group_info::ptr group, const t_xpat_list &patinfos, const nget_options &options);
+		void nntp_dogroup(ulong &num, ulong &low, ulong &high);
 		void nntp_dogroup(int getheaders);
 		void nntp_grouplist(int update, const nget_options &options);
 		void nntp_dogrouplist(void);

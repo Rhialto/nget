@@ -1,4 +1,4 @@
-.TH nget 1 "02 Aug 2002"
+.TH nget 1 "21 Aug 2002"
 .SH NAME
 nget \- retrieve files from NNTP (usenet news) hosts
 .SH SYNOPSIS
@@ -31,6 +31,14 @@ more info on priorities.)
 Subsequent -r/-R commands can be used to retrieve files.
 .IP "-G/--quickgroup group"
 Like --group, but does not retrieve new headers.
+.IP "-x/--xgroup group"
+Use group for subsequent -r commands, but without loading cache file or retrieving full header list.
+Instead, the XPAT command will used to retrieve only the matching headers.
+Compared to -g/-G this has the advantage of not requiring any disk space for cache files,
+and not requiring the initial retrieval of the full header list.
+The disadvantages are not all servers supporting XPAT,
+the inability to use complex regexs due to the need to convert it to the simpler wildmat format,
+and the possibility that the xpat command can be quite slow if the server is overloaded (you may need to increase the timeout value in some cases).
 .IP "-F/--flushserver host"
 Following -g/-G:
 Flush all headers for server from current group.
@@ -38,7 +46,7 @@ Flush all headers for server from current group.
 Following -a/-A:
 Flush all groups/descriptions for server from grouplist.
 .IP "-r/--retrieve regex"
-Following -g/-G:
+Following -g/-G/-x:
 Matches regex against subjects of previously selected group, and retrieves ones
 that match.
 .br

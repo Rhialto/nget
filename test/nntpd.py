@@ -197,6 +197,30 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			article = self.group.articles[anum]
 			self.nwrite(str(anum)+'\t%(subject)s\t%(author)s\t%(date)s\t%(mid)s\t%(references)s\t%(bytes)s\t%(lines)s'%vars(article))
 		self.nwrite('.')
+	def cmd_xpat(self, args):
+		if not self.group:
+			raise NNTPNoGroupSelectedError
+		field,rng,pat = args.split(' ', 2)
+		field = field.lower()
+		if field == 'message-id':
+			field = 'mid'
+		####doesn't handle specifing message-id instead of range (nget doesn't use this, though)
+		rng = rng.split('-')
+		if len(rng)>1:
+			low,high = map(long, rng)
+		else:
+			low = high = long(rng[0])
+		####pat should really be massaged into a regex since the wildmat semantics are not the same as that of fnmatch
+		import fnmatch
+		keys = [k for k in self.group.articles.keys() if k>=low and k<=high]
+		keys.sort()
+		self.nwrite("221 %s fields follow"%field)
+		for anum in keys:
+			article = self.group.articles[anum]
+			val = getattr(article, field, "")
+			if fnmatch.fnmatchcase(val, pat):
+				self.nwrite(str(anum)+' '+val)
+		self.nwrite('.')
 	def cmd_article(self, args):
 		if args[0]=='<':
 			try:

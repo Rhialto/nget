@@ -636,6 +636,9 @@ void c_nntp_cache_reader::check_counts(void) {
 	}
 }
 
+c_nntp_cache::c_nntp_cache(c_mid_info *midinfo):totalnum(0), saveit(0){
+	fileread=-1;
+}
 c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midinfo):totalnum(0),group(group_){
 	saveit=0;
 	//file=nid;
@@ -666,7 +669,7 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midi
 }
 c_nntp_cache::~c_nntp_cache(){
 	t_nntp_files::iterator i;
-	if (saveit && (fileread || !files.empty())){
+	if (fileread!=-1 && saveit && (fileread || !files.empty())){
 		string tmpfn;
 		tmpfn=file+".tmp";
 		try {

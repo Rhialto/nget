@@ -164,7 +164,7 @@ void set_user_error_status_and_do_fatal_user_error(int incr=1) {
 		throw FatalUserException();
 }
 
-#define NUM_OPTIONS 33
+#define NUM_OPTIONS 34
 #ifndef HAVE_LIBPOPT
 
 #ifndef HAVE_GETOPT_LONG
@@ -250,6 +250,7 @@ static void addoptions(void)
 	addoption("quickavailable",0,'A',0,"load available newsgroups list");
 	addoption("group",1,'g',"GROUPNAME","newsgroup");
 	addoption("quickgroup",1,'G',"GROUPNAME","use group without checking for new headers");
+	addoption("xgroup",1,'x',"GROUPNAME","use group without using cache files (requires XPAT)");
 	addoption("flushserver",1,'F',"HOSTALIAS","flush server from current group or newsgroup list");
 	addoption("expretrieve",1,'R',"EXPRESSION","retrieve files matching expression(see man page)");
 	addoption("retrieve",1,'r',"REGEX","retrieve files matching regex");
@@ -397,7 +398,7 @@ nget_options::nget_options(void){
 	get_path();
 	get_temppath();
 }
-nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),test_multi(o.test_multi),retr_show_multi(o.retr_show_multi),makedirs(o.makedirs),grouplistmode(o.grouplistmode),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
+nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),test_multi(o.test_multi),retr_show_multi(o.retr_show_multi),makedirs(o.makedirs),cmdmode(o.cmdmode),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
 	/*	if (o.path){
 			path=new char[strlen(o.path)+1];
 			strcpy(path,o.path);
@@ -565,6 +566,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 	int c=0;
 	const char * loptarg=NULL;
 	t_nntp_getinfo_list getinfos;
+	t_xpat_list patinfos;
 	t_grouplist_getinfo_list grouplistgetinfos;
 
 #ifdef HAVE_LIBPOPT
@@ -619,7 +621,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				options.parse_dupe_flags("I");
 				break;
 			case 'R':
-				if (options.grouplistmode) {
+				if (options.cmdmode==GROUPLIST_MODE) {
 					try {
 						nntp_grouplist_pred *p=make_grouplist_pred(loptarg, options.gflags);
 						grouplistgetinfos.push_back(new c_grouplist_getinfo(p, options.gflags));
@@ -633,6 +635,11 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					break;
 				}
 				if (!options.badskip){
+					if (options.cmdmode==NOCACHE_RETRIEVE_MODE) {
+						printf("-R is not yet supported with -x\n");
+						set_user_error_status_and_do_fatal_user_error();
+						break;
+					}
 					if(options.group.isnull()){
 						printf("no group specified\n");
 						set_user_error_status_and_do_fatal_user_error();
@@ -651,7 +658,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				}
 				break;
 			case 'r':
-				if (options.grouplistmode) {
+				if (options.cmdmode==GROUPLIST_MODE) {
 					arglist_t e_parts;
 					e_parts.push_back("group");
 					e_parts.push_back(loptarg);
@@ -697,6 +704,9 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 							e_parts.push_back("&&");
 						}
 						try {
+							if (options.cmdmode==NOCACHE_RETRIEVE_MODE) {
+								patinfos.push_back(new c_xpat("Subject", regex2wildmat(loptarg, !(options.gflags&GETFILES_CASESENSITIVE))));
+							}
 							nntp_file_pred *p=make_nntpfile_pred(e_parts, options.gflags);
 							getinfos.push_back(new c_nntp_getinfo(options.path, options.temppath, p, options.gflags));
 						}catch(RegexEx &e){
@@ -801,7 +811,12 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				{
 					c_server::ptr server=nconfig.getserver(loptarg);
 					if (!server) {printf("no such server %s\n",loptarg);set_user_error_status_and_do_fatal_user_error();break;}
-					if (options.grouplistmode) {
+					if (options.cmdmode==NOCACHE_RETRIEVE_MODE) {
+						printf("nothing to flush in nocache mode\n");
+						set_user_error_status_and_do_fatal_user_error();
+						break;
+					}
+					if (options.cmdmode==GROUPLIST_MODE) {
 						nntp.nntp_grouplist(0, options);
 						nntp.glist->flushserver(server->serverid);
 						break;
@@ -847,7 +862,12 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					}
 					grouplistgetinfos.clear();
 				}
-				if (!getinfos.empty()){
+				if (!patinfos.empty()){
+					nntp.nntp_retrieve(options.group, getinfos, patinfos, options);
+					getinfos.clear();
+					patinfos.clear();
+				}
+				else if (!getinfos.empty()){
 					nntp.nntp_retrieve(options.group, getinfos, options);
 					getinfos.clear();
 				}
@@ -906,23 +926,27 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					case 'a':
 						//if BAD_HOST, don't try to -a, fall through to -A instead
 						if (!(options.badskip & BAD_HOST)){
-							options.grouplistmode=true;
+							options.cmdmode=GROUPLIST_MODE;
 							nntp.nntp_grouplist(1, options);
 							break;
 						}
 					case 'A':
-						options.grouplistmode=true;
+						options.cmdmode=GROUPLIST_MODE;
 						break;
 					case 'g':
 						//if BAD_HOST, don't try to -g, fall through to -G instead
 						if (!(options.badskip & BAD_HOST)){
-							options.grouplistmode=false;
+							options.cmdmode=RETRIEVE_MODE;
 							options.group=nconfig.getgroup(loptarg);
 							nntp.nntp_group(options.group,1,options);
 							break;
 						}
 					case 'G':
-						options.grouplistmode=false;
+						options.cmdmode=RETRIEVE_MODE;
+						options.group=nconfig.getgroup(loptarg);
+						break;
+					case 'x':
+						options.cmdmode=NOCACHE_RETRIEVE_MODE;
 						options.group=nconfig.getgroup(loptarg);
 						break;
 					case 'h':{
@@ -1004,7 +1028,7 @@ int main(int argc, const char ** argv){
 			options.gflags=0;
 			options.test_multi=NO_SHOW_MULTI;
 			options.retr_show_multi=SHOW_MULTI_LONG;//always display the multi-server info when retrieving, just because I think thats better
-			options.grouplistmode=false;
+			options.cmdmode=RETRIEVE_MODE;
 			options.group=NULL;
 			options.host=NULL;
 			{
