@@ -246,7 +246,7 @@ static void nntp_cache_getfile(c_nntp_files_u *fc, ParHandler *parhandler, meta_
 		info = *gii;
 		if ((info->flags&GETFILES_GETINCOMPLETE || f->iscomplete()) && (info->flags&GETFILES_NODUPEIDCHECK || !(midinfo->check(f->bamid()))) && (*info->pred)(f.gimmethepointer())){//matches user spec
 			if (!(info->flags&(GETFILES_NOAUTOPAR|GETFILES_TESTMODE|GETFILES_MARK|GETFILES_UNMARK))) {
-				if (parhandler->maybe_add_parfile(info->path, f))
+				if (parhandler->maybe_add_parfile(f, info->path, info->temppath))
 					continue;
 			}
 			firange=fc->files.equal_range(f->badate());

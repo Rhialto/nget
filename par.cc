@@ -100,11 +100,11 @@ bool ParInfo::maybe_add_parfile(const c_nntp_file::ptr &f) {
 
 void ParInfo::get_initial_pars(c_nntp_files_u &fc) {
 	for (t_server_file_list::const_iterator spi=serverpars.begin(); spi!=serverpars.end(); ++spi){
-		fc.addfile(spi->second, path, path);//#### should honor -P
+		fc.addfile(spi->second, path, temppath);
 	}
 	serverpars.clear();
 	for (t_parset_map::iterator psi=parsets.begin(); psi!=parsets.end(); ++psi){
-		psi->second.get_initial_pars(path, fc);
+		psi->second.get_initial_pars(fc, path, temppath);
 	}
 }
 
@@ -143,7 +143,7 @@ int ParInfo::get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nnt
 				}
 				havevols.insert(vol);//don't try to retrieve multiple of the same volume in one run
 				PDEBUG(DEBUG_MIN, "get_pxxs: %i, %s, adding %s", cur, hexstr(key).c_str(), last_sfi->second->subject.c_str());
-				fc.addfile(last_sfi->second, path, path);//#### should honor -P
+				fc.addfile(last_sfi->second, path, temppath);
 				serverpxxs.erase(last_sfi);
 				++cur;
 				break;
@@ -212,15 +212,20 @@ void ParInfo::maybe_get_pxxs(c_nntp_files_u &fc) {
 }
 
 		
-ParHandler::t_parinfo_map::data_type ParHandler::parinfo(const string &path) {
+ParHandler::t_parinfo_map::data_type ParHandler::parinfo(const string &path, const string &temppath) {
 	t_parinfo_map::iterator i = parinfos.find(path);
 	if (i != parinfos.end())
 		return (*i).second;
-	return (*parinfos.insert_value(path, new ParInfo(path)).first).second;
+	return (*parinfos.insert_value(path, new ParInfo(path, temppath)).first).second;
+}
+ParHandler::t_parinfo_map::data_type ParHandler::parinfo(const string &path) {
+	t_parinfo_map::iterator i = parinfos.find(path);
+	assert(i != parinfos.end());
+	return (*i).second;
 }
 
-bool ParHandler::maybe_add_parfile(const string &path, const c_nntp_file::ptr &f) {
-	return parinfo(path)->maybe_add_parfile(f);
+bool ParHandler::maybe_add_parfile(const c_nntp_file::ptr &f, const string &path, const string &temppath) {
+	return parinfo(path,temppath)->maybe_add_parfile(f);
 }
 
 void ParHandler::get_initial_pars(c_nntp_files_u &fc) {

@@ -46,12 +46,12 @@ class ParSetInfo {
 		void addserverpxx(const c_nntp_file::ptr &f) {
 			serverpxxs.insert(t_server_file_list::value_type(f->badate(), f));
 		}
-		void get_initial_pars(const string &path, c_nntp_files_u &fc) {
+		void get_initial_pars(c_nntp_files_u &fc, const string &path, const string &temppath) {
 			for (t_server_file_list::const_iterator spi=serverpars.begin(); spi!=serverpars.end(); ++spi){
-				fc.addfile(spi->second, path, path);//#### should honor -P
+				fc.addfile(spi->second, path, temppath);
 			}
 			if (serverpars.empty() && !serverpxxs.empty()){
-				fc.addfile(serverpxxs.begin()->second, path, path);//#### should honor -P
+				fc.addfile(serverpxxs.begin()->second, path, temppath);
 				serverpxxs.erase(serverpxxs.begin());
 			}
 			serverpars.clear();
@@ -104,9 +104,10 @@ class ParInfo {
 		set<string> finished_parsets; // which sethashes we have finished (either tested ok, or exhausted all hope)
 		t_parset_map parsets;
 		LocalParFiles localpars;
-		const string &path;
+		const string path;
+		const string temppath;
 	public:
-		ParInfo(const string &p):path(p){
+		ParInfo(const string &p,const string &t):path(p),temppath(t){//well, saving and using only the first temppath encountered isn't exactly perfect, but I doubt many people really download multiple things to the same path but with different temp paths.  And I'm lazy.
 			localpars.addfrompath(path);
 		}
 		ParSetInfo *parset(const string &basename) { 
@@ -125,8 +126,9 @@ class ParHandler {
 		typedef auto_map<string, ParInfo> t_parinfo_map;
 		t_parinfo_map parinfos;
 	public:
+		t_parinfo_map::data_type parinfo(const string &path, const string &temppath);
 		t_parinfo_map::data_type parinfo(const string &path);
-		bool maybe_add_parfile(const string &path, const c_nntp_file::ptr &f);
+		bool maybe_add_parfile(const c_nntp_file::ptr &f, const string &path, const string &temppath);
 		void get_initial_pars(c_nntp_files_u &fc);
 		void maybe_get_pxxs(const string &path, c_nntp_files_u &fc);
 };
