@@ -396,8 +396,7 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, nget_opti
 				redone++;
 			}
 			if (!succeeded)
-//				throw TransportExFatal(Ex_INIT,"no servers queried successfully");
-				printf("nntp_dogroup: giving up, no servers queried successfully\n");
+				throw TransportExFatal(Ex_INIT,"no servers queried successfully");
 		}
 	}
 }

@@ -726,12 +726,14 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 			printf(" (fatal, aborting..)\n");
 			if (options.host)
 				options.badskip=2;//only set badskip if we are forcing a single host, otherwise we could exclude other hosts that are working
+			set_fatal_error_status();
 		}catch(ExFatal &e){
 			printCaughtEx_nnl(e);
 			printf(" (fatal, aborting..)\n");
 			//else if (n==EX_U_FATAL)
 			if (options.host)
 				options.badskip=1;//only set badskip if we are forcing a single host, otherwise we could exclude other hosts that are working
+			set_fatal_error_status();
 		}catch(ExError &e){
 		//}catch(baseEx &e){//doesn't work..?
 			printCaughtEx_nnl(e);
