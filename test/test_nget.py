@@ -619,6 +619,12 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g foobar -r foo'))
 		self.verifyoutput(['0001'])
 
+	def test_galias_metagroup(self):
+		self.addarticles('0004', 'input', groups=["test2"])
+		self.nget.writerc(self.servers.servers, extratail="{galias\nfoobar=test,test2\n}\n")
+		self.vfailIf(self.nget_run('-g foobar -r foo -r bone'))
+		self.verifyoutput(['0001','0004'])
+
 	def test_decode_overrides_k_and_K(self):
 		self.vfailIf(self.nget_run('-k -g test --decode -r joy'))
 		self.vfailIf(self.nget_run('-K -g test --decode -r foo'))
