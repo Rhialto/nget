@@ -70,7 +70,8 @@ void set_ ## type ## _ ## low ## _status(int incr){\
 #define SET_x_WARN_STATUS(type,bit) SET_x_x_STATUS(type, warn, WARN, bit)
 #define SET_x_OK_STATUS(type,bit) SET_x_x_STATUS(type, ok, OK, bit)
 SET_x_ERROR_STATUS(decode, 1);
-SET_x_ERROR_STATUS(path, 2);
+SET_x_ERROR_STATUS(autopar, 2);
+SET_x_ERROR_STATUS(path, 4);
 SET_x_ERROR_STATUS(user, 4);
 SET_x_ERROR_STATUS(retrieve, 8);
 SET_x_ERROR_STATUS(group, 16);
@@ -90,6 +91,7 @@ SET_x_OK_STATUS(unknown, 512);
 SET_x_OK_STATUS(group, 1024);
 SET_x_OK_STATUS(skipped, 2048);
 SET_x_OK_STATUS(grouplist, 4096);
+SET_x_OK_STATUS(autopar, 8192);
 SET_x_WARN_STATUS(retrieve,1);
 SET_x_WARN_STATUS(undecoded,2);
 SET_x_WARN_STATUS(unequal_line_count,8);
@@ -98,6 +100,7 @@ SET_x_WARN_STATUS(group,1024);
 SET_x_WARN_STATUS(cache,2048);
 SET_x_WARN_STATUS(grouplist, 4096);
 SET_x_WARN_STATUS(xover,8192);
+SET_x_WARN_STATUS(autopar, 16384);
 #define print_x_x_STATUS(type, low) if (low ## _ ## type) printf("%s %i " #type, cf++?",":"", low ## _ ## type)
 #define print_x_ERROR_STATUS(type) print_x_x_STATUS(type, error)
 #define print_x_WARN_STATUS(type) print_x_x_STATUS(type, warn)
@@ -121,6 +124,7 @@ void print_error_status(void){
 		print_x_OK_STATUS(grouplist);
 		print_x_OK_STATUS(dupe);
 		print_x_OK_STATUS(skipped);
+		print_x_OK_STATUS(autopar);
 	}
 	if (warnflags){
 		int cf=0;
@@ -134,6 +138,7 @@ void print_error_status(void){
 		print_x_WARN_STATUS(dupe);
 		print_x_WARN_STATUS(cache);
 		print_x_WARN_STATUS(grouplist);
+		print_x_WARN_STATUS(autopar);
 	}
 	if (errorflags){
 		int cf=0;
@@ -145,6 +150,7 @@ void print_error_status(void){
 		print_x_ERROR_STATUS(retrieve);
 		print_x_ERROR_STATUS(group);
 		print_x_ERROR_STATUS(grouplist);
+		print_x_ERROR_STATUS(autopar);
 		print_x_ERROR_STATUS(other);
 		print_x_ERROR_STATUS(fatal);
 	}

@@ -466,6 +466,8 @@ the checking must occur during the run rather than at queue time.)
 Number of groups successfully updated.
 .IP "grouplist"
 Newsgroup list successfully updated.
+.IP "autopar"
+Number of parity sets that are complete.
 .RE
 .IP "WARNINGS"
 .RS
@@ -484,13 +486,18 @@ Some articles retrieved had different line counts than the server said they shou
 (And unequal_line_error is set to 0).
 .IP "dupe"
 Number of decoded files that had the same name as existing files, but different content.
+.IP "autopar"
+Weirdness encountered reading par files, such as encountering unknown par versions, or non-ascii filenames in the pars.
 .RE
 .IP "ERRORS"
 Lists errors that occured.  In addition, the exit status will be set to a bitwise OR of the codes of all errors that occured.
+(Note that some errors share an exit code, since there are only 8 bits available.)
 .RS
 .IP "decode (exit code 1)"
 Number of file decoding errors.
-.IP "path (exit code 2)"
+.IP "autopar (exit code 2)"
+Number of parity sets that could not be completed.
+.IP "path (exit code 4)"
 Errors changing to paths specified with -p or -P.
 .IP "user (exit code 4)"
 User errors, such as trying -r without specifying a group first.

@@ -101,6 +101,7 @@ class ParInfo {
 		t_server_file_list serverpars;
 		t_server_file_list serverpxxs;
 		typedef map<string, ParSetInfo> t_parset_map;
+		set<string> finished_parsets; // which sethashes we have finished (either tested ok, or exhausted all hope)
 		t_parset_map parsets;
 		LocalParFiles localpars;
 		const string &path;
@@ -113,7 +114,7 @@ class ParInfo {
 		}
 		bool maybe_add_parfile(const c_nntp_file::ptr &f);
 		void get_initial_pars(c_nntp_files_u &fc);
-		void get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nntp_files_u &fc);
+		int get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nntp_files_u &fc);
 		void maybe_get_pxxs(c_nntp_files_u &fc);
 };
 

@@ -44,6 +44,7 @@ void set_path_error_status(int incr=1);
 void set_user_error_status(int incr=1);
 void set_other_error_status(int incr=1);
 void set_fatal_error_status(int incr=1);
+void set_autopar_error_status(int incr=1);
 
 void fatal_exit(void);
 
@@ -55,6 +56,7 @@ void set_unequal_line_count_warn_status(int incr=1);
 void set_dupe_warn_status(int incr=1);
 void set_cache_warn_status(int incr=1);
 void set_grouplist_warn_status(int incr=1);
+void set_autopar_warn_status(int incr=1);
 
 void set_total_ok_status(int incr=1);
 void set_yenc_ok_status(int incr=1);
@@ -69,6 +71,7 @@ void set_group_ok_status(int incr=1);
 void set_dupe_ok_status(int incr=1);
 void set_skipped_ok_status(int incr=1);
 void set_grouplist_ok_status(int incr=1);
+void set_autopar_ok_status(int incr=1);
 
 #define GETFILES_CASESENSITIVE	1
 #define GETFILES_GETINCOMPLETE	2

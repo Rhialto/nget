@@ -436,7 +436,7 @@ class RetrieveTest_base(DecodeTest_base):
 	
 	def test_autoparhandling_existingpar(self):
 		self.addarticles('par01', 'input')
-		self.vfailIf(self.nget_run('-g test -r "par.test.*a b.par"'))
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r "par.test.*a b.par"'), 2)
 		self.vfailIf(self.nget_run('-G test -r par.test'))
 		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par']})
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 6)
@@ -444,7 +444,7 @@ class RetrieveTest_base(DecodeTest_base):
 	def test_autoparhandling_existingpxx(self):
 		self.addarticles('par01', 'input')
 		self.rmarticle_fromserver('par01','input','par',self.servers.servers[0])
-		self.vfailIf(self.nget_run('-g test -r "par.test.*a b.p01"'))
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r "par.test.*a b.p01"'), 2)
 		self.vfailIf(self.nget_run('-G test -r par.test'))
 		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.p01']})
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 6)
@@ -460,7 +460,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.addarticles('par01', 'input')
 		self.rmarticle_fromserver('par01','input','dat2',self.servers.servers[0])
 		self.rmarticle_fromserver('par01','input','dat4',self.servers.servers[0])
-		self.vfailIf(self.nget_run('-g test -r "par.test.*\.[dp]a[tr]"'))
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r "par.test.*\.[dp]a[tr]"'), 2)
 		self.vfailIf(self.nget_run('-g test -r par.test'))
 		self.verifyoutput({'par01':['01.dat','03.dat','05.dat','a b.par','a b.p01','a b.p02']})
 		
@@ -500,7 +500,7 @@ class RetrieveTest_base(DecodeTest_base):
 	def test_autoparhandling_reply_existingpar(self):
 		self.addarticles('par01', 'input')
 		self.addarticles('par01', 'reply')
-		self.vfailIf(self.nget_run('-g test -r "par.test.*a b.par"'))
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r "par.test.*a b.par"'), 2)
 		self.vfailIf(self.nget_run('-G test -r par.test'))
 		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par','_reply_output/1041725934.0.txt']})
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 7)
@@ -572,7 +572,7 @@ class RetrieveTest_base(DecodeTest_base):
 	def test_autoparhandling_multiparset_existingpar(self):
 		self.addarticles('par01', 'input')
 		self.addarticles('par02', 'input')
-		self.vfailIf(self.nget_run('-g test -r "par.*test.*\.par"'))
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r "par.*test.*\.par"'), 2)
 		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
 		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par'],
 			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','p2.par']})
@@ -606,7 +606,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.rmarticle_fromserver('par02','input','dat1',self.servers.servers[0])
 		self.rmarticle_fromserver('par02','input','dat3',self.servers.servers[0])
 		self.rmarticle_fromserver('par02','input','dat5',self.servers.servers[0])
-		self.vfailIf(self.nget_run('-g test -r "par.*test.*\.[dp]a[tr]"'))
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r "par.*test.*\.[dp]a[tr]"'), 2)
 		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
 		self.verifyoutput({'par01':['01.dat','03.dat','05.dat','a b.par','a b.p01','a b.p02'],
 			'par02':['p2-02.dat','p2-04.dat','p2.par','p2.p01','p2.p02','p2.p03']})
@@ -747,9 +747,9 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 
 	def test_p_mkdirmaxcreate(self):
 		path = os.path.join(self.nget.tmpdir,'aaa','bbb','ccc')
-		self.vfailUnlessExitstatus(self.nget.run('-m no -g test -p '+path+' -r foo'), 2)
-		self.vfailUnlessExitstatus(self.nget.run('-m 0 -g test -p '+path+' -r foo'), 2)
-		self.vfailUnlessExitstatus(self.nget.run('-m 2 -g test -p '+path+' -r foo'), 2)
+		self.vfailUnlessExitstatus(self.nget.run('-m no -g test -p '+path+' -r foo'), 4)
+		self.vfailUnlessExitstatus(self.nget.run('-m 0 -g test -p '+path+' -r foo'), 4)
+		self.vfailUnlessExitstatus(self.nget.run('-m 2 -g test -p '+path+' -r foo'), 4)
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 0)
 		self.vfailIf(self.nget.run('-m 3 -g test -p '+path+' -r foo'))
 		self.verifyoutput('0001', tmpdir=path)
@@ -842,22 +842,22 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.vfailUnlessExitstatus(self.nget.run('-@ foobar'), 4)
 	
 	def test_badskip_path(self):
-		self.vfailUnlessExitstatus(self.nget.run('-p badpath -g test -r joy -p %s -r foo'%(self.nget.tmpdir)), 2)
+		self.vfailUnlessExitstatus(self.nget.run('-p badpath -g test -r joy -p %s -r foo'%(self.nget.tmpdir)), 4)
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_badskip_temppath(self):
-		self.vfailUnlessExitstatus(self.nget.run('-P badpath -g test -r joy -P %s -r foo'%(self.nget.tmpdir)), 2)
+		self.vfailUnlessExitstatus(self.nget.run('-P badpath -g test -r joy -P %s -r foo'%(self.nget.tmpdir)), 4)
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_badskip_temppath_okpath(self):
-		self.vfailUnlessExitstatus(self.nget.run('-P badpath -g test -r joy -p %s -r foo'%(self.nget.tmpdir)), 2) #-p resets -P too
+		self.vfailUnlessExitstatus(self.nget.run('-P badpath -g test -r joy -p %s -r foo'%(self.nget.tmpdir)), 4) #-p resets -P too
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_badskip_path_oktemppath(self):
-		self.vfailUnlessExitstatus(self.nget.run('-p badpath -g test -r joy -P %s -r foo'%(self.nget.tmpdir)), 2) #-P does not reset -p
+		self.vfailUnlessExitstatus(self.nget.run('-p badpath -g test -r joy -P %s -r foo'%(self.nget.tmpdir)), 4) #-P does not reset -p
 		self.verifyoutput([])
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 0)
 
@@ -871,17 +871,17 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_badskip_pathhost(self):
-		self.vfailUnlessExitstatus(self.nget.run('-g test -h badhost -p badpath -r . -p %s -r . -h host0 -r foo'%(self.nget.tmpdir)), 6)
+		self.vfailUnlessExitstatus(self.nget.run('-g test -h badhost -p badpath -r . -p %s -r . -h host0 -r foo'%(self.nget.tmpdir)), 4)
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_badskip_hostpath(self):
-		self.vfailUnlessExitstatus(self.nget.run('-g test -h badhost -p badpath -r . -h host0 -r . -p %s -r foo'%(self.nget.tmpdir)), 6)
+		self.vfailUnlessExitstatus(self.nget.run('-g test -h badhost -p badpath -r . -h host0 -r . -p %s -r foo'%(self.nget.tmpdir)), 4)
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_badskip_okthenbadpath(self):
-		self.vfailUnlessExitstatus(self.nget.run('-g test -r foo -p badpath -r .'), 2)
+		self.vfailUnlessExitstatus(self.nget.run('-g test -r foo -p badpath -r .'), 4)
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
@@ -1171,8 +1171,8 @@ class FatalUserErrorsTestCase(TestCase, DecodeTest_base):
 		self.nget.clean_all()
 
 	def test_badpath(self):
-		self.vfailUnlessExitstatus(self.nget.run('-p badpath -g test'), 2)
-		self.vfailUnlessExitstatus(self.nget.run('-P badpath -g test'), 2)
+		self.vfailUnlessExitstatus(self.nget.run('-p badpath -g test'), 4)
+		self.vfailUnlessExitstatus(self.nget.run('-P badpath -g test'), 4)
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
 	def test_badhost(self):
 		self.vfailUnlessExitstatus(self.nget.run('-h badhost -g test'), 4)

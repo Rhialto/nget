@@ -25,6 +25,7 @@
 #include "log.h"
 #include "md5.h"
 #include "misc.h"
+#include "nget.h"
 
 
 static void add_to_nocase_map(t_nocase_map *nocase_map, const char *key, const char *name){
@@ -107,31 +108,33 @@ void ParInfo::get_initial_pars(c_nntp_files_u &fc) {
 	}
 }
 
-void ParInfo::get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nntp_files_u &fc) {
+int ParInfo::get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nntp_files_u &fc) {
 	assert(localpars.subjmatches.find(key)!=localpars.subjmatches.end());
 	pair<t_subjmatches_map::iterator,t_subjmatches_map::iterator> matches=localpars.subjmatches.equal_range(key);
 	t_server_file_list::iterator sfi=serverpxxs.begin();
 	t_server_file_list::iterator last_sfi=serverpxxs.end();
 	c_regex_subs rsubs;
-	while (sfi!=serverpxxs.end() && num>0){
+	int cur=0;
+	while (sfi!=serverpxxs.end() && cur<num){
 		last_sfi=sfi;
 		++sfi;
 		for (t_subjmatches_map::iterator smi=matches.first; smi!=matches.second; ++smi) {
 			if (!smi->second->match(last_sfi->second->subject.c_str(), &rsubs)) {
 				int vol = atoi(rsubs.subs(1));
 				if (havevols.find(vol)!=havevols.end()){
-					PDEBUG(DEBUG_MIN, "get_pxxs: %i, %s, already have or getting vol %i, not adding %s", num, hexstr(key).c_str(), vol, last_sfi->second->subject.c_str());
+					PDEBUG(DEBUG_MIN, "get_pxxs: %i, %s, already have or getting vol %i, not adding %s", cur, hexstr(key).c_str(), vol, last_sfi->second->subject.c_str());
 					continue;
 				}
 				havevols.insert(vol);//don't try to retrieve multiple of the same volume in one run
-				--num;
-				PDEBUG(DEBUG_MIN, "get_pxxs: %i, %s, adding %s", num, hexstr(key).c_str(), last_sfi->second->subject.c_str());
+				PDEBUG(DEBUG_MIN, "get_pxxs: %i, %s, adding %s", cur, hexstr(key).c_str(), last_sfi->second->subject.c_str());
 				fc.addfile(last_sfi->second, path, path);//#### should honor -P
 				serverpxxs.erase(last_sfi);
+				++cur;
 				break;
 			}
 		}
 	}
+	return cur;
 }
 
 void ParInfo::maybe_get_pxxs(c_nntp_files_u &fc) {
@@ -151,6 +154,9 @@ void ParInfo::maybe_get_pxxs(c_nntp_files_u &fc) {
 	get_initial_pars(fc);
 
 	for (t_basefilenames_map::const_iterator bfni=localpars.basefilenames.begin(); bfni!=localpars.basefilenames.end(); ++bfni) {
+		if (finished_parsets.find(bfni->first)!=finished_parsets.end())
+			continue;//we are already done with this parset, don't waste time retesting stuff.
+
 		string goodpar;
 		uint32_t volnumber;
 		set<uint32_t> goodvols;
@@ -177,7 +183,15 @@ void ParInfo::maybe_get_pxxs(c_nntp_files_u &fc) {
 			needed = max(0, bad - (signed)goodvols.size());
 			PDEBUG(DEBUG_MIN, "parset %s in %s: %i goodpxxs, %i badp??s, %i bad/missing files, trying to get %i more", hexstr(bfni->first).c_str(), path.c_str(), goodvols.size(), badcount, bad, needed);
 		}
-		get_pxxs(needed, goodvols, bfni->first, fc);//modifies goodvals, but we don't care.
+		if (needed) {
+			if (!get_pxxs(needed, goodvols, bfni->first, fc)) {//modifies goodvols, but we don't care.
+				set_autopar_error_status();
+				finished_parsets.insert(bfni->first);
+			}
+		}else{
+			set_autopar_ok_status();
+			finished_parsets.insert(bfni->first);
+		}
 	}
 }
 
@@ -270,6 +284,7 @@ static int parfile_check_header(c_file &f) {
 	f.readfull(buf, 8);//we ignore par generator ver (last 4 bytes)
 	if (!(buf[0]==0 && buf[1]==0 && buf[2]==1 && buf[3]==0)) {
 		PERROR("error reading %s: unhandled par version %i.%i.%i.%i", f.name(), buf[0], buf[1], buf[2], buf[3]);
+		set_autopar_warn_status();
 		return 1;
 	}
 	return 0;
@@ -349,6 +364,7 @@ int parfile_check(const string &parfilename, const string &path, const t_nocase_
 		for (unsigned int n=0; n<(entrysize-0x38)/2; ++n) {
 			if (buf[n*2]>127 || buf[n*2+1]) {
 				PERROR("in %s: can't handle non-ascii filename for file %u", parfilename.c_str(), i);
+				set_autopar_warn_status();
 				++needed;
 				filename="";
 			}else
