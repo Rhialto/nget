@@ -99,7 +99,6 @@ void SockPool::release(Connection *connection) {
 		connection->touch();
 	else
 		connection_erase(connections.find(connection->server->serverid));
-	//####
 }
 
 void SockPool::expire_old_connection(void) {
