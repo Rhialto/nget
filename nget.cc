@@ -347,7 +347,7 @@ nget_options::nget_options(void){
 	get_path();
 	get_temppath();
 }
-nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),qstatus(o.qstatus),test_multi(o.test_multi),makedirs(o.makedirs),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
+nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),qstatus(o.qstatus),test_multi(o.test_multi),retr_show_multi(o.retr_show_multi),makedirs(o.makedirs),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
 	/*	if (o.path){
 			path=new char[strlen(o.path)+1];
 			strcpy(path,o.path);
