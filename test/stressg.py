@@ -113,12 +113,12 @@ try:
 	print 'starting nget...'
 	start = time.time()
 	tot_errs += testnget.run('-gfoo')
-	print 'nget -g took',time.time()-start,'sec'
+	gtime = time.time()-start
 
 	print 'verifying header cache...'
 	start = time.time()
 	st,output=testnget.run_getoutput('-Gfoo -l0 -Tr .')
-	print 'nget -Tr took',time.time()-start,'sec'
+	Trtime=time.time()-start
 	name_re = re.compile(r'\bf\w+\.dat\b')
 	parts_re = re.compile(r'^\d+')
 	matched = {}
@@ -138,7 +138,11 @@ try:
 		serv.rmallarticles()
 	start = time.time()
 	tot_errs += testnget.run('-gfoo')
-	print 'nget -g (flushing) took',time.time()-start,'sec'
+	flushtime=time.time()-start
+
+	print 'nget -g took',gtime,'sec'
+	print 'nget -Tr took',Trtime,'sec'
+	print 'nget -g (flushing) took',flushtime,'sec'
 except AssertionError:
 	tot_errs += 1
 	raise
