@@ -425,45 +425,34 @@ time_t decode_textdate(const char * cbuf){
 #endif
 
 #ifdef	USE_FILECOMPARE					// check for duplicate files
+#include "file.h"
 int filecompare(const char *old_fn,const char *nfn){
 	int	same=0;
-	FILE	*old_f, *new_f;
 	// open both files
-	if (!dofopen(old_f, old_fn, "r")){
-		if (!dofopen(new_f, nfn, "r")){
-			char	old_buf[4096], new_buf[4096];
-			int	old_len, new_len;
-			// read and compare the files
-			while(!feof(old_f)&&!ferror(old_f)&&!feof(new_f)&&!ferror(new_f)){
-				old_len=read(fileno(old_f), old_buf, 4096);
-				new_len=read(fileno(new_f), new_buf, 4096);
-				if (old_len == new_len && old_len >= 0){
-					if (old_len == 0){
-						same=1;
-						break;
-					}
-					if (memcmp(old_buf, new_buf, old_len)){
-						same=-1;
-						break;
-					}
-				} else {
-					same=-1;
-					break;
-				}
-			}
-			if (same>=0&&feof(old_f)&&feof(new_f)){
-				// passed all tests!
+	c_file_fd old_f(old_fn, O_RDONLY);
+	c_file_fd new_f(nfn, O_RDONLY);
+	char	old_buf[4096], new_buf[4096];
+	int	old_len, new_len;
+	// read and compare the files
+	while(1){
+		old_len=old_f.read(old_buf, 4096);
+		new_len=new_f.read(new_buf, 4096);
+		if (old_len == new_len){
+			if (old_len == 0){
 				same=1;
+				break;
 			}
-			fclose(new_f);
-			fclose(old_f);
+			if (memcmp(old_buf, new_buf, old_len)){
+				same=-1;
+				break;
+			}
 		} else {
-			same = -1;
-			fclose(old_f);
+			same=-1;
+			break;
 		}
-	} else {
-		same = -1;
 	}
+	new_f.close();
+	old_f.close();
 	return same;
 }
 #endif

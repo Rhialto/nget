@@ -1,4 +1,5 @@
 #include "misc.h"
+#include "file.h"
 
 #include <cppunit/TestCaller.h>
 #include <cppunit/TestCase.h>
@@ -16,13 +17,31 @@ class misc_Test : public TestCase {
 			CPPUNIT_ASSERT(filecompare("TestRunner.cc", "misc_test.h")<0);
 		}
 		void testFileCompareNonExistA(void) {
-			CPPUNIT_ASSERT(filecompare("aoeuidhtns", "misc_test.h")<0);
+			int x=0;
+			try {
+				filecompare("aoeuidhtns", "misc_test.h");
+			} catch (FileNOENTEx &e){
+				x=1;
+			}
+			CPPUNIT_ASSERT(x==1);
 		}
 		void testFileCompareNonExistB(void) {
-			CPPUNIT_ASSERT(filecompare("misc_test.h", "aoeuidhtns")<0);
+			int x=0;
+			try {
+				filecompare("misc_test.h", "aoeuidhtns");
+			} catch (FileNOENTEx &e){
+				x=1;
+			}
+			CPPUNIT_ASSERT(x==1);
 		}
 		void testFileCompareNonExist(void) {
-			CPPUNIT_ASSERT(filecompare("asdfghjkl", "aoeuidhtns")<0);
+			int x=0;
+			try {
+				filecompare("asdfghjkl", "aoeuidhtns");
+			} catch (FileNOENTEx &e){
+				x=1;
+			}
+			CPPUNIT_ASSERT(x==1);
 		}
 		void testFExists(void) {
 			CPPUNIT_ASSERT(fexists("TestRunner.cc"));

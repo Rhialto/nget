@@ -1106,6 +1106,27 @@ else:
 			self.vfailUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('testfile\.txt$','w','c')]"), 1, UpgradeUULibMessage)
 			self.check_for_errormsg(r'testfile\.txt\b')
 
+		def test_dupefile_src_open_error(self):
+			self.vfailIf(self.nget.run("-g test -r ."))
+			self.vfailUnlessEqual(self.runnget("-G test -D -r .", "IOError:f=[('testfile\.txt$','r',-1)]"), 128)
+			self.check_for_errormsg(r'testfile\.txt[^.]')
+		
+		def test_dupefile_src_read_error(self):
+			self.vfailIf(self.nget.run("-g test -r ."))
+			self.vfailUnlessEqual(self.runnget("-G test -D -r .", "IOError:f=[('testfile\.txt$','r',0)]"), 128)
+			self.check_for_errormsg(r'testfile\.txt[^.]')
+		
+		def test_dupefile_dst_open_error(self):
+			self.vfailIf(self.nget.run("-g test -r ."))
+			self.vfailUnlessEqual(self.runnget("-G test -D -r .", "IOError:f=[('testfile\.txt\..*\..*$','r',-1)]"), 128)
+			self.check_for_errormsg(r'testfile\.txt\..*\.')
+		
+		def test_dupefile_dst_read_error(self):
+			self.vfailIf(self.nget.run("-g test -r ."))
+			self.vfailUnlessEqual(self.runnget("-G test -D -r .", "IOError:f=[('testfile\.txt\..*\..*$','r',0)]"), 128)
+			self.check_for_errormsg(r'testfile\.txt\..*\.')
+		
+
 
 	class SockErrorTestCase(SubterfugueTest_base, TestCase):
 		ngetoptions={'options':{'tries':1}}
