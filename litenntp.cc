@@ -168,7 +168,11 @@ void c_prot_nntp::dogroup(const char *group){
 }
 void c_prot_nntp::doclose(void){
 	if (cursock.get())
-		cursock->close();
+		try {
+			cursock->close();
+		} catch (FileEx &e) {//ignore transport errors while closing
+			printCaughtEx_nnl(e);printf(" (ignored)\n");
+		}
 	safefree(curhost);
 	safefree(curgroup);
 	safefree(curuser);
