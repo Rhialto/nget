@@ -337,7 +337,7 @@ int sock_read(sock_t sockfd, void *buf, size_t count){
 	if ((i=select(sockfd+1,&r,NULL,NULL,&tv))>0){
 #endif
 		//return read(sockfd,buf,count);
-		return recv(sockfd, (RECV_ARG2)buf, count, 0);
+		return recv(sockfd, (RECV_ARG2)buf, count, MSG_NOSIGNAL);
 #ifdef HAVE_SELECT
 	}
 	if (i==0)

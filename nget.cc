@@ -1086,6 +1086,9 @@ int main(int argc, const char ** argv){
 #ifdef SIGQUIT
 		signal(SIGQUIT,term_handler);
 #endif
+#ifdef SIGPIPE
+		signal(SIGPIPE,SIG_IGN); //don't die on broken connections (some platforms don't support MSG_NOSIGNAL)
+#endif
 		{
 			char *home;
 			home=getenv("NGETHOME");

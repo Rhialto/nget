@@ -56,9 +56,13 @@ inline const char* sock_hstrerror(int e) {return hstrerror(e);}
 #endif /* !HAVE_WINSOCK_H */
 #include <stdarg.h>
 
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
+
 inline int sock_write(sock_t sockfd, const char *buf, size_t count) {
 	//return write(sockfd, buf, count);
-	return send(sockfd, buf, count, 0);
+	return send(sockfd, buf, count, MSG_NOSIGNAL);
 }
 
 extern int sock_timeout;
