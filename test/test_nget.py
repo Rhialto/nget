@@ -220,6 +220,19 @@ class XoverTestCase(unittest.TestCase, DecodeTest_base):
 		self.verifyoutput('0002')
 		self.verifyoutput('0002', nget=self.fxnget)
 
+	def test_lite_largearticlenumbers(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=2147483647)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=4294967295L)
+
+		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
+		self.failIf(self.nget.run("-w %s -g test -r ."%litelist), "nget process returned with an error")
+		self.verifynonewfiles()
+		self.failIf(self.nget.runlite(litelist), "ngetlite process returned with an error")
+		self.failIf(self.nget.run("-N -G test -r ."), "nget process returned with an error")
+
+		self.verifyoutput('0002')
+
 
 class DiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_article(self, args):
@@ -316,6 +329,19 @@ class AuthTestCase(unittest.TestCase, DecodeTest_base):
 		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
 		self.verifyoutput('0002')
 
+	def test_lite_GroupAuth(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.servers.servers[0].adduser('ralph','5') #ralph has full auth
+		self.servers.servers[0].adduser('','',{'group':0}) #default can't do GROUP
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, hostoptions=[{'user':'ralph', 'pass':'5'}])
+		self.servers.start()
+		self.addarticles('0002', 'uuencode_multi')
+		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
+		self.failIf(self.nget.run("-w %s -g test -r ."%litelist), "nget process returned with an error")
+		self.failIf(self.nget.runlite(litelist), "ngetlite process returned with an error")
+		self.failIf(self.nget.run("-N -G test -r ."), "nget process returned with an error")
+		self.verifyoutput('0002')
+
 	def test_ArticleAuth(self):
 		self.servers = nntpd.NNTPD_Master(1)
 		self.servers.servers[0].adduser('ralph','5') #ralph has full auth
@@ -324,6 +350,19 @@ class AuthTestCase(unittest.TestCase, DecodeTest_base):
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
 		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.verifyoutput('0002')
+		
+	def test_lite_ArticleAuth(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.servers.servers[0].adduser('ralph','5') #ralph has full auth
+		self.servers.servers[0].adduser('','',{'article':0}) #default can't do ARTICLE
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, hostoptions=[{'user':'ralph', 'pass':'5'}])
+		self.servers.start()
+		self.addarticles('0002', 'uuencode_multi')
+		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
+		self.failIf(self.nget.run("-w %s -g test -r ."%litelist), "nget process returned with an error")
+		self.failIf(self.nget.runlite(litelist), "ngetlite process returned with an error")
+		self.failIf(self.nget.run("-N -G test -r ."), "nget process returned with an error")
 		self.verifyoutput('0002')
 		
 	def test_FailedAuth(self):

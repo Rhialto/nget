@@ -71,6 +71,16 @@ class TestNGet:
 		os.environ['NGETHOME'] = self.rcdir
 		return os.system(self.exe+" -p "+self.tmpdir+" "+args)
 	
+	def runlite(self, args):
+		olddir = os.getcwd()
+		try:
+			ngetliteexe = os.path.abspath(os.path.join(os.path.split(self.exe)[0], 'ngetlite'))
+			os.chdir(self.tmpdir)
+			return os.system(ngetliteexe+" "+args)
+		finally:
+			os.chdir(olddir)
+
+	
 	def clean_all(self):
 		shutil.rmtree(self.rcdir)
 		
