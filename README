@@ -1,12 +1,8 @@
 nget 0.26  Copyright 1999-2004 Matthew Mueller <donut AT dakotacom.net>
 
-Note if you are upgrading from a version 0.8-0.11 to 0.12 or later:
- You will need to run the fixnames.sh script to rename your cache files to the
- new names.  See Changelog for more info.
-
-Note if you are upgrading from a version 0.8-0.15.2 to 0.16 or later:
- The cache file format has changed, so the cache dir is now .nget4.
- Upgrade should be as simple as "mv ~/.nget3 ~/.nget4; rm ~/.nget4/*,cache*"
+Note if you are upgrading from a version 0.16-0.26 to 0.27 or later:
+ The cache file format has changed, so the cache dir is now .nget5.
+ Upgrade should be as simple as "mv ~/.nget4 ~/.nget5; rm ~/.nget5/*,cache*"
 
 
 Requirements:

@@ -1,4 +1,6 @@
 2004-xx-xx v?.??:
+  * Cache file format change, so switch default NGETHOME to ~/.nget5.
+    (Upgrade should be as simple as "mv ~/.nget4 ~/.nget5; rm ~/.nget5/*,cache*")
   * Don't store fileid codes in the cache file, instead calculate them when needed. (Can halve size of gzipped cache files.)
   * Change fileid calculation for single-part posts to include the message-id, fixes problem with multiple posts with the same subject/author not downloading when using -K.
   * Support IPv6 if available. (Can force off with configure --disable-ipv6)
