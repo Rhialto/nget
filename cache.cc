@@ -19,7 +19,6 @@
 #include "cache.h"
 #include "strreps.h"
 #include "log.h"
-#include SLIST_H
 #include <memory>
 #include <errno.h>
 #include "nget.h"
@@ -157,9 +156,9 @@ c_nntp_files_u* c_nntp_cache::getfiles(const string &path, const string &temppat
 	if (fc==NULL) fc=new c_nntp_files_u;
 	//c_regex hreg(match,REG_EXTENDED + ((flags&GETFILES_CASESENSITIVE)?0:REG_ICASE));
 
-	filematchlist *flist=NULL;
+	dupe_file_checker flist;
 	if (!(flags&GETFILES_NODUPEFILECHECK))
-		buildflist(path, &flist);
+		flist.addfrompath(path);
 
 	t_nntp_files::const_iterator fi;
 	pair<t_nntp_files_u::const_iterator,t_nntp_files_u::const_iterator> firange;
@@ -182,7 +181,7 @@ c_nntp_files_u* c_nntp_cache::getfiles(const string &path, const string &temppat
 					goto file_match_loop_end;//can't continue out of multiple loops
 			}
 
-			if (!(flags&GETFILES_NODUPEFILECHECK) && flist_checkhavefile(flist,f->subject.c_str(),f->bamid(),f->bytes())){
+			if (!(flags&GETFILES_NODUPEFILECHECK) && flist.checkhavefile(f->subject.c_str(),f->bamid(),f->bytes())){
 				if (flags&GETFILES_DUPEFILEMARK)
 					midinfo->insert(f->bamid());
 				continue;
@@ -195,12 +194,6 @@ c_nntp_files_u* c_nntp_cache::getfiles(const string &path, const string &temppat
 			fc->bytes+=f->bytes();
 		}
 file_match_loop_end: ;
-	}
-	if (flist){
-		filematchlist::iterator curl;
-		for (curl=flist->begin();curl!=flist->end();++curl)
-			delete *curl;
-		delete flist;
 	}
 //	if (!nm){
 //		delete fc;fc=NULL;

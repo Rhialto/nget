@@ -38,8 +38,15 @@ class file_match {
 };
 typedef slist<file_match *> filematchlist;
 
-void buildflist(const string &path, filematchlist **l);
-void flist_addfile(filematchlist &l, const string &path, const char *filename);
-int flist_checkhavefile(filematchlist *fl,const char *f,string messageid,ulong bytes);
+class dupe_file_checker {
+	private:
+		filematchlist flist;
+	public:
+		void addfrompath(const string &path);
+		void addfile(const string &path, const char *filename);
+		int checkhavefile(const char *f, const string &messageid, ulong bytes);
+		void clear(void);
+		~dupe_file_checker() {clear();}
+};
 
 #endif
