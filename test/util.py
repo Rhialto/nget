@@ -102,6 +102,8 @@ class TestNGet:
 		os.mkdir(self.tmpdir)
 		
 	def clean_all(self):
+		if os.environ.get('TEST_NGET_NOCLEAN'):
+			return
 		shutil.rmtree(self.rcdir)
 		
 
