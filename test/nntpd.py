@@ -175,12 +175,25 @@ class _TimeToQuit(Exception): pass
 
 class StoppableThreadingTCPServer(SocketServer.ThreadingTCPServer):
 	def __init__(self, addr, handler):
-		#self.controlsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.controlr, self.controlw = os.pipe()
+		if os.name == "nt":
+			import socket
+			s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			s1.bind(('127.0.0.1',0))
+			s1.listen(1)
+			s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			s2.connect(s1.getsockname())
+			self.controlr = s1.accept()[0]
+			self.controlw = s2
+			s1.close()
+		else:
+			self.controlr, self.controlw = os.pipe()
 		SocketServer.ThreadingTCPServer.__init__(self, addr, handler)
 
 	def stop_serving(self):
-		os.write(self.controlw, 'FOO')
+		if hasattr(self.controlw, 'send'):
+			self.controlw.send('FOO')
+		else:
+			os.write(self.controlw, 'FOO')
 	
 	def get_request(self):
 		readfds = [self.socket, self.controlr]
