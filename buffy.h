@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include "log.h"
 
+//Main reason to use this instead of std::string is to get a non-const c_str so we can strtok it.
 class CharBuffer {
 	protected:
 		char *cbuf;
@@ -46,7 +47,7 @@ class CharBuffer {
 		char *data(void){return cbuf;}
 		char *c_str(void){
 			if (bsize>=reserved)
-				reserve(reserved*2);
+				reserve(reserved+1);//if we are doing a c_str() we are probably done adding stuff, so don't double the reserve just for the null char.
 			cbuf[bsize]=0;
 			return cbuf;
 		}
@@ -55,7 +56,7 @@ class CharBuffer {
 				reserve(reserved*2);
 			cbuf[bsize++]=b;
 		}
-		CharBuffer(int initialreserve=3) : cbuf(NULL),bsize(0),reserved(0) {
+		CharBuffer(int initialreserve=4) : cbuf(NULL),bsize(0),reserved(0) {
 			reserve(initialreserve);
 		}
 		~CharBuffer() {
