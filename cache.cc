@@ -63,8 +63,11 @@ void c_nntp_header::setfileid(char *refstr, unsigned int refstrlen){
 #else
 	hash<char *> H;
 	fileid=H(subject.c_str())+H(author.c_str());//prolly not as good as crc32, but oh well.
-	if (refstrlen)
-		fileid+=H(refstr, refstrlen);
+	char *p = refstr;
+	while (p - refstr < refstrlen) {
+		fileid+=H(p);
+		p+=strlen(p) + 1;
+	}
 #endif
 }
 void c_nntp_header::set(char * str,const char *a,ulong anum,time_t d,ulong b,ulong l,const char *mid, char *refstr){
