@@ -69,6 +69,7 @@ class c_nrange{
 		c_nrange(string f="");
 		~c_nrange();
 		bool operator==(const c_nrange &b) const {return rlist==b.rlist;}
+		bool operator!=(const c_nrange &b) const {return rlist!=b.rlist;}
 };
 
 #endif
