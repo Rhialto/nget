@@ -34,7 +34,6 @@ class c_nrange{
 	public:
 		static const ulong varmin=0;
 		static const ulong varmax=ULONG_MAX;
-//		s_lrange water;
 		int changed;
 		string file;
 		t_rlist rlist;

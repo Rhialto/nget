@@ -80,16 +80,6 @@ void c_nrange::insert(ulong l,ulong h){
 	changed=1;
 }
 
-/*void c_nrange::insert(ulong l,ulong h){
-	if (rlist.empty()){
-		rlist[h]=l;
-		changed=1;
-		return;
-	}
-	for (ulong i=l;i<=h;i++)
-		insert(i);//ok, this could really be optomized a lot with a custom func, but I don't feel like doing that now, and inserting this little func here will let me do it later if I want to.
-}*/
-
 void c_nrange::remove(ulong l, ulong h){
 	const int debug=0;//hehe.
 	if (debug){printf("remove (%lu-%lu) nrange...",l,h);fflush(stdout);}
