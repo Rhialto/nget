@@ -219,7 +219,7 @@ void c_nntp_cache::getfiles(c_nntp_files_u *fc, c_mid_info *midinfo, const t_nnt
 static bool cache_ismultiserver(const t_nntp_server_info &server_info) {
 	int num=0;
 	for (t_nntp_server_info::const_iterator sii=server_info.begin(); sii!=server_info.end(); ++sii)
-		if (sii->second->num > 0)
+		if (sii->second.num > 0)
 			num++;
 	return num > 1;
 }
@@ -228,12 +228,10 @@ bool c_nntp_cache::ismultiserver(void) const {
 }
 
 c_nntp_server_info* c_nntp_cache::getserverinfo(ulong serverid){
-	c_nntp_server_info* servinfo=server_info[serverid];
-	if (servinfo==NULL){
-		servinfo=new c_nntp_server_info(serverid);
-		server_info[serverid]=servinfo;
-	}
-	return servinfo;
+	t_nntp_server_info::iterator i = server_info.find(serverid);
+	if (i != server_info.end())
+		return &i->second;
+	return &server_info.insert(t_nntp_server_info::value_type(serverid, serverid)).first->second;
 }
 int c_nntp_cache::additem(c_nntp_header *h){
 	assert(h);
@@ -465,7 +463,6 @@ class c_nntp_cache_reader {
 c_nntp_cache_reader::c_nntp_cache_reader(c_file *cf, c_mid_info *mi, t_nntp_server_info &server_info):f(cf), midinfo(mi) {
 	count=0;counta=0;curline=0;countdeada=0;totalnum=0;
 	
-	c_nntp_server_info *si;
 	char *buf;
 	char *t[5];
 	int i;
@@ -505,8 +502,7 @@ c_nntp_cache_reader::c_nntp_cache_reader(c_file *cf, c_mid_info *mi, t_nntp_serv
 		if (i>=4){
 			ulong serverid=atoul(t[0]);
 			if (nconfig.getserver(serverid)) {
-				si=new c_nntp_server_info(serverid,atoul(t[1]),atoul(t[2]),atoul(t[3]));
-				server_info[si->serverid]=si;
+				server_info.insert(t_nntp_server_info::value_type(serverid, c_nntp_server_info(serverid, atoul(t[1]), atoul(t[2]), atoul(t[3]))));
 			}else{
 				printf("warning: serverid %lu not found in server list\n",serverid);
 				set_cache_warn_status();
@@ -665,7 +661,6 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midi
 }
 c_nntp_cache::~c_nntp_cache(){
 	t_nntp_files::iterator i;
-	c_nntp_server_info *si;
 	if (saveit && (fileread || !files.empty())){
 		string tmpfn;
 		tmpfn=file+".tmp";
@@ -683,12 +678,9 @@ c_nntp_cache::~c_nntp_cache(){
 				c_nntp_part *np;
 				f->putf(CACHE_VERSION"\t%lu\n",totalnum);//START_MODE
 				//vv SERVERINFO_MODE
-				while (!server_info.empty()){
-					si=server_info.begin()->second;
-					assert(si);
-					f->putf("%lu\t%lu\t%lu\t%lu\n",si->serverid,si->high,si->low,si->num);//mode 4
-					server_info.erase(server_info.begin());
-					delete si;
+				for (t_nntp_server_info::const_iterator sii=server_info.begin(); sii!=server_info.end(); ++sii) {
+					const c_nntp_server_info &si = sii->second;
+					f->putf("%lu\t%lu\t%lu\t%lu\n",si.serverid,si.high,si.low,si.num);//mode 4
 				}
 				f->putf(".\n");
 				//end SERVERINFO_MODE
@@ -744,11 +736,6 @@ c_nntp_cache::~c_nntp_cache(){
 
 	if (quiet<2){printf("freeing cache: %lu parts, %lu files..\n",totalnum,(ulong)files.size());}//fflush(stdout);}
 
-	while (!server_info.empty()){
-		si=server_info.begin()->second;
-		server_info.erase(server_info.begin());
-		delete si;
-	}
 //	for(i = files.begin();i!=files.end();++i){
 		//delete (*i).second;
 //		(*i).second->dec_rcount();

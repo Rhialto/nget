@@ -228,7 +228,7 @@ class c_nntp_server_info {
 		c_nntp_server_info(ulong sid):serverid(sid){reset();}
 		c_nntp_server_info(ulong sid,ulong hig,ulong lo,ulong nu):serverid(sid),high(hig),low(lo),num(nu){}
 };
-typedef map<ulong,c_nntp_server_info*> t_nntp_server_info;
+typedef map<ulong,c_nntp_server_info> t_nntp_server_info;
 
 class c_message_state : public c_refcounted<c_message_state>{
 	public:
