@@ -41,7 +41,7 @@ int maxretry=20;
 c_prot_nntp nntp;
 
 void showhelp(void){
-	printf("ngetlite v0.19.1 - 'lite' nntp fetcher for nget\n"
+	printf("ngetlite v"PACKAGE_VERSION" - 'lite' nntp fetcher for nget\n"
 			"Copyright 2000-2002 Matthew Mueller <donut@azstarnet.com>\n");
 	printf("USAGE: ngetlite <listfiles ...>\n");
 	printf("listfiles are generated with nget and the -w <listfile> param\n");
