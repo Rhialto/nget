@@ -29,7 +29,7 @@
 #include "file.h"
 
 
-typedef map<ulong, ulong, less<ulong> > t_rlist;//we are going to use high as the key, and low as the value
+typedef map<ulong, ulong> t_rlist;//we are going to use high as the key, and low as the value
 class c_nrange{
 	public:
 		static const ulong varmin=0;

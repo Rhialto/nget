@@ -78,7 +78,7 @@ class c_nntp_server_article {
 		ulong bytes,lines;
 		c_nntp_server_article(ulong serverid,ulong articlenum,ulong bytes,ulong lines);
 };
-typedef multimap<ulong,c_nntp_server_article*,less<ulong> > t_nntp_server_articles;
+typedef multimap<ulong,c_nntp_server_article*> t_nntp_server_articles;
 typedef multimap<float,c_nntp_server_article*,greater<float> > t_nntp_server_articles_prioritized;
 class c_nntp_part {
 	public:
@@ -111,11 +111,11 @@ class c_nntp_part {
 };
 
 
-typedef map<int,c_nntp_part*,less<int> > t_nntp_file_parts;
+typedef map<int,c_nntp_part*> t_nntp_file_parts;
 
 //#define FILEFLAG_READ 1
 
-typedef map<ulong,int,less<int> > t_server_have_map;
+typedef map<ulong,int> t_server_have_map;
 
 class c_nntp_file : public c_refcounted<c_nntp_file>{
 	public:
@@ -193,9 +193,9 @@ struct e_nntp_file_subject : public e_nntp_file<typename Op::arg1_type,typename 
 
 //typedef hash_map<const char*, c_nntp_file*, hash<const char*>, eqstr> t_nntp_files;
 #ifdef HAVE_HASH_MAP_H
-typedef hash_multimap<t_id, c_nntp_file::ptr, hash<t_id>, equal_to<t_id> > t_nntp_files;
+typedef hash_multimap<t_id, c_nntp_file::ptr> t_nntp_files;
 #else
-typedef multimap<t_id, c_nntp_file::ptr, less<t_id> > t_nntp_files;
+typedef multimap<t_id, c_nntp_file::ptr> t_nntp_files;
 #endif
 //typedef map<ulong,c_nntp_file*,less<ulong> > t_nntp_files_u;
 class c_nntp_file_retr : public c_refcounted<c_nntp_file_retr>{
@@ -205,7 +205,7 @@ class c_nntp_file_retr : public c_refcounted<c_nntp_file_retr>{
 		c_nntp_file::ptr file;
 		c_nntp_file_retr(const string &p, const string &tp, const c_nntp_file::ptr &f):path(p),temppath(tp),file(f){}
 };
-typedef multimap<time_t,c_nntp_file_retr::ptr,less<ulong> > t_nntp_files_u;
+typedef multimap<time_t,c_nntp_file_retr::ptr> t_nntp_files_u;
 class c_nntp_files_u {
 	public:
 		uint_fast64_t bytes, lines;
@@ -233,7 +233,7 @@ class c_nntp_server_info {
 		c_nntp_server_info(ulong sid):serverid(sid){reset();}
 		c_nntp_server_info(ulong sid,ulong hig,ulong lo,ulong nu):serverid(sid),high(hig),low(lo),num(nu){}
 };
-typedef map<ulong,c_nntp_server_info*,less<ulong> > t_nntp_server_info;
+typedef map<ulong,c_nntp_server_info*> t_nntp_server_info;
 
 class c_message_state : public c_refcounted<c_message_state>{
 	public:

@@ -64,7 +64,7 @@ class c_server {
 			}
 		}
 };
-typedef map<ulong,c_server*,less<ulong> > t_server_list;
+typedef map<ulong,c_server*> t_server_list;
 //typedef map<ulong,c_data_section*,less<ulong> > t_server_list;
 
 
@@ -74,7 +74,7 @@ class c_server_priority {
 		float baseprio;
 		c_server_priority(c_server *serv,float basep):server(serv),baseprio(basep){}
 };
-typedef map<ulong,c_server_priority*, less<ulong> > t_server_priority_grouping;
+typedef map<ulong,c_server_priority*> t_server_priority_grouping;
 
 class c_server_priority_grouping {
 	public:
