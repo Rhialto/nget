@@ -491,9 +491,6 @@ void c_prot_nntp::nntp_dogetarticle(arinfo*ari,quinfo*toti,list<string> &buf){
 			lp=cbuf;
 		ari->bytesdone+=glr;
 		ari->linesdone++;
-#ifdef FILE_DEBUG
-		sock.file_debug->DEBUGLOGPUTF("%s %lu bytes %lu(%lu): %s",header?"header":"line",ari->linesdone,glr,ari->bytesdone,cbuf);
-#endif
 		if (header && lp[0]==0){
 			//			printf("\ntoasted header statssssssss\n");
 			header=0;
@@ -521,14 +518,6 @@ void c_prot_nntp::nntp_dogetarticle(arinfo*ari,quinfo*toti,list<string> &buf){
 			ari->linesdone!=ari->linestot){
 		printf("doarticle %lu: %lu!=%lu || %lu!=%lu\n",ari->anum,ari->bytesdone,ari->bytestot,ari->linesdone,ari->linestot);
 	}
-#ifdef FILE_DEBUG
-	sock.file_debug->DEBUGLOGPUTF("doarticle %lu: %lu(%lu),%lu(%lu)",ari->anum,ari->bytesdone,ari->bytestot,ari->linesdone,ari->linestot);
-	if (ari->linesdone!=ari->linestot)
-		sock.file_debug->save();
-	else
-		sock.file_debug->purge();
-	//		sock.file_debug->save();
-#endif
 	c_server::ptr host = connection->server;
 	if (!(ari->linesdone>=ari->linestot+host->lineleniencelow && ari->linesdone<=ari->linestot+host->lineleniencehigh)){
 		printf("unequal line count %lu should equal %lu",ari->linesdone,ari->linestot);
@@ -578,16 +567,6 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 					ari->server_name=connection->server->alias.c_str();
 				nntp_dogroup(0);
 				chkreply_setok(stdputline(debug>=DEBUG_MED,"ARTICLE %lu",sa->articlenum));
-#ifdef FILE_DEBUG
-				{
-					char *sav;
-					asprintf(&sav,"/tmp/%s.%li-%lu.%lu.log.gz",group->group.c_str(),part->date,sa->serverid,sa->articlenum);
-					sock.file_debug->start(sav);
-					free(sav);
-					//		sock.file_debug->purge();
-				}
-				sock.file_debug->DEBUGLOGPUTF("doarticle %lu....",ari->anum);
-#endif
 				nntp_dogetarticle(ari,toti,buf);
 			} catch (baseCommEx &e) {
 				printCaughtEx(e);
@@ -857,7 +836,6 @@ void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_l
 //					ainfo.bytestot=p->bytes;
 					if (!options.writelite.empty()){
 						c_file_fd fw(options.writelite.c_str(), O_WRONLY|O_CREAT|O_APPEND, PRIVMODE);
-//							throw ApplicationExFatal(Ex_INIT,"couldn't open %s",options.writelite.c_str());//#######
 						nntp_dowritelite_article(fw,p,fn);
 						fw.close();
 						free(fn);
@@ -1106,9 +1084,6 @@ c_prot_nntp::c_prot_nntp(void){
 //	cbuf_size=4096;
 	gcache=NULL;
 //	ch=-1;
-#ifdef FILE_DEBUG
-	sock.file_debug=new c_debug_file;
-#endif
 	connection=NULL;
 	midinfo=NULL;
 	force_host=NULL;
@@ -1117,8 +1092,4 @@ c_prot_nntp::~c_prot_nntp(void){
 //	printf("nntp destructing\n");
 //	if (midinfo)delete midinfo;
 	cleanup();
-#ifdef FILE_DEBUG
-	sock.file_debug->purge();
-	delete sock.file_debug;
-#endif
 }

@@ -239,59 +239,15 @@ netaddress is the host name to connect to.
 The function returns the socket, ready for action.*/
 int make_connection(int type,const char *netaddress,const char *service,char * buf, int buflen){
 	PERROR("make_connection(%i,%s,%s,%p,%i)",type, netaddress, service,buf, buflen);
-	/* First convert service from a string, to a number... */
-	//int r;
-//	struct in_addr *addr;
 	int sock, connected;
 	struct sockaddr_in address;
-	//	char *tmp;
-	//struct hostent hostb;//,*host;
-//	static struct in_addr saddr;
-//	struct in_addr addr;
-	//int err;
-
-	errno=0;//prevent showing bogus errno
-//	if (!(service && *service))
-//		service=defservice;
-
-
-	//	if ((tmp=strrchr(netaddress,':')))
-	//	     service=tmp+1;
 	char *prot;
 	if (type == SOCK_STREAM)
-//		port = atoport(service, "tcp",buf,buflen);
 		prot="tcp";
 	else if (type == SOCK_DGRAM)
-//		port = atoport(service, "udp",buf,buflen);
 		prot="udp";
 	else 
 		throw FileEx(Ex_INIT,"make_connection:  Invalid prot type %i",type);
-//	if (r == -1) {
-//		PERROR("make_connection:  Invalid socket type %s",service);
-//		return -1;
-//	}
-	//	if (tmp)
-	//	     *tmp=0;
-/*	if (inet_aton(netaddress,&saddr)) {
-		addr=&saddr;
-	} else {
-#ifdef HAVE_GETHOSTBYNAME_R
-		gethostbyname_r(netaddress,&hostb,buf,buflen,&host,&err);
-#else
-		host = gethostbyname(netaddress);
-#endif
-		if (host != NULL) {
-			addr=(struct in_addr *)*host->h_addr_list;
-		}
-		else addr=NULL;
-	}*/
-//	if (atoaddr(netaddress,&addr,buf,buflen)==0){
-//	if (addr == NULL) {
-//		PERROR("make_connection:  Invalid network address %s (%i %i)",netaddress,0,sock_errno);
-		//		if (tmp) *tmp=':';
-//		return -1;
-//	}
-	//	if (tmp) *tmp=':';
 
 	memset((char *) &address, 0, sizeof(address));
 	atosockaddr(netaddress,service,prot,&address,buf,buflen);
@@ -300,16 +256,9 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 	i=(unsigned char *)&address.sin_addr.s_addr;
 	PMSG("Connecting to %i.%i.%i.%i:%i",i[0],i[1],i[2],i[3],ntohs(address.sin_port));
 
-/*	address.sin_family = AF_INET;
-	address.sin_port = (port);
-	address.sin_addr.s_addr = addr.s_addr;*/
-
 	sock = socket(address.sin_family, type, 0);
 	if (sock < 0)
 		throw FileEx(Ex_INIT,"socket: %s",sock_strerror(sock_errno));
-
-
-	//  printf("Connecting to %s on port %d.\n",inet_ntoa(*addr),htons(port));
 
 	if (type == SOCK_STREAM) {
 #if defined(HAVE_SELECT) && defined(HAVE_FCNTL)

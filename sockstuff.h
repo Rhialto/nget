@@ -60,7 +60,6 @@ void atosockaddr(const char *netaddress, const char *defport, const char *proto,
 int atoport(const char *service,const char *proto,char * buf, int buflen);
 void atoaddr(const char *netaddress,struct in_addr *addr,char *buf, int buflen);
 
-//int make_connection(char *service, int type, char *netaddress,char * buf, int buflen);
 int make_connection(int type,const char *netaddress,const char *service,char * buf, int buflen);
 
 int getsocketaddress(int s, struct sockaddr_in *addr);

@@ -31,13 +31,6 @@
 #endif
 
 #include "log.h"
-#ifdef FILE_DEBUG
-#define FILEDEBUG(a, args...) if (file_debug) file_debug->DEBUGLOGPUTF(a, ## args)
-#define FILEDEBUGRBUF(a) if (file_debug) file_debug->DEBUGLOGPUTF("%u %u %u %u %i %i "a,rbufsize,rbufused,rbufofp,rbufoff,rbufmatch,rbuft)
-#else
-#define FILEDEBUG(a, args...)
-#define FILEDEBUGRBUF(a)
-#endif
 
 //DEFINE_EX_CLASSES(File, baseEx);
 DEFINE_EX_SUBCLASS(FileEx, ApplicationExFatal, true);
@@ -63,28 +56,15 @@ class c_file_buffy : public c_buffy{
 		//~c_file_buffy();
 };
 class c_file {
-//	unsigned long size;
   private:
-//	c_buffer rbuf,wbuf;
-//	int ftype;
-//	int fh;
-//	FILE *sh;
-//#ifdef HAVE_LIBZ
-//	gzFile gzh;
-//#endif
 
 	virtual ssize_t dowrite(const void *data,size_t len)=0;
 	virtual ssize_t doread(void *data,size_t len)=0;
-//	virtual int doopen(const char *name,const char * mode)=0;
 	virtual int doflush(void)=0;
 	virtual int doclose(void)=0;
 	virtual const char *dostrerror(void)=0;
 	
   protected:
-#ifdef FILE_DEBUG
-	c_debug_file *file_debug;
-#endif
-//	c_rbuffer *rbuffer;
 	c_file_buffy *rbuffer;
 
 	string m_name;
@@ -100,51 +80,18 @@ class c_file {
 	ssize_t write(const void *data,size_t len);
 	ssize_t read(void *data,size_t len);
 	//buffered funcs: must call initrbuf first.
-	ssize_t bread(size_t len);//buffered read, must be used instead of normal read, if you are using bgets
-	//char * bgets(void);//buffered gets, should be faster than normal gets, definatly for tcp or gz. maybe not for stream.
 	int bgets(void){return rbuffer->bgets();}//buffered gets, should be faster than normal gets, definatly for tcp or gz. maybe not for stream.
 	char *bgetsp(void){rbuffer->bgets(); return rbuffer->cbufp();}
 	int btoks(char tok, char **toks, int max){return rbuffer->btoks(tok,toks,max);}
 	int bpeek(void){return rbuffer->bpeek();}
 	bool beof(void){return rbuffer->beof();}
 	void initrbuf(void);
-//	int open(const char *name,const char * mode);
 	void flush(int local=0);
 	void close(void);
 	int close_noEx(void); //same as close, but never throws an exception
 
 	virtual int isopen(void) const = 0;
 };
-
-#ifndef NDEBUG
-#define TESTPIPE_STRING
-#ifdef TESTPIPE_STRING
-#include <string>
-#else
-#include <rope.h>
-#endif
-class c_file_testpipe : public c_file {
-  private:
-#ifdef TESTPIPE_STRING
-	string data;
-#else
-	crope data;
-#endif
-	int o;
-
-	virtual ssize_t dowrite(const void *buf,size_t len);
-	virtual ssize_t doread(void *buf,size_t len);
-	virtual int doflush(void);
-	virtual int doclose(void);
-	virtual const char *dostrerror(void) {return "?";}
-  public:
-	virtual int isopen(void) const;
-	int open(void);
-	int datasize(void){return data.size();}
-	c_file_testpipe(void):c_file("<testpipe>") {o=0;};
-	~c_file_testpipe(){close_noEx();};
-};
-#endif
 
 class c_file_fd : public c_file {
   private:
@@ -162,12 +109,13 @@ class c_file_fd : public c_file {
 	c_file_fd(int dfd, const char *name="");
 	~c_file_fd(){close_noEx();};
 };
+
 #ifdef USE_FILE_STREAM
 class c_file_stream : public c_file {
   private:
 	FILE *fs;
 
-	virtual ssize_t dowrite(const void *buf,size_t len);//fwrite doesn't seem to be able to notice out of disk errors. be warned.
+	virtual ssize_t dowrite(const void *buf,size_t len);
 	virtual ssize_t doread(void *buf,size_t len);
 	virtual int doflush(void);
 	virtual int doclose(void);
@@ -178,6 +126,7 @@ class c_file_stream : public c_file {
 	~c_file_stream(){close_noEx();};
 };
 #endif
+
 class c_file_tcp : public c_file {
   private:
 	int sock;

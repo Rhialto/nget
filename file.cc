@@ -41,15 +41,7 @@ int c_file_buffy::bfill(uchar *b,int l){
 }
 
 c_file::c_file(const char *fname): m_name(fname){
-//	ftype=-1;
-//	fh=-1;sh=NULL;
-//#ifdef HAVE_LIBZ
-//	gzh=NULL;
-//#endif
 	rbuffer=NULL;
-#ifdef FILE_DEBUG
-	file_debug=NULL;
-#endif
 }
 
 c_file::~c_file(){
@@ -66,12 +58,6 @@ ssize_t c_file::putf(const char *data,...){
 	l=vasprintf(&fpbuf,data,ap);
 	va_end(ap);
 
-	//	if (wbuf.bufput(data,len)){
-	//		dowrite(wbuf.buf,wbuf.bufused);
-	//		dowrite(data,len);
-	//		wbuf.empty();
-	//	}
-	//	return len;
 	i=write(fpbuf,l);
 	free(fpbuf);
 	return i;
@@ -94,10 +80,6 @@ ssize_t c_file::write(const void *data,size_t len){
 	return sent;
 }
 
-//int c_file::open(const char *name,const char * mode){
-//	close();
-//	return doopen(name,mode);
-//}
 void c_file::flush(int local){
 //	int i=0;
 //###########3 dowrite(buffers..)
@@ -112,7 +94,6 @@ void c_file::close(void){
 		if (doclose() != 0)
 			throw FileEx(Ex_INIT,"close %s (%s)", name(), dostrerror());
 	}
-//	resetrbuf();rbufstate=0;
 	if (rbuffer)rbuffer->clearbuf();
 }
 int c_file::close_noEx(void){
@@ -126,49 +107,9 @@ int c_file::close_noEx(void){
 void c_file::initrbuf(void){
 	if (!rbuffer){
 		rbuffer=new c_file_buffy(this);
-#ifdef FILE_DEBUG
-		rbuffer->file_debug=file_debug;
-#endif
 	}
 };
-ssize_t c_file::bread(size_t len){
-	return -1;//unsupported with c_buffy yet.
-}
 
-#ifndef NDEBUG
-int c_file_testpipe::open(void){
-	o=1;
-	return 0;
-}
-int c_file_testpipe::doflush(void){
-	return 0;
-}
-int c_file_testpipe::doclose(void){
-	o=0;
-	return 0;
-}
-inline int c_file_testpipe::isopen(void)const{
-	return (o);
-}
-inline ssize_t c_file_testpipe::dowrite(const void *dat,size_t len){
-	data.append((char*)dat,len);
-	return len;
-}
-inline ssize_t c_file_testpipe::doread(void *dat,size_t len){
-//	if (rand()%2==0){
-//		int ol=len;
-		len=rand()%len+1;
-//		printf("from %i to %i\n",ol,len);
-//	}
-#ifdef TESTPIPE_STRING
-	int i=data.copy((char*)dat,len,0);
-#else
-	int i=data.copy(0,len,(char*)dat);
-#endif
-	data.erase(0,len);
-	return i;
-}
-#endif
 
 #ifdef HAVE_LIBZ
 c_file_gz::c_file_gz(const char *name,const char * mode):c_file(name){
@@ -205,6 +146,7 @@ inline ssize_t c_file_gz::doread(void *data,size_t len){
 	return gzread(gzh,data,len);
 }
 #endif
+
 
 c_file_fd::c_file_fd(int dfd, const char *name):c_file(name){
 	fd=::dup(dfd);
@@ -265,6 +207,7 @@ inline ssize_t c_file_fd::dowrite(const void *data,size_t len){
 inline ssize_t c_file_fd::doread(void *data,size_t len){
 	return ::read(fd,data,len);
 }
+
 
 #ifdef USE_FILE_STREAM
 int c_file_stream::c_file_stream(const char *name,const char * mode):c_file(name){
