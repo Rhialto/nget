@@ -1,3 +1,9 @@
+nget (0.15-1) unstable; urgency=low
+
+  * New version.
+
+ -- Matthew Mueller <donut@azstarnet.com>  Thu,  1 Nov 2001 16:44:38 -0700
+
 nget (0.14-2) unstable; urgency=low
 
   * Fix the problem with apt-get source nget in the last upload.
