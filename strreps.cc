@@ -17,6 +17,8 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 #include "strreps.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 #ifdef HAVE_CONFIG_H
 
