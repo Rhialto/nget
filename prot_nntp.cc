@@ -358,10 +358,13 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 			}
 			redone++;
 		}
-		if (!succeeded)
-			throw TransportExFatal(Ex_INIT,"no servers queried successfully");
-		set_group_warn_status(attempted - succeeded);
-		set_group_ok_status();
+		if (succeeded) {
+			set_group_warn_status(attempted - succeeded);
+			set_group_ok_status();
+		}else {
+			set_group_error_status();
+			printf("no servers queried successfully\n");
+		}
 	}
 
 	gcache_ismultiserver = gcache->ismultiserver();

@@ -4,6 +4,9 @@
   * Make all STL includes use the new method. (Fixes warnings under gcc 3.1)
   * Fix error on writing temp file sometimes leaving the broken temp file rather than deleting it.
   * Fix restoring of previous group upon completion of -@.
+  * Reset to previous startpath when -@ completes, not to previous -p.
+  * Improved skipping of command line args when bad parameters are given. (Eg, now nget -p bad -r foo -p good -r bar will still execute the -p good -r bar part, rather than exiting on the first error.)
+  * Added GROUP error exit status (code 16) for when all servers fail to update a group's headers. (Previously gave an OTHER error.)
 
 2002-05-17 v0.18.2:
   * Work around exception handling segfaults with older versions of gcc by not using multiple inheritance in exception classes. (reported by Waldemar la Tendresse)

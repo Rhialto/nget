@@ -71,6 +71,7 @@ SET_x_ERROR_STATUS(decode, 1);
 SET_x_ERROR_STATUS(path, 2);
 SET_x_ERROR_STATUS(user, 4);
 SET_x_ERROR_STATUS(retrieve, 8);
+SET_x_ERROR_STATUS(group, 16);
 SET_x_ERROR_STATUS(other, 64);
 SET_x_ERROR_STATUS(fatal, 128);
 SET_x_OK_STATUS(total, 1);
@@ -133,6 +134,7 @@ void print_error_status(void){
 		print_x_ERROR_STATUS(path);
 		print_x_ERROR_STATUS(user);
 		print_x_ERROR_STATUS(retrieve);
+		print_x_ERROR_STATUS(group);
 		print_x_ERROR_STATUS(other);
 		print_x_ERROR_STATUS(fatal);
 	}
@@ -350,6 +352,9 @@ string ngcachehome;
 
 c_nget_config nconfig;
 
+#define BAD_HOST 1
+#define BAD_PATH 2
+#define BAD_TEMPPATH 4
 void nget_options::do_get_path(string &s){char *p;goodgetcwd(&p);s=p;free(p);}
 
 nget_options::nget_options(void){
@@ -487,7 +492,6 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 	int opt_idx;
 #endif
 #endif
-	int redo=0,redone=0,mustredo_on_skip=0;
 	const char * loptarg=NULL;
 	//printf("limit:%i tries:%i case:%i complete:%i dupcheck:%i\n",linelimit,maxretry,gflags&GETFILES_CASESENSITIVE,!(gflags&GETFILES_GETINCOMPLETE),!(gflags&GETFILES_NODUPECHECK));
 
@@ -495,399 +499,331 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 	optCon = poptGetContext(NULL, argc, POPT_ARGV_T argv, optionsTable, sub?POPT_CONTEXT_KEEP_FIRST:0);
 #endif
 	while (1){
-		if (redo){
-			redo=0;
-		}else {
-//			if ((
-			c=
+//		if ((
+		c=
 #ifdef HAVE_LIBPOPT
-						poptGetNextOpt(optCon)
+					poptGetNextOpt(optCon)
 #else //HAVE_LIBPOPT
 #ifdef HAVE_GETOPT_LONG
-						getopt_long(argc,argv,OPTIONS,long_options,&opt_idx)
+					getopt_long(argc,argv,OPTIONS,long_options,&opt_idx)
 #else
-						getopt(argc,argv,OPTIONS)
+					getopt(argc,argv,OPTIONS)
 #endif
 #endif //!HAVE_LIBPOPT
-						;
-//				)==-1)
-//				c=-12345;
+					;
+//			)==-1)
+//			c=-12345;
 #ifdef HAVE_LIBPOPT
-			loptarg=poptGetOptArg(optCon);
+		loptarg=poptGetOptArg(optCon);
 #else
-			loptarg=optarg;
+		loptarg=optarg;
 #endif //HAVE_LIBPOPT
-			//					break;
-			redone=0;
-		}
+		//					break;
 //		printf("arg:%c(%i)=%s(%p)\n",isprint(c)?c:'.',c,loptarg,loptarg);
-		try {
-			switch (c){
-				//					case 'R':
-				//						if(!group)
-				//							perror("no group specified\n");
-				//						nntp.nntp_queueretrieve(loptarg,linelimit,0,gflags);
-				//						break;
-				case 'T':
-					options.gflags|=GETFILES_TESTMODE;
-					PDEBUG(DEBUG_MIN,"testmode now %i",options.gflags&GETFILES_TESTMODE > 0);
-					break;
-				case OPT_TEST_MULTI:
-					options.set_test_multi(loptarg);
-					break;
-				case 'M':
-					options.gflags|= GETFILES_MARK;
-					options.gflags&= ~GETFILES_UNMARK;
-					break;
-				case 'U':
-					options.gflags|= GETFILES_UNMARK;
-					options.gflags&= ~GETFILES_MARK;
-					options.parse_dupe_flags("I");
-					break;
-				//case 1:
-				case 'R':
-					if (!options.badskip){
-						if(options.group.isnull()){
-							printf("no group specified\n");
-							set_user_error_status();
-						}else{
-							generic_pred *p=make_pred(loptarg);
-							if (p){
-								nntp.filec=nntp.gcache->getfiles(options.path,options.temppath,nntp.filec,nntp.midinfo,p,options.gflags);
-								delete p;
-								options.qstatus=1;
-							}
-						}
-					}
-					break;
-				case 'r':
-					if (!options.badskip){
-						if(options.group.isnull()){
-							printf("no group specified\n");
-							set_user_error_status();
-						}else{
-							/*c_regex_nosub *reg=new c_regex_nosub(loptarg,REG_EXTENDED + ((gflags&GETFILES_CASESENSITIVE)?0:REG_ICASE));
-							  if (!reg)
-							  throw new c_error(EX_A_FATAL,"couldn't allocate regex");
-							  if (reg->geterror()){
-							  char buf[256];
-							  int e=reg->geterror();
-							  reg->strerror(buf,256);
-							  delete reg;
-							//throw new c_error(EX_A_FATAL,"regex error %i:%s",e,buf);
-							printf("regex error %i:%s\n",e,buf);break;
-							}
-							nntp_pred *p=ecompose2(new e_land<bool>,
-							new e_binder2nd<e_nntp_file_lines<e_ge<ulong> > >(linelimit),
-							new e_binder2nd_p<e_nntp_file_subject<e_eq<string,c_regex_nosub*> > >(reg));
-
-							nntp.filec=nntp.gcache->getfiles(nntp.filec,nntp.grange,p,gflags);
+		switch (c){
+			//					case 'R':
+			//						if(!group)
+			//							perror("no group specified\n");
+			//						nntp.nntp_queueretrieve(loptarg,linelimit,0,gflags);
+			//						break;
+			case 'T':
+				options.gflags|=GETFILES_TESTMODE;
+				PDEBUG(DEBUG_MIN,"testmode now %i",options.gflags&GETFILES_TESTMODE > 0);
+				break;
+			case OPT_TEST_MULTI:
+				options.set_test_multi(loptarg);
+				break;
+			case 'M':
+				options.gflags|= GETFILES_MARK;
+				options.gflags&= ~GETFILES_UNMARK;
+				break;
+			case 'U':
+				options.gflags|= GETFILES_UNMARK;
+				options.gflags&= ~GETFILES_MARK;
+				options.parse_dupe_flags("I");
+				break;
+			//case 1:
+			case 'R':
+				if (!options.badskip){
+					if(options.group.isnull()){
+						printf("no group specified\n");
+						set_user_error_status();
+					}else{
+						generic_pred *p=make_pred(loptarg);
+						if (p){
+							nntp.filec=nntp.gcache->getfiles(options.path,options.temppath,nntp.filec,nntp.midinfo,p,options.gflags);
 							delete p;
-							if (!nntp.filec)
-							printf("nntp_retrieve: no match for %s\n",loptarg);
-							//									throw new c_error(EX_U_WARN,"nntp_retrieve: no match for %s",match);
-							//								nntp.nntp_queueretrieve(loptarg,linelimit,gflags);
-							qstatus=1;*/
-							ostringstream s; 
-							s << "subject \"" << loptarg << "\" =~";
-							if (options.linelimit > 0)
-								s << " lines " << options.linelimit << " >= &&" ;
-							if (options.maxlinelimit < ULONG_MAX)
-								s << " lines " << options.maxlinelimit << " <= &&" ;
-							generic_pred *p=make_pred(s.str().c_str());
-							if (p){
-								nntp.filec=nntp.gcache->getfiles(options.path,options.temppath,nntp.filec,nntp.midinfo,p,options.gflags);
-								delete p;
-								options.qstatus=1;
-							}
+							options.qstatus=1;
 						}
 					}
-					break;
-				case 'i':
-					options.gflags|= GETFILES_GETINCOMPLETE;
-					break;
-				case 'I':
-					options.gflags&= ~GETFILES_GETINCOMPLETE;
-					break;
-				case 'k':
-					options.gflags|= GETFILES_KEEPTEMP;
-					break;
-				case 'K':
-					options.gflags|= GETFILES_NODECODE;
-					break;
-				case 'c':
-					options.gflags|= GETFILES_CASESENSITIVE;
-					break;
-				case 'C':
-					options.gflags&= ~GETFILES_CASESENSITIVE;
-					break;
-				case 'd':
-					options.parse_dupe_flags(loptarg);
-					break;
-				case 'D':
-					options.parse_dupe_flags("FIM");
-					break;
-				case 'N':
-					options.gflags|= GETFILES_NOCONNECT;
-					break;
-				case 'q':
-					quiet++;
-					break;
-				case 's':
-					options.retrydelay=atoi(loptarg);
-					if (options.retrydelay<0)
-						options.retrydelay=1;
-					printf("retry delay set to %i\n",options.retrydelay);
-					break;
-				case 't':
-					options.maxretry=atoi(loptarg);
-					if (options.maxretry==-1)
-						options.maxretry=INT_MAX-1;
-					printf("max retries set to %i\n",options.maxretry);
-					break;
-				case 'L':
-					options.maxlinelimit=atoul(loptarg);
-					printf("maximum line limit set to %lu\n",options.maxlinelimit);
-					break;
-				case 'l':
-					options.linelimit=atoul(loptarg);
-					printf("minimum line limit set to %lu\n",options.linelimit);
-					break;
-				case 'w':
-					options.writelite=loptarg;
-					printf("writelite to %s\n",options.writelite.c_str());
-					break;
-				case 'm':
-					options.set_makedirs(loptarg);
-					break;
-				case 'P':
-					if (!maybe_mkdir_chdir(loptarg,options.makedirs)){
-						options.get_temppath();
-						printf("temppath:%s\n",options.temppath.c_str());
-						if (chdir(options.startpath.c_str())){
-							printf("could not change to startpath: %s\n",options.startpath.c_str());
-							set_path_error_status();
-							return -1;
-						}
+				}
+				break;
+			case 'r':
+				if (!options.badskip){
+					if(options.group.isnull()){
+						printf("no group specified\n");
+						set_user_error_status();
 					}else{
-						printf("could not change temppath to %s\n",loptarg);
-						set_path_error_status();
-						return -1;
-					}
-					break;
-				case 'p':
-					if (!maybe_mkdir_chdir(loptarg,options.makedirs)){
-						options.get_path();
-						options.get_temppath();
-						printf("(temp)path:%s\n",options.path.c_str());
-						if (chdir(options.startpath.c_str())){
-							printf("could not change to startpath: %s\n",options.startpath.c_str());
-							set_path_error_status();
-							return -1;
+						/*c_regex_nosub *reg=new c_regex_nosub(loptarg,REG_EXTENDED + ((gflags&GETFILES_CASESENSITIVE)?0:REG_ICASE));
+						  if (!reg)
+						  throw new c_error(EX_A_FATAL,"couldn't allocate regex");
+						  if (reg->geterror()){
+						  char buf[256];
+						  int e=reg->geterror();
+						  reg->strerror(buf,256);
+						  delete reg;
+						//throw new c_error(EX_A_FATAL,"regex error %i:%s",e,buf);
+						printf("regex error %i:%s\n",e,buf);break;
 						}
-					}else{
-						printf("could not change to %s\n",loptarg);
-						set_path_error_status();
-						return -1;
-					}
-					break;
-				case 'F':
-					{
-						c_server::ptr server=nconfig.getserver(loptarg);
-						if (!server) {printf("no such server %s\n",loptarg);set_user_error_status();break;}
-						c_nntp_server_info* servinfo=nntp.gcache->getserverinfo(server->serverid);
+						nntp_pred *p=ecompose2(new e_land<bool>,
+						new e_binder2nd<e_nntp_file_lines<e_ge<ulong> > >(linelimit),
+						new e_binder2nd_p<e_nntp_file_subject<e_eq<string,c_regex_nosub*> > >(reg));
 
-						nntp.gcache->flushlow(servinfo,ULONG_MAX,nntp.midinfo);
-						servinfo->reset();
-						break;
+						nntp.filec=nntp.gcache->getfiles(nntp.filec,nntp.grange,p,gflags);
+						delete p;
+						if (!nntp.filec)
+						printf("nntp_retrieve: no match for %s\n",loptarg);
+						//									throw new c_error(EX_U_WARN,"nntp_retrieve: no match for %s",match);
+						//								nntp.nntp_queueretrieve(loptarg,linelimit,gflags);
+						qstatus=1;*/
+						ostringstream s; 
+						s << "subject \"" << loptarg << "\" =~";
+						if (options.linelimit > 0)
+							s << " lines " << options.linelimit << " >= &&" ;
+						if (options.maxlinelimit < ULONG_MAX)
+							s << " lines " << options.maxlinelimit << " <= &&" ;
+						generic_pred *p=make_pred(s.str().c_str());
+						if (p){
+							nntp.filec=nntp.gcache->getfiles(options.path,options.temppath,nntp.filec,nntp.midinfo,p,options.gflags);
+							delete p;
+							options.qstatus=1;
+						}
 					}
+				}
+				break;
+			case 'i':
+				options.gflags|= GETFILES_GETINCOMPLETE;
+				break;
+			case 'I':
+				options.gflags&= ~GETFILES_GETINCOMPLETE;
+				break;
+			case 'k':
+				options.gflags|= GETFILES_KEEPTEMP;
+				break;
+			case 'K':
+				options.gflags|= GETFILES_NODECODE;
+				break;
+			case 'c':
+				options.gflags|= GETFILES_CASESENSITIVE;
+				break;
+			case 'C':
+				options.gflags&= ~GETFILES_CASESENSITIVE;
+				break;
+			case 'd':
+				options.parse_dupe_flags(loptarg);
+				break;
+			case 'D':
+				options.parse_dupe_flags("FIM");
+				break;
+			case 'N':
+				options.gflags|= GETFILES_NOCONNECT;
+				break;
+			case 'q':
+				quiet++;
+				break;
+			case 's':
+				options.retrydelay=atoi(loptarg);
+				if (options.retrydelay<0)
+					options.retrydelay=1;
+				printf("retry delay set to %i\n",options.retrydelay);
+				break;
+			case 't':
+				options.maxretry=atoi(loptarg);
+				if (options.maxretry==-1)
+					options.maxretry=INT_MAX-1;
+				printf("max retries set to %i\n",options.maxretry);
+				break;
+			case 'L':
+				options.maxlinelimit=atoul(loptarg);
+				printf("maximum line limit set to %lu\n",options.maxlinelimit);
+				break;
+			case 'l':
+				options.linelimit=atoul(loptarg);
+				printf("minimum line limit set to %lu\n",options.linelimit);
+				break;
+			case 'w':
+				options.writelite=loptarg;
+				printf("writelite to %s\n",options.writelite.c_str());
+				break;
+			case 'm':
+				options.set_makedirs(loptarg);
+				break;
+			case 'P':
+				if (!maybe_mkdir_chdir(loptarg,options.makedirs)){
+					options.get_temppath();
+					printf("temppath:%s\n",options.temppath.c_str());
+					options.badskip &= ~BAD_TEMPPATH;
+					if (chdir(options.startpath.c_str())){
+						set_path_error_status();
+						throw ApplicationExFatal(Ex_INIT, "could not change to startpath: %s",options.startpath.c_str());
+					}
+				}else{
+					printf("could not change temppath to %s\n",loptarg);
+					set_path_error_status();
+					options.badskip |= BAD_TEMPPATH;
+				}
+				break;
+			case 'p':
+				if (!maybe_mkdir_chdir(loptarg,options.makedirs)){
+					options.get_path();
+					options.get_temppath();
+					printf("(temp)path:%s\n",options.path.c_str());
+					options.badskip &= ~(BAD_TEMPPATH | BAD_PATH);
+					if (chdir(options.startpath.c_str())){
+						set_path_error_status();
+						throw ApplicationExFatal(Ex_INIT, "could not change to startpath: %s",options.startpath.c_str());
+					}
+				}else{
+					printf("could not change to %s\n",loptarg);
+					set_path_error_status();
+					options.badskip |= (BAD_TEMPPATH | BAD_PATH);
+				}
+				break;
+			case 'F':
+				{
+					c_server::ptr server=nconfig.getserver(loptarg);
+					if (!server) {printf("no such server %s\n",loptarg);set_user_error_status();break;}
+					c_nntp_server_info* servinfo=nntp.gcache->getserverinfo(server->serverid);
+
+					nntp.gcache->flushlow(servinfo,ULONG_MAX,nntp.midinfo);
+					servinfo->reset();
+					break;
+				}
 #ifdef HAVE_LIBPOPT
 #define POPT_ERR_CASE(a) case a: printf("%s: %s\n",#a,poptBadOption(optCon,0)); print_help(); return 1;
-				POPT_ERR_CASE(POPT_ERROR_NOARG);
-				POPT_ERR_CASE(POPT_ERROR_BADOPT);
-				POPT_ERR_CASE(POPT_ERROR_OPTSTOODEEP);
-				POPT_ERR_CASE(POPT_ERROR_BADQUOTE);
-				POPT_ERR_CASE(POPT_ERROR_ERRNO);
-				POPT_ERR_CASE(POPT_ERROR_BADNUMBER);
-				POPT_ERR_CASE(POPT_ERROR_OVERFLOW);
+			POPT_ERR_CASE(POPT_ERROR_NOARG);
+			POPT_ERR_CASE(POPT_ERROR_BADOPT);
+			POPT_ERR_CASE(POPT_ERROR_OPTSTOODEEP);
+			POPT_ERR_CASE(POPT_ERROR_BADQUOTE);
+			POPT_ERR_CASE(POPT_ERROR_ERRNO);
+			POPT_ERR_CASE(POPT_ERROR_BADNUMBER);
+			POPT_ERR_CASE(POPT_ERROR_OVERFLOW);
 #endif
-				case ':':
-				case '?':
-					print_help();
-					return 1;
-				default:
-					if (options.qstatus){
-						mustredo_on_skip = 1;
-						if (!options.badskip) nntp.nntp_retrieve(options);
-						options.qstatus=0;
-						mustredo_on_skip = 0;
-					}
-					switch (c){
-						case '@':
+			case ':':
+			case '?':
+				print_help();
+				return 1;
+			default:
+				if (options.qstatus){
+					options.qstatus=0;
+					nntp.nntp_retrieve(options);
+				}
+				switch (c){
+					case '@':
 #ifdef HAVE_LIBPOPT
-							{
-								const char *paths[2]={(nghome + "lists/").c_str(),NULL};
-								const char *filename=fsearchpath(loptarg,paths,FSEARCHPATH_ALLOWDIRS);
-								if (!filename) {
-									printf("error opening %s: %s(%i)\n",loptarg,strerror(errno),errno);errno=0;
-									set_user_error_status();
-									break;
-								}
-								list<s_arglist> arglist;
-								s_arglist larg;
-								int totargc=0;
-								try {
-									c_file_fd f(filename,O_RDONLY);
-									f.initrbuf();
-									int pr;
-									while (f.bgets()>0){
-										if(!(pr=poptParseArgvString(f.rbufp(),&larg.argc,POPT_ARGV_p_T &larg.argv))){
-											arglist.push_back(larg);
-											totargc+=larg.argc;
-										}else {
-											printf("poptParseArgvString:%i\n",pr);
-											set_user_error_status();
-										}
-									}
-									f.close();
-								}catch (FileNOENTEx &e){
-									printf("error opening %s: %s(%i)\n",filename?:loptarg,strerror(errno),errno);errno=0;
-									set_user_error_status();
-									break;
-								}
-								if (!arglist.empty()){
-									int tc=0,ic=0;
-									s_arglist targ;
-									larg.argc=totargc;
-									larg.argv=(char**)malloc((totargc+1)*sizeof(char**));
-									list<s_arglist>::iterator it=arglist.begin();
-									for (;it!=arglist.end();++it){
-										targ=*it;
-										for(ic=0;ic<targ.argc;ic++,tc++)
-											larg.argv[tc]=targ.argv[ic];
-									}
-
-									do_args(larg.argc,larg.argv,options,1);
-									//####here we reset the stuff that may have been screwed in our recursiveness.  Perhaps it should reset it before returning, or something.. but I guess this'll do for now, since its the only place its called recursively.
-									if (options.host)
-										nntp.nntp_open(options.host);
-									if (options.group)
-										nntp.nntp_group(options.group,0,options);
-									if (!chdir(options.path.c_str())){
-										printf("path:%s\n",options.path.c_str());
-									}else{
-										printf("could not change to %s\n",options.path.c_str());
-										set_path_error_status();
-										return -1;
-									}
-
-									for (it=arglist.begin();it!=arglist.end();++it)
-										free((*it).argv);
-									free(larg.argv);
-								}
-								if (filename!=loptarg)
-									free(const_cast<char*>(filename));//const_cast away the warning
+						{
+							const char *paths[2]={(nghome + "lists/").c_str(),NULL};
+							const char *filename=fsearchpath(loptarg,paths,FSEARCHPATH_ALLOWDIRS);
+							if (!filename) {
+								printf("error opening %s: %s(%i)\n",loptarg,strerror(errno),errno);errno=0;
+								set_user_error_status();
+								break;
 							}
-#else
-							printf("This option is only available when libpopt is used.\n");
-#endif
-							break;
-						case 'g':
-							if (options.badskip<2){
-								options.group=nconfig.getgroup(loptarg);
-								nntp.nntp_group(options.group,1,options);
-								if (options.badskip)
-									options.badskip=0;
-							}
-							break;
-						case 'G':
-							if (options.badskip<2){
-								options.group=nconfig.getgroup(loptarg);
-								nntp.nntp_group(options.group,0,options);
-								if (options.badskip)
-									options.badskip=0;
-							}
-							break;
-						case 'h':{
-								if (*loptarg){
-									options.host=nconfig.getserver(loptarg);
-									if (options.host.isnull()){
-										options.badskip=2;
-										printf("invalid host %s (must be configured in .ngetrc first)\n",loptarg);
+							list<s_arglist> arglist;
+							s_arglist larg;
+							int totargc=0;
+							try {
+								c_file_fd f(filename,O_RDONLY);
+								f.initrbuf();
+								int pr;
+								while (f.bgets()>0){
+									if(!(pr=poptParseArgvString(f.rbufp(),&larg.argc,POPT_ARGV_p_T &larg.argv))){
+										arglist.push_back(larg);
+										totargc+=larg.argc;
+									}else {
+										printf("poptParseArgvString:%i\n",pr);
 										set_user_error_status();
 									}
-									else
-										options.badskip=0;
-								}else{
-									options.host=NULL;
-									options.badskip=0;
 								}
-								nntp.nntp_open(options.host);
+								f.close();
+							}catch (FileNOENTEx &e){
+								printf("error opening %s: %s(%i)\n",filename?:loptarg,strerror(errno),errno);errno=0;
+								set_user_error_status();
+								break;
 							}
+							if (!arglist.empty()){
+								int tc=0,ic=0;
+								s_arglist targ;
+								larg.argc=totargc;
+								larg.argv=(char**)malloc((totargc+1)*sizeof(char**));
+								list<s_arglist>::iterator it=arglist.begin();
+								for (;it!=arglist.end();++it){
+									targ=*it;
+									for(ic=0;ic<targ.argc;ic++,tc++)
+										larg.argv[tc]=targ.argv[ic];
+								}
+
+								do_args(larg.argc,larg.argv,options,1);
+								//####here we reset the stuff that may have been screwed in our recursiveness.  Perhaps it should reset it before returning, or something.. but I guess this'll do for now, since its the only place its called recursively.
+								if (options.host)
+									nntp.nntp_open(options.host);
+								if (options.group)
+									nntp.nntp_group(options.group,0,options);
+								if (!chdir(options.startpath.c_str())){
+									printf("path:%s\n",options.path.c_str());
+								}else{
+									set_path_error_status();
+									throw ApplicationExFatal(Ex_INIT, "could not change to startpath: %s",options.startpath.c_str());
+								}
+
+								for (it=arglist.begin();it!=arglist.end();++it)
+									free((*it).argv);
+								free(larg.argv);
+							}
+							if (filename!=loptarg)
+								free(const_cast<char*>(filename));//const_cast away the warning
+						}
+#else
+						printf("This option is only available when libpopt is used.\n");
+#endif
+						break;
+					case 'g':
+						//if BAD_HOST, don't try to -g, fall through to -G instead
+						if (!(options.badskip & BAD_HOST)){
+							options.group=nconfig.getgroup(loptarg);
+							nntp.nntp_group(options.group,1,options);
 							break;
-						case -1://end of args.
-							//								if (!badskip){
-							//									nntp.nntp_retrieve(!testmode);
-							//								}
-							return 0;
-						default:
-							print_help();
-							return 1;
-					}
-			}
-		}catch(PathExFatal &e){
-			printCaughtEx(e);
-			set_path_error_status();
-			return -1;
-		}catch(ApplicationExFatal &e){
-			printCaughtEx_nnl(e);
-			printf(" (fatal application error, exiting..)\n");
-			set_fatal_error_status();
-			exit(errorflags);
-		}catch(TransportExFatal &e){
-			printCaughtEx_nnl(e);
-			printf(" (fatal, aborting..)\n");
-			if (options.host)
-				options.badskip=2;//only set badskip if we are forcing a single host, otherwise we could exclude other hosts that are working
-			if (mustredo_on_skip) {
-				redo=1;
-				mustredo_on_skip=0;
-				options.qstatus=0;
-			}
-			set_other_error_status();
-		}catch(baseEx &e){
-			printCaughtEx_nnl(e);
-			if (e.isfatal()){
-				printf(" (fatal, aborting..)\n");
-				//else if (n==EX_U_FATAL)
-				if (options.host)
-					options.badskip=1;//only set badskip if we are forcing a single host, otherwise we could exclude other hosts that are working
-				if (mustredo_on_skip) {
-					redo=1;
-					mustredo_on_skip=0;
-					options.qstatus=0;
+						}
+					case 'G':
+						options.group=nconfig.getgroup(loptarg);
+						nntp.nntp_group(options.group,0,options);
+						break;
+					case 'h':{
+							if (*loptarg){
+								options.host=nconfig.getserver(loptarg);
+								if (options.host.isnull()){
+									options.badskip |= BAD_HOST;
+									printf("invalid host %s (must be configured in .ngetrc first)\n",loptarg);
+									set_user_error_status();
+								}
+								else
+									options.badskip &= ~BAD_HOST;
+							}else{
+								options.host=NULL;
+								options.badskip &= ~BAD_HOST;
+							}
+							nntp.nntp_open(options.host);
+						}
+						break;
+					case -1://end of args.
+						//								if (!badskip){
+						//									nntp.nntp_retrieve(!testmode);
+						//								}
+						return 0;
+					default:
+						print_help();
+						return 1;
 				}
-				set_other_error_status();
-			}
-			else{
-				if(redone<options.maxretry){
-					redo=1;redone++;
-					printf(" (trying again. %i)\n",redone);
-					if (options.retrydelay)
-						sleep(options.retrydelay);
-				}else{
-					set_other_error_status();//set "fatal" error if non-fatal error didn't succeed even after retrying.
-					printf("\n");
-					if (c==-1)
-						return 0;//end of args.
-					redone=0;
-					if (mustredo_on_skip) {
-						redo=1;
-						mustredo_on_skip=0;
-						options.qstatus=0;
-					}
-				}
-			}
 		}
 	}
 	//		printf("quiet=%i host=%s\n",quiet,nntp_server);

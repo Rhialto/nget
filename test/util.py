@@ -26,6 +26,10 @@ def exitstatus(st):
 		return os.WEXITSTATUS(st)
 	return 'unknown',st
 
+def vsystem(cmd):
+	print 'running %r'%cmd
+	return exitstatus(os.system(cmd))
+	
 class TestNGet:
 	def __init__(self, nget, servers, priorities=None, options=None, hostoptions=None):
 		defaultoptions = {
@@ -78,14 +82,14 @@ class TestNGet:
 	
 	def run(self, args, pre=""):
 		os.environ['NGETHOME'] = self.rcdir
-		return exitstatus(os.system(pre + self.exe+" -p "+self.tmpdir+" "+args))
+		return vsystem(pre + self.exe+" -p "+self.tmpdir+" "+args)
 	
 	def runlite(self, args, pre=""):
 		olddir = os.getcwd()
 		try:
-			ngetliteexe = os.path.abspath(os.path.join(os.path.split(self.exe)[0], 'ngetlite'))
+			ngetliteexe = os.path.join(os.path.split(self.exe)[0], 'ngetlite')
 			os.chdir(self.tmpdir)
-			return exitstatus(os.system(pre + ngetliteexe+" "+args))
+			return vsystem(pre + ngetliteexe+" "+args)
 		finally:
 			os.chdir(olddir)
 

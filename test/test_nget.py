@@ -25,6 +25,8 @@ import nntpd, util
 
 #allow nget executable to be tested to be overriden with TEST_NGET env var.
 ngetexe = os.environ.get('TEST_NGET',os.path.join(os.pardir, 'nget'))
+if os.sep in ngetexe or (os.altsep and os.altsep in ngetexe):
+	ngetexe = os.path.abspath(ngetexe)
 
 zerofile_fn_re = re.compile(r'(\d+)\.(\d+)\.txt$')
 
@@ -80,9 +82,9 @@ class DecodeTest_base:
 		for server in servers:
 			self.rmarticles_fromserver(testnum, dirname, server)
 
-	def verifyoutput(self, testnums, nget=None):
-		if nget is None:
-			nget = self.nget
+	def verifyoutput(self, testnums, tmpdir=None):
+		if tmpdir is None:
+			tmpdir = self.nget.tmpdir
 		ok = []
 		if type(testnums)==type(""):
 			testnums=[testnums]
@@ -96,19 +98,19 @@ class DecodeTest_base:
 
 			r = zerofile_fn_re.match(tail)
 			if r:
-				dfnglob = os.path.join(nget.tmpdir, r.group(1)+'.*.txt')
+				dfnglob = os.path.join(tmpdir, r.group(1)+'.*.txt')
 				g = glob.glob(dfnglob)
 				self.failIf(len(g) == 0, "decoded zero file %s does not exist"%dfnglob)
 				self.failIf(len(g) != 1, "decoded zero file %s matches multiple"%dfnglob)
 				dfn = g[0]
 			else:
-				dfn = os.path.join(nget.tmpdir, tail)
+				dfn = os.path.join(tmpdir, tail)
 			self.failUnless(os.path.exists(dfn), "decoded file %s does not exist"%dfn)
 			self.failUnless(os.path.isfile(dfn), "decoded file %s is not a file"%dfn)
 			self.failUnless(filecmp.cmp(fn, dfn, shallow=0), "decoded file %s differs from %s"%(dfn, fn))
 			ok.append(os.path.split(dfn)[1])
 
-		extra = [fn for fn in os.listdir(nget.tmpdir) if fn not in ok]
+		extra = [fn for fn in os.listdir(tmpdir) if fn not in ok]
 		self.failIf(extra, "extra files decoded: "+`extra`)
 
 
@@ -341,6 +343,34 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput(['0002','0001','0003'])
 		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
 
+	def test_p_relative(self):
+		d = os.getcwd()
+		try:
+			os.chdir(self.nget.tmpdir)
+			os.mkdir('aaa')
+			os.mkdir('bbb')
+			self.vfailIf(self.nget.run('-p bbb -g test -p aaa -r foo -p bbb -r joy'))
+		finally:
+			os.chdir(d)
+		self.verifyoutput('0001', tmpdir=os.path.join(self.nget.tmpdir,'aaa'))
+		self.verifyoutput('0002', tmpdir=os.path.join(self.nget.tmpdir,'bbb'))
+
+	def test_list_p_relative(self):
+		lpath = os.path.join(self.nget.rcdir, 'list.foo')
+		f = open(lpath, 'w')
+		f.write('-l 1')#whatever.
+		f.close()
+		d = os.getcwd()
+		try:
+			os.chdir(self.nget.tmpdir)
+			os.mkdir('aaa')
+			os.mkdir('bbb')
+			self.vfailIf(self.nget.run('-p bbb -@ %s -g test -p aaa -r foo -p bbb -r joy'%lpath))
+		finally:
+			os.chdir(d)
+		self.verifyoutput('0001', tmpdir=os.path.join(self.nget.tmpdir,'aaa'))
+		self.verifyoutput('0002', tmpdir=os.path.join(self.nget.tmpdir,'bbb'))
+	
 	def test_list(self):
 		ldir = os.path.join(self.nget.rcdir, 'lists')
 		os.mkdir(ldir)
@@ -389,6 +419,55 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 
 	def test_list_enoent(self):
 		self.vfailUnlessEqual(self.nget.run('-@ foobar'), 4)
+	
+	def test_badskip_path(self):
+		self.vfailUnlessEqual(self.nget.run('-p badpath -g test -r joy -p %s -r foo'%(self.nget.tmpdir)), 2)
+		self.verifyoutput(['0001'])
+		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+
+	def test_badskip_temppath(self):
+		self.vfailUnlessEqual(self.nget.run('-P badpath -g test -r joy -P %s -r foo'%(self.nget.tmpdir)), 2)
+		self.verifyoutput(['0001'])
+		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+
+	def test_badskip_temppath_okpath(self):
+		self.vfailUnlessEqual(self.nget.run('-P badpath -g test -r joy -p %s -r foo'%(self.nget.tmpdir)), 2) #-p resets -P too
+		self.verifyoutput(['0001'])
+		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+
+	def test_badskip_path_oktemppath(self):
+		self.vfailUnlessEqual(self.nget.run('-p badpath -g test -r joy -P %s -r foo'%(self.nget.tmpdir)), 2) #-P does not reset -p
+		self.verifyoutput([])
+		self.vfailUnlessEqual(self.servers.servers[0].retrs, 0)
+
+	def test_badskip_host(self):
+		self.vfailUnlessEqual(self.nget.run('-h badhost -g test -r joy -h host0 -r foo'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].retrs, 0)
+		self.verifyoutput([])#bad -h should turn -g into -G, so that should have failed to get anything.
+		self.vfailIf(self.nget.run('-g test')) #retrieve headers first and try again
+		self.vfailUnlessEqual(self.nget.run('-h badhost -g test -r joy -h host0 -r foo'), 4)
+		self.verifyoutput(['0001'])
+		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+
+	def test_badskip_pathhost(self):
+		self.vfailUnlessEqual(self.nget.run('-g test -h badhost -p badpath -r . -p %s -r . -h host0 -r foo'%(self.nget.tmpdir)), 6)
+		self.verifyoutput(['0001'])
+		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+
+	def test_badskip_hostpath(self):
+		self.vfailUnlessEqual(self.nget.run('-g test -h badhost -p badpath -r . -h host0 -r . -p %s -r foo'%(self.nget.tmpdir)), 6)
+		self.verifyoutput(['0001'])
+		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+
+	def test_badskip_okthenbadpath(self):
+		self.vfailUnlessEqual(self.nget.run('-g test -r foo -p badpath -r .'), 2)
+		self.verifyoutput(['0001'])
+		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+
+	def test_badskip_okthenbadhost(self):
+		self.vfailUnlessEqual(self.nget.run('-g test -r foo -h badhost -r .'), 4)
+		self.verifyoutput(['0001'])
+		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
 
 
 class XoverTestCase(TestCase, DecodeTest_base):
@@ -421,7 +500,7 @@ class XoverTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.fxnget.run("-g test -r ."))
 
 		self.verifyoutput('0002')
-		self.verifyoutput('0002', nget=self.fxnget)
+		self.verifyoutput('0002', tmpdir=self.fxnget.tmpdir)
 
 	def test_oldarticle(self):
 		self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[0], anum=2)
@@ -436,7 +515,7 @@ class XoverTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.fxnget.run("-g test -r ."))
 
 		self.verifyoutput('0002')
-		self.verifyoutput('0002', nget=self.fxnget)
+		self.verifyoutput('0002', tmpdir=self.fxnget.tmpdir)
 
 	def test_insertedarticle(self):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
@@ -452,7 +531,7 @@ class XoverTestCase(TestCase, DecodeTest_base):
 		self.verifynonewfiles() #fullxover=0 should not be able to find new article
 		self.vfailIf(self.fxnget.run("-g test -r ."))
 
-		self.verifyoutput('0002', nget=self.fxnget)
+		self.verifyoutput('0002', tmpdir=self.fxnget.tmpdir)
 	
 	def test_largearticlenumbers(self):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
@@ -463,7 +542,7 @@ class XoverTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.fxnget.run("-g test -r ."))
 
 		self.verifyoutput('0002')
-		self.verifyoutput('0002', nget=self.fxnget)
+		self.verifyoutput('0002', tmpdir=self.fxnget.tmpdir)
 
 	def test_lite_largearticlenumbers(self):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
@@ -516,7 +595,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		servers = [nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)]
 		self.nget = util.TestNGet(ngetexe, servers) 
 		servers[0].server_close()
-		self.vfailUnlessEqual(self.nget.run("-g test -r ."), 64, "nget process did not detect connection error")
+		self.vfailUnlessEqual(self.nget.run("-g test -r ."), 16, "nget process did not detect connection error")
 	
 	def test_DeadServerRetr(self):
 		self.servers = nntpd.NNTPD_Master(1)
@@ -763,7 +842,7 @@ class AuthTestCase(TestCase, DecodeTest_base):
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, hostoptions=[{'user':'ralph', 'pass':'WRONG'}])
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
-		self.vfailUnlessEqual(self.nget.run("-g test -r ."), 64, "nget process did not detect auth error")
+		self.vfailUnlessEqual(self.nget.run("-g test -r ."), 16, "nget process did not detect auth error")
 
 	def test_NoAuth(self):
 		self.servers = nntpd.NNTPD_Master(1)
@@ -772,7 +851,7 @@ class AuthTestCase(TestCase, DecodeTest_base):
 		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
-		self.vfailUnlessEqual(self.nget.run("-g test -r ."), 64, "nget process did not detect auth error")
+		self.vfailUnlessEqual(self.nget.run("-g test -r ."), 16, "nget process did not detect auth error")
 
 #if os.system('sf --help'):
 if os.system('sf date'):
@@ -1018,19 +1097,19 @@ else:
 		ngetoptions={'options':{'tries':1}}
 
 		def test_socket_error(self):
-			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw',-2)]"), 64)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw',-2)]"), 16)
 			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
 
 		def test_connect_error(self):
-			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw',-1)]"), 64)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw',-1)]"), 16)
 			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
 
 		def test_sock_write_error(self):
-			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('w',0)]"), 64)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('w',0)]"), 16)
 			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
 
 		def test_sock_read_error(self):
-			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('r',0)]"), 64)
+			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('r',0)]"), 16)
 			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
 
 		def test_sock_close_error(self):
