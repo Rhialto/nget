@@ -57,7 +57,7 @@ class auto_map_base : public Base<K, restricted_ptr<T> > {
 template <class K, class T>
 class auto_map : public auto_map_base<K, T, std::map> {
 	public:
-		typedef auto_map_base<K, T, std::map> super;
+		typedef typename auto_map_base<K, T, std::map>::super super;
 		typedef typename super::iterator iterator;
 		typedef typename super::value_type value_type;
 		/*super::value_type value_type(const K &k, T*p) {
@@ -76,7 +76,7 @@ class auto_map : public auto_map_base<K, T, std::map> {
 template <class K, class T>
 class auto_multimap : public auto_map_base<K, T, std::multimap> {
 	public:
-		typedef auto_map_base<K, T, std::multimap> super;
+		typedef typename auto_map_base<K, T, std::multimap>::super super;
 		typedef typename super::iterator iterator;
 		typedef typename super::value_type value_type;
 		iterator insert_value(const K &k, T* p) { //we can't really use the normal insert funcs, but we don't want to just name it insert since it would be easy to confuse with all the normal map insert funcs
