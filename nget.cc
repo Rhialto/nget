@@ -205,7 +205,7 @@ static void addoptions(void)
 	addoption("testmode",0,'T',0,"test what would have been retrieved");
 	addoption("tries",1,'t',"INT","set max retries (-1 unlimits, default 20)");
 	addoption("delay",1,'s',"INT","seconds to wait between retry attempts(default 1)");
-	addoption("limit",1,'l',"INT","min # of lines a 'file' must have(default 3)");
+	addoption("limit",1,'l',"INT","min # of lines a 'file' must have(default 0)");
 	addoption("incomplete",0,'i',0,"retrieve files with missing parts");
 	addoption("complete",0,'I',0,"retrieve only files with all parts(default)");
 	addoption("keep",0,'k',0,"keep temp files");
@@ -529,7 +529,10 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 							//								nntp.nntp_queueretrieve(loptarg,linelimit,gflags);
 							qstatus=1;*/
 							char *s;
-							asprintf(&s,"lines %lu >= subject \"%s\" =~ &&",options.linelimit,loptarg);
+							if (options.linelimit > 0)
+								asprintf(&s,"lines %lu >= subject \"%s\" =~ &&",options.linelimit,loptarg);
+							else
+								asprintf(&s,"subject \"%s\" =~",loptarg);
 							generic_pred *p=make_pred(s);
 							free(s);
 							if (p){
@@ -874,7 +877,7 @@ int main(int argc, char ** argv){
 			options.maxretry=20;
 			options.retrydelay=1;
 			options.badskip=0;
-			options.linelimit=3;
+			options.linelimit=0;
 			options.gflags=0;
 			options.qstatus=0;
 			options.group=NULL;
