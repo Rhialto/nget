@@ -472,38 +472,6 @@ dnl     ifelse(AC_LANG,C,if test "$GCC" = "yes" ; then CPPFLAGS="$CPPFLAGS -Werr
  )
 ])
 
-
-dnl @synopsis AC_PROTOTYPE_SETSOCKOPT
-dnl
-dnl Requires the AC_PROTOTYPE macro.
-dnl
-dnl Find the type of argument three of setsockopt. User
-dnl must include the following in acconfig.h:
-dnl
-dnl /* Type of third argument of setsockopt */
-dnl #undef SETSOCKOPT_ARG4
-dnl
-dnl @version $Id: ac_prototype_setsockopt.m4,v 1.1 2000/08/11 06:28:24 simons Exp $
-dnl @author Loic Dachary <loic@senga.org>
-dnl
-AC_DEFUN([AC_PROTOTYPE_SETSOCKOPT],[
-AC_PROTOTYPE(setsockopt,
- [
-  #include <sys/types.h>
-#ifdef WIN32
-  #include <winsock.h>
-#else
-  #include <sys/socket.h>
-#endif
- ],
- [
-  int a = 0;
-  ARG4 b = 0;
-  setsockopt(a, SOL_SOCKET, SO_REUSEADDR, b, sizeof(a));
- ],
- ARG4, [const void*, const char*, void*, char*])
-])
-
 AC_DEFUN([AC_PROTOTYPE_RECV],[
 AC_PROTOTYPE(recv,
  [

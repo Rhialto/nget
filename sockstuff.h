@@ -62,10 +62,6 @@ void atoaddr(const char *netaddress,struct in_addr *addr,char *buf, int buflen);
 
 int make_connection(int type,const char *netaddress,const char *service,char * buf, int buflen);
 
-int getsocketaddress(int s, struct sockaddr_in *addr);
-int get_connection1(int socket_type, u_short port);
-int get_connection2(int socket_type,int gc_listening_socket);
-//int get_connection2(int socket_type);
 int sock_write_ensured(int sockfd, const char *buf, size_t count);
 int sock_read(int sockfd, void *buf, size_t count);
 bool sock_datawaiting(int sockfd);
