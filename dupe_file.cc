@@ -31,7 +31,7 @@ void dupe_file_checker::add(const char *filename, ulong size){
 	const char *cp = filename;
 	if (isalnum(*cp)){ //only add word boundry match if we are actually next to a word, or else there isn't a word boundry to match at all.
 		buf+='\\';
-#ifdef HAVE_PCREPOSIX_H
+#ifdef HAVE_PKG_pcre
 		buf+='b';//match word boundary
 #else	
 		buf+='<';//match beginning of word
@@ -45,7 +45,7 @@ void dupe_file_checker::add(const char *filename, ulong size){
 	}
 	if (isalnum(*(cp-1))){
 		buf+='\\';
-#ifdef HAVE_PCREPOSIX_H
+#ifdef HAVE_PKG_pcre
 		buf+='b';//match word boundary
 #else
 		buf+='>';//match end of word

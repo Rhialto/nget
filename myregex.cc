@@ -118,7 +118,7 @@ c_regex_r::c_regex_r(const char * pattern,int cflags):c_regex_base(pattern,cflag
 				nregmatch++;//escaping and such, but its a lot better than a static number
 		}
 //pcre needs more matching space for something?
-#ifdef HAVE_PCREPOSIX_H
+#ifdef HAVE_PKG_pcre
 		//nregmatch=nregmatch*15/10;
 		nregmatch=nregmatch*2;
 #endif

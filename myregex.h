@@ -24,7 +24,7 @@
 
 #include <sys/types.h>
 
-#ifdef HAVE_PCREPOSIX_H
+#ifdef HAVE_PKG_pcre
 #include <pcreposix.h>
 #else
 #include <regex.h>
@@ -53,7 +53,11 @@ DEFINE_EX_SUBCLASS(RegexEx, ApplicationExFatal, true);
 //throws a RegexEx if there is an error during the constructor
 class c_regex_base{
 	protected:
-		regex_t regex;
+//icky, but pcreposix doesn't have regexec's args as const.  Blah.
+#ifdef HAVE_PKG_pcre
+		mutable
+#endif
+			regex_t regex;
 	public:
 		c_regex_base(const char * pattern,int cflags);
 		~c_regex_base();
