@@ -1,3 +1,8 @@
+should uu_msg(1) (Note) be a decode error?
+This should be handled:
+uu_msg(1):Note: No encoded data found in ec3317e3-71cf792d.011
+ 1 decoding errors occured, keeping temp files.
+
 * fix the everpresent "Operation now in progress" and make it report the real error
 
 * fullxoverthreshold.  Or sending multiple requests before recieving response (possible protocol breakage?)
