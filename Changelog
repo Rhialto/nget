@@ -1,6 +1,7 @@
 2003-xx-xx v0.xx:
   * Add simplest possible example to manpage.
   * Don't use __attribute__ on non-GNU compilers.
+  * Fix bug in knapsack algorithm that in some cases could cause a sub-optimal set of par2 files to be retrieved(or an assertion error on debug builds.)
 
 2003-11-20 v0.25:
   * Allow the same server id to be used for multiple hosts to share header cache data. (Useful if you have multiple accounts on the same server.)

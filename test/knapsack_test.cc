@@ -9,6 +9,9 @@ class knapsack_Test : public CppUnit::TestFixture {
 		CPPUNIT_TEST(test2);
 		CPPUNIT_TEST(testValue);
 		CPPUNIT_TEST(test3);
+		CPPUNIT_TEST(test4);
+		CPPUNIT_TEST(test4_2);
+		CPPUNIT_TEST(test4_3);
 	CPPUNIT_TEST_SUITE_END();
 	protected:
 		vector<int> values, sizes;
@@ -93,6 +96,48 @@ class knapsack_Test : public CppUnit::TestFixture {
 			CPPUNIT_ASSERT_EQUAL(1, (int)mresults.size());
 			CPPUNIT_ASSERT(mresults.count(1) || mresults.count(2));
 		}	
+		void test4(void) {
+			int foo[] = {8,8,8,8,7,7,7,7,7,7};
+			values.insert(values.begin(), foo, foo+sizeof(foo)/sizeof(int));
+			sizes.insert(sizes.begin(), foo, foo+sizeof(foo)/sizeof(int));
+			int v = knapsack(values, sizes, 9, results);
+			CPPUNIT_ASSERT_EQUAL(8, v);
+			CPPUNIT_ASSERT_EQUAL(1, (int)results.size());
+			CPPUNIT_ASSERT(!(results.count(4) || results.count(5) || results.count(6) || results.count(7) || results.count(8) || results.count(9)));
+			
+			int ms = knapsack_minsize(values, sizes, 9, mresults);
+			CPPUNIT_ASSERT_EQUAL(14, ms);
+			CPPUNIT_ASSERT_EQUAL(2, (int)mresults.size());
+			CPPUNIT_ASSERT(!(mresults.count(0) || mresults.count(1) || mresults.count(2) || mresults.count(3)));
+		}
+		void test4_2(void) {
+			int foo[] = {7,7,7,7,7,7,8,8,8,8};
+			values.insert(values.begin(), foo, foo+sizeof(foo)/sizeof(int));
+			sizes.insert(sizes.begin(), foo, foo+sizeof(foo)/sizeof(int));
+			int v = knapsack(values, sizes, 9, results);
+			CPPUNIT_ASSERT_EQUAL(8, v);
+			CPPUNIT_ASSERT_EQUAL(1, (int)results.size());
+			CPPUNIT_ASSERT(!(results.count(0) || results.count(1) || results.count(2) || results.count(3) || results.count(4) || results.count(5)));
+			
+			int ms = knapsack_minsize(values, sizes, 9, mresults);
+			CPPUNIT_ASSERT_EQUAL(14, ms);
+			CPPUNIT_ASSERT_EQUAL(2, (int)mresults.size());
+			CPPUNIT_ASSERT(!(mresults.count(6) || mresults.count(7) || mresults.count(8) || mresults.count(9)));
+		}
+		void test4_3(void) {
+			int foo[] = {8,8,7,7,7};
+			values.insert(values.begin(), foo, foo+sizeof(foo)/sizeof(int));
+			sizes.insert(sizes.begin(), foo, foo+sizeof(foo)/sizeof(int));
+			int v = knapsack(values, sizes, 9, results);
+			CPPUNIT_ASSERT_EQUAL(8, v);
+			CPPUNIT_ASSERT_EQUAL(1, (int)results.size());
+			CPPUNIT_ASSERT(results.count(0) || results.count(1));
+			
+			int ms = knapsack_minsize(values, sizes, 9, mresults);
+			CPPUNIT_ASSERT_EQUAL(14, ms);
+			CPPUNIT_ASSERT_EQUAL(2, (int)mresults.size());
+			CPPUNIT_ASSERT(!(mresults.count(0) || mresults.count(1)));
+		}
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( knapsack_Test );

@@ -18,6 +18,7 @@
 */
 #include "knapsack.h"
 #include <numeric>
+#include <limits.h>
 
 int knapsack(const vector<int> &values, const vector<int> &sizes, int target_size, set<int> &result) {
 	assert(result.empty());
@@ -45,10 +46,16 @@ int knapsack(const vector<int> &values, const vector<int> &sizes, int target_siz
 	i=0;
 #endif
 	j = target_size;
+	int last = INT_MAX;
 	while (j>0) {
 		vector<int>::reverse_iterator bi, bend=best[j].rend();
 		for (bi=best[j].rbegin(); bi!=bend; ++bi) {
-			if (!result.count(*bi)) {
+			// At the point in time when a value is entered into the best array,
+			// it is valid only for it and the preceeding values that have been
+			// calculated.  So if we have used the result of a value X, then any
+			// further results we use can only be from values before X.
+			if (*bi<last) {
+				last=*bi;
 #ifndef NDEBUG
 				i += values[*bi];
 #endif
