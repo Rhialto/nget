@@ -762,6 +762,27 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -r par2.test'))
 		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 04.dat','c d 05.dat','c d.par2','_corrupt_pxxblocks_output/c d.vol03+04.par2','c d.vol01+02.par2']})
 		
+	def test_autopar2handling_corruptmainpkt(self):
+		self.addarticles('par2-01', 'input',fname='dat?')
+		self.addarticles('par2-01', 'input',fname='par?')
+		self.addarticles('par2-01', 'corrupt_mainpkt')
+		self.vfailIf(self.nget_run('-g test -r par2.test'))
+		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','c d 05.dat','_corrupt_mainpkt_output/c d.par2','c d.vol00+01.par2']})
+		
+	def test_autopar2handling_missingfiledescpkt(self):
+		self.addarticles('par2-01', 'input',fname='dat?')
+		self.addarticles('par2-01', 'input',fname='par?')
+		self.addarticles('par2-01', 'missing_filedescpkt')
+		self.vfailIf(self.nget_run('-g test -r par2.test'))
+		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','c d 05.dat','_missing_filedescpkt_output/c d.par2','c d.vol00+01.par2']})
+		
+	def test_autopar2handling_missingifscpkt(self):
+		self.addarticles('par2-01', 'input',fname='dat?')
+		self.addarticles('par2-01', 'input',fname='par?')
+		self.addarticles('par2-01', 'missing_ifscpkt')
+		self.vfailIf(self.nget_run('-g test -r par2.test'))
+		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','c d 05.dat','_missing_ifscpkt_output/c d.par2','c d.vol00+01.par2']})
+		
 	def test_autopar2handling_reply(self):
 		self.addarticles('par2-01', 'input')
 		self.addarticles('par2-01', 'reply')
