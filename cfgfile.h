@@ -119,18 +119,12 @@ class CfgSection : public CfgBase{
 		CfgItem_map items;
 		CfgSection_map sections;
 
-		void load(c_file *f);
+		void load(c_file *f, int &level);
 	public:
 
-		CfgSection(const string &filename) : CfgBase(filename,"") {
-			c_file_fd f(filename.c_str(),O_RDONLY);
-			f.initrbuf();
-			load(&f);
-			f.close();
-			used=true;
-		}
-		CfgSection(string l, string k, c_file *f) : CfgBase(l,k) {
-			load(f);
+		CfgSection(const string &filename);
+		CfgSection(string l, string k, c_file *f, int &level) : CfgBase(l,k) {
+			load(f, level);
 		}
 		~CfgSection();
 

@@ -43,15 +43,15 @@ def vspawn(cmd, args, spawn=getattr(os,"spawnvp",os.spawnv)):
 
 
 class TestNGet:
-	def __init__(self, nget, servers, priorities=None, options=None, hostoptions=None):
+	def __init__(self, nget, servers, **kw):
 		self.exe = nget
 		self.rcdir = os.path.join(os.environ.get('TMPDIR') or '/tmp', 'nget_test_'+hex(random.randrange(0,sys.maxint)))
 		os.mkdir(self.rcdir)
 		self.tmpdir = os.path.join(self.rcdir, 'tmp')
 		os.mkdir(self.tmpdir)
-		self.writerc(servers, priorities, options, hostoptions)
+		self.writerc(servers, **kw)
 
-	def writerc(self, servers, priorities=None, options=None, hostoptions=None):
+	def writerc(self, servers, priorities=None, options=None, hostoptions=None, extratail=""):
 		defaultoptions = {
 #			'tries': 1,
 			'tries': 2,
@@ -91,6 +91,7 @@ class TestNGet:
 			rc.write(" }\n")
 			rc.write("}\n")
 			
+		rc.write(extratail)
 		rc.close()
 
 		#print 'begin ngetrc:\n',open(os.path.join(self.rcdir, '_ngetrc'), 'r').read()

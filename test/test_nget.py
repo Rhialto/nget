@@ -1787,6 +1787,18 @@ class ConfigErrorTestCase(TestCase, DecodeTest_base):
 		output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput('-g test -r .'), 4)
 		self.verifyoutput('0001')
 		self.vfailUnlessEqual(output.count("ERRORS: %i user"%(len(options)+len(hostoptions))), 1)
+	
+	def test_unbalanced_section(self):
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, extratail="}\n")
+		output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput('-g test -r .'), 4)
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(output.count("ERRORS: 1 user"), 1)
+
+	def test_unbalanced_section2(self):
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, extratail="{galias\n")
+		output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput('-g test -r .'), 4)
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(output.count("ERRORS: 1 user"), 1)
 
 
 class XoverTestCase(TestCase, DecodeTest_base):

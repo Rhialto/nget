@@ -33,7 +33,7 @@ bool CfgItem::issok(istringstream &iss) const {
 	return true;
 }
 
-void CfgSection::load(c_file *f) {
+void CfgSection::load(c_file *f, int &level) {
 	char *v,*buf;
 	int slen;
 	while ((slen=f->bgets())>0){
@@ -45,11 +45,13 @@ void CfgSection::load(c_file *f) {
 			continue;
 		if (*buf=='}') {
 			//			printf("end section\n");
+			level--;
 			break;
 		}
 		if (*buf=='{')
 		{
-			CfgSection *s=new CfgSection(name(),buf+1,f);
+			level++;
+			CfgSection *s=new CfgSection(name(),buf+1,f,level);
 			sections.insert(CfgSection_map::value_type(s->key,s));
 			//			printf("new section: %s\n",buf+r+1);
 		}
@@ -69,6 +71,18 @@ void CfgSection::load(c_file *f) {
 			set_user_error_status();
 		}
 	}
+}
+CfgSection::CfgSection(const string &filename) : CfgBase(filename,"") {
+	c_file_fd f(filename.c_str(),O_RDONLY);
+	f.initrbuf();
+	int level=0;
+	load(&f, level);
+	if (level!=0) {
+		PERROR("%s: unbalanced {}'s: level=%+i", filename.c_str(), level);
+		set_user_error_status();
+	}
+	f.close();
+	used=true;
 }
 CfgSection::~CfgSection() {
 	for (CfgItem_map::iterator i = items.begin(); i != items.end(); ++i)
