@@ -163,17 +163,12 @@ template <class int_type>
 string durationstr(int_type duration){
 	int_type s = duration%60, m = duration/60%60, h = duration/60/60;
 	ostringstream oss; 
-	oss.fill('0');
 	if (h)
-		oss << h << 'h' << setw(2) << m << 'm' << setw(2) << s << 's';
-//		return snprintf(timestr,max,"%ih%02im%02is",h,m,s);
-	else if (m)
-		oss << m << 'm' << setw(2) << s << 's';
-	else
-		oss << s << 's';
+		oss << h << 'h';
+	if (h || m)
+		oss << m << 'm';
+	oss << s << 's';
 	return oss.str();
-//		return snprintf(timestr,max,"%im%02is",h,m,s);
-//	return snprintf(timestr,max,"%is",h,m,s);
 }
 template string durationstr(int_fast64_t);
 template string durationstr(ulong);
