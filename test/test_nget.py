@@ -30,6 +30,8 @@ if os.sep in ngetexe or (os.altsep and os.altsep in ngetexe):
 
 zerofile_fn_re = re.compile(r'(\d+)\.(\d+)\.txt$')
 
+def textcmp(a, b):
+	return open(a,'rb').read().splitlines()==open(b,'rb').read().splitlines()
 
 class TestCase(unittest.TestCase):
 	def vfailIf(self, expr, msg=None):
@@ -53,7 +55,7 @@ class TestCase(unittest.TestCase):
 
 class DecodeTest_base:
 	def addarticle_toserver(self, testnum, dirname, aname, server, **kw):
-		article = nntpd.FileArticle(open(os.path.join("testdata",testnum,dirname,aname), 'r'))
+		article = nntpd.FileArticle(open(os.path.join("testdata",testnum,dirname,aname), 'rb'))
 		server.addarticle(["test"], article, **kw)
 		return article
 
@@ -61,13 +63,13 @@ class DecodeTest_base:
 		for fn in glob.glob(os.path.join("testdata",testnum,dirname,"*")):
 			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
 				continue
-			server.addarticle(["test"], nntpd.FileArticle(open(fn, 'r')))
+			server.addarticle(["test"], nntpd.FileArticle(open(fn, 'rb')))
 
 	def rmarticles_fromserver(self, testnum, dirname, server):
 		for fn in glob.glob(os.path.join("testdata",testnum,dirname,"*")):
 			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
 				continue
-			article = nntpd.FileArticle(open(fn, 'r'))
+			article = nntpd.FileArticle(open(fn, 'rb'))
 			server.rmarticle(article.mid)
 			
 	def addarticles(self, testnum, dirname, servers=None):
@@ -107,7 +109,10 @@ class DecodeTest_base:
 				dfn = os.path.join(tmpdir, tail)
 			self.failUnless(os.path.exists(dfn), "decoded file %s does not exist"%dfn)
 			self.failUnless(os.path.isfile(dfn), "decoded file %s is not a file"%dfn)
-			self.failUnless(filecmp.cmp(fn, dfn, shallow=0), "decoded file %s differs from %s"%(dfn, fn))
+			if r:
+				self.failUnless(textcmp(fn, dfn), "decoded file %s differs from %s"%(dfn, fn))
+			else:
+				self.failUnless(filecmp.cmp(fn, dfn, shallow=0), "decoded file %s differs from %s"%(dfn, fn))
 			ok.append(os.path.split(dfn)[1])
 
 		extra = [fn for fn in os.listdir(tmpdir) if fn not in ok]
@@ -1114,7 +1119,7 @@ else:
 			self.nget.clean_all()
 
 		def readoutput(self):
-			self.output = open(self.outputfn,'r').read()
+			self.output = open(self.outputfn,'rb').read()
 			#print 'output was:',`self.output`
 			print self.output
 			x = self._exitstatusre.search(self.output)
