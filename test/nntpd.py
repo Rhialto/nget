@@ -22,6 +22,16 @@ import time
 import threading
 import SocketServer
 
+import fnmatch
+class WildMat:
+	def __init__(self, pat):
+		####pat should really be massaged into a regex since the wildmat semantics are not the same as that of fnmatch
+		self.pat = pat
+	def __call__(self, arg):
+		return fnmatch.fnmatchcase(arg, self.pat)
+def MatchAny(arg):
+	return 1
+
 class NNTPError(Exception):
 	def __init__(self, code, text):
 		self.code=code
@@ -75,10 +85,25 @@ class AuthInfo:
 			return self.caps.get('*', 1) #default to full auth
 		return self.caps[cmd]
 
+def cmd_split(rcmd):
+	rs = rcmd.split(' ',1)
+	if len(rs)==1:
+		return rs[0], None
+	else:
+		return rs
 
 class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 	def nwrite(self, s):
 		self.wfile.write(s+"\r\n")
+	def call_command(self, cmd, args):
+		func = getattr(self, 'cmd_'+cmd, None)
+		if func and callable(func):
+			if not self.authed.has_auth(cmd):
+				raise NNTPAuthRequired
+			self.server.incrcount(cmd)
+			func(args)
+		else:
+			raise NNTPBadCommand, cmd
 	def handle(self):
 		self.server.incrcount("_conns")
 		readline = self.rfile.readline
@@ -90,21 +115,9 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			rcmd = readline()
 			if not rcmd: break
 			rcmd = rcmd.strip()
-			rs = rcmd.lower().split(' ',1)
-			if len(rs)==1:
-				cmd = rs[0]
-				args = None
-			else:
-				cmd,args = rs
-			func = getattr(self, 'cmd_'+cmd, None)
+			cmd,args = cmd_split(rcmd.lower())
 			try:
-				if func and callable(func):
-					if not self.authed.has_auth(cmd):
-						raise NNTPAuthRequired
-					self.server.incrcount(cmd)
-					func(args)
-				else:
-					raise NNTPBadCommand, rcmd
+				self.call_command(cmd, args)
 			except NNTPDisconnect, d:
 				if d.err:
 					self.nwrite(str(d.err))
@@ -134,21 +147,32 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 		self.nwrite("111 "+time.strftime("%Y%m%d%H%M%S",time.gmtime()))
 	
 	def cmd_list(self, args):
-		if args=="newsgroups":
-			self.server.incrcount("list_newsgroups")
-			self.nwrite("215 information follows")
-			for name,group in self.server.groups.items():
-				if group.description:
-					self.nwrite("%s %s"%(name, group.description))
-			self.nwrite(".")
-		elif args:
-			raise NNTPSyntaxError, args
+		if args:
+			subcmd, args = cmd_split(args)
 		else:
-			self.server.incrcount("list_") #differentiate from "list" which counts any list* command
-			self.nwrite("215 list of newsgroups follows")
-			for name,group in self.server.groups.items():
+			subcmd = ''
+		self.call_command('list_'+subcmd, args)
+	def cmd_list_newsgroups(self, args):
+		self.nwrite("215 information follows")
+		if args:
+			matcher = WildMat(args)
+		else:
+			matcher = MatchAny
+		for name,group in self.server.groups.items():
+			if group.description and matcher(name):
+				self.nwrite("%s %s"%(name, group.description))
+		self.nwrite(".")
+	def cmd_list_(self, args):
+		if args:
+			matcher = WildMat(args)
+		else:
+			matcher = MatchAny
+		self.nwrite("215 list of newsgroups follows")
+		for name,group in self.server.groups.items():
+			if matcher(name):
 				self.nwrite("%s %i %i %s"%(name, group.low, group.high, "y"))
-			self.nwrite(".")
+		self.nwrite(".")
+	cmd_list_active = cmd_list_
 
 	def cmd_newgroups(self, args):
 		#since = time.mktime(time.strptime(args,"%Y%m%d %H%M%S %Z"))
@@ -210,15 +234,14 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			low,high = map(long, rng)
 		else:
 			low = high = long(rng[0])
-		####pat should really be massaged into a regex since the wildmat semantics are not the same as that of fnmatch
-		import fnmatch
 		keys = [k for k in self.group.articles.keys() if k>=low and k<=high]
 		keys.sort()
+		matcher = WildMat(pat)
 		self.nwrite("221 %s fields follow"%field)
 		for anum in keys:
 			article = self.group.articles[anum]
 			val = getattr(article, field, "")
-			if fnmatch.fnmatchcase(val, pat):
+			if matcher(val):
 				self.nwrite(str(anum)+' '+val)
 		self.nwrite('.')
 	def cmd_article(self, args):

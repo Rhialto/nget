@@ -6,6 +6,7 @@
   * Allow -p to create missing directories recursively (with --makedirs) and add # setting for makedirs.
   * Add fatal_user_errors ngetrc setting to make user errors cause an immediate exit rather than continuing if possible.
   * Add -x option to retrieve based on XPAT searches rather than retrieving all headers and using a cache file. (suggested by Naveen Nathan)
+  * Add -X option to search group list server-side rather than retrieving the full group list and using a cache file.
   * Fix segv on || or && in -R with less than 2 items on the stack.
   * Accept invalid dates with 1 digit hours/minutes/seconds or space padded hours.
   * Update cppunit tests to cppunit 1.8.0 style.

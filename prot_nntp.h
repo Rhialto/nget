@@ -99,8 +99,12 @@ class c_prot_nntp {
 		void nntp_dogroup(ulong &num, ulong &low, ulong &high);
 		void nntp_dogroup(int getheaders);
 		void nntp_grouplist(int update, const nget_options &options);
+		void nntp_xgrouplist(const t_xpat_list &patinfos, const nget_options &options);
+		void nntp_dogetgrouplist(void);
 		void nntp_dogrouplist(void);
-		void nntp_dogroupdescriptions(void);
+		void nntp_dogrouplist(const char *wildmat);
+		void nntp_dogroupdescriptions(const char *wildmat=NULL);
+		void nntp_grouplist_search(const t_grouplist_getinfo_list &getinfos, const t_xpat_list &patinfos, const nget_options &options);
 		void nntp_grouplist_search(const t_grouplist_getinfo_list &getinfos, const nget_options &options);
 		int nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_articles_prioritized &sap,bool docurservmult);
 		int nntp_dowritelite_article(c_file &fw,c_nntp_part *part,char *fn);

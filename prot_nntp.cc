@@ -133,9 +133,28 @@ class DumbProgress : public Progress {
 		}
 };
 
-void c_prot_nntp::nntp_dogrouplist(void){
+void c_prot_nntp::nntp_dogetgrouplist(void){
 	ulong bytes=0, done=0;
+	DumbProgress progress;
+	while (1) {
+		if (progress.needupdate())
+			progress.print_retrieving("group list", done, bytes);
+		bytes+=getline(debug>=DEBUG_ALL);
+		if (cbuf[0]=='.' && cbuf[1]=='\0')break;
+		char * p = strpbrk(cbuf, " \t");
+		if (p)
+			*p = '\0';
+		//####do something with last/first/postingallowed info?
 
+		glist->addgroup(connection->server->serverid, cbuf);
+		done++;
+	}
+	if(quiet<2){
+		progress.print_retrieving("group list", done, bytes);
+		printf("\n");
+	}
+}
+void c_prot_nntp::nntp_dogrouplist(void){
 	c_nntp_grouplist_server_info::ptr servinfo = glist->getserverinfo(connection->server->serverid);
 	string newdate;
 	int r=stdputline(quiet<2,"DATE");
@@ -157,30 +176,21 @@ void c_prot_nntp::nntp_dogrouplist(void){
 		chkreply(stdputline(quiet<2,"LIST"));
 	}
 
-	DumbProgress progress;
-	while (1) {
-		if (progress.needupdate())
-			progress.print_retrieving("group list", done, bytes);
-		bytes+=getline(debug>=DEBUG_ALL);
-		if (cbuf[0]=='.' && cbuf[1]=='\0')break;
-		char * p = strpbrk(cbuf, " \t");
-		if (p)
-			*p = '\0';
-		//####do something with last/first/postingallowed info?
-
-		glist->addgroup(connection->server->serverid, cbuf);
-		done++;
-	}
-	if(quiet<2){
-		progress.print_retrieving("group list", done, bytes);
-		printf("\n");
-	}
+	nntp_dogetgrouplist();
 	servinfo->date = newdate;
 }
 
-void c_prot_nntp::nntp_dogroupdescriptions(void){
+void c_prot_nntp::nntp_dogrouplist(const char *wildmat){
+	chkreply(stdputline(quiet<2,"LIST ACTIVE %s", wildmat));
+	nntp_dogetgrouplist();
+}
+
+void c_prot_nntp::nntp_dogroupdescriptions(const char *wildmat){
 	ulong bytes=0, done=0;
-	chkreply(stdputline(quiet<2,"LIST NEWSGROUPS"));
+	if (wildmat)
+		chkreply(stdputline(quiet<2,"LIST NEWSGROUPS %s", wildmat));
+	else
+		chkreply(stdputline(quiet<2,"LIST NEWSGROUPS"));
 	DumbProgress progress;
 	while (1) {
 		if (progress.needupdate())
@@ -207,7 +217,7 @@ void c_prot_nntp::nntp_dogroupdescriptions(void){
 
 void c_prot_nntp::nntp_grouplist(int update, const nget_options &options){
 	if (!glist)
-		glist = new c_nntp_grouplist();
+		glist = new c_nntp_grouplist(nghome+"newsgroups");
 	if (update) {
 		c_server::ptr s;
 		list<c_server::ptr> doservers;
@@ -264,7 +274,67 @@ void c_prot_nntp::nntp_grouplist(int update, const nget_options &options){
 		}
 	}
 }
-		
+
+void c_prot_nntp::nntp_xgrouplist(const t_xpat_list &patinfos, const nget_options &options){
+	glist = new c_nntp_grouplist();
+
+	c_server::ptr s;
+	list<c_server::ptr> doservers;
+	c_server_priority_grouping *priogroup;
+	if (!(priogroup=nconfig.getpriogrouping("_grouplist")))
+		priogroup=nconfig.getpriogrouping("default");
+	nntp_simple_prioritize(priogroup, doservers);
+
+	int redone=0, succeeded=0, attempted=doservers.size();
+	while (!doservers.empty() && redone<options.maxretry) {
+		if (redone){
+			printf("nntp_xgrouplist: trying again. %i\n",redone);
+			if (options.retrydelay)
+				sleep(options.retrydelay);
+		}
+		list<c_server::ptr>::iterator dsi = doservers.begin();
+		list<c_server::ptr>::iterator ds_erase_i;
+		while (dsi != doservers.end()){
+			s=(*dsi);
+			assert(s);
+			PDEBUG(DEBUG_MED,"nntp_xgrouplist: serv(%lu) %f>=%f",s->serverid,priogroup->getserverpriority(s->serverid),priogroup->defglevel);
+			try {
+				ConnectionHolder holder(&sockpool, &connection, s->serverid);
+				nntp_doopen();
+				for (t_xpat_list::const_iterator i = patinfos.begin(); i != patinfos.end(); ++i) {
+					nntp_dogrouplist((*i)->wildmat.c_str());
+					nntp_dogroupdescriptions((*i)->wildmat.c_str());//####make this a seperate option? //######handle (skip?) servers that ignore wildmat option to LIST NEWSGROUPS somehow?  .. not that its really possible to tell before hand whether the server will ignore it.
+				}
+				succeeded++;
+				connection->server_ok=true;
+			} catch (baseCommEx &e) {
+				printCaughtEx(e);
+				if (e.isfatal()) {
+					printf("fatal error, won't try %s again\n", s->alias.c_str());
+					//fall through to removing server from list below.
+				}else{
+					//if this is the last retry, don't say that we will try it again.
+					if (redone+1 < options.maxretry)
+						printf("will try %s again\n", s->alias.c_str());
+					++dsi;
+					continue;//don't remove server from list
+				}
+			}
+			ds_erase_i = dsi;
+			++dsi;
+			doservers.erase(ds_erase_i);
+		}
+		redone++;
+	}
+	if (succeeded) {
+		set_grouplist_warn_status(attempted - succeeded);
+		set_grouplist_ok_status();
+	}else {
+		set_grouplist_error_status();
+		printf("no servers queried successfully\n");
+	}
+}
+
 void c_prot_nntp::nntp_grouplist_search(const t_grouplist_getinfo_list &getinfos, const nget_options &options){
 	if (glist) {
 		glist->printinfos(getinfos);
@@ -272,6 +342,12 @@ void c_prot_nntp::nntp_grouplist_search(const t_grouplist_getinfo_list &getinfos
 	} else {
 		nntp_grouplist_printinfos(getinfos);
 	}
+}
+
+void c_prot_nntp::nntp_grouplist_search(const t_grouplist_getinfo_list &getinfos, const t_xpat_list &patinfos, const nget_options &options){
+	nntp_xgrouplist(patinfos, options);
+	glist->printinfos(getinfos);
+	//####should we glist=NULL; here?
 }
 
 

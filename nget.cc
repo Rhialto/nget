@@ -164,7 +164,7 @@ void set_user_error_status_and_do_fatal_user_error(int incr=1) {
 		throw FatalUserException();
 }
 
-#define NUM_OPTIONS 36
+#define NUM_OPTIONS 37
 #ifndef HAVE_LIBPOPT
 
 #ifndef HAVE_GETOPT_LONG
@@ -250,6 +250,7 @@ static void addoptions(void)
 	addoption("host",1,'h',"HOSTALIAS","force nntp host to use (must be configured in .ngetrc)");
 	addoption("available",0,'a',0,"update/load available newsgroups list");
 	addoption("quickavailable",0,'A',0,"load available newsgroups list");
+	addoption("xavailable",0,'X',0,"search available newsgroups list without using cache files");
 	addoption("group",1,'g',"GROUPNAME","newsgroup");
 	addoption("quickgroup",1,'G',"GROUPNAME","use group without checking for new headers");
 	addoption("xgroup",1,'x',"GROUPNAME","use group without using cache files (requires XPAT)");
@@ -665,6 +666,11 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				options.parse_dupe_flags("I");
 				break;
 			case 'R':
+				if (options.cmdmode==NOCACHE_GROUPLIST_MODE) {
+					printf("-R is not yet supported with -X\n");
+					set_user_error_status_and_do_fatal_user_error();
+					break;
+				}
 				if (options.cmdmode==GROUPLIST_MODE) {
 					try {
 						nntp_grouplist_pred *p=make_grouplist_pred(loptarg, options.gflags);
@@ -702,7 +708,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				}
 				break;
 			case 'r':
-				if (options.cmdmode==GROUPLIST_MODE) {
+				if (options.cmdmode==GROUPLIST_MODE || options.cmdmode==NOCACHE_GROUPLIST_MODE) {
 					arglist_t e_parts;
 					e_parts.push_back("group");
 					e_parts.push_back(loptarg);
@@ -714,6 +720,9 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 
 					e_parts.push_back("||");
 					try {
+						if (options.cmdmode==NOCACHE_GROUPLIST_MODE) {
+							patinfos.push_back(new c_xpat("", regex2wildmat(loptarg, !(options.gflags&GETFILES_CASESENSITIVE))));
+						}
 						nntp_grouplist_pred *p=make_grouplist_pred(e_parts, options.gflags);
 						grouplistgetinfos.push_back(new c_grouplist_getinfo(p, options.gflags));
 					}catch(RegexEx &e){
@@ -851,7 +860,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				{
 					c_server::ptr server=nconfig.getserver(loptarg);
 					if (!server) {printf("no such server %s\n",loptarg);set_user_error_status_and_do_fatal_user_error();break;}
-					if (options.cmdmode==NOCACHE_RETRIEVE_MODE) {
+					if (options.cmdmode==NOCACHE_RETRIEVE_MODE || options.cmdmode==NOCACHE_GROUPLIST_MODE) {
 						printf("nothing to flush in nocache mode\n");
 						set_user_error_status_and_do_fatal_user_error();
 						break;
@@ -897,10 +906,13 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					if(!(options.gflags&GETFILES_TESTMODE)){
 						printf("testmode required for grouplist\n");
 						set_user_error_status_and_do_fatal_user_error();
+					}else if (!patinfos.empty()){
+						nntp.nntp_grouplist_search(grouplistgetinfos, patinfos, options);
 					}else{
 						nntp.nntp_grouplist_search(grouplistgetinfos, options);
 					}
 					grouplistgetinfos.clear();
+					patinfos.clear();
 				}
 				if (!patinfos.empty()){
 					nntp.nntp_retrieve(options.group, getinfos, patinfos, options);
@@ -972,6 +984,9 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 						}
 					case 'A':
 						options.cmdmode=GROUPLIST_MODE;
+						break;
+					case 'X':
+						options.cmdmode=NOCACHE_GROUPLIST_MODE;
 						break;
 					case 'g':
 						//if BAD_HOST, don't try to -g, fall through to -G instead

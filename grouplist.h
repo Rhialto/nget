@@ -85,6 +85,7 @@ class c_nntp_grouplist : public c_refcounted<c_nntp_grouplist>{
 		void flushserver(ulong serverid);
 
 		c_nntp_grouplist(void);
+		c_nntp_grouplist(string path);
 		void save(void);
 		~c_nntp_grouplist();
 };

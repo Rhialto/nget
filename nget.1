@@ -1,4 +1,4 @@
-.TH nget 1 "21 Aug 2002"
+.TH nget 1 "18 Oct 2002"
 .SH NAME
 nget \- retrieve files from NNTP (usenet news) hosts
 .SH SYNOPSIS
@@ -22,6 +22,14 @@ Update the list of available newsgroups.
 Subsequent -r/-R commands can be use to search for newsgroups.
 .IP "-A/--quickavailable"
 Like -a/--available, but does not update the list, only makes it available for searching.
+.IP "-X/--xavailable"
+Search the group list, but without loading cache file or retrieving full group list.
+Instead, the search will be done on the server.
+Compared to -a/-A this has the advantage of not requiring any disk space for cache files,
+and not requiring the initial retrieval of the full group list.
+The disadvantages are not all servers supporting the required NNTP extensions,
+the inability to use complex regexs due to the need to convert it to the simpler wildmat format,
+and the possibility that the commands can be quite slow if the server is overloaded (you may need to increase the timeout value in some cases).
 .IP "-g/--group group"
 Update the list of available files in group.
 If a host has been specified before

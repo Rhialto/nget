@@ -78,6 +78,7 @@ enum t_cmd_mode {
 	RETRIEVE_MODE,
 	GROUPLIST_MODE,
 	NOCACHE_RETRIEVE_MODE,
+	NOCACHE_GROUPLIST_MODE,
 };
 enum t_text_handling {
 	TEXT_FILES,

@@ -735,6 +735,22 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.failUnless(output.find("aa.desc")>=0)
 		self.failIf(output.find("bb.")>=0)
 
+	def test_xavailable_r(self):
+		self.servers.servers[0].addgroup("aa.group")
+		self.servers.servers[0].addgroup("bb.group")
+		self.servers.servers[0].addgroup("group.one", "aa.desc")
+		self.servers.servers[0].addgroup("group.two", "bb.desc")
+		self.servers.servers[0].addgroup("group.aa.two", "foo.desc")
+		apath = os.path.join(self.nget.rcdir, 'avail.out')
+		self.vfailIf(self.nget.run('-X -T -r aa > %s'%apath))
+		output = open(apath).read()
+		print output
+		self.failUnless(output.find("aa.group")>=0)
+		self.failUnless(output.find("group.aa.two")>=0)
+		self.failUnless(output.find("foo.desc")>=0)
+		self.failIf(output.find("bb.")>=0)
+		self.failIf(output.find("aa.desc")>=0) #LIST NEWSGROUPS wildmat doesn't search the description, so this shouldn't be found.
+
 	def test_available_R_desc(self):
 		self.servers.servers[0].addgroup("group.bbb")
 		self.servers.servers[0].addgroup("group.one", "aaa")

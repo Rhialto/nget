@@ -277,10 +277,12 @@ void c_nntp_grouplist_reader::check_counts(void) {
 
 
 c_nntp_grouplist::c_nntp_grouplist(void){
+}
+c_nntp_grouplist::c_nntp_grouplist(string path){
 	c_file *f=NULL;
 	saveit=0;
 	//file=nid;
-	filename=nghome+"newsgroups";
+	filename=path;
 	setfilenamegz(filename);
 	try {
 		f=dofileopen(filename.c_str(),"rb");
