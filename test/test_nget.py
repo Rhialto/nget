@@ -1034,6 +1034,21 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -r par2.test')) # the extra incomplete getting only happens if par2s are available.
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 4)
 		
+	def test_autopar2handling_incompletefile_smartness(self):
+		self.addarticles('par2-01', 'input', fname='dat[1245]')
+		self.addarticles('par2-01', 'input', fname='par')
+		self.addarticles('par2-01', 'input', fname='par2')
+		self.addarticles('par2-01', 'multipart', fname="dat[12345]-1")
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par2.test'), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 7)
+
+	def test_autopar2handling_incompletefile_smartness2(self):
+		self.addarticles('par2-01', 'input', fname='dat[1234]')
+		self.addarticles('par2-01', 'input', fname='par')
+		self.addarticles('par2-01', 'multipart', fname="dat[1234]-1")
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par2.test'),2)
+		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','c d.par2']})
+		
 	def test_autopar2handling_reply(self):
 		self.addarticles('par2-01', 'input')
 		self.addarticles('par2-01', 'reply')

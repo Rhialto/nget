@@ -25,7 +25,6 @@
 #include "log.h"
 #include "misc.h"
 #include "nget.h"
-#include "par2/par2cmdline.h"
 #include "knapsack.h"
 
 
@@ -323,17 +322,27 @@ bool Par2Info::maybe_add_parfile(const c_nntp_file::ptr &f, bool want_incomplete
 	return false;
 }
 
-int Par2Info::get_extradata(c_nntp_files_u &fc) {
-	if (!serverextradata.empty()) {
-		PMSG("autopar: not enough par2 recovery packets, trying to get some incomplete data");
-		//####TODO: should be smart and get only posts that pertain to files that are missing or damaged.
-		fc.addfile(serverextradata.begin()->second, path, temppath, false);
-		return 1;
+int Par2Info::get_extradata(c_nntp_files_u &fc, const Par2Repairer *par2) {
+	for (t_server_file_list::iterator edi=serverextradata.begin(); edi!=serverextradata.end(); ++edi) { 
+		for (vector<Par2RepairerSourceFile*>::const_iterator sf = par2->sourcefiles.begin(); sf != par2->sourcefiles.end(); ++sf) {
+			const Par2RepairerSourceFile *sourcefile = *sf;
+			if (sourcefile && sourcefile->GetCompleteFile() == 0) {
+				string head=sourcefile->TargetFileName(), tail;
+				path_split(head, tail);
+				if (edi->second->subject.find(tail) != string::npos) {
+					PMSG("autopar: not enough par2 recovery packets, trying to get some incomplete data");
+					fc.addfile(edi->second, path, temppath, false);
+					serverextradata.erase(edi);
+					return 1;
+				}
+			}
+		}
+
 	}
 	return 0;
 }
 		
-int Par2Info::get_recoverypackets(int num, set<uint32_t> &havepackets, const string &key, c_nntp_files_u &fc) {
+int Par2Info::get_recoverypackets(int num, set<uint32_t> &havepackets, const string &key, c_nntp_files_u &fc, const Par2Repairer *par2) {
 	assert(localpars.subjmatches.find(key)!=localpars.subjmatches.end());
 	pair<t_subjmatches_map::iterator,t_subjmatches_map::iterator> matches=localpars.subjmatches.equal_range(key);
 	c_regex_subs rsubs;
@@ -366,7 +375,7 @@ int Par2Info::get_recoverypackets(int num, set<uint32_t> &havepackets, const str
 		}
 	}
 	if ((signed)availpackets.size()<num){
-		int r = get_extradata(fc);
+		int r = get_extradata(fc, par2);
 		if (r) return r;
 	}
 	if (nconfig.autopar_optimistic && (signed)availpackets.size()<num){
@@ -422,6 +431,7 @@ int Par2Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 		set<uint32_t> goodpackets;
 		bool goodparfound = false;
 		int needed_packets = 0;
+		auto_ptr<Par2Repairer> par2;
 
 		vector<string> fullpaths;
 		for (vector<string>::const_iterator fni=bfni->second.begin(); fni!=bfni->second.end(); ++fni)
@@ -431,18 +441,18 @@ int Par2Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 			const string &fn = *fni;
 			
 			CommandLine par2cmd(fn, fullpaths, nocase_map);
-			Par2Repairer par2;
-			Result r = par2.Process(par2cmd, false);
+			par2.reset(new Par2Repairer);
+			Result r = par2->Process(par2cmd, false);
 
 			if (r == eSuccess || r == eRepairPossible || r == eRepairNotPossible) {
 				goodparfound = true;
 
-				for (map<u32, RecoveryPacket*>::const_iterator rpmi = par2.recoverypacketmap.begin(); rpmi != par2.recoverypacketmap.end(); ++rpmi)
+				for (map<u32, RecoveryPacket*>::const_iterator rpmi = par2->recoverypacketmap.begin(); rpmi != par2->recoverypacketmap.end(); ++rpmi)
 					goodpackets.insert(rpmi->first);
 				
 				if (r == eRepairNotPossible)
-					needed_packets = par2.missingblockcount - par2.recoverypacketmap.size();
-				PMSG("par2set %s in %s: %i recovery packets, %i bad/missing source blocks, trying to get %i more", hexstr(bfni->first).c_str(), path.c_str(), (int)goodpackets.size(), par2.missingblockcount, needed_packets);
+					needed_packets = par2->missingblockcount - par2->recoverypacketmap.size();
+				PMSG("par2set %s in %s: %i recovery packets, %i bad/missing source blocks, trying to get %i more", hexstr(bfni->first).c_str(), path.c_str(), (int)goodpackets.size(), par2->missingblockcount, needed_packets);
 				break;
 			}
 		}
@@ -453,7 +463,7 @@ int Par2Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 		}
 
 		if (needed_packets) {
-			int parset_added = get_recoverypackets(needed_packets, goodpackets, bfni->first, fc);
+			int parset_added = get_recoverypackets(needed_packets, goodpackets, bfni->first, fc, par2.get());
 			if (!parset_added) {
 				set_autopar_error_status();
 				finished_parsets.insert(bfni->first);

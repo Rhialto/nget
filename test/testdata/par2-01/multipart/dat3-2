@@ -1,0 +1,13 @@
+From: donut@charon
+Sender: donut@charon
+User-Agent: ypost/0.46 (http://www.yencode.org/)
+Date: Fri, 10 Oct 2003 21:41:32 GMT
+Newsgroups: test
+Subject: [par2 test] "c d 03.dat" yEnc (2/2) 32 bytes
+Lines: 3
+Message-ID: <6.1065822092.15@dumbnntpd>
+
+=ybegin part=2 total=2 line=17 size=32 name=c d 03.dat
+=ypart begin=18 end=32
+rstuvwxyz{|}~€
+=yend size=15 part=2 pcrc32=FB8B828D crc32=B750B191
