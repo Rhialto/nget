@@ -601,7 +601,7 @@ dnl Based on:
 dnl @version $Id: ac_caolan_check_package.m4,v 1.5 2000/08/30 08:50:25 simons Exp $
 dnl @author Caolan McNamara <caolan@skynet.ie> with fixes from Alexandre Duret-Lutz <duret_g@lrde.epita.fr>.
 dnl
-AC_DEFUN([AC_donut_CHECK_PACKAGE_sub],
+AC_DEFUN([AC_donut_CHECK_PACKAGE_pre],
 [
 AC_ARG_WITH($1-prefix,
 [AC_HELP_STRING([--with-$1-prefix=DIR],[use $1 and look in DIR/{include,lib}/])],
@@ -642,16 +642,17 @@ if test "${with_$1}" != no ; then
         fi
 
 	no_good=no
-        AC_CHECK_LIB($3,$2,,no_good=yes)
-        AC_CHECK_HEADER($4,,no_good=yes)
+                
+	ifelse([$7], , , [$7])
+
         if test "$no_good" = yes; then
 dnl     broken
-                ifelse([$6], , , [$6])
-
                 LIBS=$OLD_LIBS
                 LDFLAGS=$OLD_LDFLAGS
                 CPPFLAGS=$OLD_CPPFLAGS
                 CFLAGS=$OLD_CFLAGS
+		
+                ifelse([$6], , , [$6])
         else
 dnl     fixed
                 ifelse([$5], , , [$5])
@@ -669,6 +670,14 @@ fi
 
 ])
 
+AC_DEFUN([AC_donut_CHECK_PACKAGE_sub],
+[
+	AC_donut_CHECK_PACKAGE_pre([$1], [$2], [$3], [$4], [$5], [$6], [
+        AC_CHECK_LIB($3,$2,,no_good=yes)
+        AC_CHECK_HEADERS($4,,no_good=yes)
+	])
+])
+
 dnl package that defaults to enabled
 AC_DEFUN([AC_donut_CHECK_PACKAGE_DEF],
 [
@@ -679,7 +688,7 @@ with_$1=$withval
 ,
 with_$1=yes
 )
-AC_donut_CHECK_PACKAGE_sub($1, $2, $3, $4, $5, $6)
+AC_donut_CHECK_PACKAGE_sub([$1], [$2], [$3], [$4], [$5], [$6])
 ]
 )
 
@@ -692,7 +701,45 @@ with_$1=$withval
 ,
 with_$1=no
 )
-AC_donut_CHECK_PACKAGE_sub($1, $2, $3, $4, $5, $6)
+AC_donut_CHECK_PACKAGE_sub([$1], [$2], [$3], [$4], [$5], [$6])
+]
+)
+
+
+
+dnl fooo 
+AC_DEFUN([AC_donut_SEARCH_PACKAGE_sub],
+[
+	AC_donut_CHECK_PACKAGE_pre([$1], [$2], [$3], [$4], [$5], [$6], [
+        AC_SEARCH_LIBS($2,$3,,no_good=yes)
+        AC_CHECK_HEADERS($4,,no_good=yes)
+	])
+])
+
+dnl package that defaults to enabled
+AC_DEFUN([AC_donut_SEARCH_PACKAGE_DEF],
+[
+AC_ARG_WITH($1,
+AC_HELP_STRING([--without-$1], [disables $1 usage completely])
+AC_HELP_STRING([--with-$1=DIR], [look in DIR for $1]),
+with_$1=$withval
+,
+with_$1=yes
+)
+AC_donut_SEARCH_PACKAGE_sub([$1], [$2], [$3], [$4], [$5], [$6])
+]
+)
+
+dnl package that defaults to disabled
+AC_DEFUN([AC_donut_SEARCH_PACKAGE],
+[
+AC_ARG_WITH($1,
+[AC_HELP_STRING([--with-$1(=DIR)], [use $1, optionally looking in DIR])],
+with_$1=$withval
+,
+with_$1=no
+)
+AC_donut_SEARCH_PACKAGE_sub([$1], [$2], [$3], [$4], [$5], [$6])
 ]
 )
 
