@@ -367,6 +367,26 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run('-@ %s'%lpath))
 		self.verifyoutput(['0002','0001','0003'])
 
+	def test_list_list(self):
+		lpath = os.path.join(self.nget.rcdir, 'list.foo')
+		l2path = os.path.join(self.nget.rcdir, 'list2.foo')
+		f = open(lpath, 'w')
+		f.write('-@ %s'%l2path)
+		f.close()
+		f = open(l2path, 'w')
+		f.write('-g\ntest\n-r\njoy')
+		f.close()
+		self.vfailIf(self.nget.run('-@ %s'%lpath))
+		self.verifyoutput(['0002'])
+
+	def test_list_optionscope(self):
+		lpath = os.path.join(self.nget.rcdir, 'list.foo')
+		f = open(lpath, 'w')
+		f.write('-l 98765 -L 1 -p %s -G foog -M -w boofar -K -T\n'%self.nget.rcdir)
+		f.close()
+		self.vfailIf(self.nget.run('-gtest -@ %s -r joy'%lpath))
+		self.verifyoutput(['0002'])
+
 	def test_list_enoent(self):
 		self.vfailUnlessEqual(self.nget.run('-@ foobar'), 4)
 
