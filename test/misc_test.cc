@@ -1,3 +1,4 @@
+void set_user_error_status_and_do_fatal_user_error(void) {} // ugly. whee.
 #include "misc.h"
 #include "path.h"
 #include "file.h"
@@ -16,6 +17,8 @@ class misc_Test : public CppUnit::TestFixture {
 		CPPUNIT_TEST(testDecodeTextMonth);
 		CPPUNIT_TEST(testDecodeTextDate);
 		CPPUNIT_TEST(testDecodeTextAge);
+		CPPUNIT_TEST(testParseStr);
+		CPPUNIT_TEST(testParseStrUnsigned);
 	CPPUNIT_TEST_SUITE_END();
 	public:
 		void testRegex2Wildmat(void) {
@@ -153,6 +156,42 @@ class misc_Test : public CppUnit::TestFixture {
 			CPPUNIT_ASSERT_EQUAL(time(NULL)-86400, decode_textage("1d"));
 			CPPUNIT_ASSERT_EQUAL(time(NULL)-604800, decode_textage("1w"));
 			CPPUNIT_ASSERT_EQUAL(time(NULL)-(604800+86400*2+3600*3+60*4+5), decode_textage("1 week 2 days 3 hours 4 mins 5 second"));
+		}
+		void testParseStr(void) {
+			int i=-2;
+			CPPUNIT_ASSERT(parsestr("3",i,"foo"));
+			CPPUNIT_ASSERT_EQUAL(3, i);
+			CPPUNIT_ASSERT(parsestr("-4",i,"foo"));
+			CPPUNIT_ASSERT_EQUAL(-4, i);
+			CPPUNIT_ASSERT(!parsestr("5 baz",i,"foo"));
+			CPPUNIT_ASSERT_EQUAL(-4, i);
+			
+			CPPUNIT_ASSERT(parsestr("6",i,6,9,"foo"));
+			CPPUNIT_ASSERT_EQUAL(6, i);
+			CPPUNIT_ASSERT(parsestr("9",i,6,9,"foo"));
+			CPPUNIT_ASSERT_EQUAL(9, i);
+			CPPUNIT_ASSERT(!parsestr("10",i,6,9,"foo"));
+			CPPUNIT_ASSERT_EQUAL(9, i);
+			CPPUNIT_ASSERT(!parsestr("5",i,6,9,"foo"));
+			CPPUNIT_ASSERT_EQUAL(9, i);
+		}	
+		void testParseStrUnsigned(void) {
+			unsigned long ul=20;
+			CPPUNIT_ASSERT(parsestr("3",ul,"foo"));
+			CPPUNIT_ASSERT_EQUAL(3UL, ul);
+			CPPUNIT_ASSERT(!parsestr("-4",ul,"foo"));
+			CPPUNIT_ASSERT_EQUAL(3UL, ul);
+			CPPUNIT_ASSERT(!parsestr("5 baz",ul,"foo"));
+			CPPUNIT_ASSERT_EQUAL(3UL, ul);
+
+			CPPUNIT_ASSERT(parsestr("6",ul,6UL,9UL,"foo"));
+			CPPUNIT_ASSERT_EQUAL(6UL, ul);
+			CPPUNIT_ASSERT(parsestr("9",ul,6UL,9UL,"foo"));
+			CPPUNIT_ASSERT_EQUAL(9UL, ul);
+			CPPUNIT_ASSERT(!parsestr("10",ul,6UL,9UL,"foo"));
+			CPPUNIT_ASSERT_EQUAL(9UL, ul);
+			CPPUNIT_ASSERT(!parsestr("5",ul,6UL,9UL,"foo"));
+			CPPUNIT_ASSERT_EQUAL(9UL, ul);
 		}
 };
 
