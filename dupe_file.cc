@@ -31,12 +31,7 @@ void dupe_file_checker::add(const char *filename, ulong size){
 	string buf;
 	const char *cp = filename;
 	if (isalnum(*cp)){ //only add word boundry match if we are actually next to a word, or else there isn't a word boundry to match at all.
-		buf+='\\';
-#ifdef HAVE_PKG_pcre
-		buf+='b';//match word boundary
-#else	
-		buf+='<';//match beginning of word
-#endif
+		buf+=regex_match_word_beginning();
 	}
 	while (*cp){
 		if (strchr("{}()|[]\\.+*^$",*cp))
@@ -45,12 +40,7 @@ void dupe_file_checker::add(const char *filename, ulong size){
 		cp++;
 	}
 	if (isalnum(*(cp-1))){
-		buf+='\\';
-#ifdef HAVE_PKG_pcre
-		buf+='b';//match word boundary
-#else
-		buf+='>';//match end of word
-#endif
+		buf+=regex_match_word_end();
 	}
 	fm=new file_match(buf.c_str(),REG_EXTENDED|REG_ICASE|REG_NOSUB,size);
 	flist.insert(filematchmap::value_type(fm->size, fm));

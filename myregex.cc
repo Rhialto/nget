@@ -22,6 +22,39 @@
 #include <stdlib.h>
 #include "myregex.h"
 
+
+static string regex_match_word_beginning_str;
+static string regex_match_word_end_str;
+static bool regex_initialized=0;
+static string regex_test_op(const char **ops, const char *pat, const char *match1,  const char *match2){
+	char buf[100];
+	for (; *ops; ops++) {
+		sprintf(buf, pat, *ops);
+		c_regex_nosub rx(buf, REG_EXTENDED);
+		if (match1==rx && match2==rx)
+			return *ops;
+	}
+	return "";
+}
+static void regex_init(void) {
+	const char *wbeg_ops[]={"\\<", "\\b", "(^|[^A-Za-z0-9])", NULL};
+	regex_match_word_beginning_str = regex_test_op(wbeg_ops, "%sfoo", "a fooa", "fooa");
+
+	const char *wend_ops[]={"\\>", "\\b", "($|[^A-Za-z0-9])", NULL};
+	regex_match_word_end_str = regex_test_op(wend_ops, "foo%s", "afoo a", "afoo");
+
+	PDEBUG(DEBUG_MIN,"regex_init regex_match_word_beginning:%s regex_match_word_end:%s",regex_match_word_beginning_str.c_str(), regex_match_word_end_str.c_str());
+	regex_initialized=true;
+}
+const string& regex_match_word_beginning(void) {
+	if (!regex_initialized) regex_init();
+	return regex_match_word_beginning_str;
+}
+const string& regex_match_word_end(void){
+	if (!regex_initialized) regex_init();
+	return regex_match_word_end_str;
+}
+
 c_regex_base::c_regex_base(const char * pattern,int cflags){
 	if (!pattern)
 		pattern="";

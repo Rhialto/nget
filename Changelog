@@ -12,6 +12,7 @@
   * Preliminary support for (cross-)compiling with mingw32. (see README.mingw32)
   * Remove configure --disable-filecompare option.  I don't think anyone used it, and even if they did it really shouldn't be a configure option.  (If you did use it, and want me to add it as a runtime option, then contact me.)
   * Major manpage cleanups, example ngetrc sections are indented properly and all .ngetrc global and host options are individually documented.
+  * Check for internally used non-standard regex operators at runtime, should fix problems with dupe file checking not working on some non-gnu regex system libraries.
 
 2002-06-17 v0.19.1:
   * Print error message rather than segv on flush without specifying a group first. (Reported by Christian Marillat)

@@ -48,6 +48,9 @@
 #include "log.h"
 DEFINE_EX_SUBCLASS(RegexEx, ApplicationExFatal, true);
 
+const string& regex_match_word_beginning(void);
+const string& regex_match_word_end(void);
+
 //  use strerror for a textual description of problem.  same as regerror(), but without the first arg(s).
 
 //throws a RegexEx if there is an error during the constructor
