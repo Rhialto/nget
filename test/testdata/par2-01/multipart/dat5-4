@@ -3,11 +3,11 @@ Sender: donut@charon
 User-Agent: ypost/0.46 (http://www.yencode.org/)
 Date: Fri, 10 Oct 2003 21:41:50 GMT
 Newsgroups: test
-Subject: [par2 test] "c d 05.dat" yEnc (4/4) 128 bytes
+Subject: [par2 test] "c D 05.dAT" yEnc (4/4) 128 bytes
 Lines: 3
 Message-ID: <10.1065822110.12@dumbnntpd>
 
-=ybegin part=4 total=4 line=33 size=128 name=c d 05.dat
+=ybegin part=4 total=4 line=33 size=128 name=c D 05.dAT
 =ypart begin=98 end=128
 «…cç¿=M}9¨½öð<q*a¡AZÅ¢úz@pEš,n
 =yend size=31 part=4 pcrc32=2055C2D7 crc32=F3D22570

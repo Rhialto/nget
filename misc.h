@@ -42,6 +42,9 @@ string tostr(const Type &arg){
     return buffer.str();
 }
 
+string strtolower(const string &s);
+void lowerstr(string &s);
+
 string regex2wildmat(const string &repat, bool ignorecase=false);
 
 template <class int_type>

@@ -329,7 +329,8 @@ int Par2Info::get_extradata(c_nntp_files_u &fc, const Par2Repairer *par2) {
 			if (sourcefile && sourcefile->GetCompleteFile() == 0) {
 				string head=sourcefile->TargetFileName(), tail;
 				path_split(head, tail);
-				if (edi->second->subject.find(tail) != string::npos) {
+				lowerstr(tail);
+				if (strtolower(edi->second->subject).find(tail) != string::npos) {
 					PMSG("autopar: not enough par2 recovery packets, trying to get some incomplete data");
 					fc.addfile(edi->second, path, temppath, false);
 					serverextradata.erase(edi);

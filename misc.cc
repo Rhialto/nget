@@ -44,6 +44,17 @@ string hexstr(const string &s){
 	return ret;
 }
 
+string strtolower(const string &s){
+	string sl = s;
+	lowerstr(sl);
+	return sl;
+}
+
+void lowerstr(string &s){
+	for (string::iterator i=s.begin(); i!=s.end(); ++i)
+		*i=tolower(*i);
+}
+
 string regex2wildmat(const string &repat, bool ignorecase){
 	if (repat.empty())
 		return "*";
