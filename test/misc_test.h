@@ -114,6 +114,15 @@ class misc_Test : public TestCase {
 			CPPUNIT_ASSERT_EQUAL(now, decode_textdate(asctime(localtime(&now)),1));
 			CPPUNIT_ASSERT_EQUAL(now, decode_textdate(asctime(gmtime(&now)),0));
 		}
+		void testDecodeTextAge(void) {
+			CPPUNIT_ASSERT_EQUAL(time(NULL), decode_textage("0s"));
+			CPPUNIT_ASSERT_EQUAL(time(NULL)-1, decode_textage("1s"));
+			CPPUNIT_ASSERT_EQUAL(time(NULL)-60, decode_textage("1m"));
+			CPPUNIT_ASSERT_EQUAL(time(NULL)-3600, decode_textage("1h"));
+			CPPUNIT_ASSERT_EQUAL(time(NULL)-86400, decode_textage("1d"));
+			CPPUNIT_ASSERT_EQUAL(time(NULL)-604800, decode_textage("1w"));
+			CPPUNIT_ASSERT_EQUAL(time(NULL)-(604800+86400*2+3600*3+60*4+5), decode_textage("1 week 2 days 3 hours 4 mins 5 second"));
+		}
 		static Test *suite(void) {
 			TestSuite *suite = new TestSuite;
 #define ADDTEST(n) suite->addTest(new TestCaller<misc_Test>(#n, &misc_Test::n))
@@ -125,6 +134,7 @@ class misc_Test : public TestCase {
 			ADDTEST(testFExists);
 			ADDTEST(testDecodeTextMonth);
 			ADDTEST(testDecodeTextDate);
+			ADDTEST(testDecodeTextAge);
 #undef ADDTEST
 			return suite;
 		}

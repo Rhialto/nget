@@ -336,6 +336,36 @@ time_t decode_textdate(const char * cbuf, bool local){
 		return timegm(&tblock)-td_tz;
 }
 
+c_regex_r xduration("^ *([0-9]+ *ye?a?r?s?)? *([0-9]+ *mon?t?h?s?)? *([0-9]+ *we?e?k?s?)? *([0-9]+ *da?y?s?)? *([0-9]+ *ho?u?r?s?)? *([0-9]+ *mi?n?u?t?e?s?)? *([0-9]+ *se?c?o?n?d?s?)? *$", REG_ICASE|REG_EXTENDED);
+time_t decode_textage(const char *cbuf) {
+	time_t now=time(NULL);
+	struct tm tblock = *localtime(&now);
+	c_regex_subs rsubs;
+	if (!xduration.match(cbuf,&rsubs)){
+//		if(rsubs.sublen(1)>0)
+//			age+=atol(rsubs.subs(1))*31556952; //365.2425*24*60*60
+		if(rsubs.sublen(1)>0)
+			tblock.tm_year-=atol(rsubs.subs(1));
+		if(rsubs.sublen(2)>0)
+			tblock.tm_mon-=atol(rsubs.subs(2));
+		if(rsubs.sublen(3)>0)
+			tblock.tm_mday-=atol(rsubs.subs(3))*7;
+		if(rsubs.sublen(4)>0)
+			tblock.tm_mday-=atol(rsubs.subs(4));
+		if(rsubs.sublen(5)>0)
+			tblock.tm_hour-=atol(rsubs.subs(5));
+		if(rsubs.sublen(6)>0)
+			tblock.tm_min-=atol(rsubs.subs(6));
+		if(rsubs.sublen(7)>0)
+			tblock.tm_sec-=atol(rsubs.subs(7));
+	}else {
+		PERROR("decode_textage: unknown %s",cbuf);
+		return 0;
+	}
+	//return now - mktime(&tblock);
+	return mktime(&tblock);
+}
+
 #ifdef	USE_FILECOMPARE					// check for duplicate files
 #include "file.h"
 int filecompare(const char *old_fn,const char *nfn){

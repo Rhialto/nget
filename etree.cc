@@ -126,6 +126,14 @@ pred<ClassType> *comparison_re(const string &opstr, getterT get, const char *pat
 	throw UserExFatal(Ex_INIT, "invalid op %s for comparison_re", opstr.c_str());
 }
 
+string invert_op(string o) {
+	if (o == "<") return ">";
+	else if (o == "<=") return ">=";
+	else if (o == ">")  return "<";
+	else if (o == ">=") return "<=";
+	else return o;
+}
+
 nntp_file_pred * make_pred(const char *optarg, int gflags){
 	list<string> e_parts;
 	string curpart;
@@ -209,6 +217,9 @@ nntp_file_pred * make_pred(const char *optarg, int gflags){
 				p = comparison<const c_nntp_file>((*i), &c_nntp_file::have, atoi(y->c_str()));
 			else if (strcasecmp(n, "date")==0)
 				p = comparison<const c_nntp_file>((*i), &c_nntp_file::badate, decode_textdate(y->c_str()));
+			else if (strcasecmp(n, "age")==0)
+				//rather than taking a relative age and converting each date into a relative age and then comparing, decode_textage returns an absolute date (time_t) which simplifies comparisons, but to get intuitive usage we have to invert <,> operators.
+				p = comparison<const c_nntp_file>(invert_op(*i), &c_nntp_file::badate, decode_textage(y->c_str()));
 			else
 				throw UserExFatal(Ex_INIT, "no match type %s", n);
 

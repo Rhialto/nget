@@ -44,6 +44,7 @@ template <class int_type>
 string durationstr(int_type duration);
 
 time_t decode_textdate(const char * cbuf, bool local=true);
+time_t decode_textage(const char *cbuf);
 int decode_textmonth(const char * buf);
 int decode_texttz(const char * buf);
 

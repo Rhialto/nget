@@ -338,6 +338,12 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run('-g test -R "date 20020307T112059+0000 =="'))
 		self.verifyoutput('0002')
 	
+	def test_age(self):
+		self.vfailIf(self.nget.run('-g test -R "age 3w2h5m1s <"'))
+		self.verifyoutput([])
+		self.vfailIf(self.nget.run('-g test -R "age 3w2h5m1s >"'))
+		self.verifyoutput(['0002','0001','0003'])
+	
 	def test_R_extra_whitespace(self):
 		self.vfailIf(self.nget.run('-g test -R "  \tlines  \t 20 \t  > \t  lines \t  200\t  <\t  &&\t  \t"'))
 		self.verifyoutput('0003')
