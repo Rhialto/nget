@@ -36,138 +36,34 @@ AC_SUBST(LITELIBS)
 dnl Checks for libraries.
 MY_CHECK_TERMSTUFF
 
-dnl check for liblockfile
-usez=yes
-AC_ARG_WITH(lockfile,
-[ --with-lockfile(=ldir)   Use liblockfile (optionally in ldir).],
-	if test "$withval" = "no"; then
-		usez=no
-	elif test "$withval" != "yes"; then
-		usez="$withval"
-		CXXFLAGS="$CXXFLAGS -I$withval -L$withval"
-		dnl need to set ac_cpp too, so the header check will work
-		ac_cpp="$ac_cpp -I$withval"
-	fi
-)
-if test "$usez" != "no"; then
-	AC_CHECK_LIB(lockfile, lockfile_create)
-	AC_CHECK_HEADERS(lockfile.h)
-	if test "$usez" != "yes"; then
-		if test "$ac_cv_lib_lockfile_lockfile_create" != "yes" -o "$ac_cv_header_lockfile_h" != "yes" ; then
-			echo "lockfile not found in $usez"
-			exit 1
-		fi
-	fi
-fi
+AC_donut_CHECK_PACKAGE_DEF(lockfile, lockfile_create, lockfile, lockfile.h)
+AC_donut_CHECK_PACKAGE_DEF(zlib, gzopen, z, zlib.h)
+AC_donut_CHECK_PACKAGE(pcre, pcre_compile, pcre, pcreposix.h, AC_CHECK_LIB(pcreposix,pcreposix_regcomp))
+AC_donut_CHECK_PACKAGE_DEF(popt, poptGetContext, popt, popt.h, MY_CHECK_POPT_CONST)
 
-dnl Check for zlib
-usez=yes
-AC_ARG_WITH(zlib,
-[ --without-zlib           Don't use zlib.  Faster loading/quiting, but uses
-                          much more space.
- --with-zlib=zdir         Assume zlib has been compiled in zdir, rather than
-                          installed to system dirs.],
-	if test "$withval" = "no"; then
-		usez=no
-	elif test "$withval" != "yes"; then
-		usez="$withval"
-		CXXFLAGS="$CXXFLAGS -I$withval -L$withval"
-	fi
-)
-if test "$usez" != "no"; then
-	AC_CHECK_LIB(z, gzopen)
-	if test "$usez" != "yes"; then
-		if test "$ac_cv_lib_z_gzopen" != "yes"; then
-			echo "zlib not found in $usez"
-			exit 1
-		fi
-	fi
-fi
-
-dnl check for pcre (perl-compatible regex)
-usez=no
-AC_ARG_WITH(pcre,
-[ --with-pcre(=pdir)       Use perl-compatible regex library (optionally
-                          in pdir).],
-	if test "$withval" = "no"; then
-		usez=no
-	elif test "$withval" != "yes"; then
-		usez="$withval"
-		CXXFLAGS="$CXXFLAGS -I$withval -L$withval"
-		dnl need to set ac_cpp too, so the header check will work
-		ac_cpp="$ac_cpp -I$withval"
-	else
-		usez=yes
-	fi
-)
-if test "$usez" != "no"; then
-	AC_CHECK_LIB(pcre,pcre_compile)
-	AC_CHECK_LIB(pcreposix, regexec)
-	AC_CHECK_HEADERS(pcreposix.h)
-	if test "$usez" != "yes"; then
-		if test "$ac_cv_lib_pcreposix_regexec" != "yes" -o "$ac_cv_lib_pcre_pcre_compile" != "yes" -o "$ac_cv_header_pcreposix_h" != "yes" ; then
-			echo "pcre not found in $usez"
-			exit 1
-		fi
-	fi
-fi
-
-dnl check for libpopt
-usez=yes
-AC_ARG_WITH(popt,
-[ --with-popt(=pdir)       Use libpopt (getopt replacement) (optionally in pdir)],
-	if test "$withval" = "no"; then
-		usez=no
-	elif test "$withval" != "yes"; then
-		usez="$withval"
-		CXXFLAGS="$CXXFLAGS -I$withval -L$withval"
-		dnl need to set ac_cpp too, so the header check will work
-		ac_cpp="$ac_cpp -I$withval"
-	fi
-)
-if test "$usez" != "no"; then
-	AC_CHECK_LIB(popt, poptGetContext)
-	AC_CHECK_HEADERS(popt.h)
-	if test "$usez" != "yes"; then
-		if test "$ac_cv_lib_popt_poptGetContext" != "yes" -o "$ac_cv_header_popt_h" != "yes" ; then
-			echo "popt not found in $usez"
-			exit 1
-		fi
-	fi
-fi
-if test "$ac_cv_header_popt_h" = "yes" ; then
-	MY_CHECK_POPT_CONST
-fi
-
-dnl check for uulib
-if test -d uulib; then 
-	UUDIR=uulib
-	uumanual=yes
-else
-	uumanual=no
-fi
+dnl check for uulib.  We need a bit of special handling to support the
+dnl nget+uulib source.
 AC_ARG_WITH(uulib,
-[ --with-uulib=UULIBDIR    specify dir containing uulib headers and libuu.a, if
-                          not specified, configure will check in system dirs.],
-	if test "$withval" != "no"; then
-		UUDIR=$withval
-	fi
-	uumanual=yes
+[AC_HELP_STRING([--with-uulib(=DIR)], [look in DIR for uulib])],
+with_uulib=$withval
+,
+if test -d uulib; then 
+	with_uulib=no
+else
+	with_uulib=yes
+fi
 )
+AC_donut_CHECK_PACKAGE_sub(uulib, UUInitialize, uu, uudeview.h)
 
-if test "$uumanual" = "yes"; then
+if test "$with_uulib" = no; then 
+	UUDIR=uulib
 	UUINC=-I$UUDIR
 	UULIB=$UUDIR/libuu.a
-	AC_DEFINE(HAVE_LIBUU,1,[Define if you have the uu library (-luu).])
+	AC_DEFINE(HAVE_LIBUU)
+dnl	AC_DEFINE(HAVE_PKG_UULIB)
 else
 	NOUU=#
-	AC_CHECK_LIB(uulib, UUInitialize)
-	if test "$ac_cv_lib_uulib_UUInitialize" != "yes"; then
-		AC_CHECK_LIB(uu, UUInitialize)
-	fi
-	AC_CHECK_HEADERS(uudeview.h)
 fi
-
 AC_SUBST(NOUU)
 AC_SUBST(UUINC)
 AC_SUBST(UUDIR)

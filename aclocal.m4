@@ -280,3 +280,117 @@ elif test $ac_cv_func_which_getservbyname_r = four; then
 fi
 
 ])
+
+dnl @synopsis AC_donut_CHECK_PACKAGE(PACKAGE, FUNCTION, LIBRARY, HEADERFILE [, ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
+dnl
+dnl Provides --with-PACKAGE, --with-PACKAGE-include and --with-PACKAGE-lib
+dnl options to configure. Supports --with-PACKAGE=DIR approach which looks
+dnl first in DIR and then in DIR/{include,lib} but also allows the include
+dnl and lib directories to be specified seperately.
+dnl
+dnl adds the extra -Ipath to CFLAGS if needed
+dnl adds extra -Lpath to LD_FLAGS if needed
+dnl searches for the FUNCTION in the LIBRARY with
+dnl AC_CHECK_LIBRARY and thus adds the lib to LIBS
+dnl
+dnl defines HAVE_PKG_PACKAGE if it is found, (where PACKAGE in the
+dnl HAVE_PKG_PACKAGE is replaced with the actual first parameter passed)
+dnl
+dnl Based on:
+dnl @version $Id: ac_caolan_check_package.m4,v 1.5 2000/08/30 08:50:25 simons Exp $
+dnl @author Caolan McNamara <caolan@skynet.ie> with fixes from Alexandre Duret-Lutz <duret_g@lrde.epita.fr>.
+dnl
+AC_DEFUN([AC_donut_CHECK_PACKAGE_sub],
+[
+AC_ARG_WITH($1-include,
+[AC_HELP_STRING([--with-$1-include=DIR],[specify exact include dir for $1 headers])],
+$1_include="$withval")
+
+AC_ARG_WITH($1-lib,
+[AC_HELP_STRING([--with-$1-lib=DIR],[specify exact library dir for $1 library])],
+$1_libdir="$withval")
+
+if test "${with_$1}" != no ; then
+        OLD_LIBS=$LIBS
+        OLD_LDFLAGS=$LDFLAGS
+        OLD_CFLAGS=$CFLAGS
+        OLD_CPPFLAGS=$CPPFLAGS
+
+        if test "${$1_libdir}" ; then
+                LDFLAGS="$LDFLAGS -L${$1_libdir}"
+	elif test "${with_$1}" != yes ; then
+                LDFLAGS="$LDFLAGS -L${with_$1}"
+        fi
+        if test "${$1_include}" ; then
+                CPPFLAGS="$CPPFLAGS -I${$1_include}"
+                CFLAGS="$CFLAGS -I${$1_include}"
+	elif test "${with_$1}" != yes ; then
+                CPPFLAGS="$CPPFLAGS -I${with_$1}"
+                CFLAGS="$CFLAGS -I${with_$1}"
+        fi
+
+        AC_CHECK_LIB($3,$2,,[
+		if test -z "${$1_libdir}" -a "${with_$1}" != yes ; then
+			LDFLAGS="$OLD_LDFLAGS -L${with_$1}/lib"
+			AC_CHECK_LIB($3,$2,,no_good=yes)
+		else
+			no_good=yes
+		fi
+		]
+	)
+        AC_CHECK_HEADER($4,,[
+		if test -z "${$1_includedir}" -a "${with_$1}" != yes ; then
+			CPPFLAGS="$OLD_CPPFLAGS -I${with_$1}/include"
+			CFLAGS="$OLD_CFLAGS -I${with_$1}/include"
+			AC_CHECK_HEADER($4,,no_good=yes)
+		else
+			no_good=yes
+		fi
+		]
+	)
+        if test "$no_good" = yes; then
+dnl     broken
+                ifelse([$6], , , [$6])
+
+                LIBS=$OLD_LIBS
+                LDFLAGS=$OLD_LDFLAGS
+                CPPFLAGS=$OLD_CPPFLAGS
+                CFLAGS=$OLD_CFLAGS
+        else
+dnl     fixed
+                ifelse([$5], , , [$5])
+
+                AC_DEFINE(HAVE_PKG_$1,1,[Define if you have $3 and $4])
+        fi
+
+fi
+
+])
+
+dnl package that defaults to enabled
+AC_DEFUN([AC_donut_CHECK_PACKAGE_DEF],
+[
+AC_ARG_WITH($1,
+AC_HELP_STRING([--without-$1], [disables $1 usage completely])
+AC_HELP_STRING([--with-$1=DIR], [look in DIR for $1]),
+with_$1=$withval
+,
+with_$1=yes
+)
+AC_donut_CHECK_PACKAGE_sub($1, $2, $3, $4, $5, $6)
+]
+)
+
+dnl package that defaults to disabled
+AC_DEFUN([AC_donut_CHECK_PACKAGE],
+[
+AC_ARG_WITH($1,
+[AC_HELP_STRING([--with-$1(=DIR)], [use $1, optionally looking in DIR])],
+with_$1=$withval
+,
+with_$1=no
+)
+AC_donut_CHECK_PACKAGE_sub($1, $2, $3, $4, $5, $6)
+]
+)
+
