@@ -1439,30 +1439,6 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.vfailIf(self.nget.run('-g test -R "lines 2 > lines 200 < bytes 1000 > bytes 90000 < && && &&"'))
 		self.verifyoutput(['0005'])
 
-	def test_p_mkdir(self):
-		path = os.path.join(self.nget.tmpdir,'aaa','bbb','ccc')
-		self.vfailIf(self.nget.run('-m yes -g test -p '+path+' -r foo'))
-		self.verifyoutput('0001', tmpdir=path)
-
-	def test_p_mkdirmaxcreate(self):
-		path = os.path.join(self.nget.tmpdir,'aaa','bbb','ccc')
-		self.vfailUnlessExitstatus(self.nget.run('-m no -g test -p '+path+' -r foo'), 4)
-		self.vfailUnlessExitstatus(self.nget.run('-m 0 -g test -p '+path+' -r foo'), 4)
-		self.vfailUnlessExitstatus(self.nget.run('-m 2 -g test -p '+path+' -r foo'), 4)
-		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 0)
-		self.vfailIf(self.nget.run('-m 3 -g test -p '+path+' -r foo'))
-		self.verifyoutput('0001', tmpdir=path)
-
-	def test_p_relative_mkdir(self):
-		d = os.getcwd()
-		tail = os.path.join('aaa','bbb','ccc')
-		try:
-			os.chdir(self.nget.tmpdir)
-			self.vfailIf(self.nget.run('-m yes -g test -p '+tail+' -r foo'))
-		finally:
-			os.chdir(d)
-		self.verifyoutput('0001', tmpdir=os.path.join(self.nget.tmpdir,tail))
-
 	def test_p_relative(self):
 		d = os.getcwd()
 		try:
@@ -1719,6 +1695,72 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 		self.vfailIf(self.nget.run("-N -G test -r ."))
 		self.verifyoutput('0002')
+
+
+class MakedirsTestCase_base(DecodeTest_base):
+	def setUp(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.addarticles('0001', 'uuencode_single')
+		self.servers.start()
+		self.ptail = os.path.join('aaa','bbb','ccc')
+		self.ppath = os.path.join(self.nget.tmpdir,self.ptail)
+	def tearDown(self):
+		self.servers.stop()
+		self.nget.clean_all()
+
+	def test_p_mkdir(self):
+		self.vfailIf(self.nget_run('yes','-g test -p '+self.ppath+' -r foo'))
+		self.verifyoutput('0001', tmpdir=self.ppath)
+
+	def test_p_mkdirmaxcreate(self):
+		self.vfailUnlessExitstatus(self.nget_run('no','-g test -p '+self.ppath+' -r foo'), 4)
+		self.vfailUnlessExitstatus(self.nget_run('0','-g test -p '+self.ppath+' -r foo'), 4)
+		self.vfailUnlessExitstatus(self.nget_run('2','-g test -p '+self.ppath+' -r foo'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 0)
+		self.vfailIf(self.nget_run('3','-g test -p '+self.ppath+' -r foo'))
+		self.verifyoutput('0001', tmpdir=self.ppath)
+
+	def test_p_relative_mkdir(self):
+		d = os.getcwd()
+		try:
+			os.chdir(self.nget.tmpdir)
+			self.vfailIf(self.nget_run('yes','-g test -p '+self.ptail+' -r foo'))
+		finally:
+			os.chdir(d)
+		self.verifyoutput('0001', tmpdir=self.ppath)
+
+class MakedirsTestCase(TestCase, MakedirsTestCase_base):
+	def setUp(self):
+		MakedirsTestCase_base.setUp(self)
+	def tearDown(self):
+		MakedirsTestCase_base.tearDown(self)
+	def nget_run(self, m, cmd):
+		return self.nget.run('-m '+m+' '+cmd)
+
+class MakedirsCfgTestCase(TestCase, MakedirsTestCase_base):
+	def setUp(self):
+		MakedirsTestCase_base.setUp(self)
+	def tearDown(self):
+		MakedirsTestCase_base.tearDown(self)
+	def nget_run(self, m, cmd):
+		self.nget.writerc(self.servers.servers, options={'makedirs':m})
+		return self.nget.run(cmd)
+
+class MakedirsAskTestCase(TestCase, MakedirsTestCase_base):
+	def setUp(self):
+		MakedirsTestCase_base.setUp(self)
+	def tearDown(self):
+		MakedirsTestCase_base.tearDown(self)
+	def nget_run(self, m, cmd):
+		status,output = self.nget.run_getoutput('-m ask '+cmd, pre='echo %s |'%m)
+		print output
+		self.failUnless(output.count("do you want to make dir")>0)
+		return status
+
+	def test_p_mkdir2(self):
+		self.vfailIf(self.nget_run('y','-g test -p '+self.ppath+' -r foo'))
+		self.verifyoutput('0001', tmpdir=self.ppath)
 
 
 class MetaGrouping_RetrieveTest_base(DecodeTest_base):
