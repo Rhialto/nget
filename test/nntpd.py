@@ -1,5 +1,5 @@
 #    nntpd.py - simple threaded nntp server classes for testing purposes.
-#    Copyright (C) 2002-2003  Matthew Mueller <donut AT dakotacom.net>
+#    Copyright (C) 2002-2004  Matthew Mueller <donut AT dakotacom.net>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
