@@ -202,7 +202,10 @@ int Par1Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 		psi->second.release_unclaimed_pxxs(unclaimedfiles);
 	}
 	for (vector<c_nntp_file::ptr>::iterator ufi=unclaimedfiles.begin(); ufi!=unclaimedfiles.end(); ++ufi) {
-		bool r=maybe_add_parfile(*ufi);
+#ifndef NDEBUG
+		bool r=
+#endif
+			maybe_add_parfile(*ufi);
 		assert(r);
 	}
 
@@ -327,7 +330,10 @@ int Par2Info::get_recoverypackets(int num, set<uint32_t> &havepackets, const str
 		PERROR("get_recoverypackets: Only %i/%i needed packets available for par2set %s, giving up", availpackets.size(), num, hexstr(key).c_str());
 		return 0;
 	}
-	int result_size = knapsack_minsize(values, sizes, num, results);
+#ifndef NDEBUG
+	int result_size = 
+#endif
+		knapsack_minsize(values, sizes, num, results);
 	
 	int cur=0;
 	set<int>::iterator ri=results.begin(), re=results.end();
@@ -356,7 +362,10 @@ int Par2Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 		psi->second.release_unclaimed_pxxs(unclaimedfiles);
 	}
 	for (vector<c_nntp_file::ptr>::iterator ufi=unclaimedfiles.begin(); ufi!=unclaimedfiles.end(); ++ufi) {
-		bool r=maybe_add_parfile(*ufi);
+#ifndef NDEBUG
+		bool r=
+#endif
+			maybe_add_parfile(*ufi);
 		assert(r);
 	}
 
