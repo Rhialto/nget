@@ -1,5 +1,5 @@
 2005-xx-xx v0.xx:
-  * Add --bindaddr and coorosponding config file options to specify address to connect from.
+  * Add --bindaddr and corresponding config file options to specify address to connect from.
 
 2004-12-20 v0.27.1:
   * Fix error in configure script when printing exceptions not found message, due to unquoted string. (Reported by M.J. Soft)
