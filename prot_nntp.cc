@@ -1032,9 +1032,9 @@ void c_prot_nntp::nntp_doauth(const char *user, const char *pass){
 		if(!pass){
 			throw UserExFatal(Ex_INIT,"nntp_doauth: no password known");
 		}
-		putline(0,"AUTHINFO PASS %s",pass);
 		if (quiet<2)
 			printf("%s << AUTHINFO PASS *\n", connection->server->shortname.c_str());
+		putline(0,"AUTHINFO PASS %s",pass);
 		i=getreply(quiet<2);
 	}
 	chkreply(i);
