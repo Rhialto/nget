@@ -163,7 +163,8 @@ nntp_file_pred * make_pred(const char *optarg, int gflags){
 				curpart+=*cur;
 		}
 	}
-	if (esc || quote){printf("bad. %i %i\n",esc,quote);return NULL;}
+	if (quote) throw UserExFatal(Ex_INIT,"unterminated quote (%c)", quote);
+	if (esc) throw UserExFatal(Ex_INIT,"expression ended with escape");
 	if (!curpart.empty())
 		e_parts.push_back(curpart);
 
