@@ -1152,6 +1152,43 @@ else:
 			self.check_for_errormsg(r'127.0.0.1')#'TransportEx.*127.0.0.1')
 
 
+	class LiteErrorTest_base(SubterfugueTest_base):
+		def setUp(self):
+			SubterfugueTest_base.setUp(self)
+			self.litelist = os.path.join(self.nget.rcdir, 'lite.lst')
+			try:
+				self.vfailIf(self.nget.run("-w %s -g test -r ."%self.litelist))
+			except:
+				self.tearDown()
+				raise
+
+	class LiteFileErrorTestCase(LiteErrorTest_base, TestCase):
+		def test_list_open_error(self):
+			self.runlite(self.litelist, "IOError:f=[('lite\.lst$','r',-1)]") #ngetlite doesn't signal this .. hrm
+			self.check_for_errormsg(r'lite\.lst\b')
+			self.verifyoutput([])
+
+		def test_list_read_error(self):
+			self.runlite(self.litelist, "IOError:f=[('lite\.lst$','r',0)]") #ngetlite doesn't signal this .. hrm
+			self.check_for_errormsg(r'lite\.lst\b')
+			self.verifyoutput([])
+
+		def test_tempfile_open_error(self):
+			self.vfailUnlessEqual(self.runlite(self.litelist, r"IOError:f=[('ngetlite\.\d+$','w',-1)]"), 255)
+			self.check_for_errormsg(r'ngetlite\.\d+\b')
+			self.verifyoutput([])
+
+		def test_tempfile_write_error(self):
+			self.vfailUnlessEqual(self.runlite(self.litelist, r"IOError:f=[('ngetlite\.\d+$','w',0)]"), 255)
+			self.check_for_errormsg(r'ngetlite\.\d+\b')
+			#self.verifyoutput([])
+
+		def test_tempfile_close_error(self):
+			self.vfailUnlessEqual(self.runlite(self.litelist, r"IOError:f=[('ngetlite\.\d+$','w','c')]"), 255)
+			self.check_for_errormsg(r'ngetlite\.\d+\b')
+			#self.verifyoutput([])
+
+
 class CppUnitTestCase(TestCase):
 	def test_TestRunner(self):
 		self.vfailIf(util.exitstatus(os.system(os.path.join(os.curdir,'TestRunner'))), "CppUnit TestRunner returned an error")
