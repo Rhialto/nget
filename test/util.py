@@ -18,6 +18,8 @@
 import os, random, sys, shutil
 
 def exitstatus(st):
+	if not hasattr(os, 'WEXITSTATUS'): #the os.W* funcs are only on *ix
+		return st
 	if os.WIFSTOPPED(st):
 		return 'stopped',os.WSTOPSIG(st)
 	if os.WIFSIGNALED(st):
