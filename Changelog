@@ -1,3 +1,5 @@
+2001-11-0x - v0.15.1:
+  * Fix linking when there is no libtermcap but there is curses or ncurses. (Reported by Erik-Jan Vlieger)
 2001-11-01 - v0.15:
   * Fixes for gcc 3.0 compilation.
   * Print time remaining in XhXXmXXs format, rather than XXXXs.
