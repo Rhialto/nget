@@ -1,3 +1,8 @@
+add option for, or ust always force, line buffered output? (useful when redirecting stdout and stderr to the same dest to get them in the right order.)
+setvbuf(stdout, (char *)NULL, _IOLBF, 0);
+setvbuf(stderr, (char *)NULL, _IOLBF, 0);
+(or should we specify BUFSIZ? does it matter when buf is NULL?)
+
 should uu_msg(1) (Note) be a decode error?
 This should be handled:
 uu_msg(1):Note: No encoded data found in ec3317e3-71cf792d.011
