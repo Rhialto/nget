@@ -33,13 +33,18 @@
 #include "misc.h" // for tostr
 
 class CfgBase {
+	protected:
+		mutable bool used;
 	public:
 		string loc;
 		string key;
 		
-		CfgBase(string l, string k): loc(l), key(k) { }
+		CfgBase(string l, string k): used(false), loc(l), key(k) { }
 		string name(void) const {
 			return loc+'/'+key;
+		}
+		bool isused(void) const {
+			return used;
 		}
 };
 
@@ -69,10 +74,14 @@ class CfgItem : public CfgBase{
 		
 		CfgItem(string l, string k, string v): CfgBase(l,k), val(v) { }
 		
-		const string &gets(void) const { return val; }
+		const string &gets(void) const {
+			used=true;
+			return val;
+		}
 
 		template <class T>
 		void get(T &dest) const {
+			used=true;
 			T v;
 			if (doget(v))
 				dest = v;
@@ -80,6 +89,7 @@ class CfgItem : public CfgBase{
 
 		template <class T>
 		bool get(T &dest, T min, T max) const {
+			used=true;
 #ifdef HAVE_LIMITS
 			if (!numeric_limits<T>::is_signed && val.find('-')!=string::npos) {
 				PERROR("%s: invalid unsigned value", name().c_str());
@@ -117,16 +127,29 @@ class CfgSection : public CfgBase{
 			f.initrbuf();
 			load(&f);
 			f.close();
+			used=true;
 		}
 		CfgSection(string l, string k, c_file *f) : CfgBase(l,k) {
 			load(f);
 		}
 		~CfgSection();
 
-		CfgSection_map::const_iterator sections_begin(void) const { return sections.begin(); }
-		CfgSection_map::const_iterator sections_end(void) const { return sections.end(); }
-		CfgItem_map::const_iterator items_begin(void) const { return items.begin(); }
-		CfgItem_map::const_iterator items_end(void) const { return items.end(); }
+		int check_unused(void) const;
+
+		CfgSection_map::const_iterator sections_begin(void) const {
+			used=true;
+			return sections.begin();
+		}
+		CfgSection_map::const_iterator sections_end(void) const {
+			return sections.end();
+		}
+		CfgItem_map::const_iterator items_begin(void) const {
+			used=true;
+			return items.begin();
+		}
+		CfgItem_map::const_iterator items_end(void) const {
+			return items.end();
+		}
 
 		const CfgItem *getitem(const char *name) const;
 		const CfgSection *getsection(const char *name) const;

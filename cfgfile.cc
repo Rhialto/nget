@@ -59,11 +59,34 @@ CfgSection::~CfgSection() {
 		delete (*s).second;
 }
 
+int CfgSection::check_unused(void) const {
+	int count=0;
+	for (CfgItem_map::const_iterator i = items.begin(); i != items.end(); ++i)
+		if (!i->second->isused()) {
+			count++;
+			PERROR("%s: unused item (possible typo)", i->second->name().c_str());
+			set_user_error_status();
+		}
+	for (CfgSection_map::const_iterator s = sections.begin(); s != sections.end(); ++s){
+		if (s->second->isused()) {
+			count+=s->second->check_unused();
+		}
+		else {
+			count++;
+			PERROR("%s: unused section (possible typo)", s->second->name().c_str());
+			set_user_error_status();
+		}
+	}
+	return count;
+}
+
 const CfgItem *CfgSection::getitem(const char *name) const {
+	used=true;
 	CfgItem_map::const_iterator i=items.find(name);
 	return (i!=items.end()) ? (*i).second : NULL;
 }
 const CfgSection *CfgSection::getsection(const char *name) const {
+	used=true;
 	CfgSection_map::const_iterator i=sections.find(name);
 	return (i!=sections.end()) ? (*i).second : NULL;
 }

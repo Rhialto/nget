@@ -1187,6 +1187,7 @@ int main(int argc, const char ** argv){
 				ngcachehome = path_join(ngcachehome, "");
 				if (!direxists(ngcachehome))
 					throw ConfigExFatal(Ex_INIT,"cache dir %s does not exist", ngcachehome.c_str());
+				cfg.check_unused();
 			}
 			//check for user errors here rather than using set_user_error_status_and_do_fatal_user_error, so that all config entries can be checked before exiting.
 			if (error_user && nconfig.fatal_user_errors)
