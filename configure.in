@@ -14,7 +14,7 @@ MY_CHECK_EXCEPTIONS
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h getopt.h slist.h hash_map.h sstream glob.h regex.h term.h inttypes.h)
+AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h getopt.h slist.h hash_map.h sstream regex.h term.h inttypes.h)
 
 dnl Checks for libraries.
 AC_SEARCH_LIBS(tputs, termcap curses ncurses)
@@ -228,13 +228,7 @@ dnl Checks for library functions.
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
 dnl AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(mkdir mktime regcomp select socket strerror strstr strtol strtoul atoul asprintf vasprintf vdprintf getservbyname_r gethostbyname_r localtime_r inet_aton getaddrinfo getnameinfo getopt_long glob flock)
-
-if test "$ac_cv_header_glob_h" != "yes" -o "$ac_cv_func_glob" != "yes"; then
-	EXTRAOBJS="$EXTRAOBJS glob/glob.o"
-	CXXFLAGS="$CXXFLAGS -Iglob/"
-	CFLAGS="$CXXFLAGS"
-fi
+AC_CHECK_FUNCS(mkdir mktime regcomp select socket strerror strstr strtol strtoul atoul asprintf vasprintf vdprintf getservbyname_r gethostbyname_r localtime_r inet_aton getaddrinfo getnameinfo getopt_long flock)
 
 
 MY_CHECK_OPTIMIZATION
