@@ -545,6 +545,18 @@ class RetrieveTest_base(DecodeTest_base):
 		self.verifyoutput('0001')
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 2)
 
+	def test_dupef_onthefly(self):
+		self.addarticles('0001', 'yenc_single')
+		self.vfailIf(self.nget_run('-g test -r testfile.txt'))
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
+
+	def test_dupef_onthefly_dF(self):
+		self.addarticles('0001', 'yenc_single')
+		self.vfailIf(self.nget_run('-g test -dF -r testfile.txt'))
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 2)
+
 	def test_dupei(self):
 		self.vfailIf(self.nget_run('-g test -r .'))
 		self.verifyoutput(['0002','0001','0005'])
