@@ -7,7 +7,7 @@ Group: Applications/System
 BuildRoot: /var/tmp/%{name}-root
 Source: http://belnet.dl.sourceforge.net/sourceforge/nget/nget-%{version}+uulib.tar.gz
 Packager: Thomas Kotzian <thomas.kotzian@gmx.at>
-Requires: pcre >= 3.1 popt libz ncurses
+Requires: pcre >= 3.1, popt, libz / zlib, ncurses
 License: GPL
 
 
