@@ -254,7 +254,7 @@ void c_prot_nntp::nntp_dogroup(int getheaders){
 		throw UserExFatal(Ex_INIT,"nntp_dogroup: nogroup selected");
 	}
 	assert(connection);
-	if (connection->curgroup!=group){	
+	if (connection->curgroup!=group || getheaders){	
 		chkreply(stdputline(quiet<2,"GROUP %s",group->group.c_str()));
 		connection->curgroup=group;
 	}
