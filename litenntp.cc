@@ -109,7 +109,7 @@ int c_prot_nntp::getreply(int echo){
 #define tempfilename_base "ngetlite"
 
 void c_prot_nntp::doarticle(ulong anum,ulong bytes,ulong lines,const char *outfile){
-	chkreply(stdputline(debug>=DEBUG_MED,"ARTICLE %li",anum));
+	chkreply(stdputline(debug>=DEBUG_MED,"ARTICLE %lu",anum));
 	printf(".");fflush(stdout);
 	ulong rbytes=0,rlines=0,hlines=0;
 	time_t starttime,donetime;

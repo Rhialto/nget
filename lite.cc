@@ -98,11 +98,11 @@ void dofile(const char *arg){
 			Lfgets(buf);
 			newstrcpy(host,buf);
 			Lfgets(buf);
-			anum=atol(buf);
+			anum=atoul(buf);
 			Lfgets(buf);
-			bytes=atol(buf);
+			bytes=atoul(buf);
 			Lfgets(buf);
-			lines=atol(buf);
+			lines=atoul(buf);
 			if (partdone)
 				continue;
 			retry=0;
