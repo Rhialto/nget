@@ -38,7 +38,6 @@ extern "C" {
 #include <errno.h>
 #include <string.h>
 #include <time.h>
-#include "_sstream.h"
 #include "_fileconf.h"
 
 #include "path.h"
@@ -583,7 +582,6 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 						e_parts.push_back("subject");
 						e_parts.push_back(loptarg);
 						e_parts.push_back("=~");
-						ostringstream s; 
 						//use push_front for lines tests, to exploit short circuit evaluation (since comparing integers is faster than regexs)
 						if (options.linelimit > 0) {
 							e_parts.push_front(">=");
