@@ -19,7 +19,7 @@
 
 from __future__ import nested_scopes
 
-import os, sys, unittest, glob, filecmp, re, time, errno, copy
+import os, sys, unittest, glob, filecmp, re, time, errno
 import StringIO
 import nntpd, util
 
@@ -1648,8 +1648,7 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("date"), 2)
 
 	def test_available_newgroups_nodatecmd(self):
-		self.servers.servers[0].RequestHandlerClass = copy.copy(self.servers.servers[0].RequestHandlerClass)
-		self.servers.servers[0].RequestHandlerClass.cmd_date = None
+		self.servers.servers[0].RequestHandlerClass = NoDateCmdNNTPRequestHandler
 		self.vfailIf(self.nget.run('-a'))
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
 		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 1)
@@ -2264,6 +2263,9 @@ class CmdlineXoverTestCase(TestCase, XoverTest_base):
 	def tearDown(self):
 		XoverTest_base.tearDown(self)
 
+
+class NoDateCmdNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	cmd_date=None
 
 class DelayBeforeWriteNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def nwrite(self, s):
