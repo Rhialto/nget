@@ -385,7 +385,9 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 							printf("fatal error, won't try %s again\n",s->addr.c_str());
 							//fall through to removing server from list below.
 						}else{
-							printf("will try %s again\n",s->addr.c_str());
+							//if this is the last retry, don't say that we will try it again.
+							if (redone+1 < options.maxretry)
+								printf("will try %s again\n",s->addr.c_str());
 							++dsi;
 							continue;//don't remove server from list
 						}
@@ -602,7 +604,9 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 					++sapi;
 					sap.erase(sap_erase_i);
 				}else{
-					printf("will try %s again\n",host->addr.c_str());
+					//if this is the last retry, don't say that we will try it again.
+					if (redone+1 < options.maxretry)
+						printf("will try %s again\n",host->addr.c_str());
 					++sapi;
 				}
 				continue;
