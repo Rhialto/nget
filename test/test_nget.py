@@ -1718,6 +1718,10 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("list_"), 1)
 		self.vfailUnlessEqual(self.servers.servers[0].count("date"), 2)
 
+	def test_available_newgroups_nolistnewsgroupscmd(self):
+		self.servers.servers[0].RequestHandlerClass = NoListNewsgroupsCmdNNTPRequestHandler
+		self.vfailIf(self.nget.run('-a'))
+	
 	def test_available_newgroups_nodatecmd(self):
 		self.servers.servers[0].RequestHandlerClass = NoDateCmdNNTPRequestHandler
 		self.vfailIf(self.nget.run('-a'))
@@ -2466,6 +2470,9 @@ class CounterMixin:
 
 class NoDateCmdNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	cmd_date=None
+
+class NoListNewsgroupsCmdNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	cmd_list_newsgroups=None
 
 class DelayBeforeWriteNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def nwrite(self, s):

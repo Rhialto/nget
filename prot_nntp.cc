@@ -193,10 +193,15 @@ void c_prot_nntp::nntp_dogrouplist(const char *wildmat){
 
 void c_prot_nntp::nntp_dogroupdescriptions(const char *wildmat){
 	ulong bytes=0, done=0;
+	int r;
 	if (wildmat)
-		chkreply(stdputline(quiet<2,"LIST NEWSGROUPS %s", wildmat));
+		r=stdputline(quiet<2,"LIST NEWSGROUPS %s", wildmat);
 	else
-		chkreply(stdputline(quiet<2,"LIST NEWSGROUPS"));
+		r=stdputline(quiet<2,"LIST NEWSGROUPS");
+	if (r/100!=2) {
+		// if server doesn't support LIST NEWSGROUPS, just ignore the error.
+		return;
+	}
 	DumbProgress progress;
 	while (1) {
 		if (progress.needupdate())
