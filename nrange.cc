@@ -32,7 +32,7 @@ void c_nrange::insert(ulong n){
 		}else
 			i=rlist.end();//no good.
 	}
-	changed=1;//if we've gotten here, something will change.
+	//changed=1;//if we've gotten here, something will change.
 	if (n>varmin){//don't wanna wrap around, since we are using unsigned
 		j=rlist.find(n-1);
 		if (j!=rlist.end()){
@@ -50,14 +50,15 @@ void c_nrange::insert(ulong n){
 void c_nrange::insert(ulong l,ulong h){
 	if (rlist.empty()){
 		rlist[h]=l;
-		changed=1;
+		//changed=1;
 		return;
 	}
 	ulong l1=(l>varmin)?l-1:l;
 	ulong h1=(h<varmax)?h+1:h;
 	t_rlist::iterator j=rlist.lower_bound(l1);
 	if (j==rlist.end()){
-		rlist[h]=l;changed=1;return;
+		rlist[h]=l;//changed=1;
+		return;
 	}
 	t_rlist::iterator i=rlist.lower_bound(h);
 	if (i==j){//if high and low matches find the same range
@@ -66,7 +67,7 @@ void c_nrange::insert(ulong l,ulong h){
 				rlist[h]=l;//and high is outside too, make a new range
 			else
 				(*j).second=l;//else extend it
-			changed=1;
+			//changed=1;
 		}
 		return;
 	}
@@ -77,7 +78,7 @@ void c_nrange::insert(ulong l,ulong h){
 		rlist[h]=l;//if we are at the end, or below the one above us, make a new entry
 	}else
 		(*i).second=l;//else extend the one above us
-	changed=1;
+	//changed=1;
 }
 
 void c_nrange::remove(ulong l, ulong h){
@@ -112,7 +113,7 @@ void c_nrange::remove(ulong l, ulong h){
 				}else
 					rtot++;
 				rlist.erase(j);
-				changed=1;
+				//changed=1;
 			}else{
 //				if (debug)printf("a(%i)\n",ssize-rlist.size());
 //				return;//remove range is completely above this range, so we are done
@@ -125,7 +126,7 @@ void c_nrange::remove(ulong l, ulong h){
 					rlist[l-1]=(*j).second;//remove range cuts through the middle of a current range
 				}
 				(*j).second=h+1;
-				changed=1;
+				//changed=1;
 				rpart++;
 				if (tmp) break;//its completely within this range, so we are done.
 			}
@@ -134,93 +135,4 @@ void c_nrange::remove(ulong l, ulong h){
 		j=i;
 	}
 	if (debug)printf("%i(%lu tot:%lu part:%lu (%lu->%lu))\n",tmp,ssize-(ulong)rlist.size(),rtot,rpart,ssize,(ulong)rlist.size());
-}
-void c_nrange::load(string fn,int merge){
-	if (!merge){
-		clear();
-		changed=0;
-	}
-	if (fn.empty())
-		return;
-#ifdef HAVE_LIBZ
-	if (!merge)//ugh, hack
-		fn.append(".gz");
-	c_lockfile locker(fn,WANT_SH_LOCK);
-	c_file_gz f(fn.c_str(), "r");
-#else
-	c_lockfile locker(fn,WANT_SH_LOCK);
-	c_file_fd f(fn.c_str(), O_RDONLY);
-#endif
-	if (!merge){
-		file=fn;
-	}
-	f.initrbuf();
-	char *lp,*hp;
-	while (f.bgets()>0){
-		lp=f.rbufp();
-		hp=strchr(lp,'-');
-		if (merge){
-			if (hp)
-				insert(atoul(lp),atoul(hp+1));
-			else
-				insert(atoul(lp));
-		}else{
-			if (hp)//note that we do no validity/overlap/etc checking here.  it is assumed the file was created correctly.
-				rlist[atoul(hp+1)]=atoul(lp);
-			else
-				rlist[atoul(lp)]=atoul(lp);
-		}
-	}
-	f.close();
-	return;
-}
-c_nrange::c_nrange(string fn){
-	changed=0;
-	if (!fn.empty())
-		load(fn);
-}
-void c_nrange::print(c_file *f) const {
-	t_rlist::const_iterator i;
-	//int first=1;
-	for (i=rlist.begin();i!=rlist.end();++i){
-		//				if (first)first=0;
-		//				else printf(",");
-		//				printf("(%lu)",(*i).first);
-		if ((*i).second==(*i).first)
-			f->putf("%lu\n",(*i).second);
-		else
-			f->putf("%lu-%lu\n",(*i).second,(*i).first);
-		//				f.putf("\n");
-	}
-	//			printf("\n");
-}
-void c_nrange::save(){
-	if (!changed)
-		return;
-	if (file.empty())
-		return;
-	{
-		int changed_save=changed;
-		changed=0;
-		load(file,1);//merge any changes that might have happened
-		if (changed!=0){
-			if (debug){printf("saving nrange: merged something...\n");}
-		}
-		changed=changed_save;
-	}
-	c_lockfile locker(file,WANT_EX_LOCK);
-#ifdef HAVE_LIBZ
-	c_file_gz f(file.c_str(),"w");
-#else
-	c_file_fd f(file.c_str(), O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-#endif
-	if (debug){printf("saving nrange: %lu contiguous ranges..",(ulong)rlist.size());fflush(stdout);}
-	print(&f);
-	if (debug) printf(" done.\n");
-	f.close();
-	changed=0;
-	return;
-}
-c_nrange::~c_nrange(){
-	save();
 }

@@ -12,7 +12,7 @@ class nrangeTest : public TestCase {
 	public:
 		nrangeTest(void):TestCase("nrangeTest"){}
 		void setUp(void) {
-			range = new c_nrange("");
+			range = new c_nrange();
 		}
 		void tearDown(void) {
 			delete range;
@@ -152,8 +152,8 @@ class nrangeEqTest : public TestCase {
 	public:
 		nrangeEqTest(void):TestCase("nrangeEqTest"){}
 		void setUp(void) {
-			range = new c_nrange("");
-			rangeb = new c_nrange("");
+			range = new c_nrange();
+			rangeb = new c_nrange();
 		}
 		void tearDown(void) {
 			delete range;

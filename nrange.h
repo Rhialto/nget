@@ -34,7 +34,7 @@ class c_nrange{
 	public:
 		static const ulong varmin=0;
 		static const ulong varmax=ULONG_MAX;
-		int changed;
+		//int changed;
 		string file;
 		t_rlist rlist;
 		ulong get_total(void) const {
@@ -55,18 +55,14 @@ class c_nrange{
 		void insert(ulong l,ulong h);
 		void remove(ulong n){remove(n,n);}
 		void remove(ulong l, ulong h);
-		void print(c_file *f) const;
 		void clear(void){
 			if (!rlist.empty()){
 				rlist.erase(rlist.begin(),rlist.end());
-				changed=1;
+				//changed=1;
 			}
 		}
-		void load(string f,int merge=0);
-		void save(void);
-		c_nrange(c_nrange &r):changed(r.changed),rlist(r.rlist){}
-		c_nrange(string f="");
-		~c_nrange();
+		c_nrange(c_nrange &r):/*changed(r.changed),*/rlist(r.rlist){}
+		c_nrange(){};
 		bool operator==(const c_nrange &b) const {return rlist==b.rlist;}
 		bool operator!=(const c_nrange &b) const {return rlist!=b.rlist;}
 };
