@@ -91,7 +91,7 @@ class c_lockfile{
 	public:
 		HANDLE hFile;
 
-		c_lockfile(string filename,int flag){
+		c_lockfile(string filename,int flag): hFile(INVALID_HANDLE_VALUE){
 			PDEBUG(FLOCK_DEBUG_LEV,"attempting to LockFile %s",filename.c_str());
 			if (!fexists(filename.c_str()))
 				return;
