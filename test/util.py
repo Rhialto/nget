@@ -50,7 +50,7 @@ class TestNGet:
 		os.mkdir(self.tmpdir)
 		self.writerc(servers, **kw)
 
-	def writerc(self, servers, priorities=None, options=None, hostoptions=None, extratail=""):
+	def writerc(self, servers, priorities=None, options=None, hostoptions=None, extratail="", rcfilename=None):
 		defaultoptions = {
 #			'tries': 1,
 			'tries': 2,
@@ -61,7 +61,11 @@ class TestNGet:
 #			'fullxover': 1
 		}
 
-		rc = open(os.path.join(self.rcdir, '_ngetrc'), 'w')
+		if rcfilename is None:
+			rcfilename = '_ngetrc'
+		if os.sep not in rcfilename:
+			rcfilename = os.path.join(self.rcdir, rcfilename)
+		rc = open(rcfilename, 'w')
 		if options:
 			defaultoptions.update(options)
 		for k,v in defaultoptions.items():
@@ -109,7 +113,7 @@ class TestNGet:
 	
 	def run_getoutput(self, args, pre="", dopath=1):
 		outputpath = os.path.join(self.rcdir,'output.'+hex(random.randrange(0,sys.maxint)))
-		status = self.run(args+' > '+outputpath, pre=pre, dopath=dopath)
+		status = self.run(args+' > '+outputpath+' 2>&1', pre=pre, dopath=dopath) #the 2>&1 will break win9x, but I'm not sure if the test suite ever actually worked there anyway.
 		f = open(outputpath, "r")
 		output = f.read()
 		f.close()
