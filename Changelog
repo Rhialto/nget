@@ -9,6 +9,7 @@
   * Handle server_articles left in the cache that have no server with a matching serverid in .ngetrc.
   * .ngetrc now has global fullxover and maxstreaming options to set the default for all host entries that don't specify their own.
   * Update .ngetrc handling to allow # to be used for comment lines (in addition to //), and to not require the // to be on the first column.
+  * Make -i mode continue downloading parts even if the server reports one of them is no longer available. (reported by Thore Harald Hoye)
   * Add FAQ about yEnc support.
   * Started adding a test suite.
 

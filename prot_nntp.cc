@@ -893,9 +893,12 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 					}
 					if ((optionflags & GETFILES_NOCONNECT) || nntp_doarticle(p,&ainfo,&qtotinfo,fn,options)){
 						free(fn);
-						qtotinfo.bytesleft-=p->bytes();
-						derr=-1;//skip this file..
-						continue;
+						fn=NULL;
+						if (!(optionflags & GETFILES_GETINCOMPLETE)) {
+							qtotinfo.bytesleft-=p->bytes();
+							derr=-1;//skip this file..
+							continue;
+						}
 					}
 				}else{
 //					qtotinfo.bytestot-=p->bytes;
@@ -904,7 +907,8 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 				qtotinfo.bytesleft-=p->bytes();
 //				UULoadFile(fn,NULL,0);//load once they are all d/l'd
 				//				delete fn;
-				fnbuf.push_back(fn);
+				if (fn)
+					fnbuf.push_back(fn);
 			}
 			if (!derr && !(optionflags&GETFILES_NODECODE)){
 				if ((r=UUInitialize())!=UURET_OK)
