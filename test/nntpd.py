@@ -21,9 +21,30 @@ import os, select
 import threading
 import SocketServer
 
+class NNTPError(Exception):
+	def __init__(self, code, text):
+		self.code=code
+		self.text=text
+	def __str__(self):
+		return '%03i %s'%(self.code, self.text)
+class NNTPNoSuchGroupError(NNTPError):
+	def __init__(self, g):
+		NNTPError.__init__(self, 411, "No such newsgroup %s"%g)
+class NNTPNoGroupSelectedError(NNTPError):
+	def __init__(self):
+		NNTPError.__init__(self, 412, "No newsgroup currently selected")
+class NNTPNoSuchArticleNum(NNTPError):
+	def __init__(self, anum):
+		NNTPError.__init__(self, 423, "No such article %s in this newsgroup"%anum)
+class NNTPNoSuchArticleMID(NNTPError):
+	def __init__(self, mid):
+		NNTPError.__init__(self, 430, "No article found with message-id %s"%mid)
+class NNTPSyntaxError(NNTPError):
+	def __init__(self, s=''):
+		NNTPError.__init__(self, 500, "Syntax error or bad command" + (s and ' (%s)'%s or ''))
+
+
 class NNTPRequestHandler(SocketServer.StreamRequestHandler):
-	def syntax_error(self):
-		self.nwrite("500 Syntax error or bad command")
 	def nwrite(self, s):
 		self.wfile.write(s+"\r\n")
 	def handle(self):
@@ -41,20 +62,24 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			else:
 				cmd,args = rs
 			func = getattr(self, 'cmd_'+cmd, None)
-			if func and callable(func):
-				r=func(args)
-				if r==-1:
-					break
-			else:
-				self.nwrite("500 command %r not recognized"%rcmd)
+			try:
+				if func and callable(func):
+					r=func(args)
+					if r==-1:
+						break
+				else:
+					raise NNTPSyntaxError(rcmd)
+			except NNTPError, e:
+				self.nwrite(str(e))
 
 	def cmd_group(self, args):
 		self.group = self.server.groups.get(args)
-		if self.group:
-			self.nwrite("200 %i %i %i group %s selected"%(self.group.high-self.group.low+1, self.group.low, self.group.high, args))
-		else:
-			self.nwrite("411 no such news group")
+		if not self.group:
+			raise NNTPNoSuchGroupError(args)
+		self.nwrite("200 %i %i %i group %s selected"%(self.group.high-self.group.low+1, self.group.low, self.group.high, args))
 	def cmd_xover(self, args):
+		if not self.group:
+			raise NNTPNoGroupSelectedError()
 		rng = args.split('-')
 		if len(rng)>1:
 			low,high = map(long, rng)
@@ -72,14 +97,14 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			try:
 				article = self.server.articles[args]
 			except KeyError:
-				self.nwrite("430 No article found with message-id %s"%args)
-				return
+				raise NNTPNoSuchArticleMID(args)
 		else:
+			if not self.group:
+				raise NNTPNoGroupSelectedError()
 			try:
 				article = self.group.articles[long(args)]
 			except KeyError:
-				self.nwrite("423 No such article %s in this newsgroup"%args)
-				return
+				raise NNTPNoSuchArticleNum(args)
 		self.nwrite("200 Article "+args)
 		self.nwrite(article.text)
 		self.nwrite('.')
@@ -87,7 +112,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 		if args=='reader':
 			self.nwrite("200 MODE READER enabled")
 		else:
-			self.syntax_error()
+			raise NNTPSyntaxError(args)
 	def cmd_quit(self, args):
 		self.nwrite("205 Goodbye")
 		return -1
