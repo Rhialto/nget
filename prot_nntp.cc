@@ -1311,7 +1311,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 				if (fn)
 					fnbuf.push_back(fn);
 			}
-			if (!uustatus.derr && !(optionflags&GETFILES_NODECODE)){
+			if (!uustatus.derr && !(optionflags&GETFILES_NODECODE) && !fnbuf.empty()){
 				TextHandler texthandler(options.texthandling, options.save_text_for_binaries, options.mboxfname, fr, fnbuf.front());
 				uustatus.th = &texthandler;
 				if ((r=UUInitialize())!=UURET_OK)
