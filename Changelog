@@ -1,4 +1,4 @@
-2001-11-0x - v0.15.1:
+2001-11-07 - v0.15.1:
   * Fix linking when there is no libtermcap but there is curses or ncurses. (Reported by Erik-Jan Vlieger)
   * Fix hang after fatal error on article retrieval. (Reported by Lance Simmons)
 2001-11-01 - v0.15:
