@@ -80,7 +80,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 	def nwrite(self, s):
 		self.wfile.write(s+"\r\n")
 	def handle(self):
-		self.server.incr_conn()
+		self.server.incrcount("_conns")
 		readline = self.rfile.readline
 		self.nwrite("200 Hello World, %s"%(':'.join(map(str,self.client_address))))
 		self.group = None
@@ -101,6 +101,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 				if func and callable(func):
 					if not self.authed.has_auth(cmd):
 						raise NNTPAuthRequired
+					self.server.incrcount(cmd)
 					func(args)
 				else:
 					raise NNTPBadCommand, rcmd
@@ -134,6 +135,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 	
 	def cmd_list(self, args):
 		if args=="newsgroups":
+			self.server.incrcount("list_newsgroups")
 			self.nwrite("215 information follows")
 			for name,group in self.server.groups.items():
 				if group.description:
@@ -142,6 +144,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 		elif args:
 			raise NNTPSyntaxError, args
 		else:
+			self.server.incrcount("list_") #differentiate from "list" which counts any list* command
 			self.nwrite("215 list of newsgroups follows")
 			for name,group in self.server.groups.items():
 				self.nwrite("%s %i %i %s"%(name, group.low, group.high, "y"))
@@ -154,8 +157,8 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			raise NNTPSyntaxError, args
 		self.nwrite("231 list of new newsgroups follows")
 		for name,group in self.server.groups.items():
-			#if since > group.creationtime:
-			if since > time.strftime("%Y%m%d%H%M%S",time.gmtime(group.creationtime)): #just do a lexicographical comparison. stupid c library. blah.
+			#if since < group.creationtime:
+			if since < time.strftime("%Y%m%d%H%M%S",time.gmtime(group.creationtime)): #just do a lexicographical comparison. stupid c library. blah.
 				self.nwrite("%s %i %i %s"%(name, group.low, group.high, "y"))
 		self.nwrite(".")
 		
@@ -195,7 +198,6 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			self.nwrite(str(anum)+'\t%(subject)s\t%(author)s\t%(date)s\t%(mid)s\t%(references)s\t%(bytes)s\t%(lines)s'%vars(article))
 		self.nwrite('.')
 	def cmd_article(self, args):
-		self.server.incr_retr()
 		if args[0]=='<':
 			try:
 				article = self.server.articles[args]
@@ -273,16 +275,14 @@ class NNTPTCPServer(StoppableThreadingTCPServer):
 		self.auth = {}
 		self.adduser('','')
 		self.lock = threading.Lock()
-		self.conns = 0
-		self.retrs = 0
-		
-	def incr_conn(self):
+		self.counts = {}
+	
+	def count(self, key):
+		return self.counts.get(key, 0)
+
+	def incrcount(self, key):
 		self.lock.acquire()
-		self.conns += 1
-		self.lock.release()
-	def incr_retr(self):
-		self.lock.acquire()
-		self.retrs += 1
+		self.counts[key] = self.count(key) + 1
 		self.lock.release()
 
 	def adduser(self, user, password, caps=None):

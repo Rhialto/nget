@@ -208,7 +208,7 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run("-g test"))
 		self.servers.servers[0].rmarticle(article.mid)
 		self.vfailIf(self.nget.run('-g test -r .'))#should notice the article expired and not try to get anything
-		self.vfailUnlessEqual(self.servers.servers[0].retrs, 0)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 0)
 
 
 class RetrieveTestCase(TestCase, DecodeTest_base):
@@ -386,7 +386,7 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput('0002')
 		self.vfailIf(self.nget.run('-G test -U -D -r joy')) #remove from midinfo so that we can test if the file dupe check catches it
 		self.vfailIf(self.nget.run('-G test -r joy'))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
 
 	def test_dupef_D(self):
 		self.vfailIf(self.nget.run('-g test -r joy'))
@@ -394,7 +394,7 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run('-G test -U -D -r joy'))
 		self.vfailIf(self.nget.run('-G test -D -r joy'))
 		self.verifyoutput('0002')
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 
 	def test_dupei(self):
 		self.vfailIf(self.nget.run('-g test -r .'))
@@ -402,7 +402,7 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.nget.clean_tmp()
 		self.vfailIf(self.nget.run('-G test -r .'))
 		self.verifyoutput([])
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
 
 	def test_dupei_D(self):
 		self.vfailIf(self.nget.run('-g test -r .'))
@@ -410,7 +410,7 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.nget.clean_tmp()
 		self.vfailIf(self.nget.run('-G test -D -r .'))
 		self.verifyoutput(['0002','0001','0003'])
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 
 	def test_p_relative(self):
 		d = os.getcwd()
@@ -492,51 +492,51 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 	def test_badskip_path(self):
 		self.vfailUnlessExitstatus(self.nget.run('-p badpath -g test -r joy -p %s -r foo'%(self.nget.tmpdir)), 2)
 		self.verifyoutput(['0001'])
-		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_badskip_temppath(self):
 		self.vfailUnlessExitstatus(self.nget.run('-P badpath -g test -r joy -P %s -r foo'%(self.nget.tmpdir)), 2)
 		self.verifyoutput(['0001'])
-		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_badskip_temppath_okpath(self):
 		self.vfailUnlessExitstatus(self.nget.run('-P badpath -g test -r joy -p %s -r foo'%(self.nget.tmpdir)), 2) #-p resets -P too
 		self.verifyoutput(['0001'])
-		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_badskip_path_oktemppath(self):
 		self.vfailUnlessExitstatus(self.nget.run('-p badpath -g test -r joy -P %s -r foo'%(self.nget.tmpdir)), 2) #-P does not reset -p
 		self.verifyoutput([])
-		self.vfailUnlessEqual(self.servers.servers[0].retrs, 0)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 0)
 
 	def test_badskip_host(self):
 		self.vfailUnlessExitstatus(self.nget.run('-h badhost -g test -r joy -h host0 -r foo'), 4)
-		self.vfailUnlessEqual(self.servers.servers[0].retrs, 0)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 0)
 		self.verifyoutput([])#bad -h should turn -g into -G, so that should have failed to get anything.
 		self.vfailIf(self.nget.run('-g test')) #retrieve headers first and try again
 		self.vfailUnlessExitstatus(self.nget.run('-h badhost -g test -r joy -h host0 -r foo'), 4)
 		self.verifyoutput(['0001'])
-		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_badskip_pathhost(self):
 		self.vfailUnlessExitstatus(self.nget.run('-g test -h badhost -p badpath -r . -p %s -r . -h host0 -r foo'%(self.nget.tmpdir)), 6)
 		self.verifyoutput(['0001'])
-		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_badskip_hostpath(self):
 		self.vfailUnlessExitstatus(self.nget.run('-g test -h badhost -p badpath -r . -h host0 -r . -p %s -r foo'%(self.nget.tmpdir)), 6)
 		self.verifyoutput(['0001'])
-		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_badskip_okthenbadpath(self):
 		self.vfailUnlessExitstatus(self.nget.run('-g test -r foo -p badpath -r .'), 2)
 		self.verifyoutput(['0001'])
-		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_badskip_okthenbadhost(self):
 		self.vfailUnlessExitstatus(self.nget.run('-g test -r foo -h badhost -r .'), 4)
 		self.verifyoutput(['0001'])
-		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_badskip_emptyexpression(self):
 		self.vfailUnlessExitstatus(self.nget.run('-g test -R "" -r joy'), 4)
@@ -553,7 +553,7 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 	def test_cache_reloading_after_host(self):
 		self.vfailIf(self.nget.run('-g test -r foo -h host0 -D -r foo'))
 		self.verifyoutput(['0001'])
-		self.vfailUnlessEqual(self.servers.servers[0].retrs, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 2)
 
 	def test_flush_nogroup(self):
 		self.vfailUnlessExitstatus(self.nget.run('-F host0'), 4)
@@ -590,31 +590,31 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 	
 	def test_available(self):
 		self.vfailIf(self.nget.run('-a'))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
 		self.vfailIf(self.nget.run('-a'))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 		apath = os.path.join(self.nget.rcdir, 'avail.out')
 		self.vfailIf(self.nget.run('-A -T -r . > %s'%apath))
 		print open(apath).read()
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 		self.vfailUnlessEqual(open(apath).readlines()[-1].strip(), "h0\ttest")
 	
 	def test_available2(self):
 		apath = os.path.join(self.nget.rcdir, 'avail.out')
 		self.vfailIf(self.nget.run('-a -T -r . > %s'%apath))
 		print open(apath).read()
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
 		self.failUnless(re.search("^h0\ttest$",open(apath).read(), re.M))
 	
 	def test_available_overrides_group(self):
 		self.vfailIf(self.nget.run('-g test -A -T -r .'))
 		self.verifyoutput([])
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
 	
 	def test_group_overrides_available(self):
 		self.vfailIf(self.nget.run('-a -g test -r joy'))
 		self.verifyoutput(['0002'])
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
 
 
 
@@ -806,7 +806,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run("-g test"))
 		deadservers.stop()
 		self.vfailIf(self.nget.run("-G test -r ."))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
 		self.verifyoutput('0002')
 	
 	def test_SleepingServerPenalization(self):
@@ -818,8 +818,8 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.servers.servers[0]._do_delay=1
 		self.vfailIf(self.nget.run("-G test -r ."))
 		self.verifyoutput('0002')
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 3)
 
 	def test_OverXOverQuotaServerPenalization(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverXOverQuotaDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
@@ -827,8 +827,8 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.servers.start()
 		self.addarticles('0002','uuencode_multi3')
 		self.vfailIf(self.nget.run("-g test -g test -g test -g test -g test"))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 2)
 
 	def test_OverArticleQuotaServerPenalization(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
@@ -838,8 +838,8 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run("-g test"))
 		self.vfailIf(self.nget.run("-G test -r ."))
 		self.verifyoutput('0002')
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 3)
 
 	def test_NoPenalty_g(self):
 		self.servers = nntpd.NNTPD_Master(2)
@@ -847,16 +847,16 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.servers.start()
 		self.addarticles('0002','uuencode_multi3')
 		self.vfailIf(self.nget.run("-g test -g test -g test"))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 2)
 
 	def test_NoPenalty_g_NoGroup(self):
 		self.servers = nntpd.NNTPD_Master(2)
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'maxconnections':1, 'penaltystrikes':1})
 		self.servers.start()
 		self.vfailUnlessExitstatus(self.nget.run("-g test -g test -g test"), 16)
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 2)
 
 	def test_NoPenalty_r(self):
 		self.servers = nntpd.NNTPD_Master(2)
@@ -867,8 +867,8 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
 		self.vfailIf(self.nget.run("-g test"))
 		self.vfailIf(self.nget.run("-G test -r ."))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 2)
 		self.verifyoutput('0002')
 
 	def test_NoPenalty_r_Expired(self):
@@ -883,8 +883,8 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.rmarticles('0002', 'uuencode_multi3')
 		self.rmarticles('0003', 'newspost_uue_0')
 		self.vfailUnlessExitstatus(self.nget.run("-G test -r ."), 8)
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 3)
 
 	def test_OneLiveServer(self):
 		self.servers = nntpd.NNTPD_Master(1)
@@ -917,7 +917,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.addarticles('0002', 'uuencode_multi')
 		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifyoutput('0002')
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 		
 	def test_TwoDiscoServers(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler)])
@@ -938,8 +938,8 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run("-g test"))
 		self.vfailIf(self.nget.run("-h host1 -G test -r ."))
 		self.verifyoutput('0002')
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 3)
 
 	def test_TwoXOverDiscoServers(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), XOver1LineDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), XOver1LineDiscoingNNTPRequestHandler)])
@@ -949,8 +949,8 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.addarticles('0001', 'yenc_multi')
 		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifyoutput('0001')
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 3)
 
 	def test_ForceXOverDiscoServer(self):
 		"Test if errors are handled correctly in header retrieval with force_host"
@@ -960,8 +960,8 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 
 		self.addarticles('0001', 'yenc_multi')
 		self.vfailIf(self.nget.run("-h host1 -g test"))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 0)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 3)
 		self.vfailIf(self.nget.run("-G test -r ."))
 		self.verifyoutput('0001')
 
@@ -972,8 +972,8 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.addarticles_toserver('0002', 'uuencode_multi', self.servers.servers[0])
 		self.vfailIf(self.nget.run("-g test"))
 		self.vfailUnlessExitstatus(self.nget.run("-h host1 -G test -r ."), 8, "nget process did not detect retrieve error")
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
 
 	def test_ForceServer(self):
 		self.servers = nntpd.NNTPD_Master(2)
@@ -981,14 +981,14 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.servers.start()
 		self.addarticles('0001', 'yenc_multi')
 		self.vfailIf(self.nget.run("-h host1 -g test"))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 0)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
 		self.vfailIf(self.nget.run("-h host0 -g test"))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
 		self.vfailIf(self.nget.run("-h host1 -G test -r ."))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 2)
 		self.verifyoutput('0001')
 
 	def test_Available_ForceServer(self):
@@ -996,9 +996,9 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
 		self.servers.start()
 		self.vfailIf(self.nget.run("-h host1 -a"))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 0)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
-		self.vfailUnlessEqual(self.servers.servers[2].conns, 0)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[2].count("_conns"), 0)
 
 	def test_FlushServer(self):
 		self.servers = nntpd.NNTPD_Master(2)
@@ -1010,8 +1010,8 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run("-G test -F host0"))
 		self.vfailIf(self.nget.run("-G test -r ."))
 		self.verifyoutput('0001')
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 2)
 	
 	def test_Available_FlushServer(self):
 		self.servers = nntpd.NNTPD_Master(2)
@@ -1063,8 +1063,8 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
 		self.vfailIf(self.nget.run("-g test -r ."))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
 		self.verifyoutput('0002')
 
 	def test_timeout(self):
@@ -1074,7 +1074,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.addarticles('0002','uuencode_multi3')
 		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifyoutput('0002')
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
 
 	def test_idletimeout(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DelayBeforeArticleNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
@@ -1084,8 +1084,8 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[1])
 		self.vfailIf(self.nget.run("-g test -r ."))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 2)
 		self.verifyoutput('0002')
 
 	def test_maxconnections(self):
@@ -1096,8 +1096,8 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
 		self.vfailIf(self.nget.run("-g test -r ."))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 2)
 		self.verifyoutput('0002')
 
 	def test_maxconnections_2(self):
@@ -1108,9 +1108,9 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
 		self.vfailIf(self.nget.run("-g test -r ."))
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
-		self.vfailUnlessEqual(self.servers.servers[2].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[2].count("_conns"), 1)
 		self.verifyoutput('0002')
 
 
@@ -1140,9 +1140,9 @@ class AuthTestCase(TestCase, DecodeTest_base):
 		self.addarticles_toserver('0002', 'uuencode_multi',self.servers.servers[0])
 		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifyoutput('0002')
-		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
-		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
-		self.vfailUnlessEqual(self.servers.servers[2].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[2].count("_conns"), 1)
 
 	def test_lite_GroupAuth(self):
 		self.servers = nntpd.NNTPD_Master(1)
