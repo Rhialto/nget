@@ -1,4 +1,4 @@
-2003-xx-xx v0.24.1:
+2003-09-01 v0.24.1:
   * Fix compile with gcc-3.3.
   * Fix a few testcases leaving tempfiles behind.
 
