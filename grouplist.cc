@@ -20,6 +20,7 @@
 #include <memory>
 #include <errno.h>
 #include "nget.h"
+#include "status.h"
 #include "file.h"
 #include "strtoker.h"
 

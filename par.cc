@@ -25,7 +25,7 @@
 #include "path.h"
 #include "log.h"
 #include "misc.h"
-#include "nget.h"
+#include "status.h"
 #include "knapsack.h"
 
 

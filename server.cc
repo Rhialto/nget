@@ -19,6 +19,7 @@
 #include "server.h"
 #include "strreps.h"
 #include "nget.h"
+#include "status.h"
 #include <sys/types.h>
 #include <dirent.h>
 #include <algorithm>

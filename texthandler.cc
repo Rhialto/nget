@@ -19,6 +19,7 @@
 
 #include "texthandler.h"
 #include "path.h"
+#include "status.h"
 #include "mylockfile.h"
 #include "myregex.h"
 #include <time.h>

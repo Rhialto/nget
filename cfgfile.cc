@@ -17,7 +17,7 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 #include "cfgfile.h"
-#include "nget.h"
+#include "status.h"
 
 bool CfgItem::issok(istringstream &iss) const {
 	if (iss.fail() || iss.bad()) {

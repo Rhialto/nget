@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include "auto_vector.h"
 #include "nget.h"
+#include "status.h"
 #include "mylockfile.h"
 #include "strtoker.h"
 #include "path.h"

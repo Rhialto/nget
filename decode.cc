@@ -25,6 +25,7 @@
 #include "path.h"
 #include "misc.h"
 #include "myregex.h"
+#include "status.h"
 
 #ifndef PROTOTYPES
 #define PROTOTYPES //required for uudeview.h to prototype function args.

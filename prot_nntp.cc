@@ -38,6 +38,7 @@
 #include "log.h"
 #include "file.h"
 #include "nget.h"
+#include "status.h"
 #include "strtoker.h"
 #include "par.h"
 #include "decode.h"
