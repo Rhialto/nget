@@ -1263,7 +1263,11 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 							path_files_left++;
 					}
 					if (path_files_left==0) {
+						long old_files_size = filec.files.size();
 						parhandler.maybe_get_pxxs(fr->path, filec);
+						//update status line information for any new pars that have been added
+						qtotinfo.bytesleft = filec.bytes;
+						qtotinfo.filestot += filec.files.size() - old_files_size;
 					}
 				}
 			}
