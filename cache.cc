@@ -19,6 +19,7 @@
 #include "cache.h"
 #include "strreps.h"
 #include "log.h"
+#include <set>
 #include <memory>
 #include <errno.h>
 #include "nget.h"
@@ -157,15 +158,14 @@ void c_nntp_file::get_server_have_map(t_server_have_map &have_map) const{
 		t_nntp_server_articles::const_iterator nsai(pi->second->articles.begin());
 		ulong serverid;
 		int partnum=pi->second->partnum;
-		c_nrange servers_already_found;
+		set<ulong> servers_already_found;
 
 		for (;nsai!=pi->second->articles.end();++nsai) {
 			serverid=nsai->first;
-			if (!servers_already_found.check(serverid)) {
+			if (servers_already_found.insert(serverid).second){
 				t_server_have_map::iterator hmi(have_map.insert(t_server_have_map::value_type(serverid, 0)).first);
 				if (partnum>0 && partnum<=req)
 					++hmi->second;
-				servers_already_found.insert(serverid);
 			}
 		}
 	}
