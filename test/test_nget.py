@@ -1872,12 +1872,9 @@ class ConfigErrorTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(output.count("ERRORS: 2 user"), 1)
 
 
-class XoverTestCase(TestCase, DecodeTest_base):
+class XoverTest_base(DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':0}) 
-		self.fxnget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':1}) 
-		self.fx2nget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':2}) 
 		self.servers.start()
 		
 	def tearDown(self):
@@ -1896,7 +1893,7 @@ class XoverTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run(args))
 		self.vfailIf(self.fxnget.run(args))
 		self.vfailIf(self.fx2nget.run(args))
-		
+
 	def verifyoutput_all(self, testnum):
 		self.verifyoutput(testnum)
 		self.verifyoutput(testnum, tmpdir=self.fxnget.tmpdir)
@@ -2003,6 +2000,34 @@ class XoverTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run("-N -G test -r ."))
 
 		self.verifyoutput('0002')
+
+class XoverTestCase(TestCase, XoverTest_base):
+	def setUp(self):
+		XoverTest_base.setUp(self)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':0}) 
+		self.fxnget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':1}) 
+		self.fx2nget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':2}) 
+
+	def tearDown(self):
+		XoverTest_base.tearDown(self)
+
+class CmdlineXoverTestCase(TestCase, XoverTest_base):
+	def setUp(self):
+		XoverTest_base.setUp(self)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.fxnget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.fx2nget = util.TestNGet(ngetexe, self.servers.servers) 
+		def RunnerFactory(nget, fullxover):
+			oldrun = nget.run
+			def runner(args):
+				return oldrun("--fullxover=%i %s"%(fullxover, args))
+			return runner
+		self.nget.run = RunnerFactory(self.nget, 0)
+		self.fxnget.run = RunnerFactory(self.fxnget, 1)
+		self.fx2nget.run = RunnerFactory(self.fx2nget, 2)
+
+	def tearDown(self):
+		XoverTest_base.tearDown(self)
 
 
 class DelayBeforeWriteNNTPRequestHandler(nntpd.NNTPRequestHandler):

@@ -108,6 +108,9 @@ If the filename ends in .gz, it will automatically be gzipped.
 Specifies whether to save text messages for posts that contained only binary data. (If you want to see the headers.)
 .IP "--test-multiserver OPT"
 Causes testmode to display which servers have parts of each file.  OPT may be no to disable(default), long for a verbose output, and short for a more condensed form. (In short mode, the shortname of each server is printed with no seperating space, and it is upper-cased if that server does not have all the parts.  If the server has no shortname specified, it defaults to the first char of the server alias.)
+.IP "--fullxover OPT"
+Override the fullxover settings of the config file.
+The default is -1, which doesn't override.
 .IP "-M/--mark"
 Mark matched files as retrieved.
 .IP "-U/--unmark"

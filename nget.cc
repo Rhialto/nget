@@ -53,7 +53,7 @@ extern "C" {
 #include "status.h"
 
 
-#define NUM_OPTIONS 42
+#define NUM_OPTIONS 43
 #ifndef HAVE_LIBPOPT
 
 #ifndef HAVE_GETOPT_LONG
@@ -107,6 +107,7 @@ enum {
 	OPT_DUPEPATH,
 	OPT_AUTOPAR,
 	OPT_NOAUTOPAR,
+	OPT_FULLXOVER,
 	OPT_MIN_SHORTNAME
 };
 
@@ -160,6 +161,7 @@ static void addoptions(void)
 //	addoption("testretrieve",1,'R',"REGEX","test what would have been retrieved");
 	addoption("testmode",0,'T',0,"test what would have been retrieved");
 	addoption("test-multiserver",1,OPT_TEST_MULTI,"OPT","make testmode display per-server completion info (no(default)/long/short)");
+	addoption("fullxover",1,OPT_FULLXOVER,"OPT","override fullxover setting (-1..2, default -1)");
 	addoption("text",1,OPT_TEXT_HANDLING,"OPT","how to handle text posts (files(default)/mbox[:filename]/ignore)");
 	addoption("save-binary-info",1,OPT_SAVE_TEXT_FOR_BINARIES,"OPT","save text files for posts that contained only binaries (yes/no(default))");
 	addoption("tries",1,'t',"INT","set max retries (-1 unlimits, default 20)");
@@ -779,6 +781,9 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					set_path_error_status_and_do_fatal_user_error();
 				}
 				break;
+			case OPT_FULLXOVER:
+				options.fullxover=atoi(loptarg);
+				break;
 			case 'F':
 				{
 					c_server::ptr server=nconfig.getserver(loptarg);
@@ -1016,6 +1021,7 @@ int main(int argc, const char ** argv){
 			options.texthandling=TEXT_FILES;
 			options.save_text_for_binaries=false;
 			options.mboxfname="nget.mbox";
+			options.fullxover=-1;
 			{
 				string ngetrcfn = nghome + ".ngetrc";
 				if (!fexists(ngetrcfn)) {

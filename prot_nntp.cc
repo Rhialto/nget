@@ -554,7 +554,7 @@ void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, ulong &num, ulong
 	//printf("%i, %i, %i\n",num,low,high);
 }
 
-void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, bool getheaders){
+void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, bool getheaders, int forcefullxover){
 	ulong num,low,high;
 	if (connection->curgroup!=group || getheaders){	
 		nntp_dogroup(group, num,low,high);
@@ -562,11 +562,12 @@ void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, bool getheaders){
 
 	if (getheaders){
 		assert(gcache);
+		const int fullxover = forcefullxover==-1 ? connection->server->fullxover : forcefullxover;
 
 		c_nntp_server_info* servinfo=gcache->getserverinfo(connection->server->serverid);
 		assert(servinfo);
 		//shouldn't do fullxover2 on first update of group or if cached headers are ALL older than available headers
-		if (servinfo->high!=0 && servinfo->high>=low && connection->server->fullxover==2){
+		if (servinfo->high!=0 && servinfo->high>=low && fullxover==2){
 			c_nrange existing;
 			dolistgroup(existing, low, high, num);
 
@@ -582,7 +583,7 @@ void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, bool getheaders){
 		}else{
 			if (low>servinfo->low)
 				gcache->flushlow(servinfo,low,midinfo);
-			if (connection->server->fullxover){
+			if (fullxover){
 				c_nrange r;
 				gcache->getxrange(servinfo,low,high,&r);
 				doxover(group, &r);
@@ -741,7 +742,7 @@ void c_prot_nntp::nntp_group(const c_group_info::ptr &ngroup, bool getheaders, c
 				try {
 					ConnectionHolder holder(&sockpool, &connection, s);
 					nntp_doopen();
-					nntp_dogroup(ngroup, getheaders);
+					nntp_dogroup(ngroup, getheaders, options.fullxover);
 					succeeded++;
 					connection->server_ok=true;
 				} catch (baseCommEx &e) {

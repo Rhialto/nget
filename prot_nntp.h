@@ -90,7 +90,7 @@ class c_prot_nntp {
 		void nntp_group(const c_group_info::ptr &group, bool getheaders, const nget_options &options);
 		void nntp_xgroup(const c_group_info::ptr &group, const t_xpat_list &patinfos, const nget_options &options);
 		void nntp_dogroup(const c_group_info::ptr &group, ulong &num, ulong &low, ulong &high);
-		void nntp_dogroup(const c_group_info::ptr &group, bool getheaders);
+		void nntp_dogroup(const c_group_info::ptr &group, bool getheaders, int forcefullxover=-1);
 		void nntp_grouplist(int update, const nget_options &options);
 		void nntp_xgrouplist(const t_xpat_list &patinfos, const nget_options &options);
 		void nntp_dogetgrouplist(void);

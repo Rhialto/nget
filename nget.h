@@ -90,6 +90,7 @@ struct nget_options {
 	t_text_handling texthandling;
 	bool save_text_for_binaries;
 	string mboxfname;
+	int fullxover;
 
 	void do_get_path(string &s);
 	nget_options(void);
