@@ -605,6 +605,21 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		print open(apath).read()
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
 		self.failUnless(re.search("^h0\ttest$",open(apath).read(), re.M))
+		
+	def test_available_newgroups(self):
+		self.vfailIf(self.nget.run('-a'))
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_"), 1)
+		time.sleep(1.1)
+		self.servers.servers[0].addgroup("a.new.group","whee")
+		apath = os.path.join(self.nget.rcdir, 'avail.out')
+		self.vfailIf(self.nget.run('-a -T -r . > %s'%apath))
+		print open(apath).read()
+		self.failUnless(re.search(r"^h0\ta.new.group\twhee \[h0\][\n\r]+h0\ttest$",open(apath).read(), re.M))
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("newgroups"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_"), 1)
 	
 	def test_available_overrides_group(self):
 		self.vfailIf(self.nget.run('-g test -A -T -r .'))
