@@ -14,8 +14,6 @@ uu_msg(1):Note: No encoded data found in ec3317e3-71cf792d.011
 * fix sometimes showing "Operation now in progress" and make it report the real error 
 Connect (with select), sockstuff uses strerror(erp) but exception thrown uses errno.  Should make sockstuff throw directly?
 
--p/-P when dir doesn't exist should just ignore all commands until a correct dir is encountered (and set a seperate error code to be exited with)
-
 *create .ngetrc on first run from NNTPSERVER or -h if specified instead.  (and add new servers not seen before when used with -h?  need to keep comments somehow though...)
 
 *derr on uulib messages - file already exists derr.. is the current hack good enough?
