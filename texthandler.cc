@@ -55,7 +55,7 @@ void TextHandler::writeinfo(c_file *f, bool escape_From=false) {
 	headerf.initrbuf();
 	while (headerf.bgets()>0) {
 		string hs = string(headerf.rbufp())+"\n";
-		if (dupeheaders && hs == *ii) {
+		if (dupeheaders && ii!=info.end() && hs == *ii) {
 			++ii;
 		}else
 			dupeheaders=false;

@@ -1,3 +1,6 @@
+2002-10-xx v0.22.1:
+  * Fix segv on saving text file if no uulib info was recorded.
+
 2002-10-18 v0.22:
   * With fullxover=2, don't needlessly retrieve article list if all cached headers are older than all available headers.
   * Fix group/grouplist typo in manpage exit status warnings section.
