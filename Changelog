@@ -1,3 +1,6 @@
+2002-04-xx v0.xx:
+  * Fix compile on 64bit arches (based on patch from Chris Lawrence.)
+
 2002-04-02 v0.18:
   * Remove fixed length buffers. (Fix errors with extremely long subjects, etc.)
   * If a group has articles from multiple servers show the shortname of the server each part is being retrieved from.
