@@ -1,4 +1,4 @@
-2003-xx-xx v0.xx:
+2003-11-20 v0.25:
   * Allow the same server id to be used for multiple hosts to share header cache data. (Useful if you have multiple accounts on the same server.)
   * Don't print extraneous exception information on tcp errors.
   * Also look for getopt_long in libgnugetopt.  (But you probably need --with-gnugetopt-prefix=/usr/local for it to be found.)
