@@ -61,7 +61,7 @@ const string& regex_match_word_end(void){
 
 void regex_escape_string(const string &s, string &buf){
 	for (string::const_iterator cp=s.begin(); cp!=s.end(); ++cp) {
-		if (strchr("{}()|[]\\.+*^$",*cp))
+		if (strchr("{}()|[]\\.+*?^$",*cp))
 			buf+='\\';//escape special chars
 		buf+=*cp;
 	}
