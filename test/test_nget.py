@@ -661,6 +661,14 @@ class RetrieveTest_base(DecodeTest_base):
 		self.verifyoutput({'par01':['_notpxxs_output/a b.p02'],
 			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','p2.par']})
 	
+	def test_autoparhandling_incompletepxx(self):
+		self.addarticles('par01', 'input')
+		self.rmarticle_fromserver('par01','input','dat2',self.servers.servers[0])
+		self.rmarticle_fromserver('par01','input','par1',self.servers.servers[0])
+		self.addarticles('par01', 'multipart', fname='par1-1')
+		self.vfailIf(self.nget_run('-g test -ir par.test'))
+		self.verifyoutput({'par01':['01.dat','03.dat','04.dat','05.dat','a b.par','a b.p02']})
+	
 	def test_autoparhandling_reply(self):
 		self.addarticles('par01', 'input')
 		self.addarticles('par01', 'reply')
@@ -967,6 +975,15 @@ class RetrieveTest_base(DecodeTest_base):
 		self.addarticles('par2-01', 'corrupt_sethash')
 		self.vfailIf(self.nget_run('-g test -r par2.test'))
 		self.verifyoutput({'par2-01':['c d 01.dat','c d 03.dat','c d 04.dat','c d 05.dat','_corrupt_sethash_output/foo.vol01+02.par2','c d.vol00+01.par2']})
+		
+	def test_autopar2handling_incompletepxx(self):
+		self.addarticles('par2-01', 'input')
+		self.rmarticle_fromserver('par2-01','input','dat2',self.servers.servers[0])
+		self.rmarticle_fromserver('par2-01','input','dat3',self.servers.servers[0])
+		self.rmarticle_fromserver('par2-01','input','par3',self.servers.servers[0])
+		self.addarticles('par2-01', 'multipart', fname="par3-1")
+		self.vfailIf(self.nget_run('-g test -ir par2.test'))
+		self.verifyoutput({'par2-01':['c d 01.dat','c d 04.dat','c d 05.dat','c d.par2','c d.vol07+08.par2']})
 		
 	def test_autopar2handling_reply(self):
 		self.addarticles('par2-01', 'input')

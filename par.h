@@ -35,17 +35,26 @@ bool parfile_ok(const string &filename, uint32_t &vol_number);
 int parfile_check(const string &filename, const string &path, const t_nocase_map &nocase_map);
 
 
-typedef multimap<time_t, c_nntp_file::ptr> t_server_file_list;
+// Sort incomplete files to the end of the list, so we try them last.
+typedef pair<float, time_t> t_server_file_key;
+inline t_server_file_key server_file_key(const c_nntp_file::ptr &f) {
+	float completeness = (f->req >= 1) ? f->have/(float)f->req : 1.0;
+	return t_server_file_key(-completeness, f->badate());
+}
+
+typedef multimap<t_server_file_key, c_nntp_file::ptr> t_server_file_list;
+#define server_file_list_value(f) t_server_file_list::value_type(server_file_key(f), f)
+
 class ParSetInfo {
 	protected:
 		t_server_file_list serverpars;
 		t_server_file_list serverpxxs;
 	public:
 		void addserverpar(const c_nntp_file::ptr &f) {
-			serverpars.insert(t_server_file_list::value_type(f->badate(), f));
+			serverpars.insert(server_file_list_value(f));
 		}
 		void addserverpxx(const c_nntp_file::ptr &f) {
-			serverpxxs.insert(t_server_file_list::value_type(f->badate(), f));
+			serverpxxs.insert(server_file_list_value(f));
 		}
 		int get_initial_pars(c_nntp_files_u &fc, const string &path, const string &temppath) {
 			int count=0;

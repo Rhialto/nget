@@ -127,9 +127,9 @@ bool Par1Info::maybe_add_parfile(const c_nntp_file::ptr &f) {
 		if (!smi->second->match(f->subject.c_str(), &rsubs)) {
 			PMSG("autopar: %s matches local parset %s",f->subject.c_str(),hexstr(smi->first).c_str());
 			if (isalpha(rsubs.subs(1)[0]))
-				serverpars.insert(t_server_file_list::value_type(f->badate(), f));
+				serverpars.insert(server_file_list_value(f));
 			else
-				serverpxxs.insert(t_server_file_list::value_type(f->badate(), f));
+				serverpxxs.insert(server_file_list_value(f));
 			return true;
 		}
 	}
@@ -288,9 +288,9 @@ bool Par2Info::maybe_add_parfile(const c_nntp_file::ptr &f) {
 		if (!smi->second->match(f->subject.c_str(), &rsubs)) {
 			PMSG("autopar: %s matches local par2set (%s)",f->subject.c_str(),hexstr(smi->first).c_str());
 			if (rsubs.sublen(1) == 0)
-				serverpars.insert(t_server_file_list::value_type(f->badate(), f));
+				serverpars.insert(server_file_list_value(f));
 			else
-				serverpxxs.insert(t_server_file_list::value_type(f->badate(), f));
+				serverpxxs.insert(server_file_list_value(f));
 			return true;
 		}
 	}
@@ -337,6 +337,8 @@ int Par2Info::get_recoverypackets(int num, set<uint32_t> &havepackets, const str
 						value++;
 					}
 				if (value>0) {
+					if (sfi->second->req >= 1)
+						value = max(1, value*sfi->second->have/sfi->second->req); // give incomplete files less weight (but no lower than 1, since they would never be gotten then)
 					sizes.push_back(endpacket-beginpacket);
 					values.push_back(value);
 					items.push_back(sfi);
