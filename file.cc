@@ -66,7 +66,12 @@ ssize_t c_file::vputf(const char *buf, va_list ap){
 	char *fpbuf;
 	int i,l;
 	l=vasprintf(&fpbuf,buf,ap);
-	i=write(fpbuf,l);
+	try {
+		i=write(fpbuf,l);
+	} catch (...) {
+		free(fpbuf);
+		throw;
+	}
 	free(fpbuf);
 	return i;
 }
