@@ -26,6 +26,7 @@
 #include "nget.h"
 #include "mylockfile.h"
 #include "strtoker.h"
+#include "path.h"
 
 int c_nntp_header::parsepnum(const char *str,const char *soff){
 	const char *p;
@@ -625,7 +626,7 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midi
 	saveit=0;
 	//file=nid;
 	c_file *f;
-	file=path+"/"+group->group + ",cache";
+	file=path_join(path,group->group + ",cache");
 	setfilenamegz(file,group->usegz);
 	fileread=0;
 	try {
@@ -742,7 +743,7 @@ c_nntp_files_u::~c_nntp_files_u(){
 
 void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c_group_info::ptr group, c_mid_info*midinfo, const t_nntp_getinfo_list &getinfos){
 
-	string file=path+"/"+group->group + ",cache";
+	string file=path_join(path,group->group + ",cache");
 	setfilenamegz(file,group->usegz);
 	c_file *f;
 	try {
