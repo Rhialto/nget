@@ -129,7 +129,7 @@ const char* sock_strerror(int e) {
 
 static c_regex_r rfc2732host("\\[(.*)\\](:(.*))?"),
 	rawipv6host(".*:.*:.*"),
-	normalhost("(.*)(:(.*))?");
+	normalhost("([^:]*)(:(.*))?");
 void parse_host(string &saddr, string &sservice, const string &host, const string &defservice="") {
 	sservice=defservice;
 	c_regex_subs subs;
