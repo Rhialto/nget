@@ -150,7 +150,9 @@ class c_nntp_file : public c_nntp_file_base, public c_refcounted<c_nntp_file>{
 //		ulong bytes,lines;
 		ulong flags;
 		int tailoff;
+		time_t update;
 		void addpart(c_nntp_part *p);
+		void addnewpart(c_nntp_part *p);
 		void mergefile(c_nntp_file::ptr &f);
 		bool is_a_reply(void) const {return (!references.empty()) || (subject.size()>=4 && tolower(subject[0])=='r' && tolower(subject[1])=='e' && subject[2]==':' && subject[3]==' ');}
 		bool maybe_a_textreply(void) const {return (have<=1 && is_a_reply() && lines()<1000);}
@@ -173,7 +175,7 @@ class c_nntp_file : public c_nntp_file_base, public c_refcounted<c_nntp_file>{
 		HAPPYSIZEFUNC2(bytes)
 		HAPPYSIZEFUNC2(lines)
 		c_nntp_file(c_nntp_header *h);
-		c_nntp_file(int r,ulong f,const char *s,const char *a,int po,int to);
+		c_nntp_file(int r,ulong f,const char *s,const char *a,int po,int to,time_t update);
 		virtual ~c_nntp_file();
 };
 

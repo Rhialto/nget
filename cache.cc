@@ -167,8 +167,14 @@ void c_nntp_file::addpart(c_nntp_part *p){
 	if (count_partnum(p->partnum, req)) have++;
 //	bytes+=p->apxbytes;lines+=p->apxlines;
 }
+void c_nntp_file::addnewpart(c_nntp_part *p){
+	time(&update);
+	addpart(p);
+}
 
 void c_nntp_file::mergefile(c_nntp_file::ptr &f){
+	if (f->update>update)
+		update=f->update;
 	t_nntp_file_parts::iterator fpi=f->parts.begin();
 	while (fpi!=f->parts.end()){
 		const c_nntp_part *p = fpi->second;
@@ -216,10 +222,10 @@ void c_nntp_file::get_server_have_map(t_server_have_map &have_map) const{
 	}
 }
 
-c_nntp_file::c_nntp_file(int r,ulong f,const char *s,const char *a,int po,int to):c_nntp_file_base(r, po, a, s),have(0),flags(f),tailoff(to){
+c_nntp_file::c_nntp_file(int r,ulong f,const char *s,const char *a,int po,int to,time_t ud):c_nntp_file_base(r, po, a, s),have(0),flags(f),tailoff(to),update(ud){
 //	printf("aoeu1.1\n");
 }
-c_nntp_file::c_nntp_file(c_nntp_header *h):c_nntp_file_base(*h),have(0),flags(0),tailoff(h->tailoff){
+c_nntp_file::c_nntp_file(c_nntp_header *h):c_nntp_file_base(*h),have(0),flags(0),tailoff(h->tailoff),update(0){
 //	printf("aoeu1\n");
 }
 
@@ -329,14 +335,14 @@ int c_nntp_cache::additem(c_nntp_header *h){
 		}
 //			printf("adding\n");
 		c_nntp_part *p=new c_nntp_part(h);
-		f->addpart(p);
+		f->addnewpart(p);
 		totalnum++;
 		return 0;
 	}
 //	printf("new\n");
 	f=new c_nntp_file(h);
 	c_nntp_part *p=new c_nntp_part(h);
-	f->addpart(p);
+	f->addnewpart(p);
 	totalnum++;
 	//files[f->subject.c_str()]=f;
 	files.insert(t_nntp_files::value_type(f.gimmethepointer(),f));
@@ -643,9 +649,9 @@ c_nntp_file::ptr c_nntp_cache_reader::read_file(void) {
 			}
 		}
 		else if (mode==FILE_MODE){//new file mode
-			i = f->btoks('\t',t,6);
-			if (i==6){
-				nf=new c_nntp_file(atoi(t[0]),atoul(t[1]),t[2],t[3],atoi(t[4]),atoi(t[5]));
+			i = f->btoks('\t',t,7);
+			if (i==7){
+				nf=new c_nntp_file(atoi(t[0]),atoul(t[1]),t[2],t[3],atoi(t[4]),atoi(t[5]),atoul(t[6]));
 				mode=REFERENCES_MODE;
 			}else{
 				printf("invalid line %lu mode %i (%i toks)\n",curline,mode,i);
@@ -745,7 +751,7 @@ c_nntp_cache::~c_nntp_cache(){
 					nf=(*i).second;
 					assert(!nf.isnull());
 					assert(!nf->parts.empty());
-					f->putf("%i\t%lu\t%s\t%s\t%i\t%i\n",nf->req,nf->flags,nf->subject.c_str(),nf->author.c_str(),nf->partoff,nf->tailoff);//FILE_MODE
+					f->putf("%i\t%lu\t%s\t%s\t%i\t%i\t%lu\n",nf->req,nf->flags,nf->subject.c_str(),nf->author.c_str(),nf->partoff,nf->tailoff,nf->update);//FILE_MODE
 					for(ri = nf->references.begin();ri!=nf->references.end();++ri){
 						if ((*ri)[0]=='.') f->putf("."); //escape possible invalid references that might start with .
 						f->putf("%s\n",ri->c_str());//REFERENCES_MODE

@@ -1462,6 +1462,19 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.vfailIf(self.nget.run('-g test -R "age 3w2h5m1s >"'))
 		self.verifyoutput(['0002','0001','0005'])
 	
+	def test_update(self):
+		nowstr = time.strftime("%Y%m%dT%H%M%S")
+		self.vfailIf(self.nget.run('-g test -R "update %s < "'%nowstr))
+		self.verifyoutput([])
+		self.vfailIf(self.nget.run('-G test -R "update %s >="'%nowstr))
+		self.verifyoutput(['0002','0001','0005'])
+
+	def test_updateage(self):
+		self.vfailIf(self.nget.run('-g test -R "updateage 1s >"'))
+		self.verifyoutput([])
+		self.vfailIf(self.nget.run('-G test -R "updateage 1s <="'))
+		self.verifyoutput(['0002','0001','0005'])
+	
 	def test_references(self):
 		self.addarticles('refs01', 'input')
 		self.addarticles('refs02', 'input')
@@ -2324,6 +2337,40 @@ class CmdlineXoverTestCase(TestCase, XoverTest_base):
 
 	def tearDown(self):
 		XoverTest_base.tearDown(self)
+
+
+class UpdateTestCase(TestCase, DecodeTest_base):
+	def setUp(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.servers.start()
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+	def tearDown(self):
+		self.servers.stop()
+		self.nget.clean_all()
+
+	def test_addnew(self):
+		self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[0])
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-g test -T -i -R "updateage 1s <="'))
+		self.vfailUnlessEqual(output.count('joystick.jpg'),1)
+		time.sleep(2)
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-G test -T -i -R "updateage 1s <="'))
+		self.vfailUnlessEqual(output.count('joystick.jpg'),0)
+		self.addarticle_toserver('0002', 'uuencode_multi', '002', self.servers.servers[1])
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-g test -T -R "updateage 1s <="'))
+		self.vfailUnlessEqual(output.count('joystick.jpg'),1)
+
+	def test_addsamenoupdate(self):
+		self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[0])
+		self.addarticle_toserver('0002', 'uuencode_multi', '002', self.servers.servers[1])
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-g test -T -R "updateage 1s <="'))
+		self.vfailUnlessEqual(output.count('joystick.jpg'),1)
+		time.sleep(2)
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-G test -T -R "updateage 1s <="'))
+		self.vfailUnlessEqual(output.count('joystick.jpg'),0)
+		self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[1])
+		self.addarticle_toserver('0002', 'uuencode_multi', '002', self.servers.servers[0])
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-g test -T -R "updateage 1s <="'))
+		self.vfailUnlessEqual(output.count('joystick.jpg'),0)
 
 
 class CounterMixin:

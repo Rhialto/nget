@@ -1,4 +1,4 @@
-.TH nget 1 "01 Sep 2003"
+.TH nget 1 "05 Apr 2004"
 .SH NAME
 nget \- retrieve files from NNTP (usenet news) hosts
 .SH SYNOPSIS
@@ -71,7 +71,7 @@ Like -r, but matches expression instead of merely a regexp.
 Expression is a postfix expression that can contain these keywords:
 .br
 Following -g/-G:
-subject, author, lines, bytes, have, req, date, age, messageid(or mid), references.  Note that the --limit
+subject, author, lines, bytes, have, req, date, age, update, updateage, messageid(or mid), references.  Note that the --limit
 argument does not affect the option, if you want to limit based on number
 of lines, add it as part of the expression.
 .br
@@ -212,6 +212,12 @@ Format: [X y[ears]] [X mo[nths]] [X w[eeks]] [X d[ays]] [X h[ours]] [X m[inutes]
 Ex.: "6 months 7 hours 8 minutes"
 .br
 Ex.: "6mo7h8m"
+.IP "update (date)"
+Matches the "update time" of the cache item.
+That is, the most recent time that a new part of the file has been added.
+For example, if part 1 was added one day, and part 2 only appeared on the server the next day, then the update time would be when part 2 was added on the second day.  But if both parts were seen on the first day, then seen again from a different server on the second day, the update time would stay at the original value.
+.IP "updateage (age)"
+Matches the time since the update of the cache item.
 .IP "messageid (regex), mid (regex)"
 Matches the Message-ID header.  (For multi-part posts, it matches the message-id of the first part.)
 .IP "references (regex)"

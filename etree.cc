@@ -209,6 +209,10 @@ nntp_file_pred *nntp_file_comparison_maker(const string &i, const string *x, con
 	else if (strcasecmp(n, "age")==0)
 		//rather than taking a relative age and converting each date into a relative age and then comparing, decode_textage returns an absolute date (time_t) which simplifies comparisons, but to get intuitive usage we have to invert <,> operators.
 		return comparison<const c_nntp_file>(invert_op(i), &c_nntp_file::badate, decode_textage(y->c_str()));
+	else if (strcasecmp(n, "update")==0)
+		return comparison<const c_nntp_file>(i, &c_nntp_file::update, decode_textdate(y->c_str()));
+	else if (strcasecmp(n, "updateage")==0)
+		return comparison<const c_nntp_file>(invert_op(i), &c_nntp_file::update, decode_textage(y->c_str()));
 	else if (strcasecmp(n, "references")==0)
 		return comparison_re<const c_nntp_file,t_references c_nntp_file::*>(i, &c_nntp_file::references, y->c_str(), re_flags);
 	else
