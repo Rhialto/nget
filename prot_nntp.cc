@@ -279,10 +279,15 @@ void c_prot_nntp::nntp_dogroup(int getheaders){
 			doxover(&r);
 		}else{
 			c_nrange r;
-			if (servinfo->high<high)
-				r.insert(servinfo->high+1, high);
-			if (servinfo->low>low)
-				r.insert(low, servinfo->low-1);
+
+			if (servinfo->high==0)
+				r.insert(low, high);
+			else {
+				if (servinfo->high<high)
+					r.insert(servinfo->high+1, high);
+				if (servinfo->low>low)
+					r.insert(low, servinfo->low-1);
+			}
 			doxover(&r);
 		}
 	}
