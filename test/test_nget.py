@@ -252,6 +252,20 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.servers.servers[0].rmarticle(article.mid)
 		self.vfailIf(self.nget.run('-g test -r .'))#should notice the article expired and not try to get anything
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 0)
+	
+	def test_nosavetext_on_decodeerror(self):
+		self.addarticles("0001", "yenc_single_crc32_error")
+
+		self.vfailUnlessExitstatus(self.nget.run("--save-binary-info=yes -g test -r ."), 1, "nget process did not detect decode error")
+
+		output = os.listdir(self.nget.tmpdir)
+		if 'testfile.txt' in output:
+			output.remove('testfile.txt')
+		import time
+		time.sleep(10)
+		self.failUnless(len(output)==1, "extra output: %s"%output)
+		self.failUnless(output[0].endswith(".-01"), "wrong output: %s"%output)
+
 
 
 class RetrieveTest_base(DecodeTest_base):

@@ -1413,6 +1413,9 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 						++dfi;
 					}
 				}
+
+				if (uustatus.derr==0)
+					texthandler.save();
 			}
 			uustatus.th = NULL;
 			if (uustatus.derr>0){

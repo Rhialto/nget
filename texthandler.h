@@ -45,7 +45,7 @@ class TextHandler {
 		void set_save_whole_tempfile(bool flag) {save_whole_tempfile=flag;}
 		void addinfo(const string &str);
 		void adddecodeinfo(const string &str);
+		void save(void);
 		TextHandler(t_text_handling texthandlin, bool save_text_for_binarie, const string &mboxname, c_nntp_file_retr::ptr frp, const char *firsttempfn);
-		~TextHandler();
 };
 #endif
