@@ -1,0 +1,17 @@
+From: donut@bar
+Newsgroups: test
+Subject: thesubject - testfile.txt (0/1)
+Organization: My Organization
+User-Agent: newspost v1.13 http://www.ccs.neu.edu/home/jfaulkne/newspost/
+Message-ID: <1@foo>
+Date: Thu, 07 Mar 2002 12:22:09 GMT
+Lines: 8
+
+Test of zero file.
+second line.
+
+forth line.
+
+
+seventh line.
+End of zero file test.
