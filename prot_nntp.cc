@@ -366,10 +366,6 @@ void c_prot_nntp::doxover(c_nrange *r){
 						// no - get out and read the next line
 						// Is this how we want to handle it? SMW
 						printf("error retrieving xover (%i non-numeric)\n",i);
-						//printf("error retrieving xover (%i non-numeric): ",i);
-						//for (int j=0;j<i;j++)
-							//printf("%i:%s ",j,t[j]);
-						//printf("*:%s\n",p);
 						break;
 					}
 				}
@@ -408,11 +404,12 @@ void c_prot_nntp::doxover(c_nrange *r){
 			}else{
 				set_xover_warn_status();
 				printf("error retrieving xover (%i<=7): ",i);
-				for (int j=0;j<i;j++)
-					printf("%i:%s ",j,t[j]);
-				printf("*:%s\n",p);
-				//break;
-				continue;
+				for (int j=0;j<=i;j++)
+					if (t[j])
+						printf("%i:%s ",j,t[j]);
+				if (p)
+					printf("*:%s",p);
+				printf("\n");
 			}
 		}while(1);
 #ifndef NDEBUG
