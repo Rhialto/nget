@@ -419,7 +419,7 @@ int c_prot_nntp::nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_artic
 		sap.insert(t_nntp_server_articles_prioritized::value_type(prio,sa));
 	}
 
-	if (docurservmult) {
+	if (docurservmult && !sap.empty()) {
 		int connected=0, nonconnected=0;
 		t_nntp_server_articles_prioritized::iterator i;
 		pair<t_nntp_server_articles_prioritized::iterator,t_nntp_server_articles_prioritized::iterator> firstrange = sap.equal_range(sap.rend()->first);

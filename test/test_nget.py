@@ -28,12 +28,15 @@ ngetexe = os.path.join(os.pardir, 'nget')
 zerofile_fn_re = re.compile(r'(\d+)\.(\d+)\.txt$')
 
 class DecodeTest_base(unittest.TestCase):
-	def addarticles(self, testnum, dirname):
+	def addarticles_toserver(self, testnum, dirname, server):
 		for fn in glob.glob(os.path.join("testdata",testnum,dirname,"*")):
 			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
 				continue
-			for server in self.servers.servers:
-				server.addarticle(["test"], nntpd.FileArticle(open(fn, 'r')))
+			server.addarticle(["test"], nntpd.FileArticle(open(fn, 'r')))
+			
+	def addarticles(self, testnum, dirname):
+		for server in self.servers.servers:
+			self.addarticles_toserver(testnum, dirname, server)
 
 	def verifyoutput(self, testnum):
 		ok = []
@@ -168,6 +171,14 @@ class ConnectionErrorTestCase(unittest.TestCase, DecodeTest_base):
 		self.addarticles('0002', 'uuencode_multi')
 		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
 		self.verifyoutput('0002')
+
+	def test_ForceWrongServer(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+		self.addarticles_toserver('0002', 'uuencode_multi', self.servers.servers[0])
+		self.failIf(self.nget.run("-g test"), "nget process returned with an error")
+		self.failUnless(os.WEXITSTATUS(self.nget.run("-h host1 -G test -r .")) & 8, "nget process did not detect retrieve error")
 
 
 class CppUnitTestCase(unittest.TestCase):
