@@ -488,7 +488,10 @@ c_nntp_cache_reader::c_nntp_cache_reader(c_file *cf, c_mid_info *mi, t_nntp_serv
 		curline++;
 		//(mode==SERVERINFO_MODE)
 		if (f->bpeek()=='.') {
-			assert(f->bgetsp()[1]==0);
+			if (f->bgetsp()[1]!=0) {
+				printf("warning: stuff after . line %lu mode %i\n",curline,SERVERINFO_MODE);
+				set_cache_warn_status();
+			}
 			//mode=FILE_MODE;//start new file mode
 			return;
 		}
@@ -521,7 +524,10 @@ c_nntp_file::ptr c_nntp_cache_reader::read_file(void) {
 		curline++;
 		if (mode==SERVER_ARTICLE_MODE && np){//new server_article mode
 			if (f->bpeek()=='.'){
-				assert(f->bgetsp()[1]==0);
+				if (f->bgetsp()[1]!=0) {
+					printf("warning: stuff after . line %lu mode %i\n",curline,mode);
+					set_cache_warn_status();
+				}
 				mode=PART_MODE;//go back to new part mode
 				continue;
 			}else{
@@ -550,7 +556,10 @@ c_nntp_file::ptr c_nntp_cache_reader::read_file(void) {
 				count--;
 			}
 			if (f->bpeek()=='.'){
-				assert(f->bgetsp()[1]==0);
+				if (f->bgetsp()[1]!=0) {
+					printf("warning: stuff after . line %lu mode %i\n",curline,mode);
+					set_cache_warn_status();
+				}
 				if (nf->parts.empty()){
 					set_cache_warn_status();
 					printf("empty nntp_file finished at line %lu mode %i\n",curline,mode);
