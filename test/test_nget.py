@@ -329,8 +329,6 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		output = os.listdir(self.nget.tmpdir)
 		if 'testfile.txt' in output:
 			output.remove('testfile.txt')
-		import time
-		time.sleep(10)
 		self.failUnless(len(output)==1, "extra output: %s"%output)
 		self.failUnless(output[0].endswith(".-01"), "wrong output: %s"%output)
 
