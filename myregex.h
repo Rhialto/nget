@@ -45,8 +45,9 @@
 #include "log.h"
 DEFINE_EX_SUBCLASS(RegexEx, ApplicationExFatal, true);
 
-const string& regex_match_word_beginning(void);
-const string& regex_match_word_end(void);
+const string& regex_match_word_beginning(void);//may contain grouping
+const string& regex_match_word_beginning_safe(void);//won't contain any grouping
+const string& regex_match_word_end(void);//may contain grouping
 void regex_escape_string(const string &s, string &buf);
 
 //  use strerror for a textual description of problem.  same as regerror(), but without the first arg(s).

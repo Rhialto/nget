@@ -23,6 +23,7 @@
 #include "myregex.h"
 
 
+static string regex_match_word_beginning_safe_str;
 static string regex_match_word_beginning_str;
 static string regex_match_word_end_str;
 static bool regex_initialized=0;
@@ -41,14 +42,31 @@ static string regex_test_op(const char **ops, const char *pat, const char *match
 	return "";
 }
 static void regex_init(void) {
-	const char *wbeg_ops[]={"\\<", "\\b", "(^|[^A-Za-z0-9])", NULL};
+	const char *wbeg_ops[]={"\\<", "\\b", "[[:<:]]", "(^|[^A-Za-z0-9])", NULL};
 	regex_match_word_beginning_str = regex_test_op(wbeg_ops, "%sfoo", "a fooa", "fooa");
+	if (!regex_match_word_beginning_str.empty() && regex_match_word_beginning_str[0]!='(')
+		regex_match_word_beginning_safe_str = regex_match_word_beginning_str;
+	if (regex_match_word_beginning_safe_str.empty()) {
+		PERROR("\nWARNING: your regex library is not sufficient for nget's internal use.");
+		if (regex_match_word_beginning_str.empty())
+			PERROR("It doesn't seem possible to match the beginning or end of a word.\n");
+		else
+			PERROR("It can match the beginning or ending of a word, but with an ugly hack\n"
+					"which can't be used in some cases due to the use of grouping.");
+		PERROR("Please consider compiling nget with a better regex library, such as PCRE.\n"
+				"If your library does support word boundary matching, please let me know the\n"
+				"proper codes for it, so it may be supported in a future version.\n");
+	}
 
-	const char *wend_ops[]={"\\>", "\\b", "($|[^A-Za-z0-9])", NULL};
+	const char *wend_ops[]={"\\>", "\\b", "[[:>:]]", "($|[^A-Za-z0-9])", NULL};
 	regex_match_word_end_str = regex_test_op(wend_ops, "foo%s", "afoo a", "afoo");
 
 	PDEBUG(DEBUG_MIN,"regex_init regex_match_word_beginning:%s regex_match_word_end:%s",regex_match_word_beginning_str.c_str(), regex_match_word_end_str.c_str());
 	regex_initialized=true;
+}
+const string& regex_match_word_beginning_safe(void) {
+	if (!regex_initialized) regex_init();
+	return regex_match_word_beginning_safe_str;
 }
 const string& regex_match_word_beginning(void) {
 	if (!regex_initialized) regex_init();

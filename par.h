@@ -101,7 +101,7 @@ class LocalParFiles {
 
 			string matchstr;
 			if (isalnum(basename[0]))
-				matchstr+=regex_match_word_beginning();
+				matchstr+=regex_match_word_beginning_safe();
 			regex_escape_string(basename, matchstr);
 			matchstr+="\\.p(ar|[0-9]{2})";
 			matchstr+=regex_match_word_end();
@@ -114,7 +114,7 @@ class LocalParFiles {
 
 			string matchstr;
 			if (isalnum(basename[0]))
-				matchstr+=regex_match_word_beginning();
+				matchstr+=regex_match_word_beginning_safe();
 			regex_escape_string(basename, matchstr);
 			matchstr+="(\\.vol([0-9]+)\\+([0-9]+))?\\.par2";
 			matchstr+=regex_match_word_end();
