@@ -18,6 +18,7 @@
 from __future__ import nested_scopes
 
 import os, select
+import time
 import threading
 import SocketServer
 
@@ -39,9 +40,12 @@ class NNTPNoSuchArticleNum(NNTPError):
 class NNTPNoSuchArticleMID(NNTPError):
 	def __init__(self, mid):
 		NNTPError.__init__(self, 430, "No article found with message-id %s"%mid)
+class NNTPBadCommand(NNTPError):
+	def __init__(self, s=''):
+		NNTPError.__init__(self, 500, "Bad command" + (s and ' (%s)'%s or ''))
 class NNTPSyntaxError(NNTPError):
 	def __init__(self, s=''):
-		NNTPError.__init__(self, 500, "Syntax error or bad command" + (s and ' (%s)'%s or ''))
+		NNTPError.__init__(self, 501, "Syntax error" + (s and ' (%s)'%s or ''))
 
 class NNTPAuthRequired(NNTPError):
 	def __init__(self):
@@ -99,7 +103,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 						raise NNTPAuthRequired
 					func(args)
 				else:
-					raise NNTPSyntaxError, rcmd
+					raise NNTPBadCommand, rcmd
 			except NNTPDisconnect, d:
 				if d.err:
 					self.nwrite(str(d.err))
@@ -124,7 +128,37 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			self.nwrite("281 Authentication accepted")
 		else:
 			raise NNTPSyntaxError, args
-			
+	
+	def cmd_date(self, args):
+		self.nwrite("111 "+time.strftime("%Y%m%d%H%M%S",time.gmtime()))
+	
+	def cmd_list(self, args):
+		if args=="newsgroups":
+			self.nwrite("215 information follows")
+			for name,group in self.server.groups.items():
+				if group.description:
+					self.nwrite("%s %s"%(name, group.description))
+			self.nwrite(".")
+		elif args:
+			raise NNTPSyntaxError, args
+		else:
+			self.nwrite("215 list of newsgroups follows")
+			for name,group in self.server.groups.items():
+				self.nwrite("%s %i %i %s"%(name, group.low, group.high, "y"))
+			self.nwrite(".")
+
+	def cmd_newgroups(self, args):
+		#since = time.mktime(time.strptime(args,"%Y%m%d %H%M%S %Z"))
+		since = ''.join(args.split()[0:2])
+		if len(since)!=14:
+			raise NNTPSyntaxError, args
+		self.nwrite("231 list of new newsgroups follows")
+		for name,group in self.server.groups.items():
+			#if since > group.creationtime:
+			if since > time.strftime("%Y%m%d%H%M%S",time.gmtime(group.creationtime)): #just do a lexicographical comparison. stupid c library. blah.
+				self.nwrite("%s %i %i %s"%(name, group.low, group.high, "y"))
+		self.nwrite(".")
+		
 	def cmd_listgroup(self, args):
 		if args:
 			group = self.server.groups.get(args)
@@ -293,10 +327,12 @@ class NNTPD_Master:
 
 
 class Group:
-	def __init__(self):
+	def __init__(self, description=None):
 		self.low = 1
 		self.high = 0
 		self.articles = {}
+		self.creationtime = time.time()
+		self.description = description
 	def addarticle(self, article, anum=None):
 		if anum is None:
 			anum = self.high + 1
@@ -317,7 +353,6 @@ class Group:
 					self.low = self.high + 1
 				return
 
-import time
 class FakeArticle:
 	def __init__(self, mid, name, partno, totalparts, groups, body):
 		self.mid=mid

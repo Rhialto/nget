@@ -103,6 +103,7 @@ int c_prot_nntp::getreply(int echo){
 	return code;
 }
 
+
 class Progress {
 	public:
 		time_t lasttime, starttime, curt;
@@ -115,6 +116,161 @@ class Progress {
 			starttime = time(NULL);
 		};
 };
+
+
+class DumbProgress : public Progress {
+	public:
+		void print_retrieving(const char *what, ulong done, ulong bytes){
+			time(&lasttime);
+			time_t dtime=lasttime-starttime;
+			long Bps=(dtime>0)?bytes/dtime:0;
+			if (!quiet) clear_line_and_return();
+			printf("Retrieving %s: %lu %liB/s %s",what,done,Bps,durationstr(dtime).c_str());
+
+			fflush(stdout);//@@@@
+		}
+};
+
+void c_prot_nntp::nntp_dogrouplist(void){
+	ulong bytes=0, done=0;
+
+	c_nntp_grouplist_server_info::ptr servinfo = glist->getserverinfo(connection->server->serverid);
+	string newdate;
+	int r=stdputline(quiet<2,"DATE");
+	if (r==111)
+		newdate = cbuf+4;
+	else {
+		char tbuf[40];
+		time_t t = time(NULL);
+		tconv(tbuf, 40, &t, "%Y%m%d%H%M%S", 0);
+		printf("bad DATE reply '%s', using local date %s\n", cbuf, tbuf);
+		newdate = tbuf;
+	}
+
+	if (!servinfo->date.empty()) {
+		int dsepn = servinfo->date.size()-6;
+		chkreply(stdputline(quiet<2,"NEWGROUPS %s %s GMT",servinfo->date.substr(0,dsepn).c_str(), servinfo->date.substr(dsepn,6).c_str()));
+	}
+	if (servinfo->date.empty()) {
+		chkreply(stdputline(quiet<2,"LIST"));
+	}
+
+	DumbProgress progress;
+	while (1) {
+		if (progress.needupdate())
+			progress.print_retrieving("group list", done, bytes);
+		bytes+=getline(debug>=DEBUG_ALL);
+		if (cbuf[0]=='.' && cbuf[1]=='\0')break;
+		char * p = strpbrk(cbuf, " \t");
+		if (p)
+			*p = '\0';
+		//####do something with last/first/postingallowed info?
+
+		glist->addgroup(connection->server->serverid, cbuf);
+		done++;
+	}
+	if(quiet<2){
+		progress.print_retrieving("group list", done, bytes);
+		printf("\n");
+	}
+	servinfo->date = newdate;
+}
+
+void c_prot_nntp::nntp_dogroupdescriptions(void){
+	ulong bytes=0, done=0;
+	chkreply(stdputline(quiet<2,"LIST NEWSGROUPS"));
+	DumbProgress progress;
+	while (1) {
+		if (progress.needupdate())
+			progress.print_retrieving("group descriptions", done, bytes);
+
+		bytes+=getline(debug>=DEBUG_ALL);
+		if (cbuf[0]=='.' && cbuf[1]=='\0')break;
+		char * desc = strpbrk(cbuf, " \t");
+		if (desc) {
+			*desc = '\0';
+			desc++;
+			desc += strspn(desc, " \t");
+		}else
+			desc = "";
+
+		glist->addgroupdesc(connection->server->serverid, cbuf, desc);
+		done++;
+	}
+	if(quiet<2){
+		progress.print_retrieving("group descriptions", done, bytes);
+		printf("\n");
+	}
+}
+
+void c_prot_nntp::nntp_grouplist(int update, const nget_options &options){
+	glist = new c_nntp_grouplist();
+	if (update) {
+		c_server::ptr s;
+		list<c_server::ptr> doservers;
+		c_server_priority_grouping *priogroup;
+		if (!(priogroup=nconfig.getpriogrouping("_grouplist")))
+			priogroup=nconfig.getpriogrouping("default");
+		nntp_simple_prioritize(priogroup, doservers);
+
+		int redone=0, succeeded=0, attempted=doservers.size();
+		while (!doservers.empty() && redone<options.maxretry) {
+			if (redone){
+				printf("nntp_grouplist: trying again. %i\n",redone);
+				if (options.retrydelay)
+					sleep(options.retrydelay);
+			}
+			list<c_server::ptr>::iterator dsi = doservers.begin();
+			list<c_server::ptr>::iterator ds_erase_i;
+			while (dsi != doservers.end()){
+				s=(*dsi);
+				assert(s);
+				PDEBUG(DEBUG_MED,"nntp_grouplist: serv(%lu) %f>=%f",s->serverid,priogroup->getserverpriority(s->serverid),priogroup->defglevel);
+				try {
+					ConnectionHolder holder(&sockpool, &connection, s->serverid);
+					nntp_doopen();
+					nntp_dogrouplist();
+					nntp_dogroupdescriptions();//####make this a seperate option?
+					succeeded++;
+				} catch (baseCommEx &e) {
+					printCaughtEx(e);
+					if (e.isfatal()) {
+						printf("fatal error, won't try %s again\n", s->alias.c_str());
+						//fall through to removing server from list below.
+					}else{
+						//if this is the last retry, don't say that we will try it again.
+						if (redone+1 < options.maxretry)
+							printf("will try %s again\n", s->alias.c_str());
+						++dsi;
+						continue;//don't remove server from list
+					}
+				}
+				ds_erase_i = dsi;
+				++dsi;
+				doservers.erase(ds_erase_i);
+			}
+			redone++;
+		}
+		if (succeeded) {
+			set_grouplist_warn_status(attempted - succeeded);
+			set_grouplist_ok_status();
+		}else {
+			set_grouplist_error_status();
+			printf("no servers queried successfully\n");
+		}
+	}
+}
+		
+void c_prot_nntp::nntp_grouplist_search(const t_grouplist_getinfo_list &getinfos, const nget_options &options){
+	if (glist) {
+		glist->printinfos(getinfos);
+		//####should we glist=NULL; here?
+	} else {
+		nntp_grouplist_printinfos(getinfos);
+	}
+}
+
+
 class XoverProgress : public Progress {
 	public:
 		void print_retrieving_headers(ulong low,ulong high,ulong done,ulong realtotal,ulong total,ulong bytes,int doneranges,int streamed,int totalranges){
@@ -359,6 +515,24 @@ void c_prot_nntp::nntp_dogroup(int getheaders){
 	}
 };
 
+void c_prot_nntp::nntp_simple_prioritize(c_server_priority_grouping *priogroup, list<c_server::ptr> &doservers){
+	if (force_host){
+		doservers.push_front(force_host);
+	} else {
+		t_server_list::iterator sli = nconfig.serv.begin();
+		for (;sli!=nconfig.serv.end();++sli){
+			c_server::ptr &s=(*sli).second;
+			assert(s);
+			if (priogroup->getserverpriority(s->serverid) >= priogroup->defglevel) {
+				if (sockpool.is_connected(s->serverid)) //put current connected hosts at start of list
+					doservers.push_front(s);
+				else
+					doservers.push_back(s);
+			}
+		}
+	}
+}
+
 void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nget_options &options){
 	if (group == ngroup && gcache && !getheaders)
 		return; // group is already selected, don't waste time reloading it
@@ -374,21 +548,8 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 	if (getheaders){
 		c_server::ptr s;
 		list<c_server::ptr> doservers;
-		if (force_host){
-			doservers.push_front(force_host);
-		} else {
-			t_server_list::iterator sli = nconfig.serv.begin();
-			for (;sli!=nconfig.serv.end();++sli){
-				s=(*sli).second;
-				assert(s);
-				if (group->priogrouping->getserverpriority(s->serverid) >= group->priogrouping->defglevel) {
-					if (sockpool.is_connected(s->serverid)) //put current connected hosts at start of list
-						doservers.push_front(s);
-					else
-						doservers.push_back(s);
-				}
-			}
-		}
+		nntp_simple_prioritize(group->priogrouping, doservers);
+
 		int redone=0, succeeded=0, attempted=doservers.size();
 		while (!doservers.empty() && redone<options.maxretry) {
 			if (redone){

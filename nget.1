@@ -1,4 +1,4 @@
-.TH nget 1 "09 Jul 2002"
+.TH nget 1 "02 Aug 2002"
 .SH NAME
 nget \- retrieve files from NNTP (usenet news) hosts
 .SH SYNOPSIS
@@ -17,24 +17,41 @@ When specified twice, will disable printing of merely informative messages.  Err
 .IP "-h/--host host"
 Force only the given host to be used for subsequent commands.  (Must be configured in .ngetrc.)
 Can reset to standard auto-choosing method with -h ""
+.IP "-a/--available"
+Update the list of available newsgroups.
+Subsequent -r/-R commands can be use to search for newsgroups.
+.IP "-A/--quickavailable"
+Like -a/--available, but does not update the list, only makes it available for searching.
 .IP "-g/--group group"
-Newsgroup to use for subsequent commands.  If a host has been specified before
+Update the list of available files in group.
+If a host has been specified before
 with -h, it will retrieve headers only from that host.  Otherwise it will
 retrieve headers for all hosts above _glevel (see configuration section for
 more info on priorities.)
+Subsequent -r/-R commands can be used to retrieve files.
 .IP "-G/--quickgroup group"
 Like --group, but does not retrieve new headers.
 .IP "-F/--flushserver host"
 Flush all headers for server from current group.
 .IP "-r/--retrieve regex"
+Following -g/-G:
 Matches regex against subjects of previously selected group, and retrieves ones
 that match.
+.br
+Following -a/-A:
+Matches regex against groupnames and lists ones that match. (-T required)
 .IP "-R/--expretrieve expression"
-Like -r, but matches expression instead of merely a regexp.  Expression is a
-postfix expression that can contain the keywords
+Like -r, but matches expression instead of merely a regexp.
+Expression is a
+postfix expression that can contain these keywords:
+.br
+Following -g/-G:
 subject, author, lines, bytes, have, req, date, age, messageid(or mid).  Note that the --limit
 argument does not affect the option, if you want to limit based on number
 of lines, add it as part of the expression.
+.br
+Following -a/-A:
+group.
 .IP "-@/--list LISTFILE"
 Specify a file to load a list of command line args from.  Looks in ~/.nget4/lists/ dir by default.
 A # char in a listfile that is the first character on a line or is preceeded by whitespace and not quoted starts a comment which lasts until the end of the line.
@@ -244,12 +261,13 @@ option enabled.
 Multiserver priorities are defined in the hpriority section.  Multiple priority
 groups can be made, and different newsgroups can be configured to use their own
 priority grouping, or they will default to the "default" group.
+The -a option will use the "_grouplist" priority group if it exists, otherwise it will use the "default" group.
 .P
 The hpriority
 section contains a subsection for each priority group, with data items of
 server=prio-multiplier, and the special items _level=float and _glevel=float.
 _level sets the priority level assigned to any host not listed in the group,
-and _glevel sets the required priority needed for -g to automatically use that
+and _glevel sets the required priority needed for -g and -a to automatically use that
 host.  Both _level and _glevel default to 1.0 if not specified.
 .P
 The priority group "trustsizes" also has special meaning, and is used to choose which servers
@@ -344,11 +362,15 @@ them up, just that the filename(s) of any decoded files cannot be known until th
 the checking must occur during the run rather than at queue time.)
 .IP "group"
 Number of groups successfully updated.
+.IP "grouplist"
+Newsgroup list successfully updated.
 .RE
 .IP "WARNINGS"
 .RS
 .IP "group"
 Updating group info failed for some (but not all) attempted servers.
+.IP "group"
+Updating newsgroup list failed for some (but not all) attempted servers.
 .IP "retrieve"
 Article retrieval failed for some (but not all) attempted servers.
 .IP "undecoded"
@@ -372,6 +394,8 @@ User errors, such as trying -r without specifying a group first.
 Number of times article retrieval failed for all attempted servers.
 .IP "group (exit code 16)"
 Number of times header retrieval failed for all attempted servers.
+.IP "grouplist (exit code 32)"
+Number of times newsgroup list retrieval failed for all attempted servers.
 .IP "fatal (exit code 128)"
 Error preventing further operation, such as "No space left on device".
 .IP "other (exit code 64)"
@@ -399,6 +423,10 @@ flush all headers from host goodhost in group alt.binaries.pictures.linux:
 .br
 .B
 nget -Galt.binaries.pictures.linux -Fgoodhost
+.P
+retrieve/update group list, and list all groups with "linux" in the name:
+.br
+nget -a -Tr linux
 .SH NOTES
 Running multiple copies of nget at once should be safe.  It uses file locking,
 so there should be no way for the files to actually get corrupted.

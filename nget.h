@@ -38,6 +38,7 @@ extern c_server_priority_grouping_list priogroups;*/
 void set_decode_error_status(int incr=1);
 void set_retrieve_error_status(int incr=1);
 void set_group_error_status(int incr=1);
+void set_grouplist_error_status(int incr=1);
 void set_path_error_status(int incr=1);
 void set_user_error_status(int incr=1);
 void set_other_error_status(int incr=1);
@@ -51,6 +52,7 @@ void set_undecoded_warn_status(int incr=1);
 void set_unequal_line_count_warn_status(int incr=1);
 void set_dupe_warn_status(int incr=1);
 void set_cache_warn_status(int incr=1);
+void set_grouplist_warn_status(int incr=1);
 
 void set_total_ok_status(int incr=1);
 void set_yenc_ok_status(int incr=1);
@@ -64,6 +66,7 @@ void set_unknown_ok_status(int incr=1);
 void set_group_ok_status(int incr=1);
 void set_dupe_ok_status(int incr=1);
 void set_skipped_ok_status(int incr=1);
+void set_grouplist_ok_status(int incr=1);
 
 enum t_show_multiserver {
 	NO_SHOW_MULTI,
@@ -77,6 +80,7 @@ struct nget_options {
 	t_show_multiserver test_multi;
 	t_show_multiserver retr_show_multi; 
 	char makedirs;
+	bool grouplistmode;
 	c_group_info::ptr group;//,*host;
 //	c_data_section *host;
 	c_server::ptr host;

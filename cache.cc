@@ -467,7 +467,6 @@ enum {
 	REFERENCES_MODE=5,
 };
 
-DEFINE_EX_SUBCLASS(CacheEx, baseEx, false);
 class c_nntp_cache_reader {
 	protected:
 		c_file *f;

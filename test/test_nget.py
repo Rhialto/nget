@@ -584,6 +584,35 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		f.close()
 		self.vfailUnlessExitstatus(self.nget.run('-@ %s'%lpath), 4)
 		self.verifyoutput([])
+	
+	def test_available(self):
+		self.vfailIf(self.nget.run('-a'))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailIf(self.nget.run('-a'))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
+		apath = os.path.join(self.nget.rcdir, 'avail.out')
+		self.vfailIf(self.nget.run('-A -T -r . > %s'%apath))
+		print open(apath).read()
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
+		self.vfailUnlessEqual(open(apath).readlines()[-1].strip(), "h0\ttest")
+	
+	def test_available2(self):
+		apath = os.path.join(self.nget.rcdir, 'avail.out')
+		self.vfailIf(self.nget.run('-a -T -r . > %s'%apath))
+		print open(apath).read()
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.failUnless(re.search("^h0\ttest$",open(apath).read(), re.M))
+	
+	def test_available_overrides_group(self):
+		self.vfailIf(self.nget.run('-g test -A -T -r .'))
+		self.verifyoutput([])
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+	
+	def test_group_overrides_available(self):
+		self.vfailIf(self.nget.run('-a -g test -r joy'))
+		self.verifyoutput(['0002'])
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+
 
 
 class XoverTestCase(TestCase, DecodeTest_base):
@@ -958,6 +987,16 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
 		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
 		self.verifyoutput('0001')
+
+	def test_Available_ForceServer(self):
+		self.servers = nntpd.NNTPD_Master(3)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+		self.addarticles('0001', 'yenc_multi')
+		self.vfailIf(self.nget.run("-h host1 -a"))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 0)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[2].conns, 0)
 
 	def test_FlushServer(self):
 		self.servers = nntpd.NNTPD_Master(2)

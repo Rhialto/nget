@@ -74,6 +74,7 @@ SET_x_ERROR_STATUS(path, 2);
 SET_x_ERROR_STATUS(user, 4);
 SET_x_ERROR_STATUS(retrieve, 8);
 SET_x_ERROR_STATUS(group, 16);
+SET_x_ERROR_STATUS(grouplist, 32);
 SET_x_ERROR_STATUS(other, 64);
 SET_x_ERROR_STATUS(fatal, 128);
 SET_x_OK_STATUS(total, 1);
@@ -88,12 +89,14 @@ SET_x_OK_STATUS(dupe, 256);
 SET_x_OK_STATUS(unknown, 512);
 SET_x_OK_STATUS(group, 1024);
 SET_x_OK_STATUS(skipped, 2048);
+SET_x_OK_STATUS(grouplist, 4096);
 SET_x_WARN_STATUS(retrieve,1);
 SET_x_WARN_STATUS(undecoded,2);
 SET_x_WARN_STATUS(unequal_line_count,8);
 SET_x_WARN_STATUS(dupe, 256);
 SET_x_WARN_STATUS(group,1024);
 SET_x_WARN_STATUS(cache,2048);
+SET_x_WARN_STATUS(grouplist, 4096);
 #define print_x_x_STATUS(type, low) if (low ## _ ## type) printf("%s %i " #type, cf++?",":"", low ## _ ## type)
 #define print_x_ERROR_STATUS(type) print_x_x_STATUS(type, error)
 #define print_x_WARN_STATUS(type) print_x_x_STATUS(type, warn)
@@ -114,6 +117,7 @@ void print_error_status(void){
 		print_x_OK_STATUS(qp);
 		print_x_OK_STATUS(unknown);
 		print_x_OK_STATUS(group);
+		print_x_OK_STATUS(grouplist);
 		print_x_OK_STATUS(dupe);
 		print_x_OK_STATUS(skipped);
 	}
@@ -127,6 +131,7 @@ void print_error_status(void){
 		print_x_WARN_STATUS(unequal_line_count);
 		print_x_WARN_STATUS(dupe);
 		print_x_WARN_STATUS(cache);
+		print_x_WARN_STATUS(grouplist);
 	}
 	if (errorflags){
 		int cf=0;
@@ -137,6 +142,7 @@ void print_error_status(void){
 		print_x_ERROR_STATUS(user);
 		print_x_ERROR_STATUS(retrieve);
 		print_x_ERROR_STATUS(group);
+		print_x_ERROR_STATUS(grouplist);
 		print_x_ERROR_STATUS(other);
 		print_x_ERROR_STATUS(fatal);
 	}
@@ -145,7 +151,7 @@ void print_error_status(void){
 }
 
 
-#define NUM_OPTIONS 31
+#define NUM_OPTIONS 33
 #ifndef HAVE_LIBPOPT
 
 #ifndef HAVE_GETOPT_LONG
@@ -227,6 +233,8 @@ static void addoptions(void)
 {
 	addoption("quiet",0,'q',0,"supress extra info");
 	addoption("host",1,'h',"HOSTALIAS","force nntp host to use (must be configured in .ngetrc)");
+	addoption("available",0,'a',0,"update/load available newsgroups list");
+	addoption("quickavailable",0,'A',0,"load available newsgroups list");
 	addoption("group",1,'g',"GROUPNAME","newsgroup");
 	addoption("quickgroup",1,'G',"GROUPNAME","use group without checking for new headers");
 	addoption("flushserver",1,'F',"HOSTALIAS","flush all headers for server from current group");
@@ -376,7 +384,7 @@ nget_options::nget_options(void){
 	get_path();
 	get_temppath();
 }
-nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),test_multi(o.test_multi),retr_show_multi(o.retr_show_multi),makedirs(o.makedirs),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
+nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),test_multi(o.test_multi),retr_show_multi(o.retr_show_multi),makedirs(o.makedirs),grouplistmode(o.grouplistmode),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
 	/*	if (o.path){
 			path=new char[strlen(o.path)+1];
 			strcpy(path,o.path);
@@ -501,6 +509,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 	int c=0;
 	const char * loptarg=NULL;
 	t_nntp_getinfo_list getinfos;
+	t_grouplist_getinfo_list grouplistgetinfos;
 
 #ifdef HAVE_LIBPOPT
 #ifndef POPT_CONTEXT_ARG_OPTS
@@ -554,13 +563,26 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				options.parse_dupe_flags("I");
 				break;
 			case 'R':
+				if (options.grouplistmode) {
+					try {
+						nntp_grouplist_pred *p=make_grouplist_pred(loptarg, options.gflags);
+						grouplistgetinfos.push_back(new c_grouplist_getinfo(p, options.gflags));
+					}catch(RegexEx &e){
+						printCaughtEx(e);
+						set_user_error_status();
+					}catch(UserEx &e){
+						printCaughtEx(e);
+						set_user_error_status();
+					}
+					break;
+				}
 				if (!options.badskip){
 					if(options.group.isnull()){
 						printf("no group specified\n");
 						set_user_error_status();
 					}else{
 						try {
-							nntp_file_pred *p=make_pred(loptarg, options.gflags);
+							nntp_file_pred *p=make_nntpfile_pred(loptarg, options.gflags);
 							getinfos.push_back(new c_nntp_getinfo(options.path, options.temppath, p, options.gflags));
 						}catch(RegexEx &e){
 							printCaughtEx(e);
@@ -573,6 +595,29 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				}
 				break;
 			case 'r':
+				if (options.grouplistmode) {
+					arglist_t e_parts;
+					e_parts.push_back("group");
+					e_parts.push_back(loptarg);
+					e_parts.push_back("=~");
+
+					/*e_parts.push_back("desc");
+					e_parts.push_back(loptarg);
+					e_parts.push_back("=~");
+
+					e_parts.push_back("||");*/
+					try {
+						nntp_grouplist_pred *p=make_grouplist_pred(e_parts, options.gflags);
+						grouplistgetinfos.push_back(new c_grouplist_getinfo(p, options.gflags));
+					}catch(RegexEx &e){
+						printCaughtEx(e);
+						set_user_error_status();
+					}catch(UserEx &e){
+						printCaughtEx(e);
+						set_fatal_error_status();//if make_pred breaks during -r, it can't be the users fault, since they only supply the regex
+					}
+					break;
+				}
 				if (!options.badskip){
 					if(options.group.isnull()){
 						printf("no group specified\n");
@@ -596,7 +641,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 							e_parts.push_back("&&");
 						}
 						try {
-							nntp_file_pred *p=make_pred(e_parts, options.gflags);
+							nntp_file_pred *p=make_nntpfile_pred(e_parts, options.gflags);
 							getinfos.push_back(new c_nntp_getinfo(options.path, options.temppath, p, options.gflags));
 						}catch(RegexEx &e){
 							printCaughtEx(e);
@@ -732,6 +777,15 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				set_user_error_status();
 				return 1;
 			default:
+				if (!grouplistgetinfos.empty()) {
+					if(!(options.gflags&GETFILES_TESTMODE)){
+						printf("testmode required for grouplist\n");
+						set_user_error_status();
+					}else{
+						nntp.nntp_grouplist_search(grouplistgetinfos, options);
+					}
+					grouplistgetinfos.clear();
+				}
 				if (!getinfos.empty()){
 					nntp.nntp_retrieve(options.group, getinfos, options);
 					getinfos.clear();
@@ -788,14 +842,26 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 						printf("This option is only available when libpopt is used.\n");
 #endif
 						break;
+					case 'a':
+						//if BAD_HOST, don't try to -a, fall through to -A instead
+						if (!(options.badskip & BAD_HOST)){
+							options.grouplistmode=true;
+							nntp.nntp_grouplist(1, options);
+							break;
+						}
+					case 'A':
+						options.grouplistmode=true;
+						break;
 					case 'g':
 						//if BAD_HOST, don't try to -g, fall through to -G instead
 						if (!(options.badskip & BAD_HOST)){
+							options.grouplistmode=false;
 							options.group=nconfig.getgroup(loptarg);
 							nntp.nntp_group(options.group,1,options);
 							break;
 						}
 					case 'G':
+						options.grouplistmode=false;
 						options.group=nconfig.getgroup(loptarg);
 						break;
 					case 'h':{
@@ -877,6 +943,7 @@ int main(int argc, const char ** argv){
 			options.gflags=0;
 			options.test_multi=NO_SHOW_MULTI;
 			options.retr_show_multi=SHOW_MULTI_LONG;//always display the multi-server info when retrieving, just because I think thats better
+			options.grouplistmode=false;
 			options.group=NULL;
 			options.host=NULL;
 			{

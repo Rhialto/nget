@@ -25,14 +25,20 @@
 #endif
 #include "argparser.h"
 
-class c_nntp_file;
 template <class ClassType>
 struct pred {
 	virtual bool operator()(const ClassType*) const=0;
 	virtual ~pred(){}
 };
+
+class c_nntp_file;
 typedef pred<const c_nntp_file> nntp_file_pred;
-nntp_file_pred * make_pred(const char *optarg, int gflags);
-nntp_file_pred * make_pred(const arglist_t &e_parts, int gflags);
+nntp_file_pred * make_nntpfile_pred(const char *optarg, int gflags);
+nntp_file_pred * make_nntpfile_pred(const arglist_t &e_parts, int gflags);
+
+class c_group_availability;
+typedef pred<const c_group_availability> nntp_grouplist_pred;
+nntp_grouplist_pred * make_grouplist_pred(const char *optarg, int gflags);
+nntp_grouplist_pred * make_grouplist_pred(const arglist_t &e_parts, int gflags);
 
 #endif

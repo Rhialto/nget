@@ -18,6 +18,7 @@
 */
 #include "etree.h"
 #include "cache.h"
+#include "grouplist.h"
 #include "myregex.h"
 #include "misc.h"
 #include "strreps.h"
@@ -133,29 +134,25 @@ string invert_op(string o) {
 	else return o;
 }
 
-nntp_file_pred * make_pred(const char *optarg, int gflags){
-	arglist_t e_parts;
-	parseargs(e_parts, optarg);
-	return make_pred(e_parts, gflags);
-}
 
-nntp_file_pred * make_pred(const arglist_t &e_parts, int gflags){
+template <class ClassType, pred<ClassType> *(*comparison_maker)(const string &i, const string *x, const string *y, int re_flags)>
+pred<ClassType> * make_pred(const arglist_t &e_parts, int gflags) {
 	const string *x=NULL,*y=NULL;
 	arglist_t::const_iterator i=e_parts.begin();
 	int re_flags = REG_EXTENDED | ((gflags&GETFILES_CASESENSITIVE)?0:REG_ICASE);
-	nntp_file_pred * p=NULL;
-	stack<nntp_file_pred *> pstack;
+	pred<ClassType> * p=NULL;
+	stack<pred<ClassType> *> pstack;
 	for (;i!=e_parts.end();++i){
 		if (!x){
 			PDEBUG(DEBUG_MIN,"x %s",(*i).c_str());
 			x=&(*i);
 			if (*x=="&&" || *x=="and" || *x=="||" || *x=="or"){
-				nntp_file_pred *py=pstack.top(); pstack.pop();
-				nntp_file_pred *px=pstack.top(); pstack.pop();
+				pred<ClassType> *py=pstack.top(); pstack.pop();
+				pred<ClassType> *px=pstack.top(); pstack.pop();
 				if (x->compare("&&")==0 || x->compare("and")==0)
-					p = new predAnd<const c_nntp_file>(px, py);
+					p = new predAnd<ClassType>(px, py);
 				else
-					p = new predOr<const c_nntp_file>(px, py);
+					p = new predOr<ClassType>(px, py);
 				pstack.push(p);
 				x=NULL;
 			}
@@ -163,30 +160,10 @@ nntp_file_pred * make_pred(const arglist_t &e_parts, int gflags){
 			PDEBUG(DEBUG_MIN,"y %s",(*i).c_str());
 			y=&(*i);
 		} else {
-			const char *n = x->c_str();
 			PDEBUG(DEBUG_MIN,"z %s",(*i).c_str());
-			if (strcasecmp(n, "subject")==0)
-				p = comparison_re<const c_nntp_file>((*i), &c_nntp_file::subject, y->c_str(), re_flags);
-			else if (strcasecmp(n, "author")==0)
-				p = comparison_re<const c_nntp_file>((*i), &c_nntp_file::author, y->c_str(), re_flags);
-			else if (strcasecmp(n, "mid")==0 || strcasecmp(n, "messageid")==0)
-				p = comparison_re<const c_nntp_file>((*i), &c_nntp_file::bamid, y->c_str(), re_flags);
-			else if (strcasecmp(n, "bytes")==0)
-				p = comparison<const c_nntp_file>((*i), &c_nntp_file::bytes, atoul(y->c_str()));
-			else if (strcasecmp(n, "lines")==0)
-				p = comparison<const c_nntp_file>((*i), &c_nntp_file::lines, atoul(y->c_str()));
-			else if (strcasecmp(n, "req")==0)
-				p = comparison<const c_nntp_file>((*i), &c_nntp_file::req, atoi(y->c_str()));
-			else if (strcasecmp(n, "have")==0)
-				p = comparison<const c_nntp_file>((*i), &c_nntp_file::have, atoi(y->c_str()));
-			else if (strcasecmp(n, "date")==0)
-				p = comparison<const c_nntp_file>((*i), &c_nntp_file::badate, decode_textdate(y->c_str()));
-			else if (strcasecmp(n, "age")==0)
-				//rather than taking a relative age and converting each date into a relative age and then comparing, decode_textage returns an absolute date (time_t) which simplifies comparisons, but to get intuitive usage we have to invert <,> operators.
-				p = comparison<const c_nntp_file>(invert_op(*i), &c_nntp_file::badate, decode_textage(y->c_str()));
-			else
-				throw UserExFatal(Ex_INIT, "no match type %s", n);
-
+			p = comparison_maker((*i), x, y, re_flags);
+			if (!p)
+				throw UserExFatal(Ex_INIT, "no match type %s", x->c_str());
 			pstack.push(p);
 			x=y=NULL;
 		}
@@ -198,3 +175,57 @@ nntp_file_pred * make_pred(const arglist_t &e_parts, int gflags){
 		throw UserExFatal(Ex_INIT, "empty expression");
 	return pstack.top();
 }
+
+nntp_file_pred *nntp_file_comparison_maker(const string &i, const string *x, const string *y, int re_flags) {
+	const char *n = x->c_str();
+	if (strcasecmp(n, "subject")==0)
+		return comparison_re<const c_nntp_file>(i, &c_nntp_file::subject, y->c_str(), re_flags);
+	else if (strcasecmp(n, "author")==0)
+		return comparison_re<const c_nntp_file>(i, &c_nntp_file::author, y->c_str(), re_flags);
+	else if (strcasecmp(n, "mid")==0 || strcasecmp(n, "messageid")==0)
+		return comparison_re<const c_nntp_file>(i, &c_nntp_file::bamid, y->c_str(), re_flags);
+	else if (strcasecmp(n, "bytes")==0)
+		return comparison<const c_nntp_file>(i, &c_nntp_file::bytes, atoul(y->c_str()));
+	else if (strcasecmp(n, "lines")==0)
+		return comparison<const c_nntp_file>(i, &c_nntp_file::lines, atoul(y->c_str()));
+	else if (strcasecmp(n, "req")==0)
+		return comparison<const c_nntp_file>(i, &c_nntp_file::req, atoi(y->c_str()));
+	else if (strcasecmp(n, "have")==0)
+		return comparison<const c_nntp_file>(i, &c_nntp_file::have, atoi(y->c_str()));
+	else if (strcasecmp(n, "date")==0)
+		return comparison<const c_nntp_file>(i, &c_nntp_file::badate, decode_textdate(y->c_str()));
+	else if (strcasecmp(n, "age")==0)
+		//rather than taking a relative age and converting each date into a relative age and then comparing, decode_textage returns an absolute date (time_t) which simplifies comparisons, but to get intuitive usage we have to invert <,> operators.
+		return comparison<const c_nntp_file>(invert_op(i), &c_nntp_file::badate, decode_textage(y->c_str()));
+	else
+		return NULL;
+}
+
+nntp_file_pred * make_nntpfile_pred(const arglist_t &e_parts, int gflags) {
+	return make_pred<const c_nntp_file, nntp_file_comparison_maker>(e_parts, gflags);
+}
+nntp_file_pred * make_nntpfile_pred(const char *optarg, int gflags) {
+	arglist_t e_parts;
+	parseargs(e_parts, optarg);
+	return make_nntpfile_pred(e_parts, gflags);
+}
+
+nntp_grouplist_pred *grouplist_comparison_maker(const string &i, const string *x, const string *y, int re_flags) {
+	const char *n = x->c_str();
+	if (strcasecmp(n, "group")==0)
+		return comparison_re<const c_group_availability>(i, &c_group_availability::groupname, y->c_str(), re_flags);
+//	else if (strcasecmp(n, "desc")==0)
+//		return comparison_re<const c_group_availability>(i, &c_group_availability::groupname, y->c_str(), re_flags);
+	else
+		return NULL;
+}
+
+nntp_grouplist_pred * make_grouplist_pred(const arglist_t &e_parts, int gflags) {
+	return make_pred<const c_group_availability, grouplist_comparison_maker>(e_parts, gflags);
+}
+nntp_grouplist_pred * make_grouplist_pred(const char *optarg, int gflags) {
+	arglist_t e_parts;
+	parseargs(e_parts, optarg);
+	return make_grouplist_pred(e_parts, gflags);
+}
+

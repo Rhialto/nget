@@ -24,6 +24,7 @@
 
 //#include <string>
 #include "cache.h"
+#include "grouplist.h"
 //#include "nrange.h"
 #include "file.h"
 #include <stdarg.h>
@@ -71,6 +72,9 @@ class c_prot_nntp {
 		//c_nntp_cache *gcache;
 		c_nntp_cache::ptr gcache;
 		bool gcache_ismultiserver;
+		
+		c_nntp_grouplist::ptr glist;
+		
 		time_t starttime;
 
 		int stdputline(int echo,const char * str,...)
@@ -86,8 +90,13 @@ class c_prot_nntp {
 		void doxover(c_nrange *r);
 		void dolistgroup(c_nrange &existing, ulong lowest, ulong highest, ulong total);
 		void nntp_retrieve(c_group_info::ptr group, const t_nntp_getinfo_list &getinfos, const nget_options &options);
+		void nntp_simple_prioritize(c_server_priority_grouping *priogroup, list<c_server::ptr> &doservers);
 		void nntp_group(c_group_info::ptr group, int getheaders, const nget_options &options);
 		void nntp_dogroup(int getheaders);
+		void nntp_grouplist(int update, const nget_options &options);
+		void nntp_dogrouplist(void);
+		void nntp_dogroupdescriptions(void);
+		void nntp_grouplist_search(const t_grouplist_getinfo_list &getinfos, const nget_options &options);
 		int nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_articles_prioritized &sap,bool docurservmult);
 		int nntp_dowritelite_article(c_file &fw,c_nntp_part *part,char *fn);
 		int nntp_doarticle(c_nntp_part*part,arinfo*ari,quinfo*toti,char *fn, const nget_options &options);

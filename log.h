@@ -83,6 +83,7 @@ DEFINE_EX_CLASSES(User, baseEx);
 DEFINE_EX_CLASSES(Config, baseEx);
 //DEFINE_EX_CLASSES(Application, baseEx);
 DEFINE_EX_SUBCLASS(ApplicationExFatal, baseEx, true);
+DEFINE_EX_SUBCLASS(CacheEx, baseEx, false);
 
 #define Ex_INIT __FILE__,__LINE__
 
