@@ -961,6 +961,13 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -r par2.test'))
 		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','c d 05.dat','_missing_ifscpkt_output/c d.par2']})
 		
+	def test_autopar2handling_corruptsethash(self):
+		self.addarticles('par2-01', 'input', fname='dat[1345]')
+		self.addarticles('par2-01', 'input', fname='par1')
+		self.addarticles('par2-01', 'corrupt_sethash')
+		self.vfailIf(self.nget_run('-g test -r par2.test'))
+		self.verifyoutput({'par2-01':['c d 01.dat','c d 03.dat','c d 04.dat','c d 05.dat','_corrupt_sethash_output/foo.vol01+02.par2','c d.vol00+01.par2']})
+		
 	def test_autopar2handling_reply(self):
 		self.addarticles('par2-01', 'input')
 		self.addarticles('par2-01', 'reply')

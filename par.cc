@@ -500,23 +500,62 @@ void md5_file(const char *filename, uchar *result) {
 }
 
 
-static int par2file_check_header(c_file &f) {
-	const uchar parheader[] = "PAR2\0PKT";
-	uchar buf[8];
-	f.readfull(buf, 8);
-	if (memcmp(buf, parheader, 8)){
-		PERROR("error reading %s: invalid par2 file header", f.name());
-		return 1;
+static int par2file_check_packet(c_file_fd &f, int pos) {
+	uint64_t pktlen;
+	char pkthash[16];
+	f.seek(pos+8, SEEK_SET);
+	f.read_le_u64(&pktlen);
+	f.readfull(pkthash, 16);
+
+	const int BLOCKSIZE = 8192;
+	char buffer[BLOCKSIZE];
+	MD5Context context;
+	size_t n;
+	pktlen -= 8+8+16;
+	while (pktlen && (n = f.read(buffer, min((uint64_t)BLOCKSIZE,pktlen)))) {
+		context.Update(buffer, n);
+		pktlen -= n;
 	}
-	return 0;
+	if (pktlen) return 1;
+	MD5Hash hash;
+	context.Final(hash);
+	return memcmp(pkthash, hash.hash, 16);
+}
+
+static int par2file_find_packet(c_file_fd &f) {
+	const uchar parheader[] = "PAR2\0PKT";
+	const int BLOCKSIZE = 8192;
+	uchar buf[BLOCKSIZE];
+	int pos = 0, bufc = 0;
+	while (1) {
+		while (bufc<8) {
+			int c = f.read(buf+bufc, BLOCKSIZE-bufc);
+			if (c <= 0) return -1;
+			bufc += c;
+		}
+		for (int i=0; i<bufc-7; ++i)
+			if (memcmp(parheader, buf+i, 8)==0) {
+				if (!par2file_check_packet(f, pos+i))
+					return pos+i;
+				else
+					f.seek(pos+bufc, SEEK_SET);
+				
+			}
+		memmove(buf, buf+bufc-7, 7);
+		pos += bufc - 7;
+		bufc = 7;
+	}
 }
 
 bool par2file_get_sethash(const string &filename, string &sethash) {
 	try{
 		c_file_fd f(filename.c_str(), "rb");
-		if (par2file_check_header(f))
+		int pos = par2file_find_packet(f);
+		if (pos < 0) {
+			PERROR("error reading %s: no valid par2 packets", f.name());
 			return false;
-		f.seek(8+8+16, SEEK_SET);
+		}
+		f.seek(pos+8+8+16, SEEK_SET);
 		char set_hash[16];
 		f.readfull(set_hash, 16);
 		sethash.assign(set_hash, 16);
