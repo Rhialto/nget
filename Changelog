@@ -10,6 +10,7 @@
   * Add --fullxover arg to override config file fullxover settings.
   * Libpopt build calls poptReadDefaultConfig to allow alias usage. (add lines to ~/.popt containing "nget alias <new option> <options>")
   * -? is no longer used to show help since it conflicts with getopt's error value.  Run nget with no args or with --help instead.
+  * Errors converting regex to wildmat cause "user" error status rather than fatal error status.
 
 2003-11-20 v0.25:
   * Allow the same server id to be used for multiple hosts to share header cache data. (Useful if you have multiple accounts on the same server.)

@@ -646,6 +646,10 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-dI -G test --dupepath %s -p %s -r .'%(self.nget.tmpdir, tmp2dir)))
 		self.verifyoutput(['0001','0002','0005'],tmpdir=tmp2dir)
 	
+	def test_badskip_retrievebadregex(self):
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r "*" -r joy'), 4)
+		self.verifyoutput(['0002'])
+	
 	def test_noautoparhandling(self):
 		self.addarticles('par01', 'input')
 		self.vfailIf(self.nget_run('-g test --no-autopar -r par.test'))
@@ -1589,10 +1593,6 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.vfailUnlessExitstatus(self.nget.run('-g test -R "" -r joy'), 4)
 		self.verifyoutput(['0002'])
 	
-	def test_badskip_retrievebadregex(self):
-		self.vfailUnlessExitstatus(self.nget.run('-g test -r "*" -r joy'), 4)
-		self.verifyoutput(['0002'])
-	
 	def test_badskip_retrievenogroup(self):
 		self.vfailUnlessExitstatus(self.nget.run('-r . -g test -r joy'), 4)
 		self.verifyoutput(['0002'])
@@ -1903,6 +1903,9 @@ class FatalUserErrorsTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
 	def test_badhost(self):
 		self.vfailUnlessExitstatus(self.nget.run('-h badhost -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_xavailable_badregex(self):
+		self.vfailUnlessExitstatus(self.nget.run('-X -Tr "*" -g test'), 4)
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
 	def test_retrieve_badregex(self):
 		self.vfailUnlessExitstatus(self.nget.run('-Gtest -r "*" -g test'), 4)

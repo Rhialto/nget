@@ -89,7 +89,7 @@ string regex2wildmat(const string &repat, bool ignorecase){
 		}
 		else if (c == '\\') {
 			if (pos>=repat.size())
-				throw UserExFatal(Ex_INIT,"error converting regex(%s) to wildmat on char %i: %c", repat.c_str(), pos, c);
+				throw RegexEx(Ex_INIT,"error converting regex(%s) to wildmat on char %i: %c", repat.c_str(), pos, c);
 			char nc = repat[pos];
 			if (nc == '*' || nc == '?' || nc == '[' || nc == ']') {
 				wildmat += c;
@@ -101,14 +101,14 @@ string regex2wildmat(const string &repat, bool ignorecase){
 				++pos;
 			}
 			else if (nc == '<' || nc == '>' || isalnum(nc))
-				throw UserExFatal(Ex_INIT,"error converting regex(%s) to wildmat on char %i: %c", repat.c_str(), pos, c);
+				throw RegexEx(Ex_INIT,"error converting regex(%s) to wildmat on char %i: %c", repat.c_str(), pos, c);
 			else {
 				wildmat += nc;
 				++pos;
 			}
 		}
 		else if (c == '?' || c == '*' || c == '+' || c == '(' || c == ')' || c == '{' || c == '}' || c == '|')
-			throw UserExFatal(Ex_INIT,"error converting regex(%s) to wildmat on char %i: %c", repat.c_str(), pos, c);
+			throw RegexEx(Ex_INIT,"error converting regex(%s) to wildmat on char %i: %c", repat.c_str(), pos, c);
 		else if (pos==repat.size() && c == '$')
 			break;//wildmats are anchored by default, while regexs are the opposite
 		else if (ignorecase && isalpha(c)) {
@@ -132,7 +132,7 @@ string regex2wildmat(const string &repat, bool ignorecase){
 					wildmat += nc;
 			}
 			if (nc!=']')
-				throw UserExFatal(Ex_INIT,"error converting regex(%s) to wildmat on char %i: %c", repat.c_str(), pos, nc);
+				throw RegexEx(Ex_INIT,"error converting regex(%s) to wildmat on char %i: %c", repat.c_str(), pos, nc);
 		} else {
 			wildmat += c;
 		}
