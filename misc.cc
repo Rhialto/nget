@@ -35,7 +35,7 @@
 #include "myregex.h"
 
 #include <string>
-#include <sstream>
+#include "_sstream.h"
 #include <iomanip>
 
 #ifdef HAVE_CONFIG_H
