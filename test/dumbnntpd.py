@@ -19,13 +19,15 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import nntpd, threading
+import nntpd, threading, time
 
 def chomp(line):
 	if line[-2:] == '\r\n': return line[:-2]
 	elif line[-1:] in '\r\n': return line[:-1]
 	return line
 
+def genmid(n):
+	return '<%i.%s@dumbnntpd>'%(n,time.time())
 
 n=1
 nlock = threading.Lock()
@@ -39,10 +41,21 @@ class NNTPRequestHandler(nntpd.NNTPRequestHandler):
 		n += 1
 		nlock.release()
 		f = open("%03i"%myn, "w")
+		inheader = 1
+		hasmid = 0
 		while 1:
 			l = self.rfile.readline()
 			if not l: return -1
 			l = chomp(l)
+			if inheader:
+				if l=='':
+					inheader=0
+					if not hasmid:
+						mid = genmid(myn)
+						print "generated mid %s for post %s"%(mid, myn)
+						f.write('Message-ID: %s\n'%mid)
+				elif l.startswith('Message-ID: '):
+					hasmid = 1
 			if l=='.':
 				f.close()
 				self.nwrite("240 article posted ok")
@@ -50,7 +63,11 @@ class NNTPRequestHandler(nntpd.NNTPRequestHandler):
 			f.write(l+'\n')
 
 def main():
-	servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",119), NNTPRequestHandler)])
+	import sys
+	port = 119
+	if len(sys.argv)>1:
+		port = int(sys.argv[1])
+	servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",port), NNTPRequestHandler)])
 	servers.start()
 
 	print 'press enter to stop'
