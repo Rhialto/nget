@@ -11,6 +11,7 @@
   * For -G .. -r .. search while reading rather than loading cache into memory and then searching.  (Speed up and memory usage reduction.)
   * Actually honor -c option again.  (Case sensitive matches)
   * Update configure --with-*=DIR options, now searches in both DIR and DIR/{include,lib}.  Also adds --with-*-{include,lib}=DIR to force specific locations for each.
+  * Many additions to test suite, including a bunch of file error condition checks using SUBTERFUGUE.  A few patches for uulib and zlib are required to pass all tests. (See http://nget.sourceforge.net/patches/) (Note: patches have already been sent upstream, but are provided in case you don't want to wait for a new upstream release)
 
 2002-05-17 v0.18.2:
   * Work around exception handling segfaults with older versions of gcc by not using multiple inheritance in exception classes. (reported by Waldemar la Tendresse)
