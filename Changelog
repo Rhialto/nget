@@ -10,7 +10,7 @@
   * Accept invalid dates with 1 digit hours/minutes/seconds or space padded hours.
   * Update cppunit tests to cppunit 1.8.0 style.
   * Add --text option (and corresponding .ngetrc option) to configure how nget handles text posts. (possible values of "files"(default, same as previous versions), "mbox"(store all text posts in one mbox format file, suggested by Steven Mueller), "ignore"(ignore all text posts, suggested by Naveen Nathan))
-  * Include info in saved text files about any binaries were decoded from that file.
+  * Include info in saved text files about any binaries decoded from that file.
   * Add --save-binary-info option (and corresponding .ngetrc option) to specify wether to save headers/decode info for posts that contain only binaries. (values of no(default, same as previous nget versions), yes).
 
 2002-08-04 v0.21:
