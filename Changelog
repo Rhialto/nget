@@ -1,4 +1,4 @@
-2002-xx-xx v0.xx:
+2002-12-24 v0.23:
   * Add --decode arg so -k and -K can be negated.
   * Change -K's long arg from --keep2 to --no-decode to be more descriptive.
   * Make ngetlite check if the tempfile already exists and skip retrieving that article (in case it was already downloaded by nget.)
