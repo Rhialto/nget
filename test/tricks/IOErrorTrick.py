@@ -146,7 +146,8 @@ class IOError(Trick): #somewhat unfortunate, you must name <blah>Trick class as 
 			fdinfo = self.__do_fail.get(pfd, None)
 #			print pfd, call, args, fdinfo
 			if fdinfo and fdinfo.cerrs:
-				return (None, -errno.EIO, None, None)
+				return (pfd, -errno.EIO, None, None)
+			return (pfd, None, None, None)
 			
 		elif call == 'dup' or call == 'dup2':
 			return (args[0], None, None, None)
@@ -241,6 +242,9 @@ class IOError(Trick): #somewhat unfortunate, you must name <blah>Trick class as 
 			self.__do_fail[pid,result] = state
 		elif (call == 'dup' or call == 'dup2') and result != -1:
 			self.__do_fail[pid,result] = self.__do_fail.get((pid,state), None)
+		elif call == 'close':
+			if result==0 and state!=None and self.__do_fail.has_key(state):
+				del self.__do_fail[state]
 								
 
 	def callmask(self):
@@ -249,10 +253,12 @@ class IOError(Trick): #somewhat unfortunate, you must name <blah>Trick class as 
 			d['rename']=1
 		if self.serrs:
 			d['socketcall']=1
-			d['dup']=1
-			d['dup2']=1
 		if self.ferrs:
 			d['open']=1
+		if self.serrs or self.ferrs:
+			# Always watch close, and dup2 so that we can know when an fd goes out of usage, and thus avoid causing erroneous failures on any other reuse of the fd later.
+			# And always watch dup and dup2 to catch any access to the same file through a new fd.
+			d['close']=1
 			d['dup']=1
 			d['dup2']=1
 		if 'r' in self._catchmodes:
