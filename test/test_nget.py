@@ -381,6 +381,22 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-k -g test --decode -r joy'))
 		self.vfailIf(self.nget_run('-K -g test --decode -r foo'))
 		self.verifyoutput(['0002','0001'])
+	
+	def test_dupepath(self):
+		self.vfailIf(self.nget_run('-g test -r joy'))
+		self.verifyoutput(['0002'])
+		tmp2dir = os.path.join(self.nget.rcdir, 'tmp2')
+		os.mkdir(tmp2dir)
+		self.vfailIf(self.nget_run('-dI -G test -p %s --dupepath %s -r .'%(tmp2dir,self.nget.tmpdir)))
+		self.verifyoutput(['0001','0003'],tmpdir=tmp2dir)
+		
+	def test_path_clears_dupepaths(self):
+		self.vfailIf(self.nget_run('-g test -r joy'))
+		self.verifyoutput(['0002'])
+		tmp2dir = os.path.join(self.nget.rcdir, 'tmp2')
+		os.mkdir(tmp2dir)
+		self.vfailIf(self.nget_run('-dI -G test --dupepath %s -p %s -r .'%(self.nget.tmpdir, tmp2dir)))
+		self.verifyoutput(['0001','0002','0003'],tmpdir=tmp2dir)
 
 class NoCacheRetrieveTestCase(TestCase, RetrieveTest_base):
 	def setUp(self):

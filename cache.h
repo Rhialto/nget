@@ -354,11 +354,7 @@ class c_nntp_getinfo : public c_refcounted<c_nntp_getinfo>{
 		nntp_file_pred *pred;
 		int flags;
 		dupe_file_checker flist;
-		c_nntp_getinfo(const string &pat, const string &temppat,nntp_file_pred *pre,int flag):path(pat), temppath(temppat), pred(pre), flags(flag) {
-			if (!(flags&GETFILES_NODUPEFILECHECK)) {
-				flist.addfrompath(path);
-			}
-		}
+		c_nntp_getinfo(const string &pat, const string &temppat, const vector<string> &dupepaths, nntp_file_pred *pre,int flag);
 		~c_nntp_getinfo() { delete pred; }
 };
 typedef list<c_nntp_getinfo::ptr> t_nntp_getinfo_list;

@@ -78,9 +78,16 @@ group, desc.
 Specify a file to load a list of command line args from.  Looks in ~/.nget4/lists/ dir by default.
 A # char in a listfile that is the first character on a line or is preceeded by whitespace and not quoted starts a comment which lasts until the end of the line.
 .IP "-p/--path DIRECTORY"
-Path to store subsequent retrieves.  Also sets -P.  Relative to path which nget was started in.
+Path to store subsequent retrieves.
+Also sets -P, and clears previously specified dupepaths.
+Relative to path which nget was started in.
 (Except in the case of inside a -@, which will be relative to the cwd at the
 time of the -@.)
+.IP "-P/--temppath DIRECTORY"
+Store temporary files in path instead of the current dir.
+.IP "--dupepath DIRECTORY"
+Check for dupe files from specified path in addition to normal path.
+Can be specified multiple times.
 .IP "-m/--makedirs no,yes,ask,<max # of directory levels to create>"
 Make dirs specified by -p and -P.  Default is no.  If yes, will make dirs automatically.
 If #, if the number of directories that would need to be created is greater than the number given, the answer will be interpreted as no.
@@ -149,8 +156,6 @@ and/or binaries saved with another newsreader.)
 .IP "-D/--nodupecheck"
 Don't check either of the --dupecheck methods, retrieve any messages that
 match.
-.IP "-P/--temppath DIRECTORY"
-Store temporary files in path instead of the current dir.
 .IP "-N/--noconnect"
 Do not connect to any server.  Useful for trying to decode as much as you have.
 (if you got stuff with -K or ngetlite.)

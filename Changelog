@@ -9,6 +9,7 @@
   * Add support for specifying multiple groups (comma seperated) to -g/-G/-x for updating/searching/flushing several groups at once.
   * Fix exception when using -i and no parts of a file could be retrieved.
   * Add "*" as a special alias for selecting all cached groups.
+  * Add --dupepath argument to specify extra directories to search for dupe files in. (suggested by Waldemar la Tendresse)
 
 2002-10-28 v0.22.1:
   * Fix segv on saving text file if no uulib info was recorded.

@@ -102,6 +102,7 @@ struct nget_options {
 	string path;
 	string startpath;
 	string temppath;
+	vector<string> dupepaths;
 	string writelite;
 	t_text_handling texthandling;
 	bool save_text_for_binaries;

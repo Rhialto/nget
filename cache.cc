@@ -216,6 +216,16 @@ c_nntp_file::~c_nntp_file(){
 	}
 }
 
+
+c_nntp_getinfo::c_nntp_getinfo(const string &pat, const string &temppat, const vector<string> &dupepaths, nntp_file_pred *pre,int flag):path(pat), temppath(temppat), pred(pre), flags(flag) {
+	if (!(flags&GETFILES_NODUPEFILECHECK)) {
+		for (vector<string>::const_iterator si=dupepaths.begin(); si!=dupepaths.end(); ++si)
+			flist.addfrompath(*si);
+		flist.addfrompath(path);
+	}
+}
+
+
 static void nntp_cache_getfile(c_nntp_files_u *fc, meta_mid_info *midinfo, const t_nntp_getinfo_list &getinfos, const c_nntp_file::ptr &f) {
 	pair<t_nntp_files_u::const_iterator,t_nntp_files_u::const_iterator> firange;
 	t_nntp_getinfo_list::const_iterator gii, giibegin=getinfos.begin(), giiend=getinfos.end();

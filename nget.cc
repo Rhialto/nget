@@ -164,7 +164,7 @@ void set_user_error_status_and_do_fatal_user_error(int incr=1) {
 		throw FatalUserException();
 }
 
-#define NUM_OPTIONS 39
+#define NUM_OPTIONS 40
 #ifndef HAVE_LIBPOPT
 
 #ifndef HAVE_GETOPT_LONG
@@ -215,6 +215,7 @@ enum {
 	OPT_SAVE_TEXT_FOR_BINARIES,
 	OPT_DECODE,
 	OPT_TIMEOUT,
+	OPT_DUPEPATH,
 	OPT_MIN_SHORTNAME
 };
 
@@ -261,6 +262,8 @@ static void addoptions(void)
 	addoption("retrieve",1,'r',"REGEX","retrieve files matching regex");
 	addoption("list",1,'@',"LISTFILE","read commands from listfile");
 	addoption("path",1,'p',"DIRECTORY","path to store subsequent retrieves");
+	addoption("temppath",1,'P',"DIRECTORY","path to store tempfiles");
+	addoption("dupepath",1,OPT_DUPEPATH,"DIRECTORY","extra path to check for dupe files");
 	addoption("makedirs",1,'m',"no,yes,ask,#","make dirs specified by -p and -P");
 //	addoption("mark",1,'m',"MARKNAME","name of high water mark to test files against");
 //	addoption("testretrieve",1,'R',"REGEX","test what would have been retrieved");
@@ -284,7 +287,6 @@ static void addoptions(void)
 	addoption("nodupecheck",0,'D',0,"don't check if you already have files(shortcut for -dFIM)");
 	addoption("mark",0,'M',0,"mark matching articles as retrieved");
 	addoption("unmark",0,'U',0,"mark matching articles as not retrieved (implies -dI)");
-	addoption("temppath",1,'P',"DIRECTORY","path to store tempfiles");
 	addoption("writelite",1,'w',"LITEFILE","write out a ngetlite list file");
 	addoption("noconnect",0,'N',0,"don't connect, only try to decode what we have");
 	addoption("help",0,'?',0,"this help");
@@ -690,7 +692,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					}else{
 						try {
 							nntp_file_pred *p=make_nntpfile_pred(loptarg, options.gflags);
-							getinfos.push_back(new c_nntp_getinfo(options.path, options.temppath, p, options.gflags));
+							getinfos.push_back(new c_nntp_getinfo(options.path, options.temppath, options.dupepaths, p, options.gflags));
 						}catch(RegexEx &e){
 							printCaughtEx(e);
 							set_user_error_status_and_do_fatal_user_error();
@@ -753,7 +755,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 								patinfos.push_back(new c_xpat("Subject", regex2wildmat(loptarg, !(options.gflags&GETFILES_CASESENSITIVE))));
 							}
 							nntp_file_pred *p=make_nntpfile_pred(e_parts, options.gflags);
-							getinfos.push_back(new c_nntp_getinfo(options.path, options.temppath, p, options.gflags));
+							getinfos.push_back(new c_nntp_getinfo(options.path, options.temppath, options.dupepaths, p, options.gflags));
 						}catch(RegexEx &e){
 							printCaughtEx(e);
 							set_user_error_status_and_do_fatal_user_error();
@@ -851,6 +853,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				break;
 			case 'p':
 				if (!maybe_mkdir_chdir(loptarg,options.makedirs)){
+					options.dupepaths.clear();
 					options.get_path();
 					options.get_temppath();
 					PMSG("(temp)path:%s",options.path.c_str());
@@ -863,6 +866,14 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					PERROR("could not change to %s",loptarg);
 					set_path_error_status_and_do_fatal_user_error();
 					options.badskip |= (BAD_TEMPPATH | BAD_PATH);
+				}
+				break;
+			case OPT_DUPEPATH:
+				if (direxists(loptarg)) {
+					options.dupepaths.push_back(loptarg);
+				} else {
+					PERROR("dupepath %s does not exist",loptarg);
+					set_path_error_status_and_do_fatal_user_error();
 				}
 				break;
 			case 'F':
