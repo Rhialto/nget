@@ -5,6 +5,7 @@
   * Update parser to allow extra whitespace in -R expressions.
   * Update -R parser to allow a stack larger than 2 elements. (Now you can do "A B && X Y && &&" or "A B X Y && && &&", previously you would need to do "A B && X && Y &&")
   * Added age keyword to -R expressions. (Ex: -R "age 5days12h <" to choose articles less than 5 and a half days old.)
+  * Error on non-option command line args rather than ignoring them.  To place comments in listfiles, use # as the first char on a line, or with preceeding whitespace and not inside quotes.
 
 2002-06-17 v0.19.1:
   * Print error message rather than segv on flush without specifying a group first. (Reported by Christian Marillat)

@@ -24,6 +24,7 @@
 #include "strreps.h"
 #include "getter.h"
 #include <stack>
+#include "argparser.h"
 
 #define MAKE_BINARY_OP(name,op) template <class T,class T2=T>			\
 struct Op_ ## name {			\
@@ -135,49 +136,11 @@ string invert_op(string o) {
 }
 
 nntp_file_pred * make_pred(const char *optarg, int gflags){
-	list<string> e_parts;
-	string curpart;
-	const char *cur;
-	char quote=0;
-	bool esc=0;
-	for(cur=optarg;*cur;cur++){
-		if (esc){
-			switch (*cur){
-				case '"':case '\'':
-					break;
-				default:
-					curpart+='\\';//avoid having to double escape stuff other than quotes..
-					break;
-			}
-			esc=0;
-			curpart+=*cur;
-			continue;
-		}
-		if (isspace(*cur))
-			if(!quote){
-				if (!curpart.empty()){
-					e_parts.push_back(curpart);
-					curpart="";
-				}
-				continue;
-			}
-		switch(*cur){
-			case '\\':esc=1;continue;
-			case '"':case '\'':
-				if (quote==*cur) {quote=0;continue;}
-				else if (!quote) {quote=*cur;continue;}
-				//else drop through
-			default:
-				curpart+=*cur;
-		}
-	}
-	if (quote) throw UserExFatal(Ex_INIT,"unterminated quote (%c)", quote);
-	if (esc) throw UserExFatal(Ex_INIT,"expression ended with escape");
-	if (!curpart.empty())
-		e_parts.push_back(curpart);
+	arglist_t e_parts;
+	parseargs(e_parts, optarg);
 
 	string *x=NULL,*y=NULL;
-	list<string>::iterator i=e_parts.begin();
+	arglist_t::iterator i=e_parts.begin();
 	int re_flags = REG_EXTENDED | ((gflags&GETFILES_CASESENSITIVE)?0:REG_ICASE);
 	nntp_file_pred * p=NULL;
 	stack<nntp_file_pred *> pstack;

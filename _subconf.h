@@ -9,12 +9,16 @@
 
 #include <assert.h>
 
+#define GETOPT_ARGV_T (char * const *)
+
 #ifdef POPT_CONST_ARGV
-#define POPT_ARGV_T (const char **)
-#define POPT_ARGV_p_T (const char ***)
-#else
+#define POPT_NAME_T
 #define POPT_ARGV_T
 #define POPT_ARGV_p_T
+#else
+#define POPT_NAME_T (char *)
+#define POPT_ARGV_T (char **)
+#define POPT_ARGV_p_T (char ***)
 #endif
 /*#ifdef CHECKSUM
 #define CACHE_USE_CHECKSUM

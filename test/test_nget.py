@@ -536,6 +536,30 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 	def test_flush_badserver(self):
 		self.vfailUnlessEqual(self.nget.run('-g test -F badserv'), 4)
 
+	def test_bad_arg(self):
+		self.vfailUnlessEqual(self.nget.run('-g test badarg -r .'), 4)
+		self.verifyoutput([])
+
+	def test_bad_argnotcomment(self):
+		self.vfailUnlessEqual(self.nget.run('-g test "#badarg" -r .'), 4) #comments should not work on command line, only in listfile
+		self.verifyoutput([])
+
+	def test_list_comment(self):
+		lpath = os.path.join(self.nget.rcdir, 'list.foo')
+		f = open(lpath, 'w')
+		f.write('-g test #comment -r . baaha\n-r joy')
+		f.close()
+		self.vfailIf(self.nget.run('-@ %s'%lpath))
+		self.verifyoutput(['0002'])
+
+	def test_list_quotedcomment(self):
+		lpath = os.path.join(self.nget.rcdir, 'list.foo')
+		f = open(lpath, 'w')
+		f.write('-g test "#comment -r . baaha"\n -r .')
+		f.close()
+		self.vfailUnlessEqual(self.nget.run('-@ %s'%lpath), 4)
+		self.verifyoutput([])
+
 
 class XoverTestCase(TestCase, DecodeTest_base):
 	def setUp(self):

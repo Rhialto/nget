@@ -24,6 +24,7 @@
 #include <signal.h>
 #include <unistd.h>
 #ifdef HAVE_LIBPOPT
+#include "argparser.h" //only needed for with-popt build
 extern "C" {
 #include <popt.h>
 }
@@ -167,9 +168,10 @@ class c_poptContext {
 	public:
 		int GetNextOpt(void) {return poptGetNextOpt(optCon);}
 		const char * GetOptArg(void) {return poptGetOptArg(optCon);}
+		const char * const * GetArgs(void) {return poptGetArgs(optCon);}
 		const char * BadOption(int flags) {return poptBadOption(optCon, flags);}
-		c_poptContext(const char *name, int argc, char **argv, const struct poptOption *options, int flags) {
-			optCon = poptGetContext(name, argc, POPT_ARGV_T argv, options, flags);
+		c_poptContext(const char *name, int argc, const char **argv, const struct poptOption *options, int flags) {
+			optCon = poptGetContext(POPT_NAME_T name, argc, POPT_ARGV_T argv, options, flags);
 		}
 		~c_poptContext() {
 			poptFreeContext(optCon);
@@ -188,7 +190,7 @@ static opt_help ohelp[NUM_OPTIONS+1];
 static int olongestlen=0;
 
 enum {
-	OPT_TEST_MULTI=1,
+	OPT_TEST_MULTI=2,
 	OPT_MIN_SHORTNAME
 };
 
@@ -490,17 +492,20 @@ int maybe_mkdir_chdir(const char *dir, char makedir){
 	}
 	return 0;
 }
-struct s_arglist {
+struct s_argv {
 	int argc;
-	char **argv;
+	const char **argv;
 };
-static int do_args(int argc, char **argv,nget_options options,int sub){
+static int do_args(int argc, const char **argv,nget_options options,int sub){
 	int c=0;
 	const char * loptarg=NULL;
 	t_nntp_getinfo_list getinfos;
 
 #ifdef HAVE_LIBPOPT
-	c_poptContext optCon(NULL, argc, argv, optionsTable, sub?POPT_CONTEXT_KEEP_FIRST:0);
+#ifndef POPT_CONTEXT_ARG_OPTS
+#define POPT_CONTEXT_ARG_OPTS 0
+#endif
+	c_poptContext optCon(NULL, argc, argv, optionsTable, (sub?POPT_CONTEXT_KEEP_FIRST:0) | POPT_CONTEXT_ARG_OPTS);
 #else
 #ifdef HAVE_GETOPT_LONG
 	int opt_idx;
@@ -512,9 +517,9 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 					optCon.GetNextOpt()
 #else //HAVE_LIBPOPT
 #ifdef HAVE_GETOPT_LONG
-					getopt_long(argc,argv,OPTIONS,long_options,&opt_idx)
+					getopt_long(argc,GETOPT_ARGV_T argv,OPTIONS,long_options,&opt_idx)
 #else
-					getopt(argc,argv,OPTIONS)
+					getopt(argc,GETOPT_ARGV_T argv,OPTIONS)
 #endif
 #endif //!HAVE_LIBPOPT
 					;
@@ -524,6 +529,12 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 		loptarg=optarg;
 #endif //HAVE_LIBPOPT
 //		printf("arg:%c(%i)=%s(%p)\n",isprint(c)?c:'.',c,loptarg,loptarg);
+#if (HAVE_LIBPOPT && !POPT_CONTEXT_ARG_OPTS)
+		if (optCon.GetArgs()) { //hack for older version of popt without POPT_CONTEXT_ARG_OPTS
+			c = 0;
+			loptarg = *optCon.GetArgs();
+		}
+#endif
 		switch (c){
 			case 'T':
 				options.gflags|=GETFILES_TESTMODE;
@@ -725,6 +736,11 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 			case '?':
 				print_help();
 				return 1;
+			case 0://POPT_CONTEXT_ARG_OPTS
+			case 1://getopt arg
+				printf("invalid command line arg: %s\n", loptarg);
+				set_user_error_status();
+				return 1;
 			default:
 				if (!getinfos.empty()){
 					nntp.nntp_retrieve(options.group, getinfos, options);
@@ -741,20 +757,18 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 								set_user_error_status();
 								break;
 							}
-							list<s_arglist> arglist;
-							s_arglist larg;
-							int totargc=0;
+							s_argv larg;
+							arglist_t arglist;
 							try {
 								c_file_fd f(filename,O_RDONLY);
 								f.initrbuf();
-								int pr;
 								while (f.bgets()>0){
-									if(!(pr=poptParseArgvString(f.rbufp(),&larg.argc,POPT_ARGV_p_T &larg.argv))){
-										arglist.push_back(larg);
-										totargc+=larg.argc;
-									}else {
-										printf("poptParseArgvString:%i\n",pr);
+									try{
+										parseargs(arglist, f.rbufp(), true);
+									} catch(UserExFatal &e) {
+										printCaughtEx(e);
 										set_user_error_status();
+										break;
 									}
 								}
 								f.close();
@@ -764,15 +778,12 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 								break;
 							}
 							if (!arglist.empty()){
-								int tc=0,ic=0;
-								s_arglist targ;
-								larg.argc=totargc;
-								larg.argv=(char**)malloc((totargc+1)*sizeof(char**));
-								list<s_arglist>::iterator it=arglist.begin();
-								for (;it!=arglist.end();++it){
-									targ=*it;
-									for(ic=0;ic<targ.argc;ic++,tc++)
-										larg.argv[tc]=targ.argv[ic];
+								int tc=0;
+								larg.argc=arglist.size();
+								larg.argv=(const char**)malloc((larg.argc+1)*sizeof(char**));
+								arglist_t::iterator it=arglist.begin();
+								for (;it!=arglist.end();++it,++tc){
+									larg.argv[tc]=it->c_str();
 								}
 
 								do_args(larg.argc,larg.argv,options,1);
@@ -786,8 +797,6 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 									throw ApplicationExFatal(Ex_INIT, "could not change to startpath: %s",options.startpath.c_str());
 								}
 
-								for (it=arglist.begin();it!=arglist.end();++it)
-									free((*it).argv);
 								free(larg.argv);
 							}
 							if (filename!=loptarg)
@@ -844,7 +853,7 @@ string path_join(string a, string b, string c) {
 	return path_join(path_join(a,b), c);
 }
 
-int main(int argc, char ** argv){
+int main(int argc, const char ** argv){
 #ifdef HAVE_SETLINEBUF
 	setlinebuf(stdout); //force stdout to be line buffered, useful if redirecting both stdout and err to a file, to keep them from getting out of sync.
 #endif
