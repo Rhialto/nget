@@ -13,11 +13,11 @@ see http://nget.sourceforge.net/patches/ for the mentioned patches
 POPT:
 patch -p1 < popt-1.6.4-mingw32cross.patch
 autoconf && autoheader
-CC=i586-mingw32msvc-gcc CXX=i586-mingw32msvc-g++ ./configure --build=i386-linux --host=i586-mingw32msvc --prefix=~/usr/mingw32/popt1.6.4
+CC=i586-mingw32msvc-gcc CXX=i586-mingw32msvc-g++ ./configure --build=i386-linux --host=i586-mingw32msvc --prefix=/somedir/mingw32/popt1.6.4
 make install
 
 PCRE:
-CC=i586-mingw32msvc-gcc CXX=i586-mingw32msvc-g++ ./configure --build=i386-linux --host=i586-mingw32msvc --disable-shared --prefix=~/usr/mingw32/pcre3.9
+CC=i586-mingw32msvc-gcc CXX=i586-mingw32msvc-g++ ./configure --build=i386-linux --host=i586-mingw32msvc --disable-shared --prefix=/somedir/mingw32/pcre3.9
 patch -p0 < pcre-3.9-mingw32cross.patch
 make CC=gcc ./chartables.c
 make install
@@ -30,7 +30,7 @@ AR=i586-mingw32msvc-ar RANLIB=i586-mingw32msvc-ranlib CC=i586-mingw32msvc-gcc CX
 make
 cd ..
 
-CC=i586-mingw32msvc-gcc CXX=i586-mingw32msvc-g++ ./configure --build=i386-linux --host=i586-mingw32msvc --with-popt-prefix=~/usr/mingw32/popt1.6.4/ --with-pcre-prefix=~/usr/mingw32/pcre-3.9
+CC=i586-mingw32msvc-gcc CXX=i586-mingw32msvc-g++ ./configure --build=i386-linux --host=i586-mingw32msvc --with-popt-prefix=/somedir/mingw32/popt1.6.4/ --with-pcre-prefix=/somedir/mingw32/pcre-3.9
 make
 
 all done! (wellll, it really should name them .exe, and such... ;)
