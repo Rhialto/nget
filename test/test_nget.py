@@ -158,7 +158,11 @@ class DecodeTest_base:
 						outputs.append(os.path.join("testdata",testnum,parts[0],parts[1]))
 		else:
 			for testnum in testnums:
-				outputs.extend(glob.glob(os.path.join("testdata",testnum,"_output","*")))
+				parts = testnum.split('/',1)
+				if len(parts)==2:
+					outputs.extend(glob.glob(os.path.join("testdata",parts[0],parts[1],"*")))
+				else:
+					outputs.extend(glob.glob(os.path.join("testdata",testnum,"_output","*")))
 		for fn in outputs:
 			assert os.path.exists(fn), 'testdata %s not found'%fn
 			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
@@ -184,6 +188,9 @@ class DecodeTest_base:
 				self.failUnless(textcmp(fn, dfn), "decoded file %s differs from %s"%(dfn, fn))
 			elif tail.endswith(".mbox"):
 				self.failUnless(textcmp(fn, dfn, mbox=1), "decoded mbox %s differs from %s"%(dfn, fn))
+			elif tail.endswith(".mbox.gz"):
+				import gzip
+				self.failUnless(textcmp(gzip.open(fn), gzip.open(dfn), mbox=1), "decoded mbox %s differs from %s"%(dfn, fn))
 			else:
 				if gfns:
 					goodgfn=0
@@ -302,6 +309,10 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.addarticles("mbox01", "input")
 		self.vfailIf(self.nget.run("--text=mbox -g test -r ."))
 		self.verifyoutput("mbox01")
+	def test_mbox01_gz(self):
+		self.addarticles("mbox01", "input")
+		self.vfailIf(self.nget.run("--text=mbox:nget.mbox.gz -g test -r ."))
+		self.verifyoutput("mbox01/_gz_output")
 	def test_mergesa01_input(self):
 		self.do_test_auto()
 	def test_textnotuu_input(self):
