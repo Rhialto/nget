@@ -81,6 +81,11 @@ class TestCase(unittest.TestCase):
 			else:
 				msg = '(%r)'%(expr,)
 			raise self.failureException, msg
+	def vfailIf_getoutput(self, expr, msg=None):
+		status,output = expr
+		print output
+		self.vfailIf(status, msg)
+		return output
 	def vfailUnlessExitstatus(self, first, second, msg=None):
 		# os.system on windows 95/98 seems to always return 0.. so just skip testing the exit status in that case. blah.
 		if not broken_system_return:
@@ -1201,18 +1206,14 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
 		self.vfailIf(self.nget.run('-a'))
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
-		apath = os.path.join(self.nget.rcdir, 'avail.out')
-		self.vfailIf(self.nget.run('-A -T -r . > %s'%apath))
-		print open(apath).read()
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-A -T -r .'))
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
-		self.vfailUnlessEqual(open(apath).readlines()[-1].strip(), "h0\ttest")
+		self.vfailUnlessEqual(output.splitlines()[-1].strip(), "h0\ttest")
 	
 	def test_available2(self):
-		apath = os.path.join(self.nget.rcdir, 'avail.out')
-		self.vfailIf(self.nget.run('-a -T -r . > %s'%apath))
-		print open(apath).read()
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-a -T -r .'))
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
-		self.failUnless(re.search("^h0\ttest$",open(apath).read(), re.M))
+		self.failUnless(re.search("^h0\ttest$", output, re.M))
 		
 	def test_available_newgroups(self):
 		self.vfailIf(self.nget.run('-a'))
@@ -1221,10 +1222,8 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("list_"), 1)
 		time.sleep(1.1)
 		self.servers.servers[0].addgroup("a.new.group","whee")
-		apath = os.path.join(self.nget.rcdir, 'avail.out')
-		self.vfailIf(self.nget.run('-a -T -r . > %s'%apath))
-		print open(apath).read()
-		self.failUnless(re.search(r"^h0\ta.new.group\twhee \[h0\][\n\r]+h0\ttest$",open(apath).read(), re.M))
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-a -T -r .'))
+		self.failUnless(re.search(r"^h0\ta.new.group\twhee \[h0\][\n\r]+h0\ttest$", output, re.M))
 		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 2)
 		self.vfailUnlessEqual(self.servers.servers[0].count("newgroups"), 1)
 		self.vfailUnlessEqual(self.servers.servers[0].count("list_"), 1)
@@ -1234,10 +1233,7 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.servers.servers[0].addgroup("bb.group")
 		self.servers.servers[0].addgroup("group.one", "aa.desc")
 		self.servers.servers[0].addgroup("group.two", "bb.desc")
-		apath = os.path.join(self.nget.rcdir, 'avail.out')
-		self.vfailIf(self.nget.run('-a -T -r aa > %s'%apath))
-		output = open(apath).read()
-		print output
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-a -T -r aa'))
 		self.failUnless(output.find("aa.group")>=0)
 		self.failUnless(output.find("aa.desc")>=0)
 		self.failIf(output.find("bb.")>=0)
@@ -1248,10 +1244,7 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.servers.servers[0].addgroup("group.one", "aa.desc")
 		self.servers.servers[0].addgroup("group.two", "bb.desc")
 		self.servers.servers[0].addgroup("group.aa.two", "foo.desc")
-		apath = os.path.join(self.nget.rcdir, 'avail.out')
-		self.vfailIf(self.nget.run('-X -T -r aa > %s'%apath))
-		output = open(apath).read()
-		print output
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-X -T -r aa'))
 		self.failUnless(output.find("aa.group")>=0)
 		self.failUnless(output.find("group.aa.two")>=0)
 		self.failUnless(output.find("foo.desc")>=0)
@@ -1262,10 +1255,7 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.servers.servers[0].addgroup("group.bbb")
 		self.servers.servers[0].addgroup("group.one", "aaa")
 		self.servers.servers[0].addgroup("group.two", "bbb")
-		apath = os.path.join(self.nget.rcdir, 'avail.out')
-		self.vfailIf(self.nget.run('-a -T -R "desc bbb ==" > %s'%apath))
-		output = open(apath).read()
-		print output
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-a -T -R "desc bbb =="'))
 		self.failUnless(re.search(r"^h0\tgroup.two\tbbb \[h0\]$",output, re.M))
 		self.failIf(output.find(".one")>=0)
 		self.failIf(output.find("group.bbb")>=0)
@@ -1274,10 +1264,7 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.servers.servers[0].addgroup("group.bbb")
 		self.servers.servers[0].addgroup("group.one", "aaa")
 		self.servers.servers[0].addgroup("group.two", "bbb")
-		apath = os.path.join(self.nget.rcdir, 'avail.out')
-		self.vfailIf(self.nget.run('-a -T -R "desc bbb !=" > %s'%apath))
-		output = open(apath).read()
-		print output
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-a -T -R "desc bbb !="'))
 		self.failUnless(re.search(r"^h0\tgroup.bbb[\r\n]+h0\tgroup.one\taaa \[h0\][\r\n]+h0\ttest$",output, re.M))
 		self.failIf(output.find(".two")>=0)
 	
@@ -2054,10 +2041,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.servers.servers[1].addgroup("1only")
 		self.vfailIf(self.nget.run("-a"))
 		self.vfailIf(self.nget.run("-A -Fhost0"))
-		apath = os.path.join(self.nget.rcdir, 'avail.out')
-		self.vfailIf(self.nget.run('-A -T -r . > %s'%apath))
-		output = open(apath).read()
-		print output
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-A -T -r .'))
 		self.failUnless(re.search(r"^h1\ttest\tbbb \[h1\]$",output, re.M))
 		self.failUnless(re.search(r"^h1\tfoo\tccc \[h1\]$",output, re.M))
 		self.failUnless(re.search(r"^h1\t1only$",output, re.M))
@@ -2088,10 +2072,9 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.addarticles_toserver('0002', 'uuencode_multi3', self.servers.servers[0], groups=["test"])
 		self.addarticles_toserver('0001', 'uuencode_single', self.servers.servers[0], groups=["test2"])
 		tpath = os.path.join(self.nget.rcdir, 'test.out')
-		self.vfailIf(self.nget.run('-g test,test2 -q -r . > %s'%tpath))
-		print open(tpath).read()
-		self.failUnless(open(tpath).read().find("h0 1 (-1/0): ")<0)
-		self.failUnless(open(tpath).read().find("h0 1 (1/3): ")<0)
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-g test,test2 -q -r .'))
+		self.failUnless(output.find("h0 1 (-1/0): ")<0)
+		self.failUnless(output.find("h0 1 (1/3): ")<0)
 	
 	def test_MetaGrouping_ismultiserver_yes(self):
 		self.servers = nntpd.NNTPD_Master(2)
@@ -2099,11 +2082,9 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.servers.start()
 		self.addarticles_toserver('0002', 'uuencode_multi3', self.servers.servers[0], groups=["test"])
 		self.addarticles_toserver('0001', 'uuencode_single', self.servers.servers[1], groups=["test2"])
-		tpath = os.path.join(self.nget.rcdir, 'test.out')
-		self.vfailIf(self.nget.run('-g test,test2 -q -r . > %s'%tpath))
-		print open(tpath).read()
-		self.failUnless(open(tpath).read().find("h1 1 (-1/0): ")>=0)
-		self.failUnless(open(tpath).read().find("h0 1 (1/3): ")>=0)
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-g test,test2 -q -r .'))
+		self.failUnless(output.find("h1 1 (-1/0): ")>=0)
+		self.failUnless(output.find("h0 1 (1/3): ")>=0)
 	
 	def test_AbruptTimeout(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])

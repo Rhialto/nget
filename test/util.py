@@ -87,6 +87,14 @@ class TestNGet:
 		os.environ['NGETHOME'] = self.rcdir
 		return vsystem(pre + self.exe+" -p "+self.tmpdir+" "+args)
 	
+	def run_getoutput(self, args, pre=""):
+		outputpath = os.path.join(self.rcdir,'output.'+hex(random.randrange(0,sys.maxint)))
+		status = self.run(args+' > '+outputpath, pre)
+		f = open(outputpath, "r")
+		output = f.read()
+		f.close()
+		return status, output
+	
 	def runlite(self, args, pre=""):
 		olddir = os.getcwd()
 		try:
