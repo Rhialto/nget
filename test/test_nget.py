@@ -745,6 +745,20 @@ class XoverTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput('0002', tmpdir=self.fxnget.tmpdir)
 		self.verifyoutput('0002', tmpdir=self.fx2nget.tmpdir)
 	
+	def test_fullxover2_listgroup_appropriateness(self):
+		self.addarticles('0001', 'uuencode_single')
+		self.vfailIf(self.fx2nget.run("-g test"))
+		self.vfailUnlessEqual(self.servers.servers[0].count("listgroup"), 0) #shouldn't do listgroup on first update of group
+		self.vfailIf(self.fx2nget.run("-g test"))
+		self.vfailUnlessEqual(self.servers.servers[0].count("listgroup"), 1) #should do listgroup on second update of group
+		self.addarticles('0002', 'uuencode_multi')
+		self.rmarticles('0001', 'uuencode_single')
+		self.vfailIf(self.fx2nget.run("-g test -r ."))
+		self.vfailUnlessEqual(self.servers.servers[0].count("listgroup"), 1) #shouldn't do listgroup if all cached anums are lower than all available ones
+		self.verifyoutput('0002', tmpdir=self.fx2nget.tmpdir)
+		self.vfailIf(self.fx2nget.run("-g test"))
+		self.vfailUnlessEqual(self.servers.servers[0].count("listgroup"), 2)
+	
 	def test_removedarticle(self):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
 		article = self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=2)

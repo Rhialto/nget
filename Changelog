@@ -1,3 +1,6 @@
+2002-??-?? v0.??:
+  * With fullxover=2, don't needlessly retrieve article list if all cached headers are older than all available headers.
+
 2002-08-04 v0.21:
   * Remove configure check for gcc<=2.7 since it can't really build nget anymore and the test was incorrectly detecting some gcc versions.
   * Add a configure check to remove -fomit-frame-pointer from compile flags on x86, as it breaks exception handling. (reported by Jose Antonio Becerra Permuy)
