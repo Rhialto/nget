@@ -28,6 +28,32 @@ class misc_Test : public TestCase {
 			CPPUNIT_ASSERT(fexists("TestRunner.cc"));
 			CPPUNIT_ASSERT(!fexists("aoeuidhtns"));
 		}
+		void testDecodeTextMonth(void) {
+			CPPUNIT_ASSERT(decode_textmonth("jan")==0);
+			CPPUNIT_ASSERT(decode_textmonth("january")==0);
+			CPPUNIT_ASSERT(decode_textmonth("feb")==1);
+			CPPUNIT_ASSERT(decode_textmonth("february")==1);
+			CPPUNIT_ASSERT(decode_textmonth("mar")==2);
+			CPPUNIT_ASSERT(decode_textmonth("march")==2);
+			CPPUNIT_ASSERT(decode_textmonth("apr")==3);
+			CPPUNIT_ASSERT(decode_textmonth("april")==3);
+			CPPUNIT_ASSERT(decode_textmonth("may")==4);
+			CPPUNIT_ASSERT(decode_textmonth("jun")==5);
+			CPPUNIT_ASSERT(decode_textmonth("june")==5);
+			CPPUNIT_ASSERT(decode_textmonth("jul")==6);
+			CPPUNIT_ASSERT(decode_textmonth("july")==6);
+			CPPUNIT_ASSERT(decode_textmonth("aug")==7);
+			CPPUNIT_ASSERT(decode_textmonth("august")==7);
+			CPPUNIT_ASSERT(decode_textmonth("sep")==8);
+			CPPUNIT_ASSERT(decode_textmonth("september")==8);
+			CPPUNIT_ASSERT(decode_textmonth("oct")==9);
+			CPPUNIT_ASSERT(decode_textmonth("october")==9);
+			CPPUNIT_ASSERT(decode_textmonth("nov")==10);
+			CPPUNIT_ASSERT(decode_textmonth("november")==10);
+			CPPUNIT_ASSERT(decode_textmonth("dec")==11);
+			CPPUNIT_ASSERT(decode_textmonth("december")==11);
+			CPPUNIT_ASSERT(decode_textmonth("foo")==-1);
+		}
 		void testDecodeTextDate(void) {
 			init_my_timezone();
 			//extern int debug; debug=3;
@@ -70,6 +96,7 @@ class misc_Test : public TestCase {
 			ADDTEST(testFileCompareNonExistB);
 			ADDTEST(testFileCompareNonExist);
 			ADDTEST(testFExists);
+			ADDTEST(testDecodeTextMonth);
 			ADDTEST(testDecodeTextDate);
 #undef ADDTEST
 			return suite;
