@@ -23,6 +23,7 @@
 #include "strreps.h"
 #include "log.h"
 #include "file.h"
+#include "path.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -385,6 +386,9 @@ time_t decode_textage(const char *cbuf) {
 }
 
 int filecompare(const char *old_fn,const char *nfn){
+	off_t old_size, new_size;
+	if (!fsize(old_fn,&old_size) && !fsize(nfn, &new_size) && old_size!=new_size)
+		return 0;
 	c_file_fd old_f(old_fn, O_RDONLY|O_BINARY);
 	c_file_fd new_f(nfn, O_RDONLY|O_BINARY);
 	char	old_buf[4096], new_buf[4096];
