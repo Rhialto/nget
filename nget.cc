@@ -161,6 +161,21 @@ static string getopt_options="-";//lets generate this in addoption, to avoid for
 
 #else //!HAVE_LIBPOPT
 
+class c_poptContext {
+	protected:
+		poptContext optCon;
+	public:
+		int GetNextOpt(void) {return poptGetNextOpt(optCon);}
+		const char * GetOptArg(void) {return poptGetOptArg(optCon);}
+		const char * BadOption(int flags) {return poptBadOption(optCon, flags);}
+		c_poptContext(const char *name, int argc, char **argv, const struct poptOption *options, int flags) {
+			optCon = poptGetContext(name, argc, POPT_ARGV_T argv, options, flags);
+		}
+		~c_poptContext() {
+			poptFreeContext(optCon);
+		}
+};
+
 static struct poptOption optionsTable[NUM_OPTIONS+1];
 #endif //HAVE_LIBPOPT
 
@@ -481,22 +496,19 @@ struct s_arglist {
 };
 static int do_args(int argc, char **argv,nget_options options,int sub){
 	int c=0;
+	const char * loptarg=NULL;
+
 #ifdef HAVE_LIBPOPT
-	poptContext optCon;
+	c_poptContext optCon(NULL, argc, argv, optionsTable, sub?POPT_CONTEXT_KEEP_FIRST:0);
 #else
 #ifdef HAVE_GETOPT_LONG
 	int opt_idx;
 #endif
 #endif
-	const char * loptarg=NULL;
-
-#ifdef HAVE_LIBPOPT
-	optCon = poptGetContext(NULL, argc, POPT_ARGV_T argv, optionsTable, sub?POPT_CONTEXT_KEEP_FIRST:0);
-#endif
 	while (1){
 		c=
 #ifdef HAVE_LIBPOPT
-					poptGetNextOpt(optCon)
+					optCon.GetNextOpt()
 #else //HAVE_LIBPOPT
 #ifdef HAVE_GETOPT_LONG
 					getopt_long(argc,argv,OPTIONS,long_options,&opt_idx)
@@ -506,7 +518,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 #endif //!HAVE_LIBPOPT
 					;
 #ifdef HAVE_LIBPOPT
-		loptarg=poptGetOptArg(optCon);
+		loptarg=optCon.GetOptArg();
 #else
 		loptarg=optarg;
 #endif //HAVE_LIBPOPT
@@ -685,7 +697,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 					break;
 				}
 #ifdef HAVE_LIBPOPT
-#define POPT_ERR_CASE(a) case a: printf("%s: %s\n",#a,poptBadOption(optCon,0)); print_help(); return 1;
+#define POPT_ERR_CASE(a) case a: printf("%s: %s\n",#a,optCon.BadOption(0)); print_help(); return 1;
 			POPT_ERR_CASE(POPT_ERROR_NOARG);
 			POPT_ERR_CASE(POPT_ERROR_BADOPT);
 			POPT_ERR_CASE(POPT_ERROR_OPTSTOODEEP);
@@ -808,10 +820,6 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				}
 		}
 	}
-
-#ifdef HAVE_LIBPOPT
-	poptFreeContext(optCon);
-#endif
 }
 
 string path_join(string a, string b) {
