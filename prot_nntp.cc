@@ -295,6 +295,8 @@ void c_prot_nntp::nntp_dogroup(int getheaders){
 };
 
 void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nget_options &options){
+	if (group == ngroup && gcache && !getheaders)
+		return; // group is already selected, don't waste time reloading it
 
 	group=ngroup;
 //	if (gcache) delete gcache;

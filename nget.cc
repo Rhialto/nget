@@ -687,6 +687,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				{
 					c_server::ptr server=nconfig.getserver(loptarg);
 					if (!server) {printf("no such server %s\n",loptarg);set_user_error_status();break;}
+					nntp.nntp_group(options.group,0,options);
 					c_nntp_server_info* servinfo=nntp.gcache->getserverinfo(server->serverid);
 
 					nntp.gcache->flushlow(servinfo,ULONG_MAX,nntp.midinfo);
@@ -709,6 +710,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				return 1;
 			default:
 				if (!getinfos.empty()){
+					nntp.nntp_group(options.group,0,options);
 					nntp.nntp_retrieve(getinfos, options);
 					getinfos.clear();
 				}
@@ -761,8 +763,6 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 								//here we reset the stuff that may have been screwed in our recursiveness.  Perhaps it should reset it before returning, or something.. but I guess this'll do for now, since its the only place its called recursively.
 								if (options.host)
 									nntp.nntp_open(options.host);
-								if (options.group)
-									nntp.nntp_group(options.group,0,options);
 								if (!chdir(options.startpath.c_str())){
 									printf("path:%s\n",options.path.c_str());
 								}else{
@@ -790,7 +790,6 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 						}
 					case 'G':
 						options.group=nconfig.getgroup(loptarg);
-						nntp.nntp_group(options.group,0,options);
 						break;
 					case 'h':{
 							if (*loptarg){

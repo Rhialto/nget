@@ -941,26 +941,26 @@ else:
 	class FileTest_base:
 		"Holds all the tests that need to be done with both usegz and without"
 		def test_cache_openread_error(self):
-			self.vfailUnlessEqual(self.runnget("-G foo", "IOError:f=[('foo,cache','r',-1)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G foo -r bar", "IOError:f=[('foo,cache','r',-1)]"), 128)
 			self.check_for_errormsg(r'foo,cache')
 
 		def test_cache_read_error(self):
 			self.vfailIf(self.nget.run("-g test"))
-			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',60)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G test -r bar", "IOError:f=[('test,cache','r',60)]"), 128)
 			self.check_for_errormsg(r'test,cache')
-			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',20)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G test -r bar", "IOError:f=[('test,cache','r',20)]"), 128)
 			self.check_for_errormsg(r'test,cache')
-			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',10)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G test -r bar", "IOError:f=[('test,cache','r',10)]"), 128)
 			self.check_for_errormsg(r'test,cache')
 
 		def test_cache_zerobyte_read_error(self):
 			self.vfailIf(self.nget.run("-g test"))
-			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',0)]"), 128, self.UpgradeZLibMessage)
+			self.vfailUnlessEqual(self.runnget("-G test -r bar", "IOError:f=[('test,cache','r',0)]"), 128, self.UpgradeZLibMessage)
 			self.check_for_errormsg(r'test,cache')
 
 		def test_cache_close_read_error(self):
 			self.vfailIf(self.nget.run("-g test"))
-			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r','c')]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G test -r bar", "IOError:f=[('test,cache','r','c')]"), 128)
 			self.check_for_errormsg(r'test,cache')
 			
 		def test_cache_openwrite_error(self):
@@ -990,22 +990,22 @@ else:
 			self.check_for_errormsg(r'test,cache')
 
 		def test_midinfo_open_read_error(self):
-			self.vfailUnlessEqual(self.runnget("-G foo", "IOError:f=[('foo,midinfo','r',-1)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G foo -r bar", "IOError:f=[('foo,midinfo','r',-1)]"), 128)
 			self.check_for_errormsg(r'foo,midinfo')
 
 		def test_midinfo_read_error(self):
 			self.vfailIf(self.nget.run("-g test -M -r ."))
-			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,midinfo','r',20)]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G test -r bar", "IOError:f=[('test,midinfo','r',20)]"), 128)
 			self.check_for_errormsg(r'test,midinfo')
 
 		def test_midinfo_close_read_error(self):
 			self.vfailIf(self.nget.run("-g test -M -r ."))
-			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,midinfo','r','c')]"), 128)
+			self.vfailUnlessEqual(self.runnget("-G test -r bar", "IOError:f=[('test,midinfo','r','c')]"), 128)
 			self.check_for_errormsg(r'test,midinfo')
 
 		def test_midinfo_zerobyte_read_error(self):
 			self.vfailIf(self.nget.run("-g test -M -r ."))
-			self.vfailUnlessEqual(self.runnget("-G test", "IOError:f=[('test,midinfo','r',0)]"), 128, self.UpgradeZLibMessage)
+			self.vfailUnlessEqual(self.runnget("-G test -r bar", "IOError:f=[('test,midinfo','r',0)]"), 128, self.UpgradeZLibMessage)
 			self.check_for_errormsg(r'test,midinfo')
 
 		def test_midinfo_zerobyte_write_error(self):
