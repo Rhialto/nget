@@ -18,7 +18,7 @@ dep depend .depend: TestRunner.cc
 	$(CXX) $(CXXFLAGS) -MM *.cc > .depend
 
 clean:
-	-rm TestRunner *.o
+	-rm TestRunner *.o *.py[co]
 
 distclean: clean
 	-rm config.status config.h config.cache config.log Makefile stamp-h .depend *~ .*~ *.rej tags .cvsignore .#*
