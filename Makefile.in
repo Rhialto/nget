@@ -103,4 +103,4 @@ distclean-killuu: distclean
 include .depend
 #endif
 
-.PHONY: all dep depend clean install dist distclean .autostuff
+.PHONY: all dep depend clean install dist distclean .autostuff test
