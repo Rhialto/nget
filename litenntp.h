@@ -47,7 +47,7 @@ class c_prot_nntp {
 		int getline(int echo);
 		int getreply(int echo);
 //		int stdgetreply(int echo);
-		int chkreply(int reply);
+		int chkreply(int reply) const;
 
 		void doarticle(const char *article,ulong bytes,ulong lines,const char *outfile);
 

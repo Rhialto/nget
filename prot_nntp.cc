@@ -79,7 +79,7 @@ int c_prot_nntp::stdputline(int echo,const char * str,...){
 	return i;
 }
 
-int c_prot_nntp::chkreply(int reply){
+int c_prot_nntp::chkreply(int reply) const {
 //	int i=getreply(echo);
 	if (reply/100!=2)
 		throw ProtocolExFatal(Ex_INIT,"bad reply %i: %s",reply,cbuf);

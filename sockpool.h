@@ -83,7 +83,7 @@ class SockPool {
 		void connection_erase(t_connection_map::iterator i);
 	public:
 		
-		bool is_connected(ulong serverid) {
+		bool is_connected(ulong serverid) const {
 			return (connections.find(serverid) != connections.end());
 		}
 

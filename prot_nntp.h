@@ -77,7 +77,7 @@ class c_prot_nntp {
 		int getline(int echo);
 		int getreply(int echo);
 //		int stdgetreply(int echo);
-		int chkreply(int reply);
+		int chkreply(int reply) const;
 		int chkreply_setok(int reply);
 		void doxover(const c_group_info::ptr &group, ulong low, ulong high);
 		void doxover(const c_group_info::ptr &group, c_nrange *r);

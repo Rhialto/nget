@@ -48,7 +48,7 @@ void writeline(c_file *f, const char *str, bool escape_From) {
 	f->putf("%s", str);
 }
 
-void TextHandler::writeinfo(c_file *f, bool escape_From=false) {
+void TextHandler::writeinfo(c_file *f, bool escape_From=false) const {
 	list<string>::const_iterator ii=info.begin();
 	bool dupeheaders=true;
 	c_file_fd headerf(firsttempfn.c_str(), O_RDONLY);
@@ -94,7 +94,7 @@ c_file * maybegzopen(const char *fn, const char *mode) {
 	return new c_file_fd(fn, mode);
 }
 
-void TextHandler::save(void) {
+void TextHandler::save(void) const {
 	if (infocount==0 && decodeinfocount && !save_text_for_binaries && !save_whole_tempfile)
 		return;
 	if (infocount || decodeinfocount==0 || save_whole_tempfile)

@@ -81,7 +81,7 @@ class c_nntp_grouplist : public c_refcounted<c_nntp_grouplist>{
 		c_nntp_grouplist_server_info::ptr getserverinfo(ulong serverid);
 		void addgroup(ulong serverid, string name);
 		void addgroupdesc(ulong serverid, string name, string desc);
-		void printinfos(const t_grouplist_getinfo_list &getinfos);
+		void printinfos(const t_grouplist_getinfo_list &getinfos) const;
 		void flushserver(ulong serverid);
 
 		c_nntp_grouplist(void);

@@ -142,7 +142,7 @@ static void nntp_grouplist_printinfo(const t_grouplist_getinfo_list &getinfos, c
 	}
 }
 
-void c_nntp_grouplist::printinfos(const t_grouplist_getinfo_list &getinfos) {
+void c_nntp_grouplist::printinfos(const t_grouplist_getinfo_list &getinfos) const {
 	t_group_availability_map::const_iterator gi;
 	for (gi = groups.begin(); gi != groups.end(); ++gi)
 		nntp_grouplist_printinfo(getinfos, gi->second);
