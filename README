@@ -31,7 +31,8 @@ Install:
 cygwin's regex for some reason I haven't fully investigated yet.)
 2) make dep  (if you are using a compiler other than gcc, this may not work)
 3) make
-4) make install
+4) make test (Optional.  Requires python 2.1 and cppunit.)
+5) make install
 
 (./configure --help will show extra options not described here)
 
