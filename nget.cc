@@ -412,7 +412,7 @@ c_nget_config nconfig;
 #define BAD_HOST 1
 #define BAD_PATH 2
 #define BAD_TEMPPATH 4
-void nget_options::do_get_path(string &s){char *p;goodgetcwd(&p);s=p;free(p);}
+void nget_options::do_get_path(string &s){char *p=goodgetcwd();s=p;free(p);}
 
 nget_options::nget_options(void){
 	do_get_path(startpath);
@@ -553,7 +553,7 @@ int maybe_mkdir_chdir(const char *dir, int makedir){
 			if (makedir==MAKEDIRS_ASK){
 				char buf[40],*p;
 				if (!is_abspath(dir)){
-					goodgetcwd(&p);
+					p=goodgetcwd();
 					printf("in %s, ",p);
 					free(p);
 				}

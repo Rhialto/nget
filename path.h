@@ -47,6 +47,6 @@ int fexists(const char * f);
 int fsize(const char * f, off_t *size);
 string fcheckpath(const char *fn,string path);
 int testmkdir(const char * dir,int mode);
-char *goodgetcwd(char **p);
+char *goodgetcwd(void);
 
 #endif

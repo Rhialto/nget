@@ -68,8 +68,7 @@ void path_split(string &head, string &tail) {
 
 bool direxists(const string &p) {
 	bool ret=false;
-	char *oldp;
-	goodgetcwd(&oldp);
+	char *oldp=goodgetcwd();
 	if (chdir(p.c_str())==0)
 		ret=true;
 	if (chdir(oldp)) {
@@ -108,7 +107,7 @@ int testmkdir(const char * dir,int mode){
 	}
 	return 0;
 }
-char *goodgetcwd(char **p){
+char *goodgetcwd(void){
 	/*int t=-1;
 	*p=NULL;//first we try to take advantage of the GNU extension to allocate it for us.
 	while (!(*p=getcwd(*p,t))) {
@@ -118,14 +117,14 @@ char *goodgetcwd(char **p){
 		}
 	}*/
 	int t=0;
-	*p=NULL;//ack, that extension seems to like segfaulting when you free() its return.. blah.
+	char *p=NULL;//ack, that extension seems to like segfaulting when you free() its return.. blah.
 	do {
 		t+=48;
-		if (!(*p=(char*)realloc(*p,t))){
+		if (!(p=(char*)realloc(p,t))){
 			PERROR("goodgetcwd: realloc error %s (size=%i)",strerror(errno), t);exit(128);
 		}
-	}while(!(*p=getcwd(*p,t)));
-	PDEBUG(DEBUG_MED,"goodgetcwd %i %s(%p-%p)",t,*p,p,*p);
-	return *p;
+	}while(!(p=getcwd(p,t)));
+	PDEBUG(DEBUG_MED,"goodgetcwd %i %s(%p)",t,p,p);
+	return p;
 }
 
