@@ -102,13 +102,15 @@ class TestNGet:
 		#return vspawn(self.exe, ["-p",self.tmpdir]+args)
 		return vspawn(self.exe, args)
 	
-	def run(self, args, pre=""):
+	def run(self, args, pre="", dopath=1):
 		os.environ['NGETHOME'] = self.rcdir
-		return vsystem(pre + self.exe+" -p "+self.tmpdir+" "+args)
+		if dopath:
+			args = "-p "+self.tmpdir+" "+args
+		return vsystem(pre + self.exe+" "+args)
 	
-	def run_getoutput(self, args, pre=""):
+	def run_getoutput(self, args, pre="", dopath=1):
 		outputpath = os.path.join(self.rcdir,'output.'+hex(random.randrange(0,sys.maxint)))
-		status = self.run(args+' > '+outputpath, pre)
+		status = self.run(args+' > '+outputpath, pre=pre, dopath=dopath)
 		f = open(outputpath, "r")
 		output = f.read()
 		f.close()

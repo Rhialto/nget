@@ -1844,6 +1844,48 @@ class MetaGrouping_LiteRetrieveTestCase(TestCase, MetaGrouping_RetrieveTest_base
 		self.verifyoutput(['mergesa01'])
 
 
+class MiscTestCase(TestCase, DecodeTest_base):
+	def setUp(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.addarticles('0001', 'uuencode_single')
+		#self.servers.start()
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+	
+	def tearDown(self):
+		#self.servers.stop()
+		self.verifyoutput([])
+		self.nget.clean_all()
+	
+	def verify_help(self, output):
+		lines = output.splitlines()
+		preusage=usage=options=None
+		for i in range(0,len(lines)):
+			if lines[i].count("USAGE"):
+				preusage=lines[0:i]
+				usage=lines[i]
+				options=lines[i+1:]
+		self.failUnless(preusage and usage and options)
+		self.failUnless([l.count("nget v") for l in preusage])
+		optre=re.compile(r"^(-\S)?\s+(--\S+)?\s+(.+)$")
+		for l in options:
+			x=optre.match(l)
+			self.failUnless(x, l)
+			self.failUnless(x.group(3), l)
+			self.failUnless(x.group(1) or x.group(2), l)
+
+		x = re.search("copyright\s+(.+)-(.+)\s+Matthew Mueller", output, re.I)
+		self.failUnless(x)
+		self.vfailUnlessEqual(x.group(2), time.strftime("%Y"), "copyright needs updating")
+	
+	def test_noargs(self):
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('', dopath=0))
+		self.verify_help(output)
+
+	def test_help(self):
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('--help'))
+		self.verify_help(output)
+
+
 class FatalUserErrorsTestCase(TestCase, DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)
