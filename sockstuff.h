@@ -69,10 +69,5 @@ int get_connection2(int socket_type,int gc_listening_socket);
 int sock_write_ensured(int sockfd, const char *buf, size_t count);
 int sock_read(int sockfd, void *buf, size_t count);
 bool sock_datawaiting(int sockfd);
-int sock_gets(int sockfd, char *str, size_t count);
-int sock_puts(int sockfd, const char *str);
 
-int sockvprintf(int sockfd, const char *str, va_list ap);
-int sockprintf(int sockfd, const char *str, ...)
-        __attribute__ ((format (printf, 2, 3)));
 #endif
