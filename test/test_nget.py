@@ -38,7 +38,7 @@ class TestCase(unittest.TestCase):
 			if msg:
 				msg = '(%r) %s'%(expr, msg)
 			else:
-				msg = '(%r)'%(expr)
+				msg = '(%r)'%(expr,)
 			raise self.failureException, msg
 	def vfailUnlessEqual(self, first, second, msg=None):
 		"Include the exprs in the error message even if msg is given"
