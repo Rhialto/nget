@@ -24,29 +24,18 @@ import os, sys, unittest, glob, filecmp, re
 import nntpd, util
 
 ngetexe = os.path.join(os.pardir, 'nget')
+#ngetexe = '../../nget-dev/nget'
 zerofile_fn_re = re.compile(r'(\d+)\.(\d+)\.txt$')
 
-class DecodeTestCase(unittest.TestCase):
-	def setUp(self):
-		self.servers = nntpd.NNTPD_Master(1)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
-		self.servers.start()
-		
-	def tearDown(self):
-		self.servers.stop()
-		self.nget.clean_all()
-
+class DecodeTest_base(unittest.TestCase):
 	def addarticles(self, testnum, dirname):
 		for fn in glob.glob(os.path.join("testdata",testnum,dirname,"*")):
 			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
 				continue
-			self.servers.servers[0].addarticle(["test"], nntpd.FileArticle(open(fn, 'r')))
+			for server in self.servers.servers:
+				server.addarticle(["test"], nntpd.FileArticle(open(fn, 'r')))
 
-	def do_test(self, testnum, dirname):
-		self.addarticles(testnum, dirname)
-
-		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
-		
+	def verifyoutput(self, testnum):
 		ok = []
 		for fn in glob.glob(os.path.join("testdata",testnum,"_output","*")):
 			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
@@ -69,6 +58,23 @@ class DecodeTestCase(unittest.TestCase):
 
 		extra = [fn for fn in os.listdir(self.nget.tmpdir) if fn not in ok]
 		self.failIf(extra, "extra files decoded: "+`extra`)
+	
+class DecodeTestCase(unittest.TestCase, DecodeTest_base):
+	def setUp(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+		
+	def tearDown(self):
+		self.servers.stop()
+		self.nget.clean_all()
+
+	def do_test(self, testnum, dirname):
+		self.addarticles(testnum, dirname)
+
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		
+		self.verifyoutput(testnum)
 	
 	def do_test_decodeerror(self, testnum, dirname):
 		self.addarticles(testnum, dirname)
@@ -116,6 +122,43 @@ class DecodeTestCase(unittest.TestCase):
 		self.do_test_auto()
 	def test_0003_newspost_uue_0(self):
 		self.do_test_auto()
+
+
+class DiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	def cmd_article(self, args):
+		nntpd.NNTPRequestHandler.cmd_article(self, args)
+		return -1
+
+class ConnectionErrorTestCase(unittest.TestCase, DecodeTest_base):
+	def tearDown(self):
+		if hasattr(self, 'servers'):
+			self.servers.stop()
+		self.nget.clean_all()
+
+	def test_DeadServer(self):
+		servers = [nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)]
+		self.nget = util.TestNGet(ngetexe, servers) 
+		servers[0].server_close()
+		self.failUnless(os.WEXITSTATUS(self.nget.run("-g test -r .")) & 64, "nget process did not detect connection error")
+	
+	def test_DiscoServer(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+
+		self.addarticles('0002', 'uuencode_multi')
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.verifyoutput('0002')
+		
+	def test_TwoDiscoServers(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+
+		self.addarticles('0002', 'uuencode_multi')
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.verifyoutput('0002')
+
 
 class CppUnitTestCase(unittest.TestCase):
 	def test_TestRunner(self):

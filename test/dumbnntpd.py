@@ -50,15 +50,13 @@ class NNTPRequestHandler(nntpd.NNTPRequestHandler):
 			f.write(l+'\n')
 
 def main():
-	server = nntpd.NNTPTCPServer(("127.0.0.1",119), NNTPRequestHandler)
-	thread = threading.Thread(target=server.serve_forever)
-	thread.start()
-	
+	servers = nntp.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",119), NNTPRequestHandler)])
+	servers.start()
+
 	print 'press enter to stop'
 	raw_input()
 
-	server.stop_serving()
-	thread.join()
+	servers.stop()
 
 if __name__=="__main__":
 	main()

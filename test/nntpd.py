@@ -126,11 +126,14 @@ class NNTPTCPServer(StoppableThreadingTCPServer):
 			self.groups[g].addarticle(article)
 
 class NNTPD_Master:
-	def __init__(self, num):
+	def __init__(self, servers_num):
 		self.servers = []
 		self.threads = []
-		for i in range(num):
-			self.servers.append(NNTPTCPServer(("127.0.0.1", 0))) #port 0 selects a port automatically.
+		if type(servers_num)==type(1): #servers_num is integer number of servers to start
+			for i in range(servers_num):
+				self.servers.append(NNTPTCPServer(("127.0.0.1", 0))) #port 0 selects a port automatically.
+		else: #servers_num is a list of servers already created
+			self.servers.extend(servers_num)
 			
 	def start(self):
 		for server in self.servers:

@@ -26,9 +26,11 @@ class TestNGet:
 		os.mkdir(self.tmpdir)
 
 		rc = open(os.path.join(self.rcdir, '_ngetrc'), 'w')
-		rc.write("tries=1\n")
-#rc.write("debug=3\n")
-		rc.write("debug=0\n")
+		#rc.write("tries=1\n")
+		rc.write("tries=2\n")
+		rc.write("delay=0\n")
+#		rc.write("debug=3\n")
+#		rc.write("debug=2\n")
 		rc.write("{halias\n")
 		for i in range(0, len(servers)):
 			rc.write("""
