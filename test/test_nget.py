@@ -561,6 +561,9 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 	def test_flush_badserver(self):
 		self.vfailUnlessExitstatus(self.nget.run('-g test -F badserv'), 4)
 
+	def test_flush_available_badserver(self):
+		self.vfailUnlessExitstatus(self.nget.run('-A -F badserv'), 4)
+
 	def test_bad_arg(self):
 		self.vfailUnlessExitstatus(self.nget.run('-g test badarg -r .'), 4)
 		self.verifyoutput([])
@@ -992,7 +995,6 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.servers = nntpd.NNTPD_Master(3)
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
 		self.servers.start()
-		self.addarticles('0001', 'yenc_multi')
 		self.vfailIf(self.nget.run("-h host1 -a"))
 		self.vfailUnlessEqual(self.servers.servers[0].conns, 0)
 		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
@@ -1010,6 +1012,28 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput('0001')
 		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
 		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
+	
+	def test_Available_FlushServer(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+		self.servers.servers[0].addgroup("test", "aaa")
+		self.servers.servers[1].addgroup("test", "bbb")
+		self.servers.servers[0].addgroup("foo", "ccc")
+		self.servers.servers[1].addgroup("foo", "ccc")
+		self.servers.servers[0].addgroup("0only")
+		self.servers.servers[1].addgroup("1only")
+		self.vfailIf(self.nget.run("-a"))
+		self.vfailIf(self.nget.run("-A -Fhost0"))
+		apath = os.path.join(self.nget.rcdir, 'avail.out')
+		self.vfailIf(self.nget.run('-A -T -r . > %s'%apath))
+		output = open(apath).read()
+		print output
+		self.failUnless(re.search(r"^h1\ttest\tbbb \[h1\]$",output, re.M))
+		self.failUnless(re.search(r"^h1\tfoo\tccc \[h1\]$",output, re.M))
+		self.failUnless(re.search(r"^h1\t1only$",output, re.M))
+		self.failIf(output.find("h0")>=0)
+		self.failIf(output.find("0only")>=0)
 	
 	def test_AbruptTimeout(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])

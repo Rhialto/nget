@@ -237,7 +237,7 @@ static void addoptions(void)
 	addoption("quickavailable",0,'A',0,"load available newsgroups list");
 	addoption("group",1,'g',"GROUPNAME","newsgroup");
 	addoption("quickgroup",1,'G',"GROUPNAME","use group without checking for new headers");
-	addoption("flushserver",1,'F',"HOSTALIAS","flush all headers for server from current group");
+	addoption("flushserver",1,'F',"HOSTALIAS","flush server from current group or newsgroup list");
 	addoption("expretrieve",1,'R',"EXPRESSION","retrieve files matching expression(see man page)");
 	addoption("retrieve",1,'r',"REGEX","retrieve files matching regex");
 	addoption("list",1,'@',"LISTFILE","read commands from listfile");
@@ -745,6 +745,11 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				{
 					c_server::ptr server=nconfig.getserver(loptarg);
 					if (!server) {printf("no such server %s\n",loptarg);set_user_error_status();break;}
+					if (options.grouplistmode) {
+						nntp.nntp_grouplist(0, options);
+						nntp.glist->flushserver(server->serverid);
+						break;
+					}
 					if (!options.group){
 						printf("specify group before -F\n");
 						set_user_error_status();

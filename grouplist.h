@@ -81,6 +81,7 @@ class c_nntp_grouplist : public c_refcounted<c_nntp_grouplist>{
 		void addgroup(ulong serverid, string name);
 		void addgroupdesc(ulong serverid, string name, string desc);
 		void printinfos(const t_grouplist_getinfo_list &getinfos);
+		void flushserver(ulong serverid);
 
 		c_nntp_grouplist(void);
 		void save(void);

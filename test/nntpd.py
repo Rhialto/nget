@@ -301,6 +301,12 @@ class NNTPTCPServer(StoppableThreadingTCPServer):
 		for g in self.groups.values():
 			g.rmarticle(article)
 
+	def addgroup(self, name, desc=None):
+		if self.groups.has_key(name):
+			self.groups[name].description=desc
+		else:
+			self.groups[name]=Group(description=desc)
+
 class NNTPD_Master:
 	def __init__(self, servers_num):
 		self.servers = []

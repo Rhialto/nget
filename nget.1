@@ -32,7 +32,11 @@ Subsequent -r/-R commands can be used to retrieve files.
 .IP "-G/--quickgroup group"
 Like --group, but does not retrieve new headers.
 .IP "-F/--flushserver host"
+Following -g/-G:
 Flush all headers for server from current group.
+.br
+Following -a/-A:
+Flush all groups/descriptions for server from grouplist.
 .IP "-r/--retrieve regex"
 Following -g/-G:
 Matches regex against subjects of previously selected group, and retrieves ones
@@ -427,6 +431,11 @@ nget -Galt.binaries.pictures.linux -Fgoodhost
 retrieve/update group list, and list all groups with "linux" in the name:
 .br
 nget -a -Tr linux
+.P
+flush all groups from host goodhost in grouplist:
+.br
+.B
+nget -A -Fgoodhost
 .SH NOTES
 Running multiple copies of nget at once should be safe.  It uses file locking,
 so there should be no way for the files to actually get corrupted.

@@ -204,7 +204,8 @@ void c_prot_nntp::nntp_dogroupdescriptions(void){
 }
 
 void c_prot_nntp::nntp_grouplist(int update, const nget_options &options){
-	glist = new c_nntp_grouplist();
+	if (!glist)
+		glist = new c_nntp_grouplist();
 	if (update) {
 		c_server::ptr s;
 		list<c_server::ptr> doservers;

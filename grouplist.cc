@@ -90,6 +90,36 @@ void c_nntp_grouplist::addgroupdesc(ulong serverid, string name, string desc){
 		saveit=true;
 }
 
+void c_nntp_grouplist::flushserver(ulong serverid) {
+	ulong countg=0, countgs=0, countd=0, countds=0;
+	int servinfoerased=server_info.erase(serverid);
+	t_group_availability_map::iterator gi, gitmp;
+	c_group_availability::ptr group;
+	if (quiet<2) {printf("Flushing grouplist for server %lu:", serverid);fflush(stdout);}
+	for (gi = groups.begin(); gi != groups.end();) {
+		gitmp = gi;
+		++gi;
+		group = gitmp->second;
+		for (t_server_group_description_map::iterator gdi=group->servergroups.begin(); gdi!=group->servergroups.end();) {
+			t_server_group_description_map::iterator gditmp=gdi;
+			++gdi;
+			c_server_group_description::ptr gd = gditmp->second;
+			countds += gd->serverids.erase(serverid);
+			if (gd->serverids.empty()) {
+				group->servergroups.erase(gditmp);
+				++countd;
+			}
+		}
+		countgs += group->serverids.erase(serverid);
+		if (group->serverids.empty() && group->servergroups.empty()) {
+			groups.erase(gitmp);
+			++countg;
+		}
+	}
+	if (quiet<2){printf(" %lu groups (%lu dead), %lu descriptions (%lu dead)\n",countgs,countg,countds,countd);}
+	if (servinfoerased || countgs || countds) saveit=1;
+}
+
 static void nntp_grouplist_printinfo(const t_grouplist_getinfo_list &getinfos, const c_group_availability::ptr &g) {
 	t_grouplist_getinfo_list::const_iterator gii, giibegin=getinfos.begin(), giiend=getinfos.end();
 	c_grouplist_getinfo::ptr info;
