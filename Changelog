@@ -7,7 +7,7 @@
   * Add manpage for ngetlite.
   * No longer attempt to set user/group in make install.
   * Add messageid (mid) keyword to -R expressions.
-  * Add more documentation of win32 build/usage, and win32 binaries zip.
+  * Add more documentation of win32 build/usage.
   * Error on retrieving headers will retry and try other servers instead of giving up.
   * Errors other than "article not available" on retrieving articles are handled correctly.
   * Added unequal_line_error config option and made default be a warning rather than an error. (since the "unequal line count" error was more of an annoyance than anything.)
