@@ -24,7 +24,7 @@
 
 template <class K, class T, template <class BK, class BT> class Base>
 class auto_map_base : public Base<K, restricted_ptr<T> > {
-	private:
+	protected:
 		typedef Base<K, restricted_ptr<T> > super;
 	public:
 		typedef typename super::iterator iterator;
