@@ -555,6 +555,25 @@ class RetrieveTest_base(DecodeTest_base):
 		self.verifyoutput(['0002','0001','0005'])
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 10)
 	
+	def test_dupefilemark(self):
+		self.vfailIf(self.nget_run('-g test -r foo'))
+		self.verifyoutput('0001')
+		self.vfailIf(self.nget_run('-G test -U -D -r foo'))
+		self.vfailIf(self.nget_run('-G test -dm -r foo'))
+		self.nget.clean_tmp()
+		self.vfailIf(self.nget_run('-G test -r foo'))
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
+	
+	def test_dupefilemark_cfg(self):
+		self.vfailIf(self.nget_run('-g test -r foo'))
+		self.verifyoutput('0001')
+		self.vfailIf(self.nget_run('-G test -U -D -r foo'))
+		self.nget.writerc(self.servers.servers, options={'dupefilemark':1})
+		self.vfailIf(self.nget_run('-G test -r foo'))
+		self.nget.clean_tmp()
+		self.vfailIf(self.nget_run('-G test -r foo'))
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
+
 	def test_available_overrides_group(self):
 		self.vfailIf(self.nget_run('-g test -A -T -r .'))
 		self.verifyoutput([])
@@ -1571,6 +1590,14 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		f.close()
 		self.vfailUnlessExitstatus(self.nget.run('-@ %s'%lpath), 4)
 		self.verifyoutput([])
+	
+	def test_list_escaping(self):
+		lpath = os.path.join(self.nget.rcdir, 'list.foo')
+		f = open(lpath, 'w')
+		f.write(r'-g test -r \ ')
+		f.close()
+		self.vfailUnlessExitstatus(self.nget.run('-@ %s'%lpath), 0)
+		self.verifyoutput(['0001','0002','0005'])
 	
 	def test_available(self):
 		self.vfailIf(self.nget.run('-a'))
