@@ -156,7 +156,6 @@ struct option {
 #endif
 
 static struct option long_options[NUM_OPTIONS+1];
-//#define OPTIONS "-qh:g:G:r:R:p:@:Tt:s:l:iIkKcCd:DSLP:w:N?"
 static string getopt_options="-";//lets generate this in addoption, to avoid forgeting to update a define. (like in v0.8, oops)
 #define OPTIONS getopt_options.c_str()
 
@@ -257,9 +256,6 @@ GNU General Public License for more details.\n\n\
 You should have received a copy of the GNU General Public License\n\
 along with this program; if not, write to the Free Software\n\
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.\n");
-//      printf("\nUSAGE: nget [-q] [-h host] [-g group] [-r subject regex] ?\n\n"
-//	       "-q	quiet mode.  Use twice for total silence\n"
-//);
 	printf("\nUSAGE: nget -g group [-r file [-r file] [-g group [-r ...]]]\n");
 	//this is kinda ugly, but older versions of popt don't have the poptPrintHelp stuff, and it seemed to print out a bit of garbage for me anyway...
 	for (int i=0;
@@ -493,13 +489,11 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 #endif
 #endif
 	const char * loptarg=NULL;
-	//printf("limit:%i tries:%i case:%i complete:%i dupcheck:%i\n",linelimit,maxretry,gflags&GETFILES_CASESENSITIVE,!(gflags&GETFILES_GETINCOMPLETE),!(gflags&GETFILES_NODUPECHECK));
 
 #ifdef HAVE_LIBPOPT
 	optCon = poptGetContext(NULL, argc, POPT_ARGV_T argv, optionsTable, sub?POPT_CONTEXT_KEEP_FIRST:0);
 #endif
 	while (1){
-//		if ((
 		c=
 #ifdef HAVE_LIBPOPT
 					poptGetNextOpt(optCon)
@@ -511,21 +505,13 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 #endif
 #endif //!HAVE_LIBPOPT
 					;
-//			)==-1)
-//			c=-12345;
 #ifdef HAVE_LIBPOPT
 		loptarg=poptGetOptArg(optCon);
 #else
 		loptarg=optarg;
 #endif //HAVE_LIBPOPT
-		//					break;
 //		printf("arg:%c(%i)=%s(%p)\n",isprint(c)?c:'.',c,loptarg,loptarg);
 		switch (c){
-			//					case 'R':
-			//						if(!group)
-			//							perror("no group specified\n");
-			//						nntp.nntp_queueretrieve(loptarg,linelimit,0,gflags);
-			//						break;
 			case 'T':
 				options.gflags|=GETFILES_TESTMODE;
 				PDEBUG(DEBUG_MIN,"testmode now %i",options.gflags&GETFILES_TESTMODE > 0);
@@ -542,7 +528,6 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				options.gflags&= ~GETFILES_MARK;
 				options.parse_dupe_flags("I");
 				break;
-			//case 1:
 			case 'R':
 				if (!options.badskip){
 					if(options.group.isnull()){
@@ -764,7 +749,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 								}
 
 								do_args(larg.argc,larg.argv,options,1);
-								//####here we reset the stuff that may have been screwed in our recursiveness.  Perhaps it should reset it before returning, or something.. but I guess this'll do for now, since its the only place its called recursively.
+								//here we reset the stuff that may have been screwed in our recursiveness.  Perhaps it should reset it before returning, or something.. but I guess this'll do for now, since its the only place its called recursively.
 								if (options.host)
 									nntp.nntp_open(options.host);
 								if (options.group)
@@ -816,9 +801,6 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 						}
 						break;
 					case -1://end of args.
-						//								if (!badskip){
-						//									nntp.nntp_retrieve(!testmode);
-						//								}
 						return 0;
 					default:
 						print_help();
@@ -826,13 +808,6 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				}
 		}
 	}
-	//		printf("quiet=%i host=%s\n",quiet,nntp_server);
-	//		for (int i=optind;i<argc;i++)
-	//			switch (mode){
-	//				default:
-	//					printf("%s\n",argv[i]);
-	//					nntp_get(nntp_server,group,argv[i]);
-	//			}
 
 #ifdef HAVE_LIBPOPT
 	poptFreeContext(optCon);
