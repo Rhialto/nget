@@ -1800,6 +1800,12 @@ class ConfigErrorTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput('0001')
 		self.vfailUnlessEqual(output.count("ERRORS: 1 user"), 1)
 
+	def test_dupe(self):
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, extratail="fullxover=1\nfullxover=1\n{galias\n}\n{galias\n}\n")
+		output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput('-g test -r .'), 4)
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(output.count("ERRORS: 2 user"), 1)
+
 
 class XoverTestCase(TestCase, DecodeTest_base):
 	def setUp(self):

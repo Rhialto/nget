@@ -52,7 +52,15 @@ void CfgSection::load(c_file *f, int &level) {
 		{
 			level++;
 			CfgSection *s=new CfgSection(name(),buf+1,f,level);
-			sections.insert(CfgSection_map::value_type(s->key,s));
+			CfgSection_map::iterator si;
+			if ((si=sections.find(s->key))!=sections.end()) {
+				delete si->second;
+				si->second=s;
+				PERROR("%s: duplicate section", s->name().c_str());
+				set_user_error_status();
+			}
+			else
+				sections.insert(CfgSection_map::value_type(s->key,s));
 			//			printf("new section: %s\n",buf+r+1);
 		}
 		else if (*buf=='#')
@@ -63,7 +71,15 @@ void CfgSection::load(c_file *f, int &level) {
 			*v=0;
 			v++;
 			CfgItem *i=new CfgItem(name(),buf,v);
-			items.insert(CfgItem_map::value_type(i->key,i));
+			CfgItem_map::iterator ii;
+			if ((ii=items.find(i->key))!=items.end()) {
+				delete ii->second;
+				ii->second=i;
+				PERROR("%s: duplicate item", i->name().c_str());
+				set_user_error_status();
+			}
+			else
+				items.insert(CfgItem_map::value_type(i->key,i));
 			//				printf("new item: %s=%s\n",n,v);
 		}
 		else {
