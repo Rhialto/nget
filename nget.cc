@@ -207,7 +207,7 @@ static void addoption(char *longo,int needarg,char shorto,char *adesc,char *desc
 static void addoptions(void)
 {
 	addoption("quiet",0,'q',0,"supress extra info");
-	addoption("host",1,'h',"HOSTALIAS","nntp host to use (must be configured in .ngetrc)");
+	addoption("host",1,'h',"HOSTALIAS","force nntp host to use (must be configured in .ngetrc)");
 	addoption("group",1,'g',"GROUPNAME","newsgroup");
 	addoption("quickgroup",1,'G',"GROUPNAME","use group without checking for new headers");
 	addoption("flushserver",1,'F',"HOSTALIAS","flush all headers for server from current group");
