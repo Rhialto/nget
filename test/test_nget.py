@@ -38,7 +38,7 @@ class DecodeTestCase(unittest.TestCase):
 
 	def do_test(self, testnum, dirname):
 		for fn in glob.glob(os.path.join("testdata",testnum,dirname,"*")):
-			if fn.endswith("~"): #ignore backup files
+			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
 				continue
 			self.servers.servers[0].addarticle(["test"], nntpd.FileArticle(open(fn, 'r')))
 
@@ -46,7 +46,7 @@ class DecodeTestCase(unittest.TestCase):
 		
 		ok = []
 		for fn in glob.glob(os.path.join("testdata",testnum,"_output","*")):
-			if fn.endswith("~"): #ignore backup files
+			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
 				continue
 			tail = os.path.split(fn)[1]
 
@@ -79,6 +79,8 @@ class DecodeTestCase(unittest.TestCase):
 	def test_0001_uuencode_single(self):
 		self.do_test_auto()
 	def test_0001_uuenview_uue_mime_single(self):
+		self.do_test_auto()
+	def test_0001_yenc_multi(self):
 		self.do_test_auto()
 	def test_0002_yenc_multi(self):
 		self.do_test_auto()
