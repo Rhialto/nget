@@ -1,6 +1,6 @@
 /*
     rcount.h - classes for easy object refcounting
-    Copyright (C) 2000-2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 2000-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -62,23 +62,21 @@ class c_refcounted {
 		unsigned int count_;
 };
 
-#include <vector>
+
 template <class T>
-class auto_vector : public vector<T*> {
-	public:
-		~auto_vector() {
-			delete_all();
-		}
-		auto_vector(void){}
-		void clear(void){
-			delete_all();
-			vector<T*>::clear();
-		}
+class restricted_ptr {
 	private:
-		void delete_all(void) {
-			for (typename vector<T*>::iterator i=begin(); i!=end(); ++i)
-				delete *i;
-		}
-		auto_vector(const auto_vector &v); //private copy constructor to disallow copying
+		T *p_;
+	public:
+		operator bool() const {return p_!=NULL;}
+		T* operator-> () { return p_; }
+		const T* operator-> () const { return p_; }
+		T& operator* ()  { return *p_; }
+		const T& operator* () const { return *p_; }
+
+		T* gimmethepointer() {return p_;}
+		const T* gimmethepointer() const {return p_;}
+		explicit restricted_ptr(T *p):p_(p){} //explicit constructor keeps you from accidentally trying to assign to it, yet allows stl containers to copy around internally with the copy constructor and operator=
 };
+
 #endif

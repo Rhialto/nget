@@ -23,6 +23,7 @@
 #include <memory>
 #include <errno.h>
 #include <unistd.h>
+#include "auto_vector.h"
 #include "nget.h"
 #include "mylockfile.h"
 #include "strtoker.h"
