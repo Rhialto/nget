@@ -329,6 +329,7 @@ if test "${with_$1}" != no ; then
                 CFLAGS="$CFLAGS -I${with_$1}"
         fi
 
+	no_good=no
         AC_CHECK_LIB($3,$2,,[
 		if test -z "${$1_libdir}" -a "${with_$1}" != yes ; then
 			LDFLAGS="$OLD_LDFLAGS -L${with_$1}/lib"

@@ -1,5 +1,6 @@
 2002-xx-xx v0.x:
   * Print error message rather than segv on flush without specifying a group first. (Reported by Christian Marillat)
+  * Fix configure script not resetting a variable between testing packages causing it to not run some tests and to miss placing some data in the Makefile.
 
 2002-06-17 v0.19:
   * Fix handling of timeout where the server prints an error before disconnecting. (Reported by Scott Kay)
