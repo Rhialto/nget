@@ -38,18 +38,19 @@ class c_nrange{
 		int changed;
 		string file;
 		t_rlist rlist;
-		int get_total(void) {
+		ulong get_total(void) {
 			ulong tot=0;
 			for (t_rlist::iterator i=rlist.begin();i!=rlist.end();++i)
 				tot += i->first - i->second + 1;
 			return tot;
 		}
+		t_rlist::size_type num_ranges(void){return rlist.size();}
 		bool empty(void){return rlist.empty();}
-		int check(ulong n){
+		bool check(ulong n){
 			t_rlist::iterator i=rlist.lower_bound(n);
 			if (i!=rlist.end() && (*i).second<=n)
-				return 1;
-			return 0;
+				return true;
+			return false;
 		}
 		void insert(ulong n);
 		void insert(ulong l,ulong h);
@@ -67,5 +68,7 @@ class c_nrange{
 		c_nrange(c_nrange &r):changed(r.changed),rlist(r.rlist){}
 		c_nrange(string f="");
 		~c_nrange();
+		bool operator==(const c_nrange &b) const {return rlist==b.rlist;}
 };
+
 #endif

@@ -190,7 +190,7 @@ void c_prot_nntp::doxover(c_nrange *r){
 
 	t_rlist::iterator r_ri;
 	t_rlist::iterator w_ri=r->rlist.begin();
-	int streamed = 0, totalranges = r->rlist.size(), doneranges = 0;
+	int streamed = 0, totalranges = r->num_ranges(), doneranges = 0;
 	for (r_ri=r->rlist.begin();r_ri!=r->rlist.end();++r_ri, ++doneranges){
 		if (progress.needupdate())
 			progress.print_retrieving_headers(lowest,highest,realnum,realtotal,total,bytes,doneranges,streamed,totalranges);
