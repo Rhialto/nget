@@ -19,7 +19,7 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import nntpd, threading, time
+import nntpd, threading, time, rfc822
 
 def chomp(line):
 	if line[-2:] == '\r\n': return line[:-2]
@@ -43,6 +43,7 @@ class NNTPRequestHandler(nntpd.NNTPRequestHandler):
 		f = open("%03i"%myn, "w")
 		inheader = 1
 		hasmid = 0
+		hasdate = 0
 		while 1:
 			l = self.rfile.readline()
 			if not l: return -1
@@ -50,12 +51,18 @@ class NNTPRequestHandler(nntpd.NNTPRequestHandler):
 			if inheader:
 				if l=='':
 					inheader=0
+					if not hasdate:
+						date = rfc822.formatdate()
+						print "generated date %s for post %s"%(date, myn)
+						f.write('Date: %s\n'%date)
 					if not hasmid:
 						mid = genmid(myn)
 						print "generated mid %s for post %s"%(mid, myn)
 						f.write('Message-ID: %s\n'%mid)
 				elif l.startswith('Message-ID: '):
 					hasmid = 1
+				elif l.startswith('Date: '):
+					hasdate = 1
 			if l=='.':
 				f.close()
 				self.nwrite("240 article posted ok")
