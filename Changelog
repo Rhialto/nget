@@ -10,6 +10,7 @@
   * Extend server penalization so that any server that disconnects before successfully executing at least one command will be penalized.  This means that disconnects due to overquota, servers that connect but timeout before saying hello, etc, will also be penalized now.
   * Fix needing to escape quotes inside -r strings.
   * Preliminary support for (cross-)compiling with mingw32. (see README.mingw32)
+  * Remove configure --disable-filecompare option.  I don't think anyone used it, and even if they did it really shouldn't be a configure option.  (If you did use it, and want me to add it as a runtime option, then contact me.)
 
 2002-06-17 v0.19.1:
   * Print error message rather than segv on flush without specifying a group first. (Reported by Christian Marillat)

@@ -73,15 +73,6 @@ AC_SUBST(UUDIR)
 AC_SUBST(UULIB)
 
 
-AC_ARG_ENABLE(filecompare,
-[ --disable-filecompare    Do not test to see if a duplicate downloaded file is
-                          the same as the original, keep all duplicates.],
-	if test "$enableval" != "no"; then
-		AC_DEFINE(USE_FILECOMPARE,1,[compare duplicate files?])
-	fi
-,
-		AC_DEFINE(USE_FILECOMPARE)
-)
 AC_ARG_ENABLE(checksum,
 [ --enable-checksum=method Set which method to use for comparing headers and
                           for short-tempnames.  Either crc32 or adler32.

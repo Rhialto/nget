@@ -23,6 +23,7 @@
 #include "strreps.h"
 #include "log.h"
 #include "path.h"
+#include "file.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -333,8 +334,6 @@ time_t decode_textage(const char *cbuf) {
 	return mktime(&tblock);
 }
 
-#ifdef	USE_FILECOMPARE					// check for duplicate files
-#include "file.h"
 int filecompare(const char *old_fn,const char *nfn){
 	c_file_fd old_f(old_fn, O_RDONLY);
 	c_file_fd new_f(nfn, O_RDONLY);
@@ -356,5 +355,4 @@ int filecompare(const char *old_fn,const char *nfn){
 		}
 	}
 }
-#endif
 

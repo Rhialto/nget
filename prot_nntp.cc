@@ -898,7 +898,6 @@ void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_l
 						//all the following ugliness with fname_filter is due to uulib forgetting that we already filtered the name and giving us the original name instead.
 						char nfn[PATH_MAX];
 						sprintf(nfn+fname_filter(nfn, NULL, uul->filename), ".%lu.%i", f->badate(),rand());
-#ifdef	USE_FILECOMPARE	// We have a duplicate file name
 						// memorize the old file name
 						char old_fnp[PATH_MAX];
 						char *nfnp;
@@ -919,11 +918,6 @@ void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_l
 						}
 						// cleanup
 						free(nfnp);
-#else	/* USE_FILECOMPARE */				// the orginal code
-						UURenameFile(uul,nfn);
-						r=UUDecodeFile(uul,NULL);
-						set_dupe_warn_status();
-#endif	/* USE_FILECOMPARE */
 					}
 					if (r!=UURET_OK){
 						uustatus.derr++;

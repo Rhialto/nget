@@ -53,8 +53,6 @@ time_t decode_textage(const char *cbuf);
 int decode_textmonth(const char * buf);
 int decode_texttz(const char * buf);
 
-#ifdef	USE_FILECOMPARE					// check for duplicate files
 int filecompare(const char *old_fn,const char *nfn);
-#endif
 
 #endif
