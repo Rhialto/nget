@@ -69,6 +69,10 @@ void lowerstr(string &s){
 		*i=tolower(*i);
 }
 
+bool strstartswith(const string &s, const string &t) {
+	return s.substr(0,t.size()) == t;
+}
+
 string regex2wildmat(const string &repat, bool ignorecase){
 	if (repat.empty())
 		return "*";

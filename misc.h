@@ -107,6 +107,8 @@ bool parsestr(const string &val, T &dest, T min, T max, const char *name) {
 string strtolower(const string &s);
 void lowerstr(string &s);
 
+bool strstartswith(const string &s, const string &t);
+
 string regex2wildmat(const string &repat, bool ignorecase=false);
 
 template <class int_type>

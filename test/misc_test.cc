@@ -7,6 +7,7 @@ void set_user_error_status_and_do_fatal_user_error(void) {} // ugly. whee.
 
 class misc_Test : public CppUnit::TestFixture {
 	CPPUNIT_TEST_SUITE(misc_Test);
+		CPPUNIT_TEST(testStrstartswith);
 		CPPUNIT_TEST(testRegex2Wildmat);
 		CPPUNIT_TEST(testFileCompareSame);
 		CPPUNIT_TEST(testFileCompareDiff);
@@ -21,6 +22,14 @@ class misc_Test : public CppUnit::TestFixture {
 		CPPUNIT_TEST(testParseStrUnsigned);
 	CPPUNIT_TEST_SUITE_END();
 	public:
+		void testStrstartswith(void) {
+			CPPUNIT_ASSERT(strstartswith("hello","hell"));
+			CPPUNIT_ASSERT(strstartswith("hell","hell"));
+			CPPUNIT_ASSERT(!strstartswith("hel","hell"));
+			CPPUNIT_ASSERT(!strstartswith("ohello","hell"));
+			CPPUNIT_ASSERT(!strstartswith("ohell","hell"));
+			CPPUNIT_ASSERT(!strstartswith("helol","hell"));
+		}
 		void testRegex2Wildmat(void) {
 			CPPUNIT_ASSERT_EQUAL(string("*"), regex2wildmat(""));
 			CPPUNIT_ASSERT_EQUAL(string("*foo*"), regex2wildmat("foo"));
