@@ -1039,6 +1039,19 @@ class AuthTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifyoutput('0002')
 
+	def test_NoSuchGroupAuth(self): #test if the command we were authenticating for failing is handled ok
+		self.servers = nntpd.NNTPD_Master(3)
+		self.servers.servers[1].adduser('ralph','5') #ralph has full auth
+		self.servers.servers[1].adduser('','',{'group':0}) #default can't do GROUP
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, hostoptions=[{},{'user':'ralph', 'pass':'5'},{}])
+		self.servers.start()
+		self.addarticles_toserver('0002', 'uuencode_multi',self.servers.servers[0])
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.verifyoutput('0002')
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[2].conns, 1)
+
 	def test_lite_GroupAuth(self):
 		self.servers = nntpd.NNTPD_Master(1)
 		self.servers.servers[0].adduser('ralph','5') #ralph has full auth
