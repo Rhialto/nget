@@ -555,6 +555,13 @@ class RetrieveTest_base(DecodeTest_base):
 		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par']})
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 6)
 
+	def test_autoparhandling_existingdat(self):
+		self.addarticles('par01', 'input')
+		self.vfailIf(self.nget_run('-g test -r "par.test.*0..dat"'))
+		self.vfailIf(self.nget_run('-G test -r par.test'))
+		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par']})
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 6)
+
 	def test_autoparhandling_existingpxx(self):
 		self.addarticles('par01', 'input')
 		self.rmarticle_fromserver('par01','input','par',self.servers.servers[0])
