@@ -34,6 +34,15 @@ bool c_nget_config::penalize(c_server::ptr server) const {
 	return server->penalty_count >= penaltystrikes;
 }
 
+c_server::ptr c_nget_config::getserver(const string &name) const {
+	serv_match_by_name name_matcher;
+	name_matcher.mname=name.c_str();
+	t_server_list::const_iterator sli=find_if(serv.begin(),serv.end(),name_matcher);
+	if (sli!=serv.end())
+		return (*sli).second;
+	return NULL;
+}
+
 int parse_int_pair(const char *s, int *l, int *h){
 	const char *p;
 	char *erp;

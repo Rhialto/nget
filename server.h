@@ -147,14 +147,7 @@ class c_nget_config {
 				return (*sli).second;
 			return NULL;
 		}
-		c_server::ptr getserver(string name) const {
-			serv_match_by_name name_matcher;
-			name_matcher.mname=name.c_str();
-			t_server_list::const_iterator sli=find_if(serv.begin(),serv.end(),name_matcher);
-			if (sli!=serv.end())
-				return (*sli).second;
-			return NULL;
-		}
+		c_server::ptr getserver(const string &name) const;
 		c_server_priority_grouping* getpriogrouping(string groupname) const {
 			t_server_priority_grouping_list::const_iterator spgli = prioritygroupings.find(groupname.c_str());
 			if (spgli != prioritygroupings.end())
