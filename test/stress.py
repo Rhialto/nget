@@ -124,7 +124,7 @@ def populate():
 				serv.addarticle(groups, article)
 
 
-print 'generating test posts...'	
+print 'generating test posts...'
 populate()
 
 testnget = util.TestNGet(options.nget, servers.servers)

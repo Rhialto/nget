@@ -40,7 +40,7 @@ def main():
 	if not ngetargs:
 		ngetargs = ['-gtest','-r.']
 	servers = nntpd.NNTPD_Master(1)
-	nget = util.TestNGet(ngetexe, servers.servers) 
+	nget = util.TestNGet(ngetexe, servers.servers)
 	try:
 		for a in articles:
 			servers.servers[0].addarticle(["test"], nntpd.FileArticle(open(a)))

@@ -229,7 +229,7 @@ class DecodeTest_base:
 class DecodeTestCase(TestCase, DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		
 	def tearDown(self):
@@ -421,7 +421,7 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 class RetrieveTest_base(DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.addarticles('0005', 'input')
 		self.addarticles('0002', 'uuencode_multi3')
 		self.addarticles('0001', 'uuencode_single')
@@ -1294,7 +1294,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.addarticles('par02', 'c_d_par2_input', fname='par[12]')
 		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
 		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','c d 05.dat','c d.par2'],
-			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','_c_d_par2_output/c d.par2']}) 
+			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','_c_d_par2_output/c d.par2']})
 		
 	#### TODO: further par2 tests
 	
@@ -1722,7 +1722,7 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 class MakedirsTestCase_base(DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.addarticles('0001', 'uuencode_single')
 		self.servers.start()
 		self.ptail = os.path.join('aaa','bbb','ccc')
@@ -1788,7 +1788,7 @@ class MakedirsAskTestCase(TestCase, MakedirsTestCase_base):
 class MetaGrouping_RetrieveTest_base(DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		
 	def tearDown(self):
@@ -1953,7 +1953,7 @@ class MiscTestCase(TestCase, DecodeTest_base):
 class FatalUserErrorsTestCase(TestCase, DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'fatal_user_errors':1}) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'fatal_user_errors':1})
 		self.addarticles('0001', 'uuencode_single')
 		self.servers.start()
 	
@@ -2265,9 +2265,9 @@ class XoverTest_base(DecodeTest_base):
 class XoverTestCase(TestCase, XoverTest_base):
 	def setUp(self):
 		XoverTest_base.setUp(self)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':0}) 
-		self.fxnget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':1}) 
-		self.fx2nget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':2}) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':0})
+		self.fxnget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':1})
+		self.fx2nget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':2})
 
 	def tearDown(self):
 		XoverTest_base.tearDown(self)
@@ -2275,9 +2275,9 @@ class XoverTestCase(TestCase, XoverTest_base):
 class CmdlineXoverTestCase(TestCase, XoverTest_base):
 	def setUp(self):
 		XoverTest_base.setUp(self)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
-		self.fxnget = util.TestNGet(ngetexe, self.servers.servers) 
-		self.fx2nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.fxnget = util.TestNGet(ngetexe, self.servers.servers)
+		self.fx2nget = util.TestNGet(ngetexe, self.servers.servers)
 		def RunnerFactory(nget, fullxover):
 			oldrun = nget.run
 			def runner(args):
@@ -2368,7 +2368,7 @@ class OverArticleQuotaDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 class OverArticleQuotaShutdowningNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_article(self, args):
 		self.nwrite("502 Over quota. Shutdown.")
-		#If how is 0, further receives are disallowed. If how is 1, further sends are disallowed. If how is 2, further sends and receives are disallowed. 
+		#If how is 0, further receives are disallowed. If how is 1, further sends are disallowed. If how is 2, further sends and receives are disallowed.
 		self.connection.shutdown(1)
 		while 1:
 			rcmd = self.rfile.readline()
@@ -2427,13 +2427,13 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 
 	def test_DeadServer(self):
 		servers = [nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)]
-		self.nget = util.TestNGet(ngetexe, servers) 
+		self.nget = util.TestNGet(ngetexe, servers)
 		servers[0].server_close()
 		self.vfailUnlessExitstatus(self.nget.run("-g test -r ."), 16, "nget process did not detect connection error")
 	
 	def test_DeadServerRetr(self):
 		self.servers = nntpd.NNTPD_Master(1)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
 		self.vfailIf(self.nget.run("-g test"))
@@ -2738,7 +2738,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 	
 	def test_DiscoServer(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), DiscoingNNTPRequestHandler)])
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 
 		self.addarticles('0002', 'uuencode_multi')
@@ -2748,7 +2748,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		
 	def test_TwoDiscoServers(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), DiscoingNNTPRequestHandler)])
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 
 		self.addarticles('0002', 'uuencode_multi')
@@ -2758,7 +2758,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 	def test_ForceDiscoServer(self):
 		"Test if errors are handled correctly in article retrieval with force_host"
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), DiscoingNNTPRequestHandler)])
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 
 		self.addarticles('0002', 'uuencode_multi')
@@ -2794,7 +2794,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 
 	def test_ForceWrongServer(self):
 		self.servers = nntpd.NNTPD_Master(2)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		self.addarticles_toserver('0002', 'uuencode_multi', self.servers.servers[0])
 		self.vfailIf(self.nget.run("-g test"))
@@ -2804,7 +2804,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 
 	def test_ForceServer(self):
 		self.servers = nntpd.NNTPD_Master(2)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		self.addarticles('0001', 'yenc_multi')
 		self.vfailIf(self.nget.run("-h host1 -g test"))
@@ -2820,7 +2820,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 
 	def test_Available_ForceServer(self):
 		self.servers = nntpd.NNTPD_Master(3)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		self.vfailIf(self.nget.run("-h host1 -a"))
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
@@ -2829,7 +2829,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 
 	def test_FlushServer(self):
 		self.servers = nntpd.NNTPD_Master(2)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		self.addarticles_toserver('0002', 'uuencode_multi', self.servers.servers[0])
 		self.addarticles_toserver('0001', 'yenc_multi', self.servers.servers[1])
@@ -2842,7 +2842,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 	
 	def test_Available_FlushServer(self):
 		self.servers = nntpd.NNTPD_Master(2)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		self.servers.servers[0].addgroup("test", "aaa")
 		self.servers.servers[1].addgroup("test", "bbb")
@@ -2861,7 +2861,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 	
 	def test_MetaGrouping_FlushServer(self):
 		self.servers = nntpd.NNTPD_Master(2)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		self.addarticle_toserver('0001', 'yenc_multi', '001', self.servers.servers[0], groups=["test2"])
 		self.addarticle_toserver('0001', 'yenc_multi', '002', self.servers.servers[0], groups=["test3"])
@@ -2878,7 +2878,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 	
 	def test_MetaGrouping_ismultiserver_no(self):
 		self.servers = nntpd.NNTPD_Master(2)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		self.addarticles_toserver('0002', 'uuencode_multi3', self.servers.servers[0], groups=["test"])
 		self.addarticles_toserver('0001', 'uuencode_single', self.servers.servers[0], groups=["test2"])
@@ -2889,7 +2889,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 	
 	def test_MetaGrouping_ismultiserver_yes(self):
 		self.servers = nntpd.NNTPD_Master(2)
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		self.addarticles_toserver('0002', 'uuencode_multi3', self.servers.servers[0], groups=["test"])
 		self.addarticles_toserver('0001', 'uuencode_single', self.servers.servers[1], groups=["test2"])
@@ -2899,7 +2899,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 	
 	def test_AbruptTimeout(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)])
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
@@ -2909,7 +2909,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 
 	def test_ErrorTimeout(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer((nntpd.serveraddr,0), ErrorDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer((nntpd.serveraddr,0), nntpd.NNTPRequestHandler)])
-		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
 		self.servers.start()
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
