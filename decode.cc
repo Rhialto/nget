@@ -26,6 +26,7 @@
 #include "misc.h"
 #include "myregex.h"
 #include "status.h"
+#include "_sstream.h"
 
 #ifndef PROTOTYPES
 #define PROTOTYPES //required for uudeview.h to prototype function args.
@@ -69,8 +70,8 @@ int uu_busy_callback(void *v,uuprogress *p){
 	if (!quiet) {printf(".");fflush(stdout);}
 	return 0;
 };
-int fname_filter(char *buf, const char *path, char *fn){
-	char *fnp=fn;
+string fname_filter(const char *path, const char *fn){
+	const char *fnp=fn;
 	int slen=strlen(fnp);
 	if (*fnp=='"') {
 		fnp++;
@@ -79,16 +80,16 @@ int fname_filter(char *buf, const char *path, char *fn){
 	if (fnp[slen-1]=='"')
 		slen--;
 	if (path)
-		return sprintf(buf,"%s/%.*s",path,slen,fnp);
+		return path_join(path,string(fnp,slen));
 	else
-		return sprintf(buf,"%.*s",slen,fnp);
+		return string(fnp,slen);
 }
 char * uu_fname_filter(void *v,char *fn){
+	static string filtered;
 	const string *s=(const string *)v;
-	static char buf[PATH_MAX];
-	fname_filter(buf,s->c_str(),fn);
-	PDEBUG(DEBUG_MED,"uu_fname_filter: filtered %s to %s",fn,buf);
-	return buf;
+	filtered = fname_filter(s->c_str(),fn);
+	PDEBUG(DEBUG_MED,"uu_fname_filter: filtered %s to %s",fn,filtered.c_str());
+	return const_cast<char*>(filtered.c_str()); //uulib isn't const-ified
 }
 
 const char *uutypetoa(int uudet) {
@@ -102,6 +103,12 @@ const char *uutypetoa(int uudet) {
 		case QP_ENCODED:return "qptext";
 		default:return "unknown";
 	}
+}
+
+string make_dupe_name(const string &fn, c_nntp_file::ptr f) {
+	ostringstream ss;
+	ss << fn << '.' << f->badate() << '.' << rand();
+	return ss.str();
 }
 
 
@@ -156,38 +163,33 @@ int Decoder::decode(const nget_options &options, const c_nntp_file_retr::ptr &fr
 		//check if dest file exists before attempting decode, avoids having to hack around the uu_error that occurs when the destfile exists and overwriting is disabled.
 		//also rename the file if it is not ok to avoid the impression that you have a correct file.
 		int pre_decode_derr = uustatus.derr;
-		char orig_fnp[PATH_MAX];
-		fname_filter(orig_fnp, fr->path.c_str(), uul->filename);
+		string orig_fnp = fname_filter(fr->path.c_str(), uul->filename);
 		if ((uul->state & UUFILE_OK) && !fexists(orig_fnp)) {
 			r=UUDecodeFile(uul,NULL);
 			if ((r!=UURET_OK || uustatus.derr!=pre_decode_derr) && fexists(orig_fnp)) {
-				char nfn[PATH_MAX];
+				string nfnp;
 				do {
-					sprintf(nfn, "%s.%lu.%i", orig_fnp, f->badate(), rand());
-				} while (fexists(nfn));
-				xxrename(orig_fnp, nfn);
+					nfnp = make_dupe_name(orig_fnp, f);
+				} while (fexists(nfnp));
+				xxrename(orig_fnp.c_str(), nfnp.c_str());
 			}
 		}
 		else {
 			//all the following ugliness with fname_filter is due to uulib forgetting that we already filtered the name and giving us the original name instead.
 			// Generate a new filename to use
-			char nfn[PATH_MAX];
-			sprintf(nfn+fname_filter(nfn, NULL, uul->filename), ".%lu.%i", f->badate(),rand());
-			UURenameFile(uul,nfn);
+			string nfn(make_dupe_name(fname_filter(NULL,uul->filename), f));
+			UURenameFile(uul,const_cast<char*>(nfn.c_str())); //uulib isn't const-ified
 			r=UUDecodeFile(uul,NULL);
 			// did it decode correctly?
 			if (r == UURET_OK && fexists(orig_fnp)){
-				char *nfnp;
-				asprintf(&nfnp,"%s/%s",fr->path.c_str(),nfn);
+				string nfnp(path_join(fr->path,nfn));
 				// if identical, delete the one we just downloaded
-				if (filecompare(orig_fnp,nfnp)){
-					printf("Duplicate File Removed %s\n", nfn);
-					unlink(nfnp);
+				if (filecompare(orig_fnp.c_str(),nfnp.c_str())){
+					printf("Duplicate File Removed %s\n", nfn.c_str());
+					unlink(nfnp.c_str());
 					set_dupe_ok_status();
 				}else
 					set_dupe_warn_status();
-				// cleanup
-				free(nfnp);
 			}
 		}
 		if (r!=UURET_OK){
