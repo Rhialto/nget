@@ -48,7 +48,7 @@ extern "C" {
 #include "prot_nntp.h"
 #include "log.h"
 #include "nget.h"
-#include "datfile.h"
+#include "cfgfile.h"
 #include "myregex.h"
 
 
@@ -451,6 +451,7 @@ int nget_options::set_save_text_for_binaries(const char *s){
 		save_text_for_binaries=false;
 	else{
 		PERROR("set_save_text_for_binaries invalid option %s",s);
+		set_user_error_status_and_do_fatal_user_error();
 		return 0;
 	}
 	return 1;
@@ -471,6 +472,7 @@ int nget_options::set_text_handling(const char *s){
 		texthandling=TEXT_IGNORE;
 	else{
 		PERROR("set_text_handling invalid option %s",s);
+		set_user_error_status_and_do_fatal_user_error();
 		return 0;
 	}
 	return 1;
@@ -488,6 +490,7 @@ int nget_options::set_test_multi(const char *s){
 		test_multi=NO_SHOW_MULTI;
 	else{
 		PERROR("set_test_multi invalid option %s",s);
+		set_user_error_status_and_do_fatal_user_error();
 		return 0;
 	}
 	return 1;
@@ -510,6 +513,7 @@ int nget_options::set_makedirs(const char *s){
 		int numcreate = strtol(s,&erp,10);
 		if (*s=='\0' || *erp!='\0' || numcreate < 0) {
 			PERROR("set_makedirs invalid option %s",s);
+			set_user_error_status_and_do_fatal_user_error();
 			return 0;
 		}
 		makedirs = numcreate;
@@ -1130,55 +1134,53 @@ int main(int argc, const char ** argv){
 			options.save_text_for_binaries=false;
 			options.mboxfname="nget.mbox";
 			{
-				c_data_file cfg;
-				c_data_section *galias,*halias,*hpriority;
 				string ngetrcfn = nghome + ".ngetrc";
 				if (!fexists(ngetrcfn.c_str())) {
 					ngetrcfn = nghome + "_ngetrc";
 					if (!fexists(ngetrcfn.c_str()))
 							throw ConfigExFatal(Ex_INIT,"neither %s nor %s exist", (nghome + ".ngetrc").c_str(), ngetrcfn.c_str());
 				}
-				cfg.setfilename(ngetrcfn.c_str());
-				cfg.read();
-				halias=cfg.data.getsection("halias");
-				hpriority=cfg.data.getsection("hpriority");
-				galias=cfg.data.getsection("galias");
+				CfgSection cfg(ngetrcfn);
+				const CfgSection *galias,*halias,*hpriority;
+				halias=cfg.getsection("halias");
+				hpriority=cfg.getsection("hpriority");
+				galias=cfg.getsection("galias");
 				if (!halias)
 					throw ConfigExFatal(Ex_INIT,"no halias section");
-				nconfig.setlist(&cfg.data,halias,hpriority,galias);
+				nconfig.setlist(&cfg,halias,hpriority,galias);
 				int t;
 				/*			if (!halias || !(options.host=halias->getitema("default")))
 							options.host=getenv("NNTPSERVER")?:"";
 							nntp.nntp_open(options.host,NULL,NULL);*/
 				/*			options.host=halias->getsection("default");
 							nntp.nntp_open(options.host);*/
-				cfg.data.getitemi("timeout",&sock_timeout);
-				cfg.data.getitemi("debug",&debug);
-				cfg.data.getitemi("quiet",&quiet);
-				cfg.data.getitemul("limit",&options.linelimit);
-				cfg.data.getitemi("tries",&options.maxretry);
-				cfg.data.getitemi("delay",&options.retrydelay);
-				if (!cfg.data.getitemi("case",&t) && t==1)
+				cfg.get("timeout",sock_timeout,1,INT_MAX);
+				cfg.get("debug",debug,0,DEBUG_ALL);
+				cfg.get("quiet",quiet,0,2);
+				cfg.get("limit",options.linelimit,0UL,ULONG_MAX);
+				cfg.get("tries",options.maxretry,1,INT_MAX);
+				cfg.get("delay",options.retrydelay,0,INT_MAX);
+				if (!cfg.get("case",t,0,1) && t==1)
 					options.gflags|= GETFILES_CASESENSITIVE;
-				if (!cfg.data.getitemi("complete",&t) && t==0)
+				if (!cfg.get("complete",t,0,1) && t==0)
 					options.gflags|= GETFILES_GETINCOMPLETE;
-				if (!cfg.data.getitemi("dupeidcheck",&t) && t==0)
+				if (!cfg.get("dupeidcheck",t,0,1) && t==0)
 					options.gflags|= GETFILES_NODUPEIDCHECK;
-				if (!cfg.data.getitemi("dupefilecheck",&t) && t==0)
+				if (!cfg.get("dupefilecheck",t,0,1) && t==0)
 					options.gflags|= GETFILES_NODUPEFILECHECK;
-				if (!cfg.data.getitemi("dupefilemark",&t) && t==1)
+				if (!cfg.get("dupefilemark",t,0,1) && t==1)
 					options.gflags|= GETFILES_DUPEFILEMARK;
-				if (!cfg.data.getitemi("tempshortnames",&t) && t==1)
+				if (!cfg.get("tempshortnames",t,0,1) && t==1)
 					options.gflags|= GETFILES_TEMPSHORTNAMES;
-				if (!cfg.data.getitemi("save_binary_info",&t) && t==1)
+				if (!cfg.get("save_binary_info",t,0,1) && t==1)
 					options.save_text_for_binaries=true;
-				if (!cfg.data.getitemi("autopar",&t) && t==0)
+				if (!cfg.get("autopar",t,0,1) && t==0)
 					options.gflags|= GETFILES_NOAUTOPAR;
-				options.set_test_multi(cfg.data.getitema("test_multiserver"));
-				options.set_text_handling(cfg.data.getitema("text"));
-				options.set_makedirs(cfg.data.getitema("makedirs"));
+				options.set_test_multi(cfg.geta("test_multiserver"));
+				options.set_text_handling(cfg.geta("text"));
+				options.set_makedirs(cfg.geta("makedirs"));
 				
-				cfg.data.getitems("cachedir",&ngcachehome);//.ngetrc setting overrides default
+				cfg.get("cachedir",ngcachehome);//.ngetrc setting overrides default
 				char *cp=getenv("NGETCACHE");//environment var overrides .ngetrc
 				if (cp)
 					ngcachehome=cp;
@@ -1186,6 +1188,9 @@ int main(int argc, const char ** argv){
 				if (!direxists(ngcachehome))
 					throw ConfigExFatal(Ex_INIT,"cache dir %s does not exist", ngcachehome.c_str());
 			}
+			//check for user errors here rather than using set_user_error_status_and_do_fatal_user_error, so that all config entries can be checked before exiting.
+			if (error_user && nconfig.fatal_user_errors)
+				throw FatalUserException();
 			init_term_stuff();
 			options.get_path();
 			nntp.initready();

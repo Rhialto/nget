@@ -5,6 +5,7 @@
   * Patched uulib to fix problem with long headers causing duplicate output in text files. (Patch also at http://nget.sf.net/patches/uulib-0.5.19-uuinfofile-long-headers.patch)
   * Fix memleak in goodgetcwd with long paths.
   * Fix goodgetcwd error handling.
+  * Rewrite of config file code, all config values are error checked now.
 
 2003-11-20 v0.25:
   * Allow the same server id to be used for multiple hosts to share header cache data. (Useful if you have multiple accounts on the same server.)

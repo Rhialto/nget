@@ -530,6 +530,16 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-dI -G test --dupepath %s -p %s -r .'%(self.nget.tmpdir, tmp2dir)))
 		self.verifyoutput(['0001','0002','0005'],tmpdir=tmp2dir)
 	
+	def test_config_file_silly_values(self):
+		options={'debug':-1,'quiet':-1,'tries':0,'limit':-1,'delay':-1,'timeout':0,'case':-1,'complete':-1,'dupeidcheck':-1,'dupefilecheck':-1,'dupefilemark':-1,'tempshortnames':-1,'save_binary_info':-1,'autopar':-1,'test_multiserver':'foo','text':'foo','makedirs':-1,
+			'usegz':-20,'fullxover':-1,'fatal_user_errors':-1,'autopar_optimistic':-1,'unequal_line_error':-1,'maxstreaming':-1,'maxconnections':-2,'idletimeout':0,'penaltystrikes':-2,'initialpenalty':0,'penaltymultiplier':0}
+		hostoptions={'idletimeout':0,'fullxover':-1,'maxstreaming':-1,'linelenience':'foo'}
+		self.nget.writerc(self.servers.servers, options=options, hostoptions=[hostoptions])
+		output = self.vfailUnlessExitstatus_getoutput(self.nget_run_getoutput('-g test -r joystick'), 4)
+		self.verifyoutput('0002')
+		self.vfailUnlessEqual(output.count("ERRORS: %i user"%(len(options)+len(hostoptions))), 1)
+	
+	
 	def test_noautoparhandling(self):
 		self.addarticles('par01', 'input')
 		self.vfailIf(self.nget_run('-g test --no-autopar -r par.test'))

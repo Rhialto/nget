@@ -1,6 +1,6 @@
 /*
     _sstream.h - wrapper around old ostrstream class to emulate ostringstream
-    Copyright (C) 2001  Matthew Mueller <donut AT dakotacom.net>
+    Copyright (C) 2001-2003  Matthew Mueller <donut AT dakotacom.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,10 @@
 #ifndef __SSTREAM_H_
 #define __SSTREAM_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifdef HAVE_SSTREAM
 //If we have the new sstream, we don't need to do anything.
 #include <sstream>
@@ -31,6 +35,7 @@ class ostringstream : public ostrstream {
 	public:
 		string str(void) {return string(ostrstream::str(), pcount());} //ostrstream::str() is not null terminated.
 };
+class istringstream : public istrstream { }
 #endif
 
 #endif

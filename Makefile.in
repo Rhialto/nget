@@ -30,7 +30,7 @@ all: .autostuff $(NGET) $(NGETLITE)
 INSTALLDIRS=$(bindir) $(mandir)/man1
 W32DISTFILES=COPYING Changelog FAQ README.win32 nget.txt ngetlite.txt _ngetrc $(NGET) $(NGETLITE)
 
-OBJS=nget.o prot_nntp.o decode.o texthandler.o sockpool.o sockstuff.o cache.o grouplist.o dupe_file.o file.o file_gz.o termstuff.o path.o misc.o strtoker.o strreps.o myregex.o datfile.o argparser.o etree.o nrange.o log.o server.o par.o knapsack.o par2/par2.a @UULIB@
+OBJS=nget.o prot_nntp.o decode.o texthandler.o sockpool.o sockstuff.o cache.o grouplist.o dupe_file.o file.o file_gz.o termstuff.o path.o misc.o strtoker.o strreps.o myregex.o cfgfile.o argparser.o etree.o nrange.o log.o server.o par.o knapsack.o par2/par2.a @UULIB@
 $(NGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
 

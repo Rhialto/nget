@@ -21,6 +21,7 @@
 #include "nget.h"
 #include <sys/types.h>
 #include <dirent.h>
+#include <algorithm>
 
 bool c_nget_config::penalize(c_server::ptr server) const {
 	if (penaltystrikes<=0)
@@ -77,25 +78,23 @@ int parse_int_pair(const char *s, int *l, int *h){
 	return 0;
 }
 
-c_server::c_server(ulong id, string alia, string shortnam, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea, int idletimeou):alias(alia),shortname(shortnam),addr(add),user(use),pass(pas),idletimeout(idletimeou){
-	serverid=id;
-	if (shortname.empty())
-		shortname=alias[0];
-	if (fullxove)
-		fullxover=atoi(fullxove);
-	else
-		fullxover=nconfig.fullxover;
-	if (maxstrea<0) {
-		PERROR("invalid maxstreaming %i for host %s",maxstrea,addr.c_str());
-		maxstreaming = 0;
-	}else
-		maxstreaming = maxstrea;
-	if (ll){
+c_server::c_server(ulong id, const CfgSection *ds) : serverid(id), alias(ds->key) {
+	addr = ds->gets("addr");
+	user = ds->gets("user");
+	pass = ds->gets("pass");
+	shortname = ds->gets("shortname");
+	if (shortname.empty()) shortname = alias[0];
+	ds->get("idletimeout",idletimeout,1,INT_MAX,nconfig.idletimeout);
+	ds->get("fullxover",fullxover,0,2,nconfig.fullxover);
+	ds->get("maxstreaming",maxstreaming,0,INT_MAX,nconfig.maxstreaming);
+	if (ds->getitem("linelenience")){
+		const char *ll = ds->geta("linelenience");
 		int l,h;
 		if (!parse_int_pair(ll,&l,&h)){
 			lineleniencelow=l;lineleniencehigh=h;
 		}else{
-			PERROR("invalid linelenience %s for host %s",ll,addr.c_str());
+			PERROR("%s: invalid linelenience %s",ds->name().c_str(),ll);
+			set_user_error_status();
 			lineleniencelow=lineleniencehigh=0;
 		}
 	}else{
@@ -107,96 +106,67 @@ c_server::c_server(ulong id, string alia, string shortnam, string add, string us
 	penalty_time=0;
 }
 
-void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_section *pinfo,c_data_section *ginfo){
+void c_nget_config::setlist(const CfgSection *cfg,const CfgSection *hinfo,const CfgSection *pinfo,const CfgSection *ginfo){
 	c_server::ptr server;
-	data_list::iterator dli,dlj;
-	c_data_section *ds;
-	c_data_item *di;
-	const char *sida;
+	CfgSection_map::const_iterator dli;
+	CfgItem_map::const_iterator dii; 
+	const CfgSection *ds;
+	const CfgItem *di;
 	ulong tul;
 	//cfg
 	assert(cfg);
-	const char *cp=cfg->getitema("curservmult");
-	float f;
-	if (cp){
-		f=atof(cp);
-		if (f)
-			nconfig.curservmult=f;
-		else
-			PERROR("invalid curservmult: %s",cp);
-	}
-	cfg->getitemi("usegz",&usegz);
-	fullxover=cfg->geti("fullxover", fullxover);
-	fatal_user_errors=cfg->geti("fatal_user_errors", fatal_user_errors);
-	autopar_optimistic=cfg->geti("autopar_optimistic", autopar_optimistic);
-	cfg->getitemi("unequal_line_error",&unequal_line_error);
-	cfg->getitemi("maxstreaming",&maxstreaming);
-	cfg->getitemi("maxconnections",&maxconnections);
-	cfg->getitemi("idletimeout",&idletimeout);
-	cfg->getitemi("penaltystrikes",&penaltystrikes);
-	cfg->getitemi("initialpenalty",&initialpenalty);
-	cp=cfg->getitema("penaltymultiplier");
-	if (cp){
-		f=atof(cp);
-		if (f>0)
-			nconfig.penaltymultiplier=f;
-		else
-			PERROR("invalid penaltymultiplier: %s",cp);
-	}
+	cfg->get("curservmult",curservmult);
+	cfg->get("usegz",usegz,-1,9);
+	cfg->get("fullxover", fullxover, 0, 2);
+	cfg->get("fatal_user_errors", fatal_user_errors, false, true);
+	cfg->get("autopar_optimistic", autopar_optimistic, false, true);
+	cfg->get("unequal_line_error",unequal_line_error,0,1);
+	cfg->get("maxstreaming",maxstreaming,0,INT_MAX);
+	cfg->get("maxconnections",maxconnections,-1,INT_MAX);
+	cfg->get("idletimeout",idletimeout,1,INT_MAX);
+	cfg->get("penaltystrikes",penaltystrikes,-1,INT_MAX);
+	cfg->get("initialpenalty",initialpenalty,1,INT_MAX);
+	cfg->get("penaltymultiplier",penaltymultiplier,1.0f,1e100f);
 	//halias
 	assert(hinfo);
-	for (dli=hinfo->data.begin();dli!=hinfo->data.end();++dli){
-		di=(*dli).second;
-		if (di->type!=1){
-			PERROR("h not a section");
-			continue;
-		}
-		ds=static_cast<c_data_section*>(di);
-		if (!ds){
-			PERROR("h !ds");continue;
-		}
-		if (!ds->getitema("addr")){
+	for (dli=hinfo->sections_begin();dli!=hinfo->sections_end();++dli){
+		ds=(*dli).second;
+		assert(ds);
+		if (!ds->getitem("addr")){
 			PERROR("host %s no addr",ds->key.c_str());
+			set_user_error_status();
 			continue;
 		}
-		if (!(sida=ds->getitema("id"))){
+		if (!ds->getitem("id")){
 			PERROR("host %s no id",ds->key.c_str());
+			set_user_error_status();
 			continue;
 		}
-		tul=atoul(sida);
-		if (tul==0){
-			PERROR("host %s invalid id '%s'",ds->key.c_str(),sida);
+		if (!ds->get("id",tul,1UL,ULONG_MAX))
 			continue;
-		}
-		server=new c_server(tul,ds->key,ds->getitems("shortname"),ds->getitems("addr"),ds->getitems("user"),ds->getitems("pass"),ds->getitema("fullxover"),ds->getitema("linelenience"),ds->geti("maxstreaming",maxstreaming),ds->geti("idletimeout",idletimeout));
+		server = new c_server(tul, ds);
 		serv.insert(t_server_list::value_type(server->serverid,server));
 	}
 	//hpriority
 	if (pinfo)
-		for (dli=pinfo->data.begin();dli!=pinfo->data.end();++dli){
-			di=(*dli).second;
-			if (di->type!=1){
-				PERROR("p not a section");
-				continue;
-			}
-			ds=static_cast<c_data_section*>(di);
-			if (!ds){
-				PERROR("p !ds");continue;
-			}
+		for (dli=pinfo->sections_begin();dli!=pinfo->sections_end();++dli){
+			ds=(*dli).second;
+			assert(ds);
 			c_server_priority_grouping *pgrouping=new c_server_priority_grouping(ds->key);
-			for (dlj=ds->data.begin();dlj!=ds->data.end();++dlj){
-				di=(*dlj).second;
+			for (dii=ds->items_begin();dii!=ds->items_end();++dii){
+				di=(*dii).second;
 				if (di->key=="_level"){
-					pgrouping->deflevel=atof(di->str.c_str());
+					di->get(pgrouping->deflevel);
 				}else if (di->key=="_glevel"){
-					pgrouping->defglevel=atof(di->str.c_str());
+					di->get(pgrouping->defglevel);
 				}else{
 					server=getserver(di->key);
 					if (!server){
 						PERROR("prio section %s, server %s not found",ds->key.c_str(),di->key.c_str());
+						set_user_error_status();
 						continue;
 					}
-					c_server_priority *sprio=new c_server_priority(server,atof(di->str.c_str()));
+					c_server_priority *sprio=new c_server_priority(server,atof(di->gets().c_str()));
 					pgrouping->priorities.insert(t_server_priority_grouping::value_type(sprio->server,sprio));
 				}
 			}
@@ -213,19 +183,19 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 		trustsizes=new c_server_priority_grouping("trustsizes");
 	}
 	//galias
-	if (ginfo)
-		for (dli=ginfo->data.begin();dli!=ginfo->data.end();++dli){
-			di=(*dli).second;
-			if (di->type!=1){
-				addgroup_or_metagroup(di->key,di->str);
-			}else{
-				ds=static_cast<c_data_section*>(di);
-				if (!ds){
-					PERROR("g !ds");continue;
-				}
-				addgroup(ds->key,ds->getitems("group"),ds->getitems("prio"),ds->geti("usegz",-2));
-			}
+	if (ginfo) {
+		for (dii=ginfo->items_begin();dii!=ginfo->items_end();++dii){
+			di=(*dii).second;
+			addgroup_or_metagroup(di->key,di->gets());
 		}
+		for (dli=ginfo->sections_begin();dli!=ginfo->sections_end();++dli){
+			ds=(*dli).second;
+			assert(ds);
+			int susegz;
+			ds->get("usegz",susegz,-1,9,-2);
+			addgroup(ds->key,ds->gets("group"),ds->gets("prio"),susegz);
+		}
+	}
 }
 
 void c_nget_config::addgroup_or_metagroup(const string &alias, const string &name){

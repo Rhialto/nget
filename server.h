@@ -23,8 +23,10 @@
 #include "config.h"
 #endif
 #include <map>
+#include <vector>
 #include <time.h>
-#include "datfile.h"
+#include "stlhelp.h"
+#include "cfgfile.h"
 #include "rcount.h"
 #include "strtoker.h"
 
@@ -47,7 +49,7 @@ class c_server : public c_refcounted<c_server>{
 		time_t penalty_time;
 		int penalty_count;
 
-		c_server(ulong id, string alia, string shortnam, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea, int idletimeou);
+		c_server(ulong id, const CfgSection *ds);
 };
 typedef multimap<ulong,c_server::ptr> t_server_list;
 typedef pair<t_server_list::const_iterator,t_server_list::const_iterator> t_server_list_range;
@@ -160,7 +162,7 @@ class c_nget_config {
 		}
 		void getgroups(vector<c_group_info::ptr> &groups, const char *names);
 		void dogetallcachedgroups(vector<c_group_info::ptr> &groups);
-		void setlist(c_data_section *cfg,c_data_section *hinfo,c_data_section *pinfo,c_data_section *ginfo);
+		void setlist(const CfgSection *cfg,const CfgSection *hinfo,const CfgSection *pinfo,const CfgSection *ginfo);
 		c_nget_config(){
 			curservmult=2.0;
 			usegz=-1;
