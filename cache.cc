@@ -151,6 +151,7 @@ void c_nntp_file::addpart(c_nntp_part *p){
 //	bytes+=p->apxbytes;lines+=p->apxlines;
 }
 
+//fill a mapping of how many parts of the file each server has
 void c_nntp_file::get_server_have_map(t_server_have_map &have_map) const{
 	t_nntp_file_parts::const_iterator pi(parts.begin());
 	for (;pi!=parts.end();++pi){
@@ -161,6 +162,7 @@ void c_nntp_file::get_server_have_map(t_server_have_map &have_map) const{
 
 		for (;nsai!=pi->second->articles.end();++nsai) {
 			serverid=nsai->first;
+			//don't increment count twice if a server has multiple server_articles for a single part
 			if (servers_already_found.insert(serverid).second){
 				t_server_have_map::iterator hmi(have_map.insert(t_server_have_map::value_type(serverid, 0)).first);
 				if (partnum>0 && partnum<=req)
