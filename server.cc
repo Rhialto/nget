@@ -240,11 +240,11 @@ void c_nget_config::addmetagroup(const string &alias, const string &name){
 }
 
 c_group_info::ptr c_nget_config::addgroup(const string &alias, const string &name, string prio, int usegz){
-	if (name.empty())return NULL;
 	if (prio.empty())prio="default";
 	c_server_priority_grouping *priog=getpriogrouping(prio);
 	if (!priog){
 		printf("group %s(%s), prio %s not found\n",name.c_str(),alias.c_str(),prio.c_str());
+		set_user_error_status();
 		return NULL;
 	}
 	assert(priog);

@@ -412,6 +412,11 @@ class RetrieveTest_base(DecodeTest_base):
 	def test_group_overrides_available(self):
 		self.vfailIf(self.nget_run('-a -g test -r joy'))
 		self.verifyoutput(['0002'])
+	
+	def test_group_noname(self):
+		self.addarticles('0002', 'uuencode_multi3', groups=[""])
+		self.vfailIf(self.nget_run('-g "" -ir .'))
+		self.verifyoutput(['0002'])
 
 	def test_decode_overrides_k_and_K(self):
 		self.vfailIf(self.nget_run('-k -g test --decode -r joy'))
