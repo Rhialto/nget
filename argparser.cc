@@ -1,4 +1,5 @@
 #include "argparser.h"
+#include <ctype.h>
 #include "log.h"
 
 void parseargs(arglist_t &argl, const char *optarg, bool ignorecomments){
