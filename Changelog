@@ -1,3 +1,6 @@
+2004-xx-xx v0.xx:
+  * Fix error in configure script when printing exceptions not found message, due to unquoted string. (Reported by M.J. Soft)
+
 2004-06-17 v0.27:
   * Cache file format change, so switch default NGETHOME to ~/.nget5.
     (Upgrade should be as simple as "mv ~/.nget4 ~/.nget5; rm ~/.nget5/*,cache*")

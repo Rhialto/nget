@@ -42,8 +42,8 @@ AC_DEFUN(MY_CHECK_EXCEPTIONS,
   ])
   AC_MSG_RESULT($my_cv_exceptions)
   if test "x$my_cv_exceptions" = xno; then
-   AC_ERROR(exceptions not supported by your compiler,
-if you need a special flag try CXXFLAGS="-flag-to-enable-exceptions" ./configure)
+   AC_MSG_ERROR([exceptions not supported by your compiler,
+if you need a special flag try CXXFLAGS="-flag-to-enable-exceptions" ./configure])
   fi
  ]
 )
