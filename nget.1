@@ -48,7 +48,7 @@ mkdir.  A future version of nget will support multi-level creating, like mkdir -
 .IP "-T/--testmode"
 Causes --retrieve to merely print out all matching files.
 .IP "--test-multiserver OPT"
-Causes testmode to display which servers have parts of each file.  OPT may be no to disable(default), long for a verbose output, and short for a more condensed form (In short mode, only the first letter of each server alias is printed, and it is upper-cased if that server does not have all the parts).
+Causes testmode to display which servers have parts of each file.  OPT may be no to disable(default), long for a verbose output, and short for a more condensed form. (In short mode, the shortname of each server is printed with no seperating space, and it is upper-cased if that server does not have all the parts.  If the server has no shortname specified, it defaults to the first char of the server alias.)
 .IP "-M/--mark"
 Mark matched files as retrieved.
 .IP "-U/--unmark"
@@ -140,7 +140,7 @@ yes/no/ask: makedirs
 no/short/long: test_multiserver
 .P
 Host configuration is done in the halias section, with a subsection for each
-host containing its address, unique id, and optionally user, pass, fullxover, maxstreaming, and linelenience
+host containing its address, unique id, and optionally shortname, user, pass, fullxover, maxstreaming, and linelenience
 items.  The "id" field must be unique, and should not be changed after you have
 used it (since it could leave leftovers in your cache files, unless you delete
 them first).  The "id" must be greater than 0 and less than ULONG_MAX. (usually

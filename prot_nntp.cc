@@ -741,10 +741,12 @@ void print_nntp_file_info(c_nntp_file::ptr f, t_show_multiserver show_multi) {
 					printf(":%i", i->second);
 			}
 			else{
-				if (i->second<f->have)
-					printf("%c", toupper(s->alias[0]));
+				if (i->second<f->have){
+					for (string::size_type j=0; j<s->shortname.size(); j++)
+						printf("%c", toupper(s->shortname[j]));
+				}
 				else
-					printf("%c", s->alias[0]);
+					printf("%s", s->shortname.c_str());
 			}
 		}
 	}

@@ -33,13 +33,14 @@ class c_server {
 	public:
 		ulong serverid;
 		string alias;
+		string shortname;
 		string addr;
 		string user,pass;
 		bool fullxover;
 		int maxstreaming;
 		int lineleniencelow,lineleniencehigh;
 
-		c_server(ulong id, string alia, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea);
+		c_server(ulong id, string alia, string shortnam, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea);
 };
 typedef map<ulong,c_server*> t_server_list;
 //typedef map<ulong,c_data_section*,less<ulong> > t_server_list;

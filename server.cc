@@ -50,8 +50,10 @@ int parse_int_pair(const char *s, int *l, int *h){
 	return 0;
 }
 
-c_server::c_server(ulong id, string alia, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea):alias(alia),addr(add),user(use),pass(pas){
+c_server::c_server(ulong id, string alia, string shortnam, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea):alias(alia),shortname(shortnam),addr(add),user(use),pass(pas){
 	serverid=id;
+	if (shortname.empty())
+		shortname=alias[0];
 	if (fullxove)
 		fullxover=atoi(fullxove);
 	else
@@ -114,7 +116,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 			printf("host %s invalid id '%s'\n",ds->key.c_str(),sida);
 			continue;
 		}
-		server=new c_server(tul,ds->key,ds->getitems("addr"),ds->getitems("user"),ds->getitems("pass"),ds->getitema("fullxover"),ds->getitema("linelenience"),ds->geti("maxstreaming",maxstreaming));
+		server=new c_server(tul,ds->key,ds->getitems("shortname"),ds->getitems("addr"),ds->getitems("user"),ds->getitems("pass"),ds->getitema("fullxover"),ds->getitema("linelenience"),ds->geti("maxstreaming",maxstreaming));
 		serv[server->serverid]=server;
 	}
 	//hpriority
