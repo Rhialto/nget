@@ -147,6 +147,8 @@ pred<ClassType> * make_pred(const arglist_t &e_parts, int gflags) {
 			PDEBUG(DEBUG_MIN,"x %s",(*i).c_str());
 			x=&(*i);
 			if (*x=="&&" || *x=="and" || *x=="||" || *x=="or"){
+				if (pstack.size()<2)
+					throw UserExFatal(Ex_INIT, "not enough arguments for %s", x->c_str());
 				pred<ClassType> *py=pstack.top(); pstack.pop();
 				pred<ClassType> *px=pstack.top(); pstack.pop();
 				if (x->compare("&&")==0 || x->compare("and")==0)

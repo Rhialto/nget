@@ -743,6 +743,18 @@ class FatalUserErrorsTestCase(TestCase, DecodeTest_base):
 	def test_expretrieve_badexp(self):
 		self.vfailUnlessExitstatus(self.nget.run('-Gtest -R foo -g test'), 4)
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_expretrieve_badexp2(self):
+		self.vfailUnlessExitstatus(self.nget.run('-Gtest -R "lines 0" -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_expretrieve_badexp_join_emptystack(self):
+		self.vfailUnlessExitstatus(self.nget.run('-Gtest -R "||" -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_expretrieve_badexp_join_singleitem(self):
+		self.vfailUnlessExitstatus(self.nget.run('-Gtest -R "lines 0 >= ||" -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_expretrieve_badexp_nojoin(self):
+		self.vfailUnlessExitstatus(self.nget.run('-Gtest -R "lines 0 >= lines 10 <" -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
 	def test_expretrieve_badregex(self):
 		self.vfailUnlessExitstatus(self.nget.run('-Gtest -R "subject * ==" -g test'), 4)
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
