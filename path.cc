@@ -116,10 +116,10 @@ char *goodgetcwd(void){
 			PERROR("realloc error %s",strerror(errno));exit(1);
 		}
 	}*/
-	int t=0;
+	int t=32;
 	char *p=NULL;//ack, that extension seems to like segfaulting when you free() its return.. blah.
 	do {
-		t+=48;
+		t*=2;
 		if (!(p=(char*)realloc(p,t))){
 			PERROR("goodgetcwd: realloc error %s (size=%i)",strerror(errno), t);exit(128);
 		}
