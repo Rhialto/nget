@@ -36,6 +36,7 @@ class TestNGet:
 #			'tries': 1,
 			'tries': 2,
 			'delay': 0,
+#			'penaltystrikes': 1,
 #			'debug': 3,
 #			'debug': 2,
 #			'fullxover': 1

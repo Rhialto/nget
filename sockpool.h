@@ -37,6 +37,7 @@ class Connection {
 		c_server::ptr server;
 		c_group_info::ptr curgroup;
 		bool freshconnect;
+		bool server_ok;
 
 
 		int putline(int echo,const char * str,...)
@@ -66,6 +67,7 @@ class Connection {
 		Connection(c_server::ptr serv):lastuse(0), sock(serv->addr.c_str(), "nntp"), server(serv){
 			sock.initrbuf();
 			freshconnect=true;
+			server_ok=false;
 			curgroup=NULL;
 		}
 };

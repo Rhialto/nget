@@ -75,6 +75,10 @@ void SockPool::connection_erase(t_connection_map::iterator i) {
 	} catch (baseCommEx &e) {//ignore transport errors while closing
 		printCaughtEx_nnl(e);printf(" (ignored)\n");
 	}
+	if (i->second->server_ok)
+		nconfig.unpenalize(i->second->server);
+	else
+		nconfig.penalize(i->second->server);
 	delete i->second;
 	connections.erase(i);
 }
@@ -117,7 +121,6 @@ Connection* SockPool::connect(ulong serverid) {
 		nconfig.penalize(nconfig.getserver(serverid));
 		throw TransportExError(Ex_INIT,"Connection: %s",e.getExStr());
 	}
-	nconfig.unpenalize(c->server);
 	connections.insert(t_connection_map::value_type(serverid, c));
 	c->touch();
 	return c;

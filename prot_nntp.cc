@@ -81,6 +81,13 @@ int c_prot_nntp::chkreply(int reply){
 	return reply;
 }
 
+int c_prot_nntp::chkreply_setok(int reply){
+	//only set the server_ok flag if the command was successful, or if it had a "normal" error status (like group not found, article expired, etc)
+	if (reply/100==2 || reply/100==4)
+		connection->server_ok = true;
+	return chkreply(reply);
+}
+
 int c_prot_nntp::getline(int echo){
 	int r = connection->getline(echo);
 	cbuf = connection->sock.rbufp();
@@ -169,7 +176,7 @@ void c_prot_nntp::doxover(c_nrange *r){
 		}
 		ulong low=(*r_ri).second, high=(*r_ri).first;
 		last = low;
-		chkreply(getreply(debug>=DEBUG_MED));
+		chkreply_setok(getreply(debug>=DEBUG_MED));
 		bytes+=strlen(cbuf)+2;//#### ugly.
 		--streamed;
 		unsigned long an=0;
@@ -252,7 +259,11 @@ void c_prot_nntp::doxover(ulong low, ulong high){
 void c_prot_nntp::nntp_dogroup(int getheaders){
 	assert(connection);
 	if (connection->curgroup!=group || getheaders){	
-		chkreply(stdputline(quiet<2,"GROUP %s",group->group.c_str()));
+		int reply = stdputline(quiet<2,"GROUP %s",group->group.c_str());
+		if (reply/100==4) // if group doesn't exist, set ok flag.  Otherwise let XOVER/ARTICLE reply set it. (If we always set it here, failure of xover/article would never result in penalization.  But if we only set it after xover/article, then a host could be incorrectly penalized just because it didn't have the group (eg, if maxconnections=1 so it closed connection before any other commands could succeed and setok))
+			chkreply_setok(reply);
+		else
+			chkreply(reply);
 		connection->curgroup=group;
 	}
 	if (getheaders){
@@ -565,7 +576,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 				else if (toti->doarticle_show_multi==SHOW_MULTI_LONG)
 					ari->server_name=connection->server->alias.c_str();
 				nntp_dogroup(0);
-				chkreply(stdputline(debug>=DEBUG_MED,"ARTICLE %lu",sa->articlenum));
+				chkreply_setok(stdputline(debug>=DEBUG_MED,"ARTICLE %lu",sa->articlenum));
 #ifdef FILE_DEBUG
 				{
 					char *sav;

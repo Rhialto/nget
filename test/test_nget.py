@@ -649,6 +649,12 @@ class XoverTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput('0002')
 
 
+class DelayBeforeWriteNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	def nwrite(self, s):
+		if getattr(self.server, '_do_delay', 0):
+			time.sleep(2)
+		nntpd.NNTPRequestHandler.nwrite(self, s)
+
 class DelayBeforeArticleNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_article(self, args):
 		time.sleep(1)
@@ -668,6 +674,14 @@ class ErrorDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_article(self, args):
 		nntpd.NNTPRequestHandler.cmd_article(self, args)
 		raise nntpd.NNTPDisconnect("503 You are now disconnected. Have a nice day.")
+
+class OverArticleQuotaDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	def cmd_article(self, args):
+		raise nntpd.NNTPDisconnect("502 Over quota.  Goodbye.")
+
+class OverXOverQuotaDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	def cmd_xover(self, args):
+		raise nntpd.NNTPDisconnect("502 Over quota.  Goodbye.")
 
 class XOver1LineDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_xover(self, args):
@@ -718,6 +732,83 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
 		self.verifyoutput('0002')
 	
+	def test_SleepingServerPenalization(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DelayBeforeWriteNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, priorities=[3,1], options={'tries':1, 'timeout':1, 'penaltystrikes':2, 'maxconnections':1})
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		self.vfailIf(self.nget.run("-g test"))
+		self.servers.servers[0]._do_delay=1
+		self.vfailIf(self.nget.run("-G test -r ."))
+		self.verifyoutput('0002')
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 3)
+
+	def test_OverXOverQuotaServerPenalization(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverXOverQuotaDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':1, 'penaltystrikes':2, 'maxconnections':1})
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		self.vfailIf(self.nget.run("-g test -g test -g test -g test -g test"))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
+
+	def test_OverArticleQuotaServerPenalization(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, priorities=[3,1], options={'tries':1, 'penaltystrikes':2, 'maxconnections':1})
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		self.vfailIf(self.nget.run("-g test"))
+		self.vfailIf(self.nget.run("-G test -r ."))
+		self.verifyoutput('0002')
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 3)
+
+	def test_NoPenalty_g(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'maxconnections':1, 'penaltystrikes':1})
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		self.vfailIf(self.nget.run("-g test -g test -g test"))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
+
+	def test_NoPenalty_g_NoGroup(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'maxconnections':1, 'penaltystrikes':1})
+		self.servers.start()
+		self.vfailUnlessEqual(self.nget.run("-g test -g test -g test"), 16)
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
+
+	def test_NoPenalty_r(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'maxconnections':1, 'penaltystrikes':1})
+		self.servers.start()
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
+		self.vfailIf(self.nget.run("-g test"))
+		self.vfailIf(self.nget.run("-G test -r ."))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
+		self.verifyoutput('0002')
+
+	def test_NoPenalty_r_Expired(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'maxconnections':1, 'penaltystrikes':1})
+		self.servers.start()
+		self.addarticles('0001', 'uuencode_single')
+		self.addarticles('0002', 'uuencode_multi3')
+		self.addarticles('0003', 'newspost_uue_0')
+		self.vfailIf(self.nget.run("-g test"))
+		self.rmarticles('0001', 'uuencode_single')
+		self.rmarticles('0002', 'uuencode_multi3')
+		self.rmarticles('0003', 'newspost_uue_0')
+		self.vfailUnlessEqual(self.nget.run("-G test -r ."), 8)
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 3)
+
 	def test_OneLiveServer(self):
 		self.servers = nntpd.NNTPD_Master(1)
 		deadserver = nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)
