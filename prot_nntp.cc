@@ -374,7 +374,7 @@ inline void arinfo::print_retrieving_articles(time_t curtime, quinfo*tot){
 	if (!quiet) clear_line_and_return();
 	if (tot && tot->doarticle_show_multi!=NO_SHOW_MULTI)
 		printf("%s ",server_name);
-	printf("%li (%i/%i): %li/%liL %li/%liB %3li%% %liB/s %s",
+	printf("%lu (%i/%i): %li/%liL %li/%liB %3li%% %liB/s %s",
 			anum,partnum,partreq,linesdone,linestot,bytesdone,bytestot,
 			(linestot!=0)?(linesdone*100/linestot):0,Bps,
 			durationstr((linesdone>=linestot)?dtime:((Bps>0)?(bytestot-bytesdone)/(Bps):-1)).c_str());
@@ -563,7 +563,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 				else if (toti->doarticle_show_multi==SHOW_MULTI_LONG)
 					ari->server_name=connection->server->alias.c_str();
 				nntp_dogroup(0);
-				chkreply(stdputline(debug>=DEBUG_MED,"ARTICLE %li",sa->articlenum));
+				chkreply(stdputline(debug>=DEBUG_MED,"ARTICLE %lu",sa->articlenum));
 #ifdef FILE_DEBUG
 				{
 					char *sav;
