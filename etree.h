@@ -112,6 +112,6 @@ ecompose2(const Operation1 *op1, const Operation2 *op2, const Operation3 *op3) {
 
 class c_nntp_file;
 typedef e_unary_function<const c_nntp_file*,bool> generic_pred;
-generic_pred * make_pred(const char *optarg);
+generic_pred * make_pred(const char *optarg, int gflags);
 
 #endif

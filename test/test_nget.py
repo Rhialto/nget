@@ -228,6 +228,14 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run('-g test -r joystick'))
 		self.verifyoutput('0002')
 	
+	def test_r_case(self):
+		self.vfailIf(self.nget.run('-g test -c -r jOyStIcK'))
+		self.verifyoutput([])
+	
+	def test_r_nocase(self):
+		self.vfailIf(self.nget.run('-g test -C -r jOyStIcK'))
+		self.verifyoutput('0002')
+	
 	def test_multi_r_samepath(self):
 		self.vfailIf(self.nget.run('-g test -r joystick -r foo'))
 		self.verifyoutput(['0001','0002'])

@@ -9,6 +9,7 @@
   * Added GROUP error exit status (code 16) for when all servers fail to update a group's headers. (Previously gave an OTHER error.)
   * Search the cache for all adjacent -r/-R options in a single loop.  (Speeds up command lines like nget -Gfoo -r bar -r baz -r boo. (options -h/-G/-g/-@ split -r chains.))
   * For -G .. -r .. search as reading rather than loading cache into memory and then searching.  (Speed up and memory usage reduction.)
+  * Actually honor -c option again.  (Case sensitive matches)
 
 2002-05-17 v0.18.2:
   * Work around exception handling segfaults with older versions of gcc by not using multiple inheritance in exception classes. (reported by Waldemar la Tendresse)

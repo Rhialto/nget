@@ -165,7 +165,7 @@ struct {
 	{0,0,0,0}
 };
 
-generic_pred * make_pred(const char *optarg){
+generic_pred * make_pred(const char *optarg, int gflags){
 	list<string> e_parts;
 	string curpart;
 	//const char /**curstart=NULL,*/*cur;
@@ -241,8 +241,7 @@ generic_pred * make_pred(const char *optarg){
 			if (nntp_matches[match].name){
 				PDEBUG(DEBUG_MIN,"%s %i %i",nntp_matches[match].name,nntp_matches[match].type,nntp_matches[match].ofs);
 				if (nntp_matches[match].type==E_STRING){
-					//c_regex_nosub *reg=new c_regex_nosub(optarg,REG_EXTENDED + ((gflags&GETFILES_CASESENSITIVE)?0:REG_ICASE));
-					c_regex_nosub *reg=new c_regex_nosub(y->c_str(),REG_EXTENDED|REG_ICASE);
+					c_regex_nosub *reg=new c_regex_nosub(y->c_str(),REG_EXTENDED | ((gflags&GETFILES_CASESENSITIVE)?0:REG_ICASE));
 					if ((*i).compare("=~")==0 || (*i).compare("==")==0)
 						e_str_=&str_eq;
 					else if ((*i).compare("!~")==0 || (*i).compare("!=")==0)
