@@ -51,15 +51,15 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 	def cmd_group(self, args):
 		self.group = self.server.groups.get(args)
 		if self.group:
-			self.nwrite("200 %i %i %i group %s selected"%(self.group.high-self.group.low, self.group.low, self.group.high-1, args))
+			self.nwrite("200 %i %i %i group %s selected"%(self.group.high-self.group.low+1, self.group.low, self.group.high, args))
 		else:
 			self.nwrite("411 no such news group")
 	def cmd_xover(self, args):
 		rng = args.split('-')
 		if len(rng)>1:
-			low,high = map(int, rng)
+			low,high = map(long, rng)
 		else:
-			low = high = int(rng[0])
+			low = high = long(rng[0])
 		keys = [k for k in self.group.articles.keys() if k>=low and k<=high]
 		keys.sort()
 		self.nwrite("200 XOVER "+str(rng))
@@ -71,7 +71,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 		if args[0]=='<':
 			article = self.server.articles[args]
 		else:
-			article = self.group.articles[int(args)]
+			article = self.group.articles[long(args)]
 		self.nwrite("200 Article "+args)
 		self.nwrite(article.text)
 		self.nwrite('.')
@@ -153,16 +153,16 @@ class NNTPD_Master:
 class Group:
 	def __init__(self):
 		self.low = 1
-		self.high = 1
+		self.high = 0
 		self.articles = {}
 	def addarticle(self, article, anum=None):
 		if anum is None:
-			anum = self.high
+			anum = self.high + 1
 		if self.articles.has_key(anum):
 			raise Exception, "already have article %s"%anum
 		self.articles[anum] = article
-		if anum >= self.high:
-			self.high = anum + 1
+		if anum > self.high:
+			self.high = anum
 		if anum < self.low:
 			self.low = anum
 

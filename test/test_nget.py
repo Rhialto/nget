@@ -199,6 +199,17 @@ class XoverTestCase(unittest.TestCase, DecodeTest_base):
 		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
 
 		self.verifyoutput('0002', nget=self.fxnget)
+	
+	def test_largearticlenumbers(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=2147483647)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=4294967295L)
+
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
+
+		self.verifyoutput('0002')
+		self.verifyoutput('0002', nget=self.fxnget)
 
 
 class DiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
