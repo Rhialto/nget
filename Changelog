@@ -8,6 +8,7 @@
   * If there aren't enough par2 files available, try getting some incomplete data files even if -i wasn't specified.
   * Fix compile with the MacOSX version of gcc 3.3.
   * Support bsd-style regex word boundaries.
+  * Fix par1 handling on bigendian systems due to typo in byte swapping macro.
 
 2003-10-04 v0.24.2:
   * Use gcc's automatic dependancy generation rather than a seperate depend rule.
