@@ -22,6 +22,7 @@
 #include <set>
 #include <memory>
 #include <errno.h>
+#include <unistd.h>
 #include "nget.h"
 #include "mylockfile.h"
 #include "strtoker.h"
