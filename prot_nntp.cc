@@ -454,7 +454,8 @@ int c_prot_nntp::nntp_dowritelite_article(c_file &fw,c_nntp_part *part,char *fn)
 	for (sapi = sap.begin(); sapi != sap.end(); ++sapi){
 		sa=(*sapi).second;
 		whost=nconfig.getserver(sa->serverid);
-		fw.putf("%s\n%lu\n%lu\n%lu\n",whost->addr.c_str(),sa->articlenum,sa->bytes,sa->lines);
+		fw.putf("%s\t%s\t%s\n",whost->addr.c_str(),whost->user.c_str(),whost->pass.c_str());
+		fw.putf("%lu\n%lu\n%lu\n",sa->articlenum,sa->bytes,sa->lines);
 	}
 	return 0;
 }

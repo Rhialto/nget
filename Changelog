@@ -4,6 +4,7 @@
   * Fix "Numerical result out of range" connection error that occured on some addresses due to using too small a buffer.
   * Make install create directories if needed. (reported by Godmar Back)
   * Fix printf compile warnings on some arches (eg macosx) and include CPPFLAGS in make dep line. (Thomas Kotzian)
+  * Add nntp auth support to ngetlite too.
 
 2002-05-02 v0.18.1:
   * Fix compile on 64bit arches (based on patch from Chris Lawrence.)

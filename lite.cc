@@ -68,7 +68,8 @@ void dofile(const char *arg){
 	printf("using litelist file: %s\n",arg);
 	char *group=NULL;
 	char *outfile=NULL;
-	char *host=NULL;
+	char *host=NULL, *user=NULL, *pass=NULL;
+	char *cp;
 	int tempi,i,partdone,retry,maxretry=20;
 	long flagpos,temppos;
 	ulong anum,lines,bytes;
@@ -97,6 +98,18 @@ void dofile(const char *arg){
 		for (i=0;i<tempi;i++){
 			Lfgets(buf);
 			newstrcpy(host,buf);
+			//we'll be tricky and make user/pass point to parts of the mem allocated for the host string, rather then allocating seperate mem for all of them. hahaha!
+			user=pass=NULL;
+			cp=strchr(host, '\t');
+			if (cp) {
+				*cp='\0';
+				user=cp+1;
+				cp=strchr(user, '\t');
+				if (cp) {
+					*cp='\0';
+					pass=cp+1;
+				}
+			}
 			Lfgets(buf);
 			anum=atoul(buf);
 			Lfgets(buf);
@@ -108,7 +121,7 @@ void dofile(const char *arg){
 			retry=0;
 			while (retry<maxretry){
 				try {
-					nntp.doopen(host);
+					nntp.doopen(host, user, pass);
 					nntp.dogroup(group);
 					nntp.doarticle(anum,bytes,lines,outfile);
 					partdone=1;

@@ -171,7 +171,7 @@ void c_prot_nntp::doclose(void){
 	safefree(curuser);
 	safefree(curpass);
 }
-void c_prot_nntp::doopen(const char *host){
+void c_prot_nntp::doopen(const char *host, const char *user, const char *pass){
 	if (cursock.isopen() && curhost && strcmp(host,curhost)==0)
 		return;
 
@@ -183,10 +183,31 @@ void c_prot_nntp::doopen(const char *host){
 	putline(debug>=DEBUG_MED,"MODE READER");
 	getline(debug>=DEBUG_MED);
 	newstrcpy(curhost,host);
+	newstrcpy(curuser,user);
+	newstrcpy(curpass,pass);
 }
 
 void c_prot_nntp::nntp_auth(void){
-	throw TransportExError(Ex_INIT,"c_prot_nntp::nntp_auth not implemented for lite yet");
+	nntp_doauth(curuser,curpass);
+}
+void c_prot_nntp::nntp_doauth(const char *user, const char *pass){
+	int i;
+
+	if(!user || !*user){
+		throw TransportExFatal(Ex_INIT,"nntp_doauth: no authorization info known");
+	}
+	putline(quiet<2,"AUTHINFO USER %s",user);
+	i=getreply(quiet<2);
+	if (i==350 || i==381){
+		if(!pass || !*pass){
+			throw TransportExFatal(Ex_INIT,"nntp_doauth: no password known");
+		}
+		if (quiet<2)
+			printf(">AUTHINFO PASS *\n");
+		putline(0,"AUTHINFO PASS %s",pass);
+		i=getreply(quiet<2);
+	}
+	chkreply(i);
 }
 
 c_prot_nntp::c_prot_nntp(){

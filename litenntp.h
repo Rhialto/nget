@@ -53,8 +53,9 @@ class c_prot_nntp {
 
 		void dogroup(const char *group);
 		void doclose(void);
-		void doopen(const char *host);
+		void doopen(const char *host, const char *user, const char *pass);
 		void nntp_auth(void);
+		void nntp_doauth(const char *user, const char *pass);
 
 		c_prot_nntp();
 		~c_prot_nntp();
