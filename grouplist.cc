@@ -312,7 +312,7 @@ void c_nntp_grouplist::save(void){
 	c_file *f=f=dofileopen(tmpfn,"wb");
 	try {
 		auto_ptr<c_file> fcloser(f);
-		if (debug){printf("saving grouplist: %i groups..",groups.size());fflush(stdout);}
+		if (debug){printf("saving grouplist: %lu groups..",(ulong)groups.size());fflush(stdout);}
 		t_group_availability_map::iterator gdi;
 		t_server_group_description_map::iterator sgdi;
 		c_group_availability::ptr gd;
