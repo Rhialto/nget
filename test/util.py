@@ -34,10 +34,11 @@ class TestNGet:
 			rc.write("""
  {host%i
   addr=%s
+  shortname=h%i
   fullxover=1
   id=%i
  }
-"""%(i, ':'.join(map(str,servers[i].socket.getsockname())), i+1))
+"""%(i, ':'.join(map(str,servers[i].socket.getsockname())), i, i+1))
 		rc.write("}\n")
 		rc.close()
 	
