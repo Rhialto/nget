@@ -598,14 +598,13 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 					for(curb = buf.begin();curb!=buf.end();++curb){
 						f.putf("%s\n",(*curb).c_str());
 					}
+					f.close();
 				}catch(FileEx &e){
-					if (errno==ENOSPC){//if the drive is full, then the temp file will be cutoff and useless, so delete it.
-						if (unlink(fn))
-							perror("unlink:");
-					}
+					//if the drive is full or other error occurs, then the temp file will be cutoff and useless, so delete it.
+					if (unlink(fn))
+						perror("unlink:");
 					throw ApplicationExFatal(Ex_INIT,"error writing %s: %s",fn,e.getExStr());
 				}
-				f.close();
 				set_retrieve_warn_status(attempted - sap.size());
 				return 0; //article successfully retrieved, return.
 			}
