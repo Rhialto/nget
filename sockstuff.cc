@@ -39,6 +39,9 @@
 #include "log.h"
 #include "strreps.h"
 
+//comment the next line out if by chance you actually don't have select.
+#define HAVE_SELECT
+
 int sock_timeout=3*60;
 
 /* Take a service name, and a service type, and return a port number.  If the
