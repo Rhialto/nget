@@ -799,7 +799,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 						break;
 					}
 					for (vector<c_group_info::ptr>::const_iterator gi=options.groups.begin(); gi!=options.groups.end(); gi++) {
-						nntp.nntp_group(*gi, 0, options);
+						nntp.nntp_group(*gi, false, options);
 						c_nntp_server_info* servinfo=nntp.gcache->getserverinfo(server->serverid);
 						nntp.gcache->flushlow(servinfo,ULONG_MAX,nntp.midinfo);
 						servinfo->reset();
@@ -918,7 +918,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 							options.cmdmode=RETRIEVE_MODE;
 							nconfig.getgroups(options.groups, loptarg);
 							for (vector<c_group_info::ptr>::const_iterator gi=options.groups.begin(); gi!=options.groups.end(); gi++)
-								nntp.nntp_group(*gi, 1, options);
+								nntp.nntp_group(*gi, true, options);
 							break;
 						}
 					case 'G':

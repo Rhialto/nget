@@ -87,10 +87,10 @@ class c_prot_nntp {
 		void nntp_retrieve(const vector<c_group_info::ptr> &rgroups, const t_nntp_getinfo_list &getinfos, const t_xpat_list &patinfos, const nget_options &options);
 		void nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler, const nget_options &options);
 		void nntp_simple_prioritize(c_server_priority_grouping *priogroup, list<c_server::ptr> &doservers);
-		void nntp_group(const c_group_info::ptr &group, int getheaders, const nget_options &options);
+		void nntp_group(const c_group_info::ptr &group, bool getheaders, const nget_options &options);
 		void nntp_xgroup(const c_group_info::ptr &group, const t_xpat_list &patinfos, const nget_options &options);
 		void nntp_dogroup(const c_group_info::ptr &group, ulong &num, ulong &low, ulong &high);
-		void nntp_dogroup(const c_group_info::ptr &group, int getheaders);
+		void nntp_dogroup(const c_group_info::ptr &group, bool getheaders);
 		void nntp_grouplist(int update, const nget_options &options);
 		void nntp_xgrouplist(const t_xpat_list &patinfos, const nget_options &options);
 		void nntp_dogetgrouplist(void);

@@ -554,7 +554,7 @@ void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, ulong &num, ulong
 	//printf("%i, %i, %i\n",num,low,high);
 }
 
-void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, int getheaders){
+void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, bool getheaders){
 	ulong num,low,high;
 	if (connection->curgroup!=group || getheaders){	
 		nntp_dogroup(group, num,low,high);
@@ -708,7 +708,7 @@ void c_prot_nntp::nntp_xgroup(const c_group_info::ptr &group, const t_xpat_list 
 	gcache_ismultiserver = gcache->ismultiserver();
 }
 
-void c_prot_nntp::nntp_group(const c_group_info::ptr &ngroup, int getheaders, const nget_options &options){
+void c_prot_nntp::nntp_group(const c_group_info::ptr &ngroup, bool getheaders, const nget_options &options){
 	if (group == ngroup && gcache && !getheaders)
 		return; // group is already selected, don't waste time reloading it
 
@@ -961,7 +961,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 					ari->server_name=connection->server->shortname.c_str();
 				else if (toti->doarticle_show_multi==SHOW_MULTI_LONG)
 					ari->server_name=connection->server->alias.c_str();
-				nntp_dogroup(sa->group, 0);
+				nntp_dogroup(sa->group, false);
 				chkreply_setok(stdputline(debug>=DEBUG_MED,"ARTICLE %lu",sa->articlenum));
 				nntp_dogetarticle(ari,toti,buf);
 				connection->server_ok=true;
