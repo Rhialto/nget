@@ -207,7 +207,7 @@ if test "$GXX" = "yes"; then
 	CXXFLAGS="$CXXFLAGS -Wall -MMD"
 
 	AC_MSG_CHECKING(if $CXX accepts -MP)
-	if $CXX -MP 2>&1 | grep -q -- -MP ; then
+	if $CXX -MP 2>&1 | grep -- -MP ; then
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
@@ -218,7 +218,7 @@ if test "$GCC" = "yes"; then
 	CFLAGS="$CFLAGS -Wall -MMD"
 
 	AC_MSG_CHECKING(if $CC accepts -MP)
-	if $CC -MP 2>&1 | grep -q -- -MP ; then
+	if $CC -MP 2>&1 | grep -- -MP ; then
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
