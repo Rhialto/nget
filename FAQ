@@ -7,6 +7,8 @@ Index:
 3. Whats this "unequal line count" error?
 4. I have maxconnections set at 10 but only one article is being downloaded at
 a time.  Why?
+5. -r with --no-autopar (or things that imply it: -T/-M/-U/-K) still doesn't
+match par files.
 
 
 Answers:
@@ -57,4 +59,11 @@ change server.
 
 Support for retrieving multiple articles at once (either from the same server
 or seperate ones) is not currently implemented, though it is on my todo.
+
+
+5. -r with --no-autopar (or things that imply it: -T/-M/-U/-K) still doesn't
+match par files.
+
+Order of arguments matters.  These args must appear before the -r/-R in
+order for the -r/-R to know not to treat par files specially.
 
