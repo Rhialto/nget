@@ -2,6 +2,8 @@
 
 * Some sort of hierarchical organization for .ngetrc, so that you could set some options for abunch of hosts or a bunch of groups at once...
 
+* A "connectiongroup" or something so that you can set a maxconnections within a certain set of servers
+
 should uu_msg(1) (Note) be a decode error?
 This should be handled:
 uu_msg(1):Note: No encoded data found in ec3317e3-71cf792d.011
