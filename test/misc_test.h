@@ -1,4 +1,5 @@
 #include "misc.h"
+#include "path.h"
 #include "file.h"
 
 #include <cppunit/TestCaller.h>
