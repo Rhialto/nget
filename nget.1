@@ -264,6 +264,11 @@ Number of plaintext files saved.
 Number of Quoted-Printable encoded files.
 .IP "dupe"
 Number of decoded files that were exact dupes of existing files, and thus deleted.
+.IP "skipped"
+Number of files that were queued to download but turned out to be dupes after decoding earlier parts
+and comparing their filenames to the subject line.  (Same method thats used for the dupe file check when queueing
+them up, just that the filename(s) of any decoded files cannot be known until they are downloaded, so some of
+the checking must occur during the run rather than at queue time.)
 .IP "group"
 Number of groups successfully updated.
 .RE

@@ -935,6 +935,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 						if (dfr->path == fr->path) {
 							c_nntp_file::ptr df = dfr->file;
 							if (flist.checkhavefile(df->subject.c_str(), df->bamid(), df->bytes())) {
+								set_skipped_ok_status();
 								del_fi=dfi;
 								++dfi;
 								filec->files.erase(del_fi);
