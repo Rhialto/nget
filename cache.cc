@@ -25,6 +25,7 @@
 #include <glob.h>
 #include <errno.h>
 #include <dirent.h>
+#include <ctype.h>
 #include "nget.h"
 #include "mylockfile.h"
 #include "strtoker.h"
@@ -178,12 +179,14 @@ void buildflist(const string &path, filematchlist **l){
 		if (strcmp(de->d_name,"..")==0) continue;
 		if (strcmp(de->d_name,".")==0) continue;
 		sl=0;
-		buf[sl++]='\\';
+		if (isalnum(de->d_name[0])){ //only add word boundry match if we are actually next to a word, or else there isn't a word boundry to match at all.
+			buf[sl++]='\\';
 #ifdef HAVE_PCREPOSIX_H
-		buf[sl++]='b';//match word boundary
-#else
-		buf[sl++]='<';//match beginning of word
+			buf[sl++]='b';//match word boundary
+#else	
+			buf[sl++]='<';//match beginning of word
 #endif
+		}
 		cp=de->d_name;
 		while (*cp){
 			if (strchr("{}()|[]\\.+*^$",*cp))
@@ -191,12 +194,14 @@ void buildflist(const string &path, filematchlist **l){
 			buf[sl++]=*cp;
 			cp++;
 		}
-		buf[sl++]='\\';
+		if (isalnum(*(cp-1))){
+			buf[sl++]='\\';
 #ifdef HAVE_PCREPOSIX_H
-		buf[sl++]='b';//match word boundary
+			buf[sl++]='b';//match word boundary
 #else
-		buf[sl++]='>';//match end of word
+			buf[sl++]='>';//match end of word
 #endif
+		}
 		buf[sl++]=0;
 		fm=new file_match(buf,REG_EXTENDED|REG_ICASE|REG_NOSUB);
 		if (stat((path+'/'+de->d_name).c_str(), &stbuf)==0)
