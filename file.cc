@@ -187,13 +187,13 @@ int c_file_fd::doclose(void){
 	fd=-1;
 	return i;
 }
-inline int c_file_fd::isopen(void)const{
+int c_file_fd::isopen(void)const{
 	return (fd>=0);
 }
-inline ssize_t c_file_fd::dowrite(const void *data,size_t len){
+ssize_t c_file_fd::dowrite(const void *data,size_t len){
 	return ::write(fd,(char*)data,len);
 }
-inline ssize_t c_file_fd::doread(void *data,size_t len){
+ssize_t c_file_fd::doread(void *data,size_t len){
 	return ::read(fd,data,len);
 }
 int c_file_fd::seek(int offset, int whence){
@@ -223,13 +223,13 @@ int c_file_stream::doclose(void){
 	fs=NULL;
 	return i;
 }
-inline int c_file_stream::isopen(void)const{
+int c_file_stream::isopen(void)const{
 	return (fs!=0);
 }
-inline ssize_t c_file_stream::dowrite(const void *data,size_t len){
+ssize_t c_file_stream::dowrite(const void *data,size_t len){
 	return fwrite(data,1,len,fs);
 }
-inline ssize_t c_file_stream::doread(void *data,size_t len){
+ssize_t c_file_stream::doread(void *data,size_t len){
 	return fread(data,1,len,fs);
 }
 #endif
@@ -269,14 +269,14 @@ int c_file_tcp::doclose(void){
 	sock=SOCK_INVALID;
 	return i;
 }
-inline int c_file_tcp::isopen(void)const{
+int c_file_tcp::isopen(void)const{
 	return sock_isvalid(sock);
 }
-inline ssize_t c_file_tcp::dowrite(const void *data,size_t len){
+ssize_t c_file_tcp::dowrite(const void *data,size_t len){
 	//don't need to use sock_write_ensured since c_file::write handles the looping.
 	return sock_write(sock,(char*)data, len);
 }
-inline ssize_t c_file_tcp::doread(void *data,size_t len){
+ssize_t c_file_tcp::doread(void *data,size_t len){
 	return sock_read(sock,data,len);
 }
 bool c_file_tcp::datawaiting(void) const {

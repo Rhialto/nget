@@ -50,13 +50,13 @@ int c_file_gz::doclose(void){
 	gzh=NULL;
 	return i;
 }
-inline int c_file_gz::isopen(void)const{
+int c_file_gz::isopen(void)const{
 	return (gzh!=0);
 }
-inline ssize_t c_file_gz::dowrite(const void *data,size_t len){
+ssize_t c_file_gz::dowrite(const void *data,size_t len){
 	return gzwrite(gzh,(void*)data,len);
 }
-inline ssize_t c_file_gz::doread(void *data,size_t len){
+ssize_t c_file_gz::doread(void *data,size_t len){
 	return gzread(gzh,data,len);
 }
 #endif
