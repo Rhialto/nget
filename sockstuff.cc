@@ -20,19 +20,12 @@
 #include "config.h"
 #endif
 #include "sockstuff.h"
-//#include <netdb.h>
-//#include <netinet/in.h>
-//#include <sys/socket.h>
-//#include <netinet/in.h>
-//#include <arpa/inet.h>
 
 #include <sys/time.h>
 
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
 
