@@ -13,7 +13,7 @@ MY_CHECK_EXCEPTIONS
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h getopt.h slist.h hash_map.h glob.h regex.h term.h)
+AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h getopt.h slist.h hash_map.h glob.h regex.h term.h inttypes.h)
 
 dnl Checks for libraries.
 AC_CHECK_LIB(termcap, tputs)
@@ -220,6 +220,7 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
+AC_LONG_LONG
 
 dnl Checks for library functions.
 AC_TYPE_SIGNAL

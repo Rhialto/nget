@@ -7,6 +7,9 @@
 /* Define to `int' if <sys/types.h> doesn't define.  */
 #undef socklen_t
 
+/* Define if your compiler knows about long long */
+#undef HAVE_LONG_LONG
+
 /* Define to `unsigned long' if <sys/types.h> doesn't define.  */
 #undef ulong
 

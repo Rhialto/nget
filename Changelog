@@ -2,6 +2,8 @@
   * Fixes for gcc 3.0 compilation.
   * Print time remaining in XhXXmXXs format, rather than XXXXs.
   * Use termcap for clearing progress lines, fixes problems with chars getting left at the end.
+  * Use 64bit int for total bytes/lines.  Fixes negative/weird time left displays for large queues. 
+  
 2001-08-02 - v0.14:
   * Fix exception if files in current dir contained '{' or '}'. (reported by Brian Keefer)
   * Remove autoconf AC_C_CONST, its only for C progs and breaks g++.

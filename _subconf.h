@@ -30,3 +30,21 @@
 #endif*/
 
 using namespace std;
+
+#ifdef HAVE_INTTYPES_H
+# ifndef __STDC_FORMAT_MACROS
+# define __STDC_FORMAT_MACROS
+# endif
+# include <inttypes.h>
+#else
+# ifdef HAVE_LONG_LONG
+#  define int_fast64_t long long
+#  define uint_fast64_t unsigned long long
+#  define PRIuFAST64 "llu"
+# else
+//well, they may not be 64 bits but at least it should still work.
+#  define int_fast64_t long
+#  define uint_fast64_t unsigned long
+#  define PRIuFAST64 "lu"
+# endif
+#endif

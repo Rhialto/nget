@@ -212,7 +212,7 @@ class c_nntp_file_retr : public c_refcounted<c_nntp_file_retr>{
 typedef multimap<time_t,c_nntp_file_retr::ptr,less<ulong> > t_nntp_files_u;
 class c_nntp_files_u {
 	public:
-		ulong bytes,lines;
+		uint_fast64_t bytes, lines;
 		t_nntp_files_u files;
 		c_nntp_files_u(void):bytes(0),lines(0){}
 		~c_nntp_files_u();

@@ -175,6 +175,7 @@ string durationstr(int_type duration){
 //		return snprintf(timestr,max,"%im%02is",h,m,s);
 //	return snprintf(timestr,max,"%is",h,m,s);
 }
+template string durationstr(int_fast64_t);
 template string durationstr(ulong);
 template string durationstr(long);
 

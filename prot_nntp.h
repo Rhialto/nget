@@ -39,7 +39,7 @@
 #define GETFILES_UNMARK			2048
 
 struct quinfo {
-	long bytesleft;
+	int_fast64_t bytesleft;
 	long filestot,filesdone;
 	time_t starttime;
 //	long fpartstot,fpartsdone;

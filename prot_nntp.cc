@@ -685,7 +685,7 @@ void c_prot_nntp::nntp_retrieve(int options, const string &writelite){
 		}
 		if (options & GETFILES_MARK)
 			printf("Would mark ");
-		printf("%lu bytes in %u files\n",filec->bytes,filec->files.size());
+		printf("%"PRIuFAST64" bytes in %u files\n",filec->bytes,filec->files.size());
 	} else if (options & GETFILES_MARK) {
 		for(curf = filec->files.begin();curf!=filec->files.end();++curf){
 			fr=(*curf).second;
