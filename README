@@ -1,4 +1,4 @@
-nget 0.14  Copyright 1999-2001 Matthew Mueller <donut@azstarnet.com>
+nget 0.15  Copyright 1999-2001 Matthew Mueller <donut@azstarnet.com>
 
 Note if you are upgrading from a version 0.8-0.11 to 0.12 or later:
  You will need to run the fixnames.sh script to rename your cache files to the
@@ -25,6 +25,8 @@ Install:
 1.2b) if you get strange errors about redo(and other vars) possibly being used
   uninitialized try compiling with a lower optimization (seems to occur with 
   gcc 2.7.*, autodetected in nget >=0.8)
+1.2c) when building with cygwin, you must use --with-pcre (Doesn't work with
+cygwin's regex for some reason I haven't fully investigated yet.)
 2) make dep  (if you are using a compiler other than gcc, this may not work)
 3) make
 4) make install
