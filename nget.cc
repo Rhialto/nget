@@ -109,6 +109,7 @@ enum {
 	OPT_AUTOPAR,
 	OPT_NOAUTOPAR,
 	OPT_FULLXOVER,
+	OPT_HELP,
 	OPT_MIN_SHORTNAME //sentinel, must be last element.
 };
 
@@ -185,7 +186,7 @@ static void addoptions(void)
 	addoption("unmark",0,'U',0,"mark matching articles as not retrieved (implies -dI)");
 	addoption("writelite",1,'w',"LITEFILE","write out a ngetlite list file");
 	addoption("noconnect",0,'N',0,"don't connect, only try to decode what we have");
-	addoption("help",0,'?',0,"this help");
+	addoption("help",0,OPT_HELP,0,"this help");
 	addoption(NULL,0,0,NULL,NULL);
 };
 static void print_help(void){
@@ -823,7 +824,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					break;
 				}
 #ifdef HAVE_LIBPOPT
-#define POPT_ERR_CASE(a) case a: PERROR("%s: %s",#a,optCon.BadOption(0)); print_help(); return 1;
+#define POPT_ERR_CASE(a) case a: PERROR("%s: %s",#a,optCon.BadOption(0)); set_user_error_status_and_do_fatal_user_error(); break;
 			POPT_ERR_CASE(POPT_ERROR_NOARG);
 			POPT_ERR_CASE(POPT_ERROR_BADOPT);
 			POPT_ERR_CASE(POPT_ERROR_OPTSTOODEEP);
@@ -834,6 +835,10 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 #endif
 			case ':':
 			case '?':
+				//getopt prints the error message itself.
+				set_user_error_status_and_do_fatal_user_error();
+				break;
+			case OPT_HELP:
 				print_help();
 				return 1;
 			case 0://POPT_CONTEXT_ARG_OPTS

@@ -1875,6 +1875,9 @@ class FatalUserErrorsTestCase(TestCase, DecodeTest_base):
 	def test_bad_arg(self):
 		self.vfailUnlessExitstatus(self.nget.run('badarg -g test'), 4)
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_bad_option(self):
+		self.vfailUnlessExitstatus(self.nget.run('--badopt -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
 	def test_list_nonexistant(self):
 		self.vfailUnlessExitstatus(self.nget.run('-@ foo -g test'), 4)
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
@@ -1896,6 +1899,9 @@ class UserErrorTestCase(TestCase, DecodeTest_base):
 		output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput(args + ' -g test -r .'), 4)
 		self.verifyoutput('0001')
 		self.vfailUnlessEqual(output.count("ERRORS: %i user"%(args.count(' ')+1)), 1)
+	
+	def test_missing_optarg(self):
+		self.vfailUnlessExitstatus(self.nget.run('-g'), 4)
 
 
 class ConfigErrorTestCase(TestCase, DecodeTest_base):
