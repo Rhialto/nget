@@ -835,6 +835,9 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 }
 
 int main(int argc, char ** argv){
+#ifdef HAVE_SETLINEBUF
+	setlinebuf(stdout); //force stdout to be line buffered, useful if redirecting both stdout and err to a file, to keep them from getting out of sync.
+#endif
 	atexit(print_error_status);
 	try {
 		//	atexit(cache_dbginfo);
