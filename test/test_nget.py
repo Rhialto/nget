@@ -335,6 +335,11 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run('-g test -r .'))#should notice the article expired and not try to get anything
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 0)
 	
+	def test_0001_yenc_single_withtext(self):
+		self.addarticles("0001", "yenc_single_withtext")
+		output = self.vfailIf_getoutput(self.nget.run_getoutput("-g test -r ."))
+		self.verifyoutput(['0001','0001/_yenc_single_withtext_output'], output=output, enctype='yenc')
+	
 	def test_nosavetext_on_decodeerror(self):
 		self.addarticles("0001", "yenc_single_crc32_error")
 

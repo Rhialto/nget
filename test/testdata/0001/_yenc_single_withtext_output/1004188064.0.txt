@@ -1,0 +1,14 @@
+From: develop@winews.net
+Newsgroups: yenc
+Date: 27 Oct 2001 15:07:44 +0200
+Subject: yEnc-Prefix: "testfile.txt" 584 yEnc bytes - yEnc test (1)
+Message-ID: <THDE.4407f.ra1200@liebchen.winews.net>
+Path: liebchen.winews.net!not-for-mail
+Lines: 11
+X-Newsreader: MyNews
+
+hello.
+
+foo bar baz.
+
+[yEnc testfile.txt]
