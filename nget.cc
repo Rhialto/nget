@@ -724,12 +724,14 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 		}catch(TransportExFatal &e){
 			printCaughtEx_nnl(e);
 			printf(" (fatal, aborting..)\n");
-			options.badskip=2;
+			if (options.host)
+				options.badskip=2;//only set badskip if we are forcing a single host, otherwise we could exclude other hosts that are working
 		}catch(ExFatal &e){
 			printCaughtEx_nnl(e);
 			printf(" (fatal, aborting..)\n");
 			//else if (n==EX_U_FATAL)
-			options.badskip=1;
+			if (options.host)
+				options.badskip=1;//only set badskip if we are forcing a single host, otherwise we could exclude other hosts that are working
 		}catch(ExError &e){
 		//}catch(baseEx &e){//doesn't work..?
 			printCaughtEx_nnl(e);
