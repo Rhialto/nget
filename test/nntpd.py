@@ -53,6 +53,9 @@ class NNTPAuthError(NNTPError):
 	def __init__(self):
 		NNTPError.__init__(self, 502, "Authentication error")
 
+class NNTPDisconnect(Exception):
+	def __init__(self, err=None):
+		self.err=None
 
 class AuthInfo:
 	def __init__(self, user, password, caps=None):
@@ -94,11 +97,13 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 				if func and callable(func):
 					if not self.authed.has_auth(cmd):
 						raise NNTPAuthRequired
-					r=func(args)
-					if r==-1:
-						break
+					func(args)
 				else:
 					raise NNTPSyntaxError, rcmd
+			except NNTPDisconnect, d:
+				if d.err:
+					self.nwrite(str(d.err))
+				return
 			except NNTPError, e:
 				self.nwrite(str(e))
 
@@ -163,8 +168,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 		else:
 			raise NNTPSyntaxError, args
 	def cmd_quit(self, args):
-		self.nwrite("205 Goodbye")
-		return -1
+		raise NNTPDisconnect("205 Goodbye")
 
 
 class _TimeToQuit(Exception): pass

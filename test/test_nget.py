@@ -438,13 +438,23 @@ class DelayingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 class DiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_article(self, args):
 		nntpd.NNTPRequestHandler.cmd_article(self, args)
-		return -1
+		raise nntpd.NNTPDisconnect
 
 class ErrorDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_article(self, args):
 		nntpd.NNTPRequestHandler.cmd_article(self, args)
-		self.nwrite("503 You are now disconnected. Have a nice day.")
-		return -1
+		raise nntpd.NNTPDisconnect("503 You are now disconnected. Have a nice day.")
+
+class XOver1LineDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	def cmd_xover(self, args):
+		self.discocountdown = 2 #allow a single xover result to pass before disconnecting
+		nntpd.NNTPRequestHandler.cmd_xover(self, args)
+	def nwrite(self, s):
+		if hasattr(self, 'discocountdown'):
+			if self.discocountdown==0:
+				raise nntpd.NNTPDisconnect
+			self.discocountdown -= 1
+		nntpd.NNTPRequestHandler.nwrite(self, s)
 
 class ConnectionTestCase(TestCase, DecodeTest_base):
 	def tearDown(self):
@@ -500,6 +510,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.addarticles('0002', 'uuencode_multi')
 		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifyoutput('0002')
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 2)
 		
 	def test_TwoDiscoServers(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler)])
@@ -510,6 +521,43 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run("-g test -r ."))
 		self.verifyoutput('0002')
 
+	def test_ForceDiscoServer(self):
+		"Test if errors are handled correctly in article retrieval with force_host"
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+
+		self.addarticles('0002', 'uuencode_multi')
+		self.vfailIf(self.nget.run("-g test"))
+		self.vfailIf(self.nget.run("-h host1 -G test -r ."))
+		self.verifyoutput('0002')
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 3)
+
+	def test_TwoXOverDiscoServers(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), XOver1LineDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), XOver1LineDiscoingNNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':3})
+		self.servers.start()
+
+		self.addarticles('0001', 'yenc_multi')
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 3)
+
+	def test_ForceXOverDiscoServer(self):
+		"Test if errors are handled correctly in header retrieval with force_host"
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), XOver1LineDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), XOver1LineDiscoingNNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':3})
+		self.servers.start()
+
+		self.addarticles('0001', 'yenc_multi')
+		self.vfailIf(self.nget.run("-h host1 -g test"))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 0)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 3)
+		self.vfailIf(self.nget.run("-G test -r ."))
+		self.verifyoutput('0001')
+
 	def test_ForceWrongServer(self):
 		self.servers = nntpd.NNTPD_Master(2)
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
@@ -517,6 +565,24 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.addarticles_toserver('0002', 'uuencode_multi', self.servers.servers[0])
 		self.vfailIf(self.nget.run("-g test"))
 		self.vfailUnlessEqual(self.nget.run("-h host1 -G test -r ."), 8, "nget process did not detect retrieve error")
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
+
+	def test_ForceServer(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+		self.addarticles('0001', 'yenc_multi')
+		self.vfailIf(self.nget.run("-h host1 -g test"))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 0)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
+		self.vfailIf(self.nget.run("-h host0 -g test"))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
+		self.vfailIf(self.nget.run("-h host1 -G test -r ."))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
+		self.verifyoutput('0001')
 	
 	def test_AbruptTimeout(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
