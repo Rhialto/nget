@@ -168,9 +168,6 @@ inline ssize_t c_file_testpipe::doread(void *dat,size_t len){
 	data.erase(0,len);
 	return i;
 }
-inline char * c_file_testpipe::dogets(char *dat,size_t len){
-	return NULL;
-}
 #endif
 
 #ifdef HAVE_LIBZ
@@ -197,9 +194,6 @@ inline ssize_t c_file_gz::dowrite(const void *data,size_t len){
 }
 inline ssize_t c_file_gz::doread(void *data,size_t len){
 	return gzread(gzh,data,len);
-}
-inline char * c_file_gz::dogets(char *data,size_t len){
-	return gzgets(gzh,data,len);
 }
 #endif
 
@@ -259,12 +253,6 @@ inline ssize_t c_file_fd::dowrite(const void *data,size_t len){
 inline ssize_t c_file_fd::doread(void *data,size_t len){
 	return ::read(fd,data,len);
 }
-inline char * c_file_fd::dogets(char *data,size_t len){
-	int i=sock_gets(fd,data,len);//well, I guess it'll work for non sockets too.
-	if (i<=0)return NULL;
-	return data;
-	//return fd_gets(fd,data,len);
-}
 
 #ifdef USE_FILE_STREAM
 int c_file_stream::c_file_stream(const char *name,const char * mode):c_file(name){
@@ -290,9 +278,6 @@ inline ssize_t c_file_stream::dowrite(const void *data,size_t len){
 }
 inline ssize_t c_file_stream::doread(void *data,size_t len){
 	return fread(data,1,len,fs);
-}
-inline char * c_file_stream::dogets(char *data,size_t len){
-	return fgets(data,len,fs);
 }
 #endif
 
@@ -335,12 +320,6 @@ inline ssize_t c_file_tcp::dowrite(const void *data,size_t len){
 }
 inline ssize_t c_file_tcp::doread(void *data,size_t len){
 	return sock_read(sock,data,len);
-}
-inline char * c_file_tcp::dogets(char *data,size_t len){
-	int i=sock_gets(sock,data,len);
-	if (i<=0)return NULL;
-	return data;
-	//return sock_gets(sock,data,len);
 }
 bool c_file_tcp::datawaiting(void) const {
 	return sock_datawaiting(sock);

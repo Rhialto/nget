@@ -73,7 +73,6 @@ class c_file {
 //	gzFile gzh;
 //#endif
 
-	virtual char * dogets(char *data,size_t len)=0;
 	virtual ssize_t dowrite(const void *data,size_t len)=0;
 	virtual ssize_t doread(void *data,size_t len)=0;
 //	virtual int doopen(const char *name,const char * mode)=0;
@@ -97,7 +96,6 @@ class c_file {
 	virtual ~c_file();
 	ssize_t putf(const char *buf,...)
 		__attribute__ ((format (printf, 2, 3)));
-	char * gets(char *data,size_t len){return dogets(data,len);}
 	ssize_t write(const void *data,size_t len);
 	ssize_t read(void *data,size_t len);
 	//buffered funcs: must call initrbuf first.
@@ -133,7 +131,6 @@ class c_file_testpipe : public c_file {
 #endif
 	int o;
 
-	virtual char * dogets(char *data,size_t len);
 	virtual ssize_t dowrite(const void *buf,size_t len);
 	virtual ssize_t doread(void *buf,size_t len);
 	virtual int doflush(void);
@@ -151,7 +148,6 @@ class c_file_fd : public c_file {
   private:
 	int fd;
 
-	virtual char * dogets(char *data,size_t len);
 	virtual ssize_t dowrite(const void *buf,size_t len);
 	virtual ssize_t doread(void *buf,size_t len);
 	virtual int doflush(void);
@@ -168,7 +164,6 @@ class c_file_stream : public c_file {
   private:
 	FILE *fs;
 
-	virtual char * dogets(char *data,size_t len);
 	virtual ssize_t dowrite(const void *buf,size_t len);//fwrite doesn't seem to be able to notice out of disk errors. be warned.
 	virtual ssize_t doread(void *buf,size_t len);
 	virtual int doflush(void);
@@ -183,7 +178,6 @@ class c_file_tcp : public c_file {
   private:
 	int sock;
 
-	virtual char * dogets(char *data,size_t len);
 	virtual ssize_t dowrite(const void *buf,size_t len);
 	virtual ssize_t doread(void *buf,size_t len);
 	virtual int doflush(void);
@@ -201,7 +195,6 @@ class c_file_gz : public c_file {
   private:
 	gzFile gzh;
 
-	virtual char * dogets(char *data,size_t len);
 	virtual ssize_t dowrite(const void *buf,size_t len);
 	virtual ssize_t doread(void *buf,size_t len);
 	virtual int doflush(void);
