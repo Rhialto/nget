@@ -1,4 +1,4 @@
-2004-xx-xx v0.xx:
+2004-12-20 v0.27.1:
   * Fix error in configure script when printing exceptions not found message, due to unquoted string. (Reported by M.J. Soft)
   * Fix -G* when NGETCACHE != NGETHOME. (Reported by Steven Adeff)
   * Fix midinfo and newsgroups files not honoring NGETCACHE/cachedir setting. (Reported by Christian Marillat)
