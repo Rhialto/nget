@@ -1982,6 +1982,7 @@ class MetaGrouping_CacheRetrieveTestCase(TestCase, MetaGrouping_RetrieveTest_bas
 		try:
 			self.vfailUnlessExitstatus(self.nget.run('-G "*" -Dir .'), 4)
 		finally:
+			os.environ['NGETCACHE'] = ''
 			del os.environ['NGETCACHE']
 		
 		self.nget.writerc(self.servers.servers, options={'cachedir':self.nget.tmpdir})
@@ -2052,6 +2053,7 @@ class CacheLocTestCase(TestCase, DecodeTest_base):
 		try:
 			self.do_test_cache_location(tmp2dir)
 		finally:
+			os.environ['NGETCACHE'] = ''
 			del os.environ['NGETCACHE']
 	
 	def test_rc_cachedir(self):
@@ -2274,6 +2276,7 @@ class ConfigErrorTestCase(TestCase, DecodeTest_base):
 			self.vfailIf(self.nget.run('-g test -r .'))
 			self.verifyoutput('0001')
 		finally:
+			os.environ['NGETRC'] = ""
 			del os.environ['NGETRC']
 
 	def test_bad_NGETRC(self):
@@ -2282,6 +2285,7 @@ class ConfigErrorTestCase(TestCase, DecodeTest_base):
 			self.nget = util.TestNGet(ngetexe, self.servers.servers)
 			output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput('-g test -r .'), 128) #is 128 really the best exit status for this?
 		finally:
+			os.environ['NGETRC'] = ""
 			del os.environ['NGETRC']
 		self.failUnless(output.count("foobar1"))
 
