@@ -86,16 +86,17 @@ class c_lockfile{
 };
 #elif HAVE_LOCKFILE
 #include <windows.h>
-#include "path.h"
 class c_lockfile{
 	public:
 		HANDLE hFile;
 
 		c_lockfile(string filename,int flag): hFile(INVALID_HANDLE_VALUE){
+			filename += ".lock";//Windows does not allow removing the locked file, (when we rename the .tmp to the real name), so create a seperate lock file instead.
 			PDEBUG(FLOCK_DEBUG_LEV,"attempting to LockFile %s",filename.c_str());
-			if (!fexists(filename.c_str()))
-				return;
-			hFile = CreateFile(filename.c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+			//if (!fexists(filename.c_str()))
+			//	return;
+			//hFile = CreateFile(filename.c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+			hFile = CreateFile(filename.c_str(), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 			if (hFile==INVALID_HANDLE_VALUE){
 				throw ApplicationExFatal(Ex_INIT,"c_lockfile: open %s (%i)",filename.c_str(),GetLastError());
 			}
