@@ -75,7 +75,7 @@ void dofile(const char *arg){
 	int tempi,i,partdone,retry;
 	long flagpos,temppos;
 	ulong anum,lines,bytes;
-#define FCHK(a) {if (a) {printf(__FILE__":%i ",__LINE__); goto dofile_ferror;}}
+#define FCHK(a) {if (a) {if (ferror(listf)) {printf(__FILE__":%i ",__LINE__);} goto dofile_ferror;}}
 #define Lfgets(buf) {FCHK(Bfgets(buf,2048,listf)==NULL);}
 	while (!feof(listf)){
 		FCHK((flagpos=ftell(listf))<0);
