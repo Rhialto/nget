@@ -5,6 +5,7 @@ Index:
 1. Why doesn't -G somegroup -r '*.png' work?
 2. Whats a regexp? I'm too lazy to read a man page.
 3. Whats this "unequal line count" error?
+4. Yenc support?
 
 
 Answers:
@@ -43,4 +44,17 @@ The main reason this check is in there is to catch any possible download
 corruption, but in a case like this its just the server and nget
 disagree on the method of counting.  pan most likely just doesn't care
 if the line count is different.
+
+
+4. Yenc support?
+
+For now, you can handle them with nget's -K option, and an external decoder
+(see http://users.pandora.be/stef/ or http://www.winews.net/yenc/index.htm or
+http://sourceforge.net/projects/yenc/).  Due to the extra info yenc includes in
+each part, you can safely run "ydec *" and everything should be decoded
+correctly.
+
+In the future, nget will support yenc directly.  nget utilizes uulib for its
+decoding, so nget will support yenc automatically when uulib is upgraded to
+support it.
 
