@@ -23,7 +23,7 @@ AC_DEFUN(MY_CHECK_POPT_CONST,
 [AC_TRY_COMPILE([#include <popt.h>], [const char ** targv=NULL;poptContext c=poptGetContext(NULL,1,targv,NULL,0);],
   ac_cv_popt_const_argv=yes, ac_cv_popt_const_argv=no)])
 if test $ac_cv_popt_const_argv = yes; then
-  AC_DEFINE(POPT_CONST_ARGV,,[Does popt want const argvs?])
+  AC_DEFINE(POPT_CONST_ARGV,1,[Does popt want const argvs?])
 fi
 ])
 
@@ -33,7 +33,7 @@ AC_DEFUN(MY_DECL__TIMEZONE,
 [AC_TRY_COMPILE([#include <time.h>], [long l = 1l-_timezone;],
   ac_cv_decl__timezone=yes, ac_cv_decl__timezone=no)])
 if test $ac_cv_decl__timezone = yes; then
-  AC_DEFINE(_TIMEZONE_IS_VAR,,[define if `timezone' is an integer var defined in time.h])
+  AC_DEFINE(_TIMEZONE_IS_VAR,1,[define if `timezone' is an integer var defined in time.h])
 fi
 ])
 AC_DEFUN(MY_DECL_TIMEZONE,
@@ -42,7 +42,7 @@ AC_DEFUN(MY_DECL_TIMEZONE,
 [AC_TRY_COMPILE([#include <time.h>], [long l = 1l-timezone;],
   ac_cv_decl_timezone=yes, ac_cv_decl_timezone=no)])
 if test $ac_cv_decl_timezone = yes; then
-  AC_DEFINE(TIMEZONE_IS_VAR,,[define if `_timezone' is an integer var defined in time.h])
+  AC_DEFINE(TIMEZONE_IS_VAR,1,[define if `_timezone' is an integer var defined in time.h])
 fi
 ])
 
@@ -128,7 +128,7 @@ fi
 LIBS=$ac_func_search_save_LIBS])
 AS_IF([test "$my_cv_working_termstuff" != no],
   [test "$my_cv_working_termstuff" = "none required" || LIBS="$my_cv_working_termstuff $LIBS"
-  AC_DEFINE(HAVE_WORKING_TERMSTUFF,,[Do we have a working term.h, tputs, and clr_bol?])])dnl
+  AC_DEFINE(HAVE_WORKING_TERMSTUFF,1,[Do we have a working term.h, tputs, and clr_bol?])])dnl
 ])
 
 
@@ -198,11 +198,11 @@ dnl  ac_cv_func_which_gethostname_r=no
         ,ac_cv_func_which_gethostname_r=no)])
 
 if test $ac_cv_func_which_gethostname_r = six; then
-  AC_DEFINE(HAVE_FUNC_GETHOSTBYNAME_R_6,,[6 arg version])
+  AC_DEFINE(HAVE_FUNC_GETHOSTBYNAME_R_6,1,[6 arg version])
 elif test $ac_cv_func_which_gethostname_r = five; then
-  AC_DEFINE(HAVE_FUNC_GETHOSTBYNAME_R_5,,[5 arg version])
+  AC_DEFINE(HAVE_FUNC_GETHOSTBYNAME_R_5,1,[5 arg version])
 elif test $ac_cv_func_which_gethostname_r = three; then
-  AC_DEFINE(HAVE_FUNC_GETHOSTBYNAME_R_3,,[3 arg version])
+  AC_DEFINE(HAVE_FUNC_GETHOSTBYNAME_R_3,1,[3 arg version])
 
 fi
 
@@ -271,11 +271,11 @@ AC_CHECK_FUNC(getservbyname_r, [
         ,ac_cv_func_which_getservbyname_r=no)])
 
 if test $ac_cv_func_which_getservbyname_r = six; then
-  AC_DEFINE(HAVE_FUNC_GETSERVBYNAME_R_6,,[6 arg version])
+  AC_DEFINE(HAVE_FUNC_GETSERVBYNAME_R_6,1,[6 arg version])
 elif test $ac_cv_func_which_getservbyname_r = five; then
-  AC_DEFINE(HAVE_FUNC_GETSERVBYNAME_R_5,,[5 arg version])
+  AC_DEFINE(HAVE_FUNC_GETSERVBYNAME_R_5,1,[5 arg version])
 elif test $ac_cv_func_which_getservbyname_r = four; then
-  AC_DEFINE(HAVE_FUNC_GETSERVBYNAME_R_4,,[4 arg version])
+  AC_DEFINE(HAVE_FUNC_GETSERVBYNAME_R_4,1,[4 arg version])
 
 fi
 

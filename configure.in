@@ -158,7 +158,7 @@ AC_ARG_WITH(uulib,
 if test "$uumanual" = "yes"; then
 	UUINC=-I$UUDIR
 	UULIB=$UUDIR/libuu.a
-	AC_DEFINE(HAVE_LIBUU,,[Define if you have the uu library (-luu).])
+	AC_DEFINE(HAVE_LIBUU,1,[Define if you have the uu library (-luu).])
 else
 	NOUU=#
 	AC_CHECK_LIB(uulib, UUInitialize)
@@ -178,7 +178,7 @@ AC_ARG_ENABLE(filecompare,
 [ --disable-filecompare    Do not test to see if a duplicate downloaded file is
                           the same as the original, keep all duplicates.],
 	if test "$enableval" != "no"; then
-		AC_DEFINE(USE_FILECOMPARE,,[compare duplicate files?])
+		AC_DEFINE(USE_FILECOMPARE,1,[compare duplicate files?])
 	fi
 ,
 		AC_DEFINE(USE_FILECOMPARE)
@@ -222,7 +222,7 @@ if test "$nget_noopt" = "yes"; then
 	MY_DISABLE_OPT
 fi
 if test "$nget_ndebug" = "yes"; then
-	AC_DEFINE(NDEBUG,,[debug mode?])
+	AC_DEFINE(NDEBUG,1,[debug mode?])
 fi
 dnl AC_ARG_ENABLE(debug_cache,
 dnl [ --enable-debug_cache     Enable consistancy checks when loading and saving header cache],
