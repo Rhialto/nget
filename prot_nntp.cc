@@ -223,7 +223,7 @@ void c_prot_nntp::nntp_dogroupdescriptions(const char *wildmat){
 
 void c_prot_nntp::nntp_grouplist(int update, const nget_options &options){
 	if (!glist)
-		glist = new c_nntp_grouplist(nghome+"newsgroups");
+		glist = new c_nntp_grouplist(ngcachehome+"newsgroups");
 	if (update) {
 		c_server::ptr s;
 		list<c_server::ptr> doservers;
@@ -723,7 +723,7 @@ void c_prot_nntp::nntp_group(const c_group_info::ptr &ngroup, bool getheaders, c
 //	if (gcache) delete gcache;
 	cleanupcache();
 
-	midinfo=new meta_mid_info(nghome, ngroup); 
+	midinfo=new meta_mid_info(ngcachehome, ngroup); 
 	//gcache=new c_nntp_cache(nghome,group->group + ",cache");
 	gcache=new c_nntp_cache(ngcachehome, group, midinfo);
 	if (getheaders){
@@ -1047,14 +1047,14 @@ void c_prot_nntp::nntp_retrieve(const vector<c_group_info::ptr> &rgroups, const 
 	if (rgroups.size()!=1) {
 		cleanupcache();
 		group = NULL;
-		midinfo=new meta_mid_info(nghome, rgroups);
+		midinfo=new meta_mid_info(ngcachehome, rgroups);
 	} else {
 		if (rgroups.front() != group) {
 			cleanupcache();
 			group = rgroups.front();
 		}
 		if (!midinfo) {
-			midinfo=new meta_mid_info(nghome, group);
+			midinfo=new meta_mid_info(ngcachehome, group);
 		}
 	}
 	gcache=new c_nntp_cache();
@@ -1075,7 +1075,7 @@ void c_prot_nntp::nntp_retrieve(const vector<c_group_info::ptr> &rgroups, const 
 	if (rgroups.size()!=1) {
 		cleanupcache();
 		group = NULL;
-		midinfo=new meta_mid_info(nghome, rgroups);
+		midinfo=new meta_mid_info(ngcachehome, rgroups);
 		nntp_cache_getfiles(&filec, &parhandler, &gcache_ismultiserver, ngcachehome, rgroups, midinfo, getinfos);
 	} else {
 		assert(rgroups.front());
@@ -1090,7 +1090,7 @@ void c_prot_nntp::nntp_retrieve(const vector<c_group_info::ptr> &rgroups, const 
 				group = rgroups.front();
 			}
 			if (!midinfo) {
-				midinfo=new meta_mid_info(nghome, rgroups);
+				midinfo=new meta_mid_info(ngcachehome, rgroups);
 			}
 
 			nntp_cache_getfiles(&filec, &parhandler, &gcache_ismultiserver, ngcachehome, group, midinfo, getinfos);

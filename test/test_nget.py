@@ -1976,6 +1976,49 @@ class MetaGrouping_LiteRetrieveTestCase(TestCase, MetaGrouping_RetrieveTest_base
 		self.verifyoutput(['mergesa01'])
 
 
+class CacheLocTestCase(TestCase, DecodeTest_base):
+	def setUp(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.addarticles('0001', 'uuencode_single')
+		self.addarticles('0002', 'uuencode_multi')
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.start()
+
+	def tearDown(self):
+		self.servers.stop()
+		self.nget.clean_all()
+
+	def do_test_cache_location(self, tmp2dir):
+		def getrcfilelist(d=self.nget.rcdir):
+			rcfiles = os.listdir(d)
+			rcfiles.sort()
+			return rcfiles
+		rcfiles = getrcfilelist()
+		self.nget.run('-X -Tr .')
+		self.nget.run('-x test -r joy')
+		self.verifyoutput(['0002'])
+		self.nget.run('-a')
+		self.nget.run('-g test')
+		self.nget.run('-G test -r testfile')
+		self.vfailUnlessEqual(rcfiles, getrcfilelist())
+		self.verifyoutput(['0001','0002'])
+	
+	def test_env_ngetcache(self):
+		tmp2dir = os.path.join(self.nget.rcdir, 'tmp2')
+		os.mkdir(tmp2dir)
+		os.environ['NGETCACHE'] = tmp2dir
+		try:
+			self.do_test_cache_location(tmp2dir)
+		finally:
+			del os.environ['NGETCACHE']
+	
+	def test_rc_cachedir(self):
+		tmp2dir = os.path.join(self.nget.rcdir, 'tmp2')
+		os.mkdir(tmp2dir)
+		self.nget.writerc(self.servers.servers, options={'cachedir':tmp2dir})
+		self.do_test_cache_location(tmp2dir)
+
+
 class MiscTestCase(TestCase, DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)

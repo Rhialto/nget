@@ -1,6 +1,7 @@
 2004-xx-xx v0.xx:
   * Fix error in configure script when printing exceptions not found message, due to unquoted string. (Reported by M.J. Soft)
   * Fix -G* when NGETCACHE != NGETHOME. (Reported by Steven Adeff)
+  * Fix midinfo and newsgroups files not honoring NGETCACHE/cachedir setting. (Reported by Christian Marillat)
 
 2004-06-17 v0.27:
   * Cache file format change, so switch default NGETHOME to ~/.nget5.

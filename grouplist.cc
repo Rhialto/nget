@@ -371,7 +371,7 @@ c_nntp_grouplist::~c_nntp_grouplist(){
 
 void nntp_grouplist_printinfos(const t_grouplist_getinfo_list &getinfos) {
 	c_file *f=NULL;
-	string filename=nghome+"newsgroups";
+	string filename=ngcachehome+"newsgroups";
 	setfilenamegz(filename);
 	try {
 		f=dofileopen(filename.c_str(),"rb");
