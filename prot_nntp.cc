@@ -282,11 +282,11 @@ void c_prot_nntp::nntp_dogroup(int getheaders){
 	char *p;
 	ulong num,low,high;
 	p=strchr(cbuf,' ')+1;
-	num=atoi(p);
+	num=atoul(p);
 	p=strchr(p,' ')+1;
-	low=atoi(p);
+	low=atoul(p);
 	p=strchr(p,' ')+1;
-	high=atoi(p);
+	high=atoul(p);
 //	printf("%i, %i, %i\n",num,low,high);
 	if (getheaders){
 		c_nntp_server_info* servinfo=gcache->getserverinfo(curserverid);

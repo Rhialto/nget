@@ -585,9 +585,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 					printf("max retries set to %i\n",options.maxretry);
 					break;
 				case 'l':
-					options.linelimit=atoi(loptarg);
-					if (options.linelimit<0)
-						options.linelimit=0;
+					options.linelimit=atoul(loptarg);
 					printf("minimum line limit set to %lu\n",options.linelimit);
 					break;
 				case 'w':
