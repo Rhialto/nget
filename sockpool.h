@@ -34,7 +34,7 @@ class Connection {
 		time_t lastuse;
 	public:
 		c_file_tcp sock;
-		c_server *server;
+		c_server::ptr server;
 		c_group_info::ptr curgroup;
 		bool freshconnect;
 
@@ -68,7 +68,7 @@ class Connection {
 				sock.close();
 			}
 		}
-		Connection(c_server *serv):lastuse(0), server(serv){
+		Connection(c_server::ptr serv):lastuse(0), server(serv){
 			assert(serv);
 			sock.initrbuf();
 		}

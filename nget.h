@@ -83,7 +83,7 @@ struct nget_options {
 	char makedirs;
 	c_group_info::ptr group;//,*host;
 //	c_data_section *host;
-	c_server *host;
+	c_server::ptr host;
 //	char *user,*pass;//,*path;
 	string path;
 	string startpath;

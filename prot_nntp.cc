@@ -316,8 +316,8 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 			nntp_doopen();
 			nntp_dogroup(getheaders);
 		}else{
-			c_server* s;
-			list<c_server*> doservers;
+			c_server::ptr s;
+			list<c_server::ptr> doservers;
 			t_server_list::iterator sli = nconfig.serv.begin();
 			for (;sli!=nconfig.serv.end();++sli){
 				s=(*sli).second;
@@ -336,8 +336,8 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 					if (options.retrydelay)
 						sleep(options.retrydelay);
 				}
-				list<c_server*>::iterator dsi = doservers.begin();
-				list<c_server*>::iterator ds_erase_i;
+				list<c_server::ptr>::iterator dsi = doservers.begin();
+				list<c_server::ptr>::iterator ds_erase_i;
 				while (dsi != doservers.end()){
 					s=(*dsi);
 					assert(s);
@@ -453,7 +453,7 @@ int c_prot_nntp::nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_artic
 int c_prot_nntp::nntp_dowritelite_article(c_file &fw,c_nntp_part *part,char *fn){
 	fw.putf("0\n%s\n%s\n",group->group.c_str(),fn);
 
-	c_server *whost;
+	c_server::ptr whost;
 	c_nntp_server_article *sa=NULL;
 	t_nntp_server_articles_prioritized sap;
 	t_nntp_server_articles_prioritized::iterator sapi;
@@ -522,7 +522,7 @@ void c_prot_nntp::nntp_dogetarticle(arinfo*ari,quinfo*toti,list<string> &buf){
 		sock.file_debug->purge();
 	//		sock.file_debug->save();
 #endif
-	c_server *host = connection->server;
+	c_server::ptr host = connection->server;
 	if (!(ari->linesdone>=ari->linestot+host->lineleniencelow && ari->linesdone<=ari->linestot+host->lineleniencehigh)){
 		printf("unequal line count %lu should equal %lu",ari->linesdone,ari->linestot);
 		if (host->lineleniencelow||host->lineleniencehigh){
@@ -678,7 +678,7 @@ void print_nntp_file_info(c_nntp_file::ptr f, t_show_multiserver show_multi) {
 			printf(" ");
 		
 		for (t_server_have_map::iterator i=have_map.begin(); i!=have_map.end(); ++i){
-			c_server *s=nconfig.getserver(i->first);
+			c_server::ptr s=nconfig.getserver(i->first);
 			if (show_multi==SHOW_MULTI_LONG){
 				printf(" %s", s->alias.c_str());
 				if (i->second<f->have)
@@ -1040,7 +1040,7 @@ void c_prot_nntp::nntp_doauth(const char *user, const char *pass){
 	chkreply(i);
 }
 
-void c_prot_nntp::nntp_open(c_server *h){
+void c_prot_nntp::nntp_open(c_server::ptr h){
 	if (h)
 		force_host=h;
 	else

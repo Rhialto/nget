@@ -81,7 +81,7 @@ c_server::c_server(ulong id, string alia, string shortnam, string add, string us
 }
 
 void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_section *pinfo,c_data_section *ginfo){
-	c_server *server;
+	c_server::ptr server;
 	data_list::iterator dli,dlj;
 	c_data_section *ds;
 	c_data_item *di;

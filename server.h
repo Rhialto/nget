@@ -29,7 +29,7 @@
 int parse_int_pair(const char *s, int *l, int *h);
 
 
-class c_server {
+class c_server : public c_refcounted<c_server>{
 	public:
 		ulong serverid;
 		string alias;
@@ -47,15 +47,15 @@ class c_server {
 
 		c_server(ulong id, string alia, string shortnam, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea, int idletimeou);
 };
-typedef map<ulong,c_server*> t_server_list;
+typedef map<ulong,c_server::ptr> t_server_list;
 //typedef map<ulong,c_data_section*,less<ulong> > t_server_list;
 
 
 class c_server_priority {
 	public:
-		c_server *server;
+		c_server::ptr server;
 		float baseprio;
-		c_server_priority(c_server *serv,float basep):server(serv),baseprio(basep){}
+		c_server_priority(c_server::ptr serv,float basep):server(serv),baseprio(basep){}
 };
 typedef map<ulong,c_server_priority*> t_server_priority_grouping;
 
@@ -97,7 +97,7 @@ class c_nget_config {
 	private:
 			struct serv_match_by_name {
 				const char *mname;
-				bool operator() (pair<ulong,c_server*> server) const{
+				bool operator() (pair<ulong,c_server::ptr> server) const{
 					return (server.second->alias==mname || server.second->addr==mname);
 				}
 			};
@@ -117,17 +117,17 @@ class c_nget_config {
 		float penaltymultiplier;
 
 		void check_penalized(ulong serverid) const {
-			c_server *s=getserver(serverid);
+			c_server::ptr s=getserver(serverid);
 			if (penaltystrikes > 0 && s && s->penalty_count >= penaltystrikes) {
 				long timeleft = s->last_penalty + s->penalty_time - time(NULL);
 				if (timeleft > 0)
 					throw TransportExFatal(Ex_INIT,"server %s penalized %li sec", s->alias.c_str(), timeleft);
 			}
 		}
-		void unpenalize(c_server *server) const {
+		void unpenalize(c_server::ptr server) const {
 			server->penalty_count = 0;
 		}
-		void penalize(c_server *server) const {
+		void penalize(c_server::ptr server) const {
 			if (penaltystrikes<=0)
 				return;//penalization disabled
 			++server->penalty_count;
@@ -141,17 +141,17 @@ class c_nget_config {
 			PDEBUG(DEBUG_MED, "penalized %s: count %i, last %li, time %li", server->alias.c_str(), server->penalty_count, server->last_penalty, server->penalty_time);
 		}
 		const char * getservername(ulong serverid) const {
-			c_server *s=getserver(serverid);
+			c_server::ptr s=getserver(serverid);
 			if (s) return s->alias.c_str();
 			return "invalid_serverid";
 		}
-		c_server* getserver(ulong serverid) const {
+		c_server::ptr getserver(ulong serverid) const {
 			t_server_list::const_iterator sli=serv.find(serverid);
 			if (sli!=serv.end())
 				return (*sli).second;
 			return NULL;
 		}
-		c_server* getserver(string name) const {
+		c_server::ptr getserver(string name) const {
 			serv_match_by_name name_matcher;
 			name_matcher.mname=name.c_str();
 			t_server_list::const_iterator sli=find_if(serv.begin(),serv.end(),name_matcher);
@@ -202,9 +202,6 @@ class c_nget_config {
 			penaltymultiplier=2.0;
 		}
 		~c_nget_config(){
-			t_server_list::iterator i;
-			for (i=serv.begin(); i!=serv.end(); ++i)
-				delete (*i).second;
 			delete trustsizes;
 		}
 };

@@ -693,7 +693,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 					break;
 				case 'F':
 					{
-						c_server* server=nconfig.getserver(loptarg);
+						c_server::ptr server=nconfig.getserver(loptarg);
 						if (!server) {printf("no such server %s\n",loptarg);set_user_error_status();break;}
 						c_nntp_server_info* servinfo=nntp.gcache->getserverinfo(server->serverid);
 
@@ -804,7 +804,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 						case 'h':{
 								if (*loptarg){
 									options.host=nconfig.getserver(loptarg);
-									if (options.host==NULL){
+									if (options.host.isnull()){
 										options.badskip=2;
 										printf("invalid host %s (must be configured in .ngetrc first)\n",loptarg);
 										set_user_error_status();

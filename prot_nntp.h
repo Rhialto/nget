@@ -65,7 +65,7 @@ class c_prot_nntp {
 		char *cbuf;
 //		int cbuf_size;
 		Connection *connection;
-		c_server *force_host;
+		c_server::ptr force_host;
 		c_group_info::ptr group;
 //		c_nrange *grange;
 		c_mid_info *midinfo;
@@ -95,7 +95,7 @@ class c_prot_nntp {
 		void nntp_dogetarticle(arinfo*ari,quinfo*toti,list<string> &buf);
 		void nntp_auth(void);
 		void nntp_doauth(const char *user, const char *pass);
-		void nntp_open(c_server *h);
+		void nntp_open(c_server::ptr h);
 		void nntp_doopen(void);
 		void cleanupcache(void);
 		void cleanup(void);
