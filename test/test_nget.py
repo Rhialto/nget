@@ -142,7 +142,7 @@ class ConnectionErrorTestCase(unittest.TestCase, DecodeTest_base):
 		self.failUnless(os.WEXITSTATUS(self.nget.run("-g test -r .")) & 64, "nget process did not detect connection error")
 	
 	def test_DeadServerRetr(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master(1)
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
