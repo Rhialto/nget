@@ -205,10 +205,9 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		
 		self.verifyoutput(testnum)
 	
-	def do_test_decodeerror(self, testnum, dirname):
-		self.addarticles(testnum, dirname)
-
+	def do_test_decodeerror(self):
 		self.vfailUnlessExitstatus(self.nget.run("-g test -r ."), 1, "nget process did not detect decode error")
+		self.vfailUnlessExitstatus(self.nget.run("-dF -G test -r ."), 1, "nget process did not detect decode error on 2nd run (midinfo problem?)")
 	
 	def get_auto_args(self):
 		#use some magic so we don't have to type out everything twice
@@ -221,7 +220,9 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.do_test(*self.get_auto_args(), **kw)
 
 	def do_test_auto_decodeerror(self):
-		self.do_test_decodeerror(*self.get_auto_args())
+		self.addarticles(*self.get_auto_args())
+
+		self.do_test_decodeerror()
 	
 	def test_0001_yenc_single(self):
 		self.do_test_auto()
@@ -249,6 +250,13 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.do_test_auto()
 	def test_0002_uuencode_multi3(self):
 		self.do_test_auto()
+	def test_0002_uuencode_noencodeddata_article_error(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
+		article = self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
+		wrongarticle = nntpd.FileArticle(open(os.path.join("testdata",'0004','input','001'), 'rb'))
+		article.text = wrongarticle.text
+		self.do_test_decodeerror()
 	def test_0002_uuenview_uue_mime_multi(self):
 		self.do_test_auto()
 	def test_0003_newspost_uue_0(self):
