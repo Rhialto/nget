@@ -69,11 +69,11 @@ class c_lockfile{
 //					if (flag&WANT_SH_LOCK)
 					return;
 				} else
-					throw new c_error(EX_A_FATAL,"c_lockfile: open: %i (%i)",fd,errno);
+					throw ApplicationExFatal(Ex_INIT,"c_lockfile: open: %i (%i)",fd,errno);
 			}
 			int ret=flock(fd,(flag&WANT_SH_LOCK)?LOCK_SH:LOCK_EX);
 			if (ret)
-				throw new c_error(EX_A_FATAL,"c_lockfile: flock: %i (%i)",ret,errno);
+				throw ApplicationExFatal(Ex_INIT,"c_lockfile: flock: %i (%i)",ret,errno);
 			PDEBUG(FLOCK_DEBUG_LEV,"flocked %s (%i)",filename.c_str(),fd);
 //			sleep(10);
 		}

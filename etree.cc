@@ -249,14 +249,14 @@ generic_pred * make_pred(const char *optarg){
 					try{
 						reg=new c_regex_nosub(y->c_str(),REG_EXTENDED|REG_ICASE);
 						if (!reg)
-							throw new c_error(EX_A_FATAL,"couldn't allocate regex");
+							throw ApplicationExFatal(Ex_INIT,"couldn't allocate regex");
 					}catch (c_regex_error *regerr) {
 						char buf[256];
 						regerr->strerror(buf,256);
 						int e=regerr->geterror();
 						delete reg;//shouldn't be needed, but shouldn't hurt either
 						delete regerr;
-						throw new c_error(EX_A_FATAL,"regex error %i:%s",e,buf);
+						throw ApplicationExFatal(Ex_INIT,"regex error %i:%s",e,buf);
 					}
 					if ((*i).compare("=~")==0 || (*i).compare("==")==0)
 						e_str_=&str_eq;

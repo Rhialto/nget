@@ -29,6 +29,7 @@
 #include <stdarg.h>
 #include "server.h"
 #include "nrange.h"
+#include "nget.h"
 
 #define GETFILES_NODECODE		8
 #define GETFILES_KEEPTEMP		16
@@ -90,7 +91,7 @@ class c_prot_nntp /*: public c_transfer_protocol */{
 		void nntp_print_retrieving_headers(ulong lll,ulong hhh,ulong ccc,ulong bbb);
 //		void nntp_print_retrieving_articles(long nnn, long tot,long done,long btot,long bbb);
 //		void nntp_print_retrieving_articles(arinfo *ari, arinfo*tot);
-		void nntp_group(c_group_info::ptr group, int getheaders);
+		void nntp_group(c_group_info::ptr group, int getheaders, nget_options &options);
 		void nntp_dogroup(int getheaders);
 		//void nntp_doarticle(long num,long ltotal,long btotal,char *fn);
 		int nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_articles_prioritized &sap,t_nntp_server_articles_prioritized::iterator *curservsapi);

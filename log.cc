@@ -17,21 +17,5 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 #include "log.h"
-#include <stdarg.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include "strreps.h"
 
 int quiet=0,debug=0;
-c_error::c_error(int n, const char * s, ...){
-	va_list ap;
-	num=n;
-	va_start(ap,s);
-	vasprintf(&str,s,ap);
-	va_end(ap);
-//	printf("c_error %i constructed: %s\n",num,str);
-}
-c_error::~c_error(){
-	if (str) free(str);
-	//printf("c_error %i deconstructed\n",num);
-};

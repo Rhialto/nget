@@ -16,6 +16,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include <stdio.h>
 #include <errno.h>
 #include "log.h"
@@ -114,25 +117,21 @@ void dofile(const char *arg){
 					FCHK(fputc('1',listf)<0);
 					FCHK(fseek(listf,temppos,SEEK_SET));
 					break;
-				}catch(c_error *e){
-					int n=e->num;
-					printf("caught exception %i: %s",n,e->str);
-					delete e;
-					if (n<EX_FATALS){
-//						nntp.doclose();
-						retry++;
-						printf(" (retrying %i)\n",retry);
-						sleep(1);
-						continue;
-					}else{
-						if (n==EX_A_FATAL){
-							printf(" (fatal application error, exiting..)\n");
-							exit(-1);
-						}else{
-							printf(" (skipping)\n");
-							break;
-						}
-					}
+				}catch(ApplicationExFatal &e){
+					printCaughtEx_nnl(e);
+					printf(" (fatal application error, exiting..)\n");
+					exit(-1);
+				}catch(ExFatal &e){
+					printCaughtEx_nnl(e);
+					printf(" (skipping)\n");
+					break;
+				}catch(ExError &e){
+				//}catch(baseEx &e){//doesn't work..?
+					printCaughtEx_nnl(e);
+					retry++;
+					printf(" (retrying %i)\n",retry);
+					sleep(1);
+					continue;
 				}
 			}
 		}

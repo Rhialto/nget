@@ -21,6 +21,11 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include <stdarg.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string>
+#include "strreps.h"
 //#include <string.h>
 #define PERROR(a, args...) fprintf(stderr,a "\n" , ## args)
 #define PMSG(a, args...) printf(a "\n" , ## args)
@@ -33,29 +38,66 @@ extern int debug;
 #define DEBUG_MED 2
 #define DEBUG_ALL 3
 extern int quiet;
-//transport level errors
-#define EX_T_FATAL 5
-#define EX_T_ERROR 2
-//#define EX_T_NOCON 1
-//protocol errors
-#define EX_P_FATAL 3
-//user errors
-#define EX_U_FATAL 4
-#define EX_U_WARN 1
-//application errors
-#define EX_A_FATAL 6
-//path.
-#define EX_PATH_FATAL 7
 
-#define EX_FATALS 3
-
-class c_error {
+class baseEx {
 	public:
-		int num;
-		char* str;
-		c_error(int n, const char * s, ...);
-		~c_error();
+		virtual bool isfatal(void)const=0;
+		virtual const char* getExType(void)const=0;
+		virtual const char* getExStr(void)const=0;
+		virtual const char* getExFile(void)const=0;
+		virtual int getExLine(void)const=0;
 };
+
+class ExError : public baseEx{
+	public:
+		virtual bool isfatal(void)const{return 0;}
+};
+class ExFatal : public baseEx{
+	public:
+		virtual bool isfatal(void)const{return 1;}
+};
+#define DEFINE_EX_SUBCLASS(name, sub) class name ## Ex ## sub : public Ex ## sub, public name ## Ex {\
+		string str;\
+		const char *mfile;\
+		int mline;\
+	public:\
+		virtual const char* getExFile(void)const{return mfile;}\
+		virtual int getExLine(void)const{return mline;}\
+		virtual const char* getExStr(void)const{return str.c_str();}\
+		virtual bool isfatal(void)const{return Ex ## sub::isfatal();}\
+		virtual const char* getExType(void)const{return #name "Ex" #sub;}\
+		name ## Ex ## sub(const char *file, int line, const char * s, ...):mfile(file),mline(line){\
+			char *cstr;\
+			va_list ap;\
+			va_start(ap,s);\
+			vasprintf(&cstr,s,ap);\
+			va_end(ap);\
+			str=cstr;\
+			free(cstr);\
+			PDEBUG(DEBUG_MIN,"%s:%i:Created exception %s with %s(%p)",mfile,mline,getExType(), getExStr(), getExStr());\
+		}\
+		virtual ~name ## Ex ## sub(){\
+/*			printf("Destroying exception %s with %s(%p)\n",getExType(), getExStr(), getExStr());*/\
+		}\
+};
+
+#define DEFINE_EX_CLASSES(name,base) class name ## Ex: public base {};\
+DEFINE_EX_SUBCLASS(name, Fatal)\
+DEFINE_EX_SUBCLASS(name, Error)
+
+class baseCommEx: public baseEx {};
+	
+DEFINE_EX_CLASSES(Transport, baseCommEx);
+DEFINE_EX_CLASSES(Protocol, baseCommEx);
+DEFINE_EX_CLASSES(Path, baseEx);
+DEFINE_EX_CLASSES(User, baseEx);
+DEFINE_EX_CLASSES(Application, baseEx);
+
+#define Ex_INIT __FILE__,__LINE__
+
+#define printCaughtEx_nnl(e) printf("%s:%i:caught exception %s:%i:%s: %s",__FILE__,__LINE__,e.getExFile(),e.getExLine(),e.getExType(),e.getExStr());
+#define printCaughtEx(e) printCaughtEx_nnl(e);printf("\n");
+
 
 //#define FILE_DEBUG
 

@@ -82,7 +82,7 @@ int c_prot_nntp::doputline(int echo,const char * str,va_list ap){
 	if (!(fpbuf=(char*)realloc(fpbuf,i+3))){
 		free(fpbuf);
 		nntp_close();
-		throw new c_error(EX_T_ERROR,"nntp_putline:realloc(%p,%i) %s(%i)",fpbuf,i+3,strerror(errno),errno);
+		throw TransportExError(Ex_INIT,"nntp_putline:realloc(%p,%i) %s(%i)",fpbuf,i+3,strerror(errno),errno);
 	}
 	if (echo)
 		printf(">%s\n",fpbuf);
@@ -95,7 +95,7 @@ int c_prot_nntp::doputline(int echo,const char * str,va_list ap){
 //		printf("nntp_putline:%i %s(%i)\n",i,strerror(errno),errno);
 		free(fpbuf);
 		nntp_close(1);
-		throw new c_error(EX_T_ERROR,"nntp_putline:%i %s(%i)",i,strerror(errno),errno);
+		throw TransportExError(Ex_INIT,"nntp_putline:%i %s(%i)",i,strerror(errno),errno);
 	}
 	free(fpbuf);
 	return i;
@@ -106,7 +106,7 @@ int c_prot_nntp::getline(int echo){
 	int i=sock.bgets();
 	if (i<0){//==0 can be legally achieved since the line terminators are removed
 		nntp_close(1);
-		throw new c_error(EX_T_ERROR,"nntp_getline:%i %s(%i)",i,strerror(errno),errno);
+		throw TransportExError(Ex_INIT,"nntp_getline:%i %s(%i)",i,strerror(errno),errno);
 	}else {
 		cbuf=sock.rbufp();
 		time(&lasttime);
@@ -119,7 +119,7 @@ int c_prot_nntp::getline(int echo){
 int c_prot_nntp::chkreply(int reply){
 //	int i=getreply(echo);
 	if (reply/100!=2)
-		throw new c_error(EX_P_FATAL,"bad reply %i: %s",reply,cbuf);
+		throw ProtocolExFatal(Ex_INIT,"bad reply %i: %s",reply,cbuf);
 	return reply;
 }
 
@@ -272,7 +272,7 @@ void c_prot_nntp::doxover(c_nrange *r){
 void c_prot_nntp::nntp_dogroup(int getheaders){
 	//if(!gcache && getheaders){
 	if(gcache.isnull() && getheaders){
-		throw new c_error(EX_U_FATAL,"nntp_dogroup: nogroup selected");
+		throw UserExFatal(Ex_INIT,"nntp_dogroup: nogroup selected");
 	}
 	nntp_doopen();
 	if (groupselected) return;
@@ -319,7 +319,7 @@ void c_prot_nntp::nntp_dogroup(int getheaders){
 	}
 };
 
-void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders){
+void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, nget_options &options){
 
 	group=ngroup;
 //	if (gcache) delete gcache;
@@ -340,29 +340,64 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders){
 //			assert(host);
 			nntp_dogroup(getheaders);
 		}else{
-			c_server* firstserv=host;
 			c_server* s;
-			if (firstserv && (group->priogrouping->getserverpriority(firstserv->serverid) >= group->priogrouping->defglevel)){
-				PDEBUG(DEBUG_MED,"nntp_group: firstserv(%lu) %f>=%f",firstserv->serverid,group->priogrouping->getserverpriority(firstserv->serverid),group->priogrouping->defglevel);
-				nntp_dogroup(getheaders);//if the serv we currently are on has a high enough prio, do it first.
-			}
-//			group->priogrouping->defglevel;
-			t_server_list::iterator sli=nconfig.serv.begin();
+			list<c_server*> doservers;
+			t_server_list::iterator sli = nconfig.serv.begin();
 			for (;sli!=nconfig.serv.end();++sli){
 				s=(*sli).second;
 				assert(s);
-				if (firstserv && s->serverid==firstserv->serverid){
-					PDEBUG(DEBUG_MED,"nntp_group: serv(%lu) already done",s->serverid);
-					continue;//we already did this one first, skip it.
-				}
-				PDEBUG(DEBUG_MED,"nntp_group: serv(%lu) %f>=%f",s->serverid,group->priogrouping->getserverpriority(s->serverid),group->priogrouping->defglevel);
-				if (group->priogrouping->getserverpriority(s->serverid) >= group->priogrouping->defglevel){
-					curserverid=s->serverid;
-					host=s;
-					nntp_close();
-					nntp_dogroup(getheaders);
+				if (group->priogrouping->getserverpriority(s->serverid) >= group->priogrouping->defglevel) {
+					if (host && host==s) //put current connected host at start of list
+						doservers.push_front(s);
+					else
+						doservers.push_back(s);
 				}
 			}
+			int redone=0, succeeded=0;
+			while (!doservers.empty() && redone<options.maxretry) {
+				if (redone){
+					printf("nntp_group: trying again. %i\n",redone);
+					if (options.retrydelay)
+						sleep(options.retrydelay);
+				}
+				list<c_server*>::iterator dsi = doservers.begin();
+				list<c_server*>::iterator ds_erase_i;
+				while (dsi != doservers.end()){
+					s=(*dsi);
+					assert(s);
+					PDEBUG(DEBUG_MED,"nntp_group: serv(%lu) %f>=%f",s->serverid,group->priogrouping->getserverpriority(s->serverid),group->priogrouping->defglevel);
+					if (host!=s) {
+						try {
+							nntp_close();
+						} catch (baseCommEx &e) {//ignore transport errors while closing
+							printCaughtEx_nnl(e);printf(" (ignored)\n");
+						}
+						curserverid=s->serverid;
+						host=s;
+					}
+					try {
+						nntp_dogroup(getheaders);
+						succeeded++;
+					} catch (baseCommEx &e) {
+						printCaughtEx(e);
+						if (e.isfatal()) {
+							printf("fatal error, won't try %s again\n",s->addr.c_str());
+							//fall through to removing server from list below.
+						}else{
+							printf("will try %s again\n",s->addr.c_str());
+							++dsi;
+							continue;//don't remove server from list
+						}
+					}
+					ds_erase_i = dsi;
+					++dsi;
+					doservers.erase(ds_erase_i);
+				}
+				redone++;
+			}
+			if (!succeeded)
+//				throw TransportExFatal(Ex_INIT,"no servers queried successfully");
+				printf("nntp_dogroup: giving up, no servers queried successfully\n");
 		}
 	}
 }
@@ -562,13 +597,13 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 							if (unlink(fn))
 								perror("unlink:");
 						}
-						throw new c_error(EX_A_FATAL,"error writing %s: %s",fn,strerror(e));
+						throw ApplicationExFatal(Ex_INIT,"error writing %s: %s",fn,strerror(e));
 					}
 					//delete [] p;
 				}
 				f.close();
 			}else
-				throw new c_error(EX_A_FATAL,"unable to open %s: %s",fn,strerror(errno));
+				throw ApplicationExFatal(Ex_INIT,"unable to open %s: %s",fn,strerror(errno));
 			return 0;
 		}
 	}
@@ -761,7 +796,7 @@ void c_prot_nntp::nntp_retrieve(int options, const string &writelite){
 					if (!writelite.empty()){
 						c_file_fd fw;
 						if (fw.open(writelite.c_str(),O_WRONLY|O_CREAT|O_APPEND,PRIVMODE)<0)
-							throw new c_error(EX_A_FATAL,"couldn't open %s",writelite.c_str());
+							throw ApplicationExFatal(Ex_INIT,"couldn't open %s",writelite.c_str());
 						nntp_dowritelite_article(fw,p,fn);
 						fw.close();
 						free(fn);
@@ -786,7 +821,7 @@ void c_prot_nntp::nntp_retrieve(int options, const string &writelite){
 			}
 			if (!derr && !(options&GETFILES_NODECODE)){
 				if ((r=UUInitialize())!=UURET_OK)
-					throw new c_error(EX_A_FATAL,"UUInitialize: %s",UUstrerror(r));
+					throw ApplicationExFatal(Ex_INIT,"UUInitialize: %s",UUstrerror(r));
 				UUSetOption(UUOPT_DUMBNESS,1,NULL);//we already put the parts in the correct order, so it doesn't need to.
 				//UUSetOption(UUOPT_FAST,1,NULL);//we store each message in a seperate file
 				//actually, I guess that won't work, since some messages have multiple files in them anyway.
@@ -921,14 +956,14 @@ void c_prot_nntp::nntp_doauth(const char *user, const char *pass){
 
 	if(!user){
 		nntp_close();
-		throw new c_error(EX_U_FATAL,"nntp_doauth: no authorization info known");
+		throw UserExFatal(Ex_INIT,"nntp_doauth: no authorization info known");
 	}
 	putline(quiet<2,"AUTHINFO USER %s",user);
 	i=getreply(quiet<2);
 	if (i==350 || i==381){
 		if(!pass){
 			nntp_close();
-			throw new c_error(EX_U_FATAL,"nntp_doauth: no password known");
+			throw UserExFatal(Ex_INIT,"nntp_doauth: no password known");
 		}
 		putline(0,"AUTHINFO PASS %s",pass);
 		if (quiet<2)
@@ -955,7 +990,7 @@ void c_prot_nntp::nntp_doopen(void){
 	if (!sock.isopen()){
 		//if(host.size()<=0){
 		if(!host){
-			throw new c_error(EX_U_FATAL,"nntp_doopen: no host selected");
+			throw UserExFatal(Ex_INIT,"nntp_doopen: no host selected");
 		}
 		time(&lasttime);
 		int i;
@@ -963,7 +998,7 @@ void c_prot_nntp::nntp_doopen(void){
 		if((i=sock.open(host->addr.c_str(),"nntp"))<0){
 			//throw -1;
 			//throw new c_error(EX_T_FATAL,"make_connection:%i %s(%i)",i,strerror(errno),errno);
-			throw new c_error(EX_T_ERROR,"make_connection:%i %s(%i)",i,strerror(errno),errno);
+			throw TransportExError(Ex_INIT,"make_connection:%i %s(%i)",i,strerror(errno),errno);
 		}
 		chkreply(getreply(quiet<2));
 		putline(debug>=DEBUG_MED,"MODE READER");

@@ -43,4 +43,26 @@ void set_path_error_status(void);
 void set_user_error_status(void);
 void set_fatal_error_status(void);
 
+struct nget_options {
+	int maxretry,retrydelay;
+	ulong linelimit;
+	int gflags,badskip,qstatus;
+	char makedirs;
+	c_group_info::ptr group;//,*host;
+//	c_data_section *host;
+	c_server *host;
+//	char *user,*pass;//,*path;
+	string path;
+	string startpath;
+	string temppath;
+	string writelite;
+
+	void do_get_path(string &s);
+	nget_options(void);
+	nget_options(nget_options &o);
+	void get_path(void);
+	void get_temppath(void);
+	void parse_dupe_flags(const char *opt);
+	int set_makedirs(const char *s);
+};
 #endif

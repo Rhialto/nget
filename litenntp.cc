@@ -16,6 +16,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
@@ -56,7 +59,7 @@ int c_prot_nntp::doputline(int echo,const char * str,va_list ap){
 
 	if ((((i=cursock.vprintf(str,ap)<=0)))||(((j=cursock.printf("\r\n")<=0)))){
 		doclose();
-		throw new c_error(EX_T_ERROR,"nntp_putline:%i %s(%i)",i>=0?j:i,strerror(errno),errno);
+		throw TransportExError(Ex_INIT,"nntp_putline:%i %s(%i)",i>=0?j:i,strerror(errno),errno);
 	}
 	if (echo){
 		printf(">");
@@ -72,7 +75,7 @@ int c_prot_nntp::getline(int echo){
 	//int i=sock.bgets();
 	if (i<0){//==0 can be legally achieved since the line terminators are removed
 		doclose();
-		throw new c_error(EX_T_ERROR,"nntp_getline:%i %s(%i)",i,strerror(errno),errno);
+		throw TransportExError(Ex_INIT,"nntp_getline:%i %s(%i)",i,strerror(errno),errno);
 	}else {
 //		cbuf=sock.rbuffer->rbufp;
 //		time(&lasttime);
@@ -87,7 +90,7 @@ int c_prot_nntp::getline(int echo){
 int c_prot_nntp::chkreply(int reply){
 //	int i=getreply(echo);
 	if (reply/100!=2)
-		throw new c_error(EX_P_FATAL,"bad reply %i: %s",reply,cbuf);
+		throw ProtocolExFatal(Ex_INIT,"bad reply %i: %s",reply,cbuf);
 	return reply;
 }
 
@@ -117,7 +120,7 @@ void c_prot_nntp::doarticle(ulong anum,ulong bytes,ulong lines,const char *outfi
 	sprintf(tempfilename,"%s.%i",tempfilename_base,getpid());
 	FILE *f=fopen(tempfilename,"w");
 	if (f==NULL)
-		throw new c_error(EX_A_FATAL,"nntp_doarticle:%lu fopen %s(%i)",anum,strerror(errno),errno);
+		throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu fopen %s(%i)",anum,strerror(errno),errno);
 	while(1) {
 		glr=getline(debug>=DEBUG_ALL);
 		if (cbuf[0]=='.'){
@@ -135,12 +138,12 @@ void c_prot_nntp::doarticle(ulong anum,ulong bytes,ulong lines,const char *outfi
 		}
 		if (fprintf(f,"%s\n",lp)<0){
 			fclose(f);
-			throw new c_error(EX_A_FATAL,"nntp_doarticle:%lu fprintf %s(%i)",anum,strerror(errno),errno);
+			throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu fprintf %s(%i)",anum,strerror(errno),errno);
 		}
 	}
 	fclose(f);
 	if (rename(tempfilename,outfile)<0){
-		throw new c_error(EX_A_FATAL,"nntp_doarticle:%lu rename %s(%i)",anum,strerror(errno),errno);
+		throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu rename %s(%i)",anum,strerror(errno),errno);
 	}
 	time(&donetime);
 	if (!quiet){
@@ -174,7 +177,7 @@ void c_prot_nntp::doopen(const char *host){
 	doclose();
 	int i;
 	if ((i=cursock.open(host,"nntp"))<0)
-		throw new c_error(EX_T_ERROR,"nntp_doopen:%i %s(%i)",i,strerror(errno),errno);
+		throw TransportExError(Ex_INIT,"nntp_doopen:%i %s(%i)",i,strerror(errno),errno);
 	chkreply(getreply(!quiet));
 	putline(debug>=DEBUG_MED,"MODE READER");
 	getline(debug>=DEBUG_MED);
@@ -182,7 +185,7 @@ void c_prot_nntp::doopen(const char *host){
 }
 
 void c_prot_nntp::nntp_auth(void){
-	throw new c_error(EX_T_ERROR,"c_prot_nntp::nntp_auth not implemented for lite yet");
+	throw TransportExError(Ex_INIT,"c_prot_nntp::nntp_auth not implemented for lite yet");
 }
 
 c_prot_nntp::c_prot_nntp(){

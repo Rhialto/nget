@@ -255,77 +255,64 @@ string nghome;
 
 c_nget_config nconfig;
 
-struct nget_options {
-	int maxretry,retrydelay;
-	ulong linelimit;
-	int gflags,badskip,qstatus;
-	char makedirs;
-	c_group_info::ptr group;//,*host;
-//	c_data_section *host;
-	c_server *host;
-//	char *user,*pass;//,*path;
-	string path;
-	string startpath;
-	string temppath;
-	string writelite;
-	//nget_options(void){path=NULL;}
-	void do_get_path(string &s){char *p;goodgetcwd(&p);s=p;free(p);}
+void nget_options::do_get_path(string &s){char *p;goodgetcwd(&p);s=p;free(p);}
 
-	nget_options(void){
-		do_get_path(startpath);
-		get_path();
-		get_temppath();
-	}
-	nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),gflags(o.gflags),badskip(o.badskip),qstatus(o.qstatus),makedirs(o.makedirs),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
-/*		if (o.path){
+nget_options::nget_options(void){
+	do_get_path(startpath);
+	get_path();
+	get_temppath();
+}
+nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),gflags(o.gflags),badskip(o.badskip),qstatus(o.qstatus),makedirs(o.makedirs),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
+	/*	if (o.path){
 			path=new char[strlen(o.path)+1];
 			strcpy(path,o.path);
 		}else
 			path=NULL;*/
-		//printf("copy path=%s(%p-%p)\n",path,this,path);
-	}
+	//printf("copy path=%s(%p-%p)\n",path,this,path);
+}
 //	void del_path(void){if (path){/*printf("deleteing %s(%p-%p)\n",path,this,path);*/free(path);path=NULL;}}
 	//void get_path(void){/*printf("get_path\n");*/del_path();goodgetcwd(&path);}
-	void get_path(void){do_get_path(path);}
-	void get_temppath(void){
-		do_get_path(temppath);
-		if (temppath[temppath.size()-1]!='/')
-			temppath.append("/");
-	}
-	void parse_dupe_flags(const char *opt){
-		while(*opt){
-			switch (*opt){
-				case 'i':gflags&= ~GETFILES_NODUPEIDCHECK;break;
-				case 'I':gflags|= GETFILES_NODUPEIDCHECK;break;
-				case 'f':gflags&= ~GETFILES_NODUPEFILECHECK;break;
-				case 'F':gflags|= GETFILES_NODUPEFILECHECK;break;
-				case 'm':gflags|= GETFILES_DUPEFILEMARK;break;
-				case 'M':gflags&= ~GETFILES_DUPEFILEMARK;break;
-				default:
-					throw new c_error(EX_U_FATAL,"unknown dupe flag %c",*opt);
-			}
-			opt++;
+void nget_options::get_path(void){do_get_path(path);}
+void nget_options::get_temppath(void){
+	do_get_path(temppath);
+	if (temppath[temppath.size()-1]!='/')
+		temppath.append("/");
+}
+void nget_options::parse_dupe_flags(const char *opt){
+	while(*opt){
+		switch (*opt){
+			case 'i':gflags&= ~GETFILES_NODUPEIDCHECK;break;
+			case 'I':gflags|= GETFILES_NODUPEIDCHECK;break;
+			case 'f':gflags&= ~GETFILES_NODUPEFILECHECK;break;
+			case 'F':gflags|= GETFILES_NODUPEFILECHECK;break;
+			case 'm':gflags|= GETFILES_DUPEFILEMARK;break;
+			case 'M':gflags&= ~GETFILES_DUPEFILEMARK;break;
+			default:
+				//throw new c_error(EX_U_FATAL,"unknown dupe flag %c",*opt);
+				throw UserExFatal(Ex_INIT,"unknown dupe flag %c",*opt);
 		}
+		opt++;
 	}
-	int set_makedirs(const char *s){
-		if (!s) {
-			//printf("set_makedirs s=NULL\n");
-			return 0;
-		}
-		if (strcasecmp(s,"yes")==0)
-			makedirs=1;
-		else if (strcasecmp(s,"ask")==0)
-			makedirs=2;
-		else if (strcasecmp(s,"no")==0)
-			makedirs=0;
-		else{
-			printf("set_makedirs invalid option %s\n",s);
-			return 0;
-		}
-		return 1;
+}
+int nget_options::set_makedirs(const char *s){
+	if (!s) {
+		//printf("set_makedirs s=NULL\n");
+		return 0;
 	}
+	if (strcasecmp(s,"yes")==0)
+		makedirs=1;
+	else if (strcasecmp(s,"ask")==0)
+		makedirs=2;
+	else if (strcasecmp(s,"no")==0)
+		makedirs=0;
+	else{
+		printf("set_makedirs invalid option %s\n",s);
+		return 0;
+	}
+	return 1;
+}
 //	~nget_options(){del_path();}
-};
+
 int makedirs(const char *dir, int mode){
 	//eventually, maybe, this shall be made recursive. for now only the leaf can be made.
 	return mkdir(dir,mode);
@@ -658,7 +645,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 										if (options.host){//####here we reset the stuff that may have been screwed in our recursiveness.  Perhaps it should reset it before returning, or something.. but I guess this'll do for now, since its the only place its called recursively.
 											nntp.nntp_open(options.host);
 											if (!options.group.isnull())
-												nntp.nntp_group(options.group,0);
+												nntp.nntp_group(options.group,0,options);
 										}
 										if (!chdir(options.path.c_str())){
 											printf("path:%s\n",options.path.c_str());
@@ -685,7 +672,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 						case 'g':
 							if (options.badskip<2){
 								options.group=nconfig.getgroup(loptarg);
-								nntp.nntp_group(options.group,1);
+								nntp.nntp_group(options.group,1,options);
 								if (options.badskip)
 									options.badskip=0;
 							}
@@ -693,7 +680,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 						case 'G':
 							if (options.badskip<2){
 								options.group=nconfig.getgroup(loptarg);
-								nntp.nntp_group(options.group,0);
+								nntp.nntp_group(options.group,0,options);
 								if (options.badskip)
 									options.badskip=0;
 							}
@@ -725,38 +712,37 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 							return 1;
 					}
 			}
-		}catch(c_error *e){
-			int n=e->num;
-			printf("caught exception %i: %s",n,e->str);
-			delete e;
-			if (n<EX_FATALS){
-				if(redone<options.maxretry){
-					redo=1;redone++;
-					printf(" (trying again. %i)\n",redone);
-					if (options.retrydelay)
-						sleep(options.retrydelay);
-				}else{
-					printf("\n");
-					if (c==-1)
-						return 0;//end of args.
-					redo=0;redone=0;
-				}
+		}catch(PathExFatal &e){
+			printCaughtEx(e);
+			set_path_error_status();
+			return -1;
+		}catch(ApplicationExFatal &e){
+			printCaughtEx_nnl(e);
+			printf(" (fatal application error, exiting..)\n");
+			set_fatal_error_status();
+			exit(errflags);
+		}catch(TransportExFatal &e){
+			printCaughtEx_nnl(e);
+			printf(" (fatal, aborting..)\n");
+			options.badskip=2;
+		}catch(ExFatal &e){
+			printCaughtEx_nnl(e);
+			printf(" (fatal, aborting..)\n");
+			//else if (n==EX_U_FATAL)
+			options.badskip=1;
+		}catch(ExError &e){
+		//}catch(baseEx &e){//doesn't work..?
+			printCaughtEx_nnl(e);
+			if(redone<options.maxretry){
+				redo=1;redone++;
+				printf(" (trying again. %i)\n",redone);
+				if (options.retrydelay)
+					sleep(options.retrydelay);
 			}else{
-				if (n==EX_PATH_FATAL){
-					set_path_error_status();
-					return -1;
-				}else if (n==EX_A_FATAL){
-					printf(" (fatal application error, exiting..)\n");
-					set_fatal_error_status();
-					exit(errflags);
-				}else{
-					printf(" (fatal, aborting..)\n");
-					if (n==EX_T_FATAL)
-						options.badskip=2;
-					//else if (n==EX_U_FATAL)
-					else
-						options.badskip=1;
-				}
+				printf("\n");
+				if (c==-1)
+					return 0;//end of args.
+				redo=0;redone=0;
 			}
 		}
 	}
@@ -871,10 +857,8 @@ int main(int argc, char ** argv){
 			nntp.initready();
 			do_args(argc,argv,options,0);
 		}
-	}catch(c_error *e){
-		int n=e->num;
-		printf("main(): caught exception %i: %s",n,e->str);
-		delete e;
+	}catch(baseEx &e){
+		printf("main():");printCaughtEx(e);
 	}catch(exception &e){
 		printf("caught std exception %s\n",e.what());
 	}catch(...){

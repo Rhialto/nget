@@ -167,7 +167,7 @@ void buildflist(const string &path, filematchlist **l){
 	DIR *dir=opendir(path.c_str());
 	struct dirent *de;
 	if (!dir)
-		throw new c_error(EX_PATH_FATAL,"opendir: %s(%i)",strerror(errno),errno);
+		throw PathExFatal(Ex_INIT,"opendir: %s(%i)",strerror(errno),errno);
 	*l=NULL;
 	*l=new filematchlist;
 	struct stat stbuf;

@@ -8,6 +8,7 @@
   * No longer attempt to set user/group in make install.
   * Add messageid (mid) keyword to -R expressions.
   * Add more documentation of win32 build/usage, and win32 binaries zip.
+  * Error on retrieving headers will retry and try other servers instead of giving up.
   
 2001-08-02 - v0.14:
   * Fix exception if files in current dir contained '{' or '}'. (reported by Brian Keefer)
