@@ -93,25 +93,30 @@ class IOError(Trick): #somewhat unfortunate, you must name <blah>Trick class as 
 
 
 	def callbefore(self, pid, call, args):
-		def doreadwrite():
+		def doreadwrite(callt, args):
+#			print 'doreadwrite',call,callt,args,
 			fd = args[0]
 			pfd = pid,fd
 			fdinfo = self.__do_fail.get(pfd, None)
 #			if fdinfo:
 #				print fdinfo
-			if fdinfo and call[0] in fdinfo.modes:
-				if call[0] == 'r':
+			if fdinfo and callt in fdinfo.modes:
+				if callt == 'r':
 					#after = self.afterr
+					if not fdinfo.rerrs:
+						return
 					after = min([err.after for err in fdinfo.rerrs])
 					failinfo = fdinfo.r
 				else:
 					#after = self.afterw
+					if not fdinfo.werrs:
+						return
 					after = min([err.after for err in fdinfo.werrs])
 					failinfo = fdinfo.w
 				failcount, bytes = failinfo.failed, failinfo.bytes
 
 				if failcount > 5:
-					print 'exiting on %ith failed %s of %i'%(failcount, call, pfd)
+					print 'exiting on %ith failed %s of %i'%(failcount, callt, pfd)
 					import sys
 					sys.exit(1)
 
@@ -119,19 +124,19 @@ class IOError(Trick): #somewhat unfortunate, you must name <blah>Trick class as 
 					size = args[2]
 					if bytes + size > after:
 						size = after - bytes
-					print pfd, call, (fd, args[1], size), 'was', args
+					print pfd, callt, (fd, args[1], size), 'was', args
 					return (pfd, None, None, (fd, args[1], size))
 					
 				failinfo.failed += 1
-				print pid,'failing',call,'#%i'%failcount, 'for fd', fd
+				print pid,'failing',call,callt,'#%i'%failcount, 'for fd', fd
 				return (pfd, -errno.EIO, None, None)
 #			else:
 #				print 'allowing',call,'for',args[0]
 	
 		if call == 'read':
-			return doreadwrite()
+			return doreadwrite('r',args)
 		elif call == 'write':
-			return doreadwrite()
+			return doreadwrite('w',args)
 		elif call == 'close':
 			fd = args[0]
 			pfd = pid,fd
@@ -181,6 +186,16 @@ class IOError(Trick): #somewhat unfortunate, you must name <blah>Trick class as 
 				do = -1
 			elif subcall == 5:          # accept
 				do = -1
+			elif subcall in (9,10):          # send/recv
+				if subcall == 9:          # send
+					r = doreadwrite('w', (ptrace.peekdata(pid, args[1]), ptrace.peekdata(pid, args[1]+4), ptrace.peekdata(pid, args[1]+8)))
+				elif subcall == 10:          # recv
+					r = doreadwrite('r', (ptrace.peekdata(pid, args[1]), ptrace.peekdata(pid, args[1]+4), ptrace.peekdata(pid, args[1]+8)))
+				if not r or r[1]: # if default return or error, we can return it with no probs.
+					return r
+				#otherwise we have to convert from doreadwrite return which is in read()/write() format to socketcall format
+				ptrace.pokedata(args[1]+8, r[3][2]) # set new recv/write size
+				return (r[0], r[1], r[2], args)
 
 			if do:
 				#ses = []
