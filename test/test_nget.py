@@ -117,5 +117,9 @@ class DecodeTestCase(unittest.TestCase):
 	def test_0003_newspost_uue_0(self):
 		self.do_test_auto()
 
+class CppUnitTestCase(unittest.TestCase):
+	def test_TestRunner(self):
+		self.failIf(os.system(os.path.join(os.curdir,'TestRunner')), "CppUnit TestRunner returned an error")
+
 if __name__ == '__main__':
 	unittest.main()
