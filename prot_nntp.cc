@@ -849,7 +849,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 				//				delete fn;
 				fnbuf.push_back(fn);
 			}
-			if (!derr && !(optionflags&GETFILES_NODECODE) && f->iscomplete()){
+			if (!derr && !(optionflags&GETFILES_NODECODE)){
 				if ((r=UUInitialize())!=UURET_OK)
 					throw ApplicationExFatal(Ex_INIT,"UUInitialize: %s",UUstrerror(r));
 				UUSetOption(UUOPT_DUMBNESS,1,NULL);//we already put the parts in the correct order, so it doesn't need to.
