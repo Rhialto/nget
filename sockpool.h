@@ -73,7 +73,7 @@ class Connection {
 };
 
 
-typedef map<ulong, Connection *> t_connection_map;
+typedef map<c_server::ptr, Connection *> t_connection_map;
 
 class SockPool {
 	protected:
@@ -83,15 +83,15 @@ class SockPool {
 		void connection_erase(t_connection_map::iterator i);
 	public:
 		
-		bool is_connected(ulong serverid) const {
-			return (connections.find(serverid) != connections.end());
+		bool is_connected(const c_server::ptr &server) const {
+			return (connections.find(server) != connections.end());
 		}
 
 //		int total_connections(void) const {
 //			return free_connections.size() + used_connections.size();
 //		}
 
-		Connection* connect(ulong serverid);
+		Connection* connect(const c_server::ptr &server);
 		void release(Connection *connection);
 		void expire_old_connection(void);
 		void expire_connections(bool closeall=false);
@@ -107,10 +107,10 @@ class ConnectionHolder {
 		SockPool * pool;
 		Connection ** connection;
 	public:
-		ConnectionHolder(SockPool *sockpool, Connection **conn, int serverid):pool(sockpool), connection(conn) {
-			PDEBUG(DEBUG_MED, "aquiring connection to %i", serverid);
-			*connection = pool->connect(serverid);
-			PDEBUG(DEBUG_MED, "aquired connection to %i (%p)", serverid, *connection);
+		ConnectionHolder(SockPool *sockpool, Connection **conn, const c_server::ptr &server):pool(sockpool), connection(conn) {
+			PDEBUG(DEBUG_MED, "aquiring connection to %s", server->alias.c_str());
+			*connection = pool->connect(server);
+			PDEBUG(DEBUG_MED, "aquired connection to %s (%p)", server->alias.c_str(), *connection);
 			pool->expire_connections();
 		}
 		~ConnectionHolder() {

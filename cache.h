@@ -107,7 +107,8 @@ class c_nntp_server_article {
 		c_nntp_server_article(ulong serverid,const c_group_info::ptr &group,ulong articlenum,ulong bytes,ulong lines);
 };
 typedef multimap<ulong,c_nntp_server_article*> t_nntp_server_articles;
-typedef multimap<float,c_nntp_server_article*,greater<float> > t_nntp_server_articles_prioritized;
+typedef pair<c_nntp_server_article*,c_server::ptr> t_real_server_article;
+typedef multimap<float,t_real_server_article,greater<float> > t_nntp_server_articles_prioritized;
 class c_nntp_part {
 	public:
 		int partnum;
@@ -122,10 +123,11 @@ class c_nntp_part {
 			float highprio=-10000.0,f;
 			for (;nsai!=articles.end();++nsai) {
 				sa=(*nsai).second;
-				if ((f=nconfig.trustsizes->getserverpriority(sa->serverid)) > highprio){
-					highest_sa=sa;
-					highprio=f;
-				}
+				for (t_server_list_range servers = nconfig.getservers(sa->serverid); servers.first!=servers.second; ++servers.first)
+					if ((f=nconfig.trustsizes->getserverpriority(servers.first->second)) > highprio){
+						highest_sa=sa;
+						highprio=f;
+					}
 			}
 			return highest_sa;
 		}

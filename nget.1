@@ -318,8 +318,12 @@ host containing its options:
 .IP "address (string, required)"
 Address of the server, with optional port number seperated by a colon.
 .IP "id (int, required)"
-An identifier for this server. Must be unique, and should not be changed after you have
-used it.  Must be greater than 0 and less than ULONG_MAX. (usually 4294967295).
+An identifier for this server.
+The id uniquely identifies a certain set of header cache data.
+You may specify the same id in more than one host,
+for example if you have multiple accounts on a server to avoid to storing the same cache data multiple times.
+The id should not be changed after you have used it.
+Must be greater than 0 and less than ULONG_MAX. (usually 4294967295).
 .IP "shortname (string, default=first character of host alias)"
 The shortname to use for this server.
 .IP "user (string)"

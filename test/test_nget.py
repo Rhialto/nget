@@ -1762,6 +1762,11 @@ class DelayBeforeWriteNNTPRequestHandler(nntpd.NNTPRequestHandler):
 			time.sleep(2)
 		nntpd.NNTPRequestHandler.nwrite(self, s)
 
+class DelayBeforeCommandNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	def call_command(self, *args):
+		time.sleep(1)
+		nntpd.NNTPRequestHandler.call_command(self, *args)
+
 class DelayBeforeArticleNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_article(self, args):
 		time.sleep(1)
@@ -2330,7 +2335,7 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput('0002')
 
 	def test_maxconnections_2(self):
-		self.servers = nntpd.NNTPD_Master(3)
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DelayBeforeCommandNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), DelayBeforeCommandNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), DelayBeforeCommandNNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'maxconnections':2})
 		self.servers.start()
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[2])
@@ -2439,6 +2444,31 @@ class AuthTestCase(TestCase, DecodeTest_base):
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
 		self.vfailUnlessExitstatus(self.nget.run("-g test -r ."), 16, "nget process did not detect auth error")
+
+	def test_ServerClone(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.servers.servers[0].adduser('','',{'*':0}) #default can't do anything
+		self.servers.servers[0].adduser('ralph','5',{'article':0}) #ralph can't retrieve articles
+		self.servers.servers[0].adduser('bob','6',{'xover':0}) #bob can't retrieve headers
+		self.nget = util.TestNGet(ngetexe, self.servers.servers*2, hostoptions=[{'user':'ralph', 'pass':'5', 'id':1},{'user':'bob','pass':'6', 'id':1}], priorities=[5,2])
+		self.servers.start()
+		self.addarticles('0002', 'uuencode_multi')
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.verifyoutput('0002')
+
+	def test_lite_ServerClone(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.servers.servers[0].adduser('','',{'*':0}) #default can't do anything
+		self.servers.servers[0].adduser('ralph','5',{'article':0}) #ralph can't retrieve articles
+		self.servers.servers[0].adduser('bob','6',{'xover':0}) #bob can't retrieve headers
+		self.nget = util.TestNGet(ngetexe, self.servers.servers*2, hostoptions=[{'user':'ralph', 'pass':'5', 'id':1},{'user':'bob','pass':'6', 'id':1}], priorities=[5,2])
+		self.servers.start()
+		self.addarticles('0002', 'uuencode_multi')
+		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
+		self.vfailIf(self.nget.run("-w %s -g test -r ."%litelist))
+		self.vfailIf(self.nget.runlite(litelist))
+		self.vfailIf(self.nget.run("-N -G test -r ."))
+		self.verifyoutput('0002')
 
 #if os.system('sf --help'):
 if os.system('sf date'):

@@ -169,7 +169,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 			continue;
 		}
 		server=new c_server(tul,ds->key,ds->getitems("shortname"),ds->getitems("addr"),ds->getitems("user"),ds->getitems("pass"),ds->getitema("fullxover"),ds->getitema("linelenience"),ds->geti("maxstreaming",maxstreaming),ds->geti("idletimeout",idletimeout));
-		serv[server->serverid]=server;
+		serv.insert(t_server_list::value_type(server->serverid,server));
 	}
 	//hpriority
 	if (pinfo)
@@ -197,7 +197,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 						continue;
 					}
 					c_server_priority *sprio=new c_server_priority(server,atof(di->str.c_str()));
-					pgrouping->priorities.insert(t_server_priority_grouping::value_type(sprio->server->serverid,sprio));
+					pgrouping->priorities.insert(t_server_priority_grouping::value_type(sprio->server,sprio));
 				}
 			}
 			if (pgrouping->alias=="trustsizes")

@@ -184,7 +184,7 @@ void c_prot_nntp::doclose(void){
 	safefree(curpass);
 }
 void c_prot_nntp::doopen(const char *host, const char *user, const char *pass){
-	if (cursock.get() && cursock->isopen() && curhost && strcmp(host,curhost)==0)
+	if (cursock.get() && cursock->isopen() && safestrcmp(host,curhost)==0 && safestrcmp(user,curuser)==0 && safestrcmp(pass,curpass)==0)
 		return;
 
 	doclose();

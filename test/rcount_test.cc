@@ -9,6 +9,7 @@ class rcount_Test : public CppUnit::TestFixture {
 		CPPUNIT_TEST(testScope);
 		CPPUNIT_TEST(testSelfAssignment);
 		CPPUNIT_TEST(testTransient);
+		CPPUNIT_TEST(testComparison);
 	CPPUNIT_TEST_SUITE_END();
 	protected:
 		int alive;
@@ -60,6 +61,31 @@ class rcount_Test : public CppUnit::TestFixture {
 		void testTransient(void) {
 			CPPUNIT_ASSERT(RCounted::Create(&alive)->foo());
 			CPPUNIT_ASSERT(!alive);
+		}
+		void testComparison(void) {
+			RCounted::ptr a = new RCounted(&alive);
+			RCounted::ptr c;
+			RCounted::ptr b = new RCounted(&alive);
+			RCounted::ptr a1 = a, b1 = b;
+			c = new RCounted(&alive);
+#define TEST_COMPARE(OP) \
+			CPPUNIT_ASSERT_EQUAL(a OP b, a.gimmethepointer() OP b.gimmethepointer());\
+			CPPUNIT_ASSERT_EQUAL(a OP c, a.gimmethepointer() OP c.gimmethepointer());\
+			CPPUNIT_ASSERT_EQUAL(b OP c, b.gimmethepointer() OP c.gimmethepointer());
+			TEST_COMPARE(<);
+			TEST_COMPARE(<=);
+			TEST_COMPARE(>);
+			TEST_COMPARE(>=);
+			TEST_COMPARE(==);
+			TEST_COMPARE(!=);
+			CPPUNIT_ASSERT(!(b==a));
+			CPPUNIT_ASSERT(a==a);
+			CPPUNIT_ASSERT(b==b);
+			CPPUNIT_ASSERT(a1==a);
+			CPPUNIT_ASSERT(b1==b);
+			CPPUNIT_ASSERT(a!=b);
+			CPPUNIT_ASSERT(b!=a);
+			CPPUNIT_ASSERT(!(a!=a));
 		}
 };
 

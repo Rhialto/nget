@@ -239,9 +239,9 @@ void c_prot_nntp::nntp_grouplist(int update, const nget_options &options){
 			while (dsi != doservers.end()){
 				s=(*dsi);
 				assert(s);
-				PDEBUG(DEBUG_MED,"nntp_grouplist: serv(%lu) %f>=%f",s->serverid,priogroup->getserverpriority(s->serverid),priogroup->defglevel);
+				PDEBUG(DEBUG_MED,"nntp_grouplist: serv(%s) %f>=%f",s->alias.c_str(),priogroup->getserverpriority(s),priogroup->defglevel);
 				try {
-					ConnectionHolder holder(&sockpool, &connection, s->serverid);
+					ConnectionHolder holder(&sockpool, &connection, s);
 					nntp_doopen();
 					nntp_dogrouplist();
 					nntp_dogroupdescriptions();//####make this a seperate option?
@@ -298,9 +298,9 @@ void c_prot_nntp::nntp_xgrouplist(const t_xpat_list &patinfos, const nget_option
 		while (dsi != doservers.end()){
 			s=(*dsi);
 			assert(s);
-			PDEBUG(DEBUG_MED,"nntp_xgrouplist: serv(%lu) %f>=%f",s->serverid,priogroup->getserverpriority(s->serverid),priogroup->defglevel);
+			PDEBUG(DEBUG_MED,"nntp_xgrouplist: serv(%s) %f>=%f",s->alias.c_str(),priogroup->getserverpriority(s),priogroup->defglevel);
 			try {
-				ConnectionHolder holder(&sockpool, &connection, s->serverid);
+				ConnectionHolder holder(&sockpool, &connection, s);
 				nntp_doopen();
 				for (t_xpat_list::const_iterator i = patinfos.begin(); i != patinfos.end(); ++i) {
 					nntp_dogrouplist((*i)->wildmat.c_str());
@@ -623,8 +623,8 @@ void c_prot_nntp::nntp_simple_prioritize(c_server_priority_grouping *priogroup, 
 		for (;sli!=nconfig.serv.end();++sli){
 			c_server::ptr &s=(*sli).second;
 			assert(s);
-			if (priogroup->getserverpriority(s->serverid) >= priogroup->defglevel) {
-				if (sockpool.is_connected(s->serverid)) //put current connected hosts at start of list
+			if (priogroup->getserverpriority(s) >= priogroup->defglevel) {
+				if (sockpool.is_connected(s)) //put current connected hosts at start of list
 					doservers.push_front(s);
 				else
 					doservers.push_back(s);
@@ -684,9 +684,9 @@ void c_prot_nntp::nntp_xgroup(const c_group_info::ptr &group, const t_xpat_list 
 		while (dsi != doservers.end()){
 			s=(*dsi);
 			assert(s);
-			PDEBUG(DEBUG_MED,"nntp_xgroup: serv(%lu) %f>=%f",s->serverid,group->priogrouping->getserverpriority(s->serverid),group->priogrouping->defglevel);
+			PDEBUG(DEBUG_MED,"nntp_xgroup: serv(%s) %f>=%f",s->alias.c_str(),group->priogrouping->getserverpriority(s),group->priogrouping->defglevel);
 			try {
-				ConnectionHolder holder(&sockpool, &connection, s->serverid);
+				ConnectionHolder holder(&sockpool, &connection, s);
 				nntp_doopen();
 				ulong num,low,high;
 				nntp_dogroup(group, num,low,high);
@@ -755,9 +755,9 @@ void c_prot_nntp::nntp_group(const c_group_info::ptr &ngroup, int getheaders, co
 			while (dsi != doservers.end()){
 				s=(*dsi);
 				assert(s);
-				PDEBUG(DEBUG_MED,"nntp_group: serv(%lu) %f>=%f",s->serverid,group->priogrouping->getserverpriority(s->serverid),group->priogrouping->defglevel);
+				PDEBUG(DEBUG_MED,"nntp_group: serv(%s) %f>=%f",s->alias.c_str(),group->priogrouping->getserverpriority(s),group->priogrouping->defglevel);
 				try {
-					ConnectionHolder holder(&sockpool, &connection, s->serverid);
+					ConnectionHolder holder(&sockpool, &connection, s);
 					nntp_doopen();
 					nntp_dogroup(ngroup, getheaders);
 					succeeded++;
@@ -825,15 +825,18 @@ int c_prot_nntp::nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_artic
 	for (sai = part->articles.begin(); sai != part->articles.end(); ++sai){
 		sa=(*sai).second;
 		assert(sa);
-		if (force_host && sa->serverid!=force_host->serverid)
-			continue;
-		prio=sa->group->priogrouping->getserverpriority(sa->serverid);
-		if (docurservmult){
-			if (sockpool.is_connected(sa->serverid))
-				prio*=nconfig.curservmult;
+		for (t_server_list_range servers = nconfig.getservers(sa->serverid); servers.first!=servers.second; ++servers.first) {
+			const c_server::ptr &s = servers.first->second;
+			if (force_host && s!=force_host)
+				continue;
+			prio=sa->group->priogrouping->getserverpriority(s);
+			if (docurservmult){
+				if (sockpool.is_connected(s))
+					prio*=nconfig.curservmult;
+			}
+			PDEBUG(DEBUG_MED,"prioritizing server %s(%lu) article %lu prio %f",s->alias.c_str(),sa->serverid,sa->articlenum,prio);
+			sap.insert(t_nntp_server_articles_prioritized::value_type(prio,t_real_server_article(sa,s)));
 		}
-		PDEBUG(DEBUG_MED,"prioritizing server %lu article %lu prio %f",sa->serverid,sa->articlenum,prio);
-		sap.insert(t_nntp_server_articles_prioritized::value_type(prio,sa));
 	}
 
 	if (docurservmult && !sap.empty()) {
@@ -841,7 +844,7 @@ int c_prot_nntp::nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_artic
 		t_nntp_server_articles_prioritized::iterator i;
 		pair<t_nntp_server_articles_prioritized::iterator,t_nntp_server_articles_prioritized::iterator> firstrange = sap.equal_range(sap.rend()->first);
 		for (i=firstrange.first; i!=firstrange.second; ++i)
-			if (sockpool.is_connected(i->second->serverid))
+			if (sockpool.is_connected(i->second.second))
 				++connected;
 			else
 				++nonconnected;
@@ -851,13 +854,14 @@ int c_prot_nntp::nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_artic
 			for (i=firstrange.first; i!=firstrange.second;){
 				ci = i;
 				++i;
-				if (sockpool.is_connected(ci->second->serverid)) {
+				if (sockpool.is_connected(ci->second.second)) {
 					prio=(*ci).first;
-					sa=(*ci).second;
+					sa=(*ci).second.first;
+					c_server::ptr s = (*ci).second.second;
 					sap.erase(ci);
 					prio*=1.001;
-					sap.insert(t_nntp_server_articles_prioritized::value_type(prio,sa));
-					PDEBUG(DEBUG_MED,"server %lu article %lu reprioritized %f",sa->serverid,sa->articlenum,prio);
+					sap.insert(t_nntp_server_articles_prioritized::value_type(prio,t_real_server_article(sa,s)));
+					PDEBUG(DEBUG_MED,"server %s(%lu) article %lu reprioritized %f",s->alias.c_str(),sa->serverid,sa->articlenum,prio);
 				}
 			}
 		}
@@ -877,8 +881,8 @@ int c_prot_nntp::nntp_dowritelite_article(c_file &fw,c_nntp_part *part,char *fn)
 	nntp_doarticle_prioritize(part,sap,false);
 	fw.putf("%lu\n",(ulong)sap.size());
 	for (sapi = sap.begin(); sapi != sap.end(); ++sapi){
-		sa=(*sapi).second;
-		whost=nconfig.getserver(sa->serverid);
+		sa=(*sapi).second.first;
+		whost=(*sapi).second.second;
 		fw.putf("%s\t%s\t%s\n",whost->addr.c_str(),whost->user.c_str(),whost->pass.c_str());
 		if (group)
 			fw.putf("%lu\n",sa->articlenum);
@@ -963,7 +967,8 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 				sleep(options.retrydelay);
 		}
 		for (sapi = sap.begin(); sapi != sap.end();){
-			sa=(*sapi).second;
+			sa=(*sapi).second.first;
+			const c_server::ptr &s = (*sapi).second.second;
 			assert(sa);
 			ari->partnum=part->partnum;
 			ari->anum=sa->articlenum;
@@ -971,10 +976,10 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 			ari->linestot=sa->lines;
 			ari->linesdone=0;
 			ari->bytesdone=0;
-			PDEBUG(DEBUG_MED,"trying server %lu article %lu",sa->serverid,sa->articlenum);
+			PDEBUG(DEBUG_MED,"trying server %s(%lu) article %lu",s->alias.c_str(),sa->serverid,sa->articlenum);
 			list<string> buf;//use a list of strings instead of char *.  Easier and it cleans up after itself too.
 			try {
-				ConnectionHolder holder(&sockpool, &connection, sa->serverid);
+				ConnectionHolder holder(&sockpool, &connection, s);
 				nntp_doopen();
 				if (toti->doarticle_show_multi==SHOW_MULTI_SHORT)
 					ari->server_name=connection->server->shortname.c_str();
@@ -987,14 +992,14 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 			} catch (baseCommEx &e) {
 				printCaughtEx(e);
 				if (e.isfatal()) {
-					printf("fatal error, won't try %s again\n", nconfig.getservername(sa->serverid));
+					printf("fatal error, won't try %s again\n", s->alias.c_str());
 					sap_erase_i = sapi;
 					++sapi;
 					sap.erase(sap_erase_i);
 				}else{
 					//if this is the last retry, don't say that we will try it again.
 					if (redone+1 < options.maxretry)
-						printf("will try %s again\n", nconfig.getservername(sa->serverid));
+						printf("will try %s again\n", s->alias.c_str());
 					++sapi;
 				}
 				continue;
@@ -1092,19 +1097,21 @@ void print_nntp_file_info(c_nntp_file::ptr f, t_show_multiserver show_multi) {
 			printf(" ");
 		
 		for (t_server_have_map::iterator i=have_map.begin(); i!=have_map.end(); ++i){
-			c_server::ptr s=nconfig.getserver(i->first);
-			if (show_multi==SHOW_MULTI_LONG){
-				printf(" %s", s->alias.c_str());
-				if (i->second<f->have)
-					printf(":%i", i->second);
-			}
-			else{
-				if (i->second<f->have){
-					for (string::size_type j=0; j<s->shortname.size(); j++)
-						printf("%c", toupper(s->shortname[j]));
+			for (t_server_list_range servers = nconfig.getservers(i->first); servers.first!=servers.second; ++servers.first) {
+				c_server::ptr s=servers.first->second;
+				if (show_multi==SHOW_MULTI_LONG){
+					printf(" %s", s->alias.c_str());
+					if (i->second<f->have)
+						printf(":%i", i->second);
 				}
-				else
-					printf("%s", s->shortname.c_str());
+				else{
+					if (i->second<f->have){
+						for (string::size_type j=0; j<s->shortname.size(); j++)
+							printf("%c", toupper(s->shortname[j]));
+					}
+					else
+						printf("%s", s->shortname.c_str());
+				}
 			}
 		}
 	}

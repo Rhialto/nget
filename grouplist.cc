@@ -127,13 +127,17 @@ static void nntp_grouplist_printinfo(const t_grouplist_getinfo_list &getinfos, c
 		info = *gii;
 		if ((*info->pred)(g.gimmethepointer())) {
 			for (set<ulong>::const_iterator sii=g->serverids.begin(); sii!=g->serverids.end(); ++sii) {
-				printf("%s",nconfig.getserver(*sii)->shortname.c_str());
+				for (t_server_list_range servers = nconfig.getservers(*sii); servers.first!=servers.second; ++servers.first) {
+					printf("%s",servers.first->second->shortname.c_str());
+				}
 			}
 			printf("\t%s",g->groupname.c_str());
 			for (t_server_group_description_map::const_iterator sgdi=g->servergroups.begin(); sgdi!=g->servergroups.end(); ++sgdi) {
 				printf("\t%s [",sgdi->first);
 				for (set<ulong>::const_iterator sii=sgdi->second->serverids.begin(); sii!=sgdi->second->serverids.end(); ++sii) {
-					printf("%s",nconfig.getserver(*sii)->shortname.c_str());
+					for (t_server_list_range servers = nconfig.getservers(*sii); servers.first!=servers.second; ++servers.first) {
+						printf("%s",servers.first->second->shortname.c_str());
+					}
 				}
 				printf("]");
 			}
@@ -190,7 +194,7 @@ c_nntp_grouplist_reader::c_nntp_grouplist_reader(c_file *cf, t_nntp_grouplist_se
 		i = f->btoks('\t',t,2);
 		if (i==2) {
 			ulong serverid=atoul(t[0]);
-			if (nconfig.getserver(serverid)) {
+			if (nconfig.hasserver(serverid)) {
 				server_info.insert(t_nntp_grouplist_server_info_map::value_type(serverid, new c_nntp_grouplist_server_info(serverid, t[1])));
 			}else{
 				printf("warning: serverid %lu not found in server list\n",serverid);
@@ -217,7 +221,7 @@ c_group_availability::ptr c_nntp_grouplist_reader::read_group(void) {
 			gd = new c_group_availability(t[1]);
 			while ((cp = goodstrtok(&buf, ','))) {
 				ulong serverid=atoul(cp);
-				if (nconfig.getserver(serverid)) {
+				if (nconfig.hasserver(serverid)) {
 					gd->serverids.insert(serverid);
 					nums++;
 				}else{
@@ -240,7 +244,7 @@ c_group_availability::ptr c_nntp_grouplist_reader::read_group(void) {
 					buf = t[0];
 					while ((cp = goodstrtok(&buf, ','))) {
 						ulong serverid=atoul(cp);
-						if (nconfig.getserver(serverid)) {
+						if (nconfig.hasserver(serverid)) {
 							gd->addserverdescription(serverid, t[1]);
 							numsd++;
 						}else{

@@ -79,11 +79,11 @@ void SockPool::connection_erase(t_connection_map::iterator i) {
 	connections.erase(i);
 }
 
-Connection* SockPool::connect(ulong serverid) {
+Connection* SockPool::connect(const c_server::ptr &server){
 	Connection *c;
 
 	//use existing connection when possible
-	t_connection_map::iterator i = connections.find(serverid);
+	t_connection_map::iterator i = connections.find(server);
 	if (i!=connections.end()){
 		c = i->second;	
 		if (c->isopen()) {
@@ -104,7 +104,7 @@ Connection* SockPool::connect(ulong serverid) {
 	}
 	
 	//check penalization before expire_old_connection
-	nconfig.check_penalized(serverid); // (throws exception if penalized)
+	nconfig.check_penalized(server); // (throws exception if penalized)
 	
 	//if we have to create a new one, don't go over max
 	if (nconfig.maxconnections > 0 && (signed)connections.size() >= nconfig.maxconnections)
@@ -112,12 +112,12 @@ Connection* SockPool::connect(ulong serverid) {
 	
 	//create new connection
 	try {
-		c = new Connection(nconfig.getserver(serverid));
+		c = new Connection(server);
 	}  catch (FileEx &e) {
-		nconfig.penalize(nconfig.getserver(serverid));
+		nconfig.penalize(server);
 		throw TransportExError(Ex_INIT,"Connection: %s",e.getExStr());
 	}
-	connections.insert(t_connection_map::value_type(serverid, c));
+	connections.insert(t_connection_map::value_type(server, c));
 	c->touch();
 	return c;
 }
@@ -134,7 +134,7 @@ void SockPool::release(Connection *connection) {
 	if (keepopen)
 		connection->touch();
 	else
-		connection_erase(connections.find(connection->server->serverid));
+		connection_erase(connections.find(connection->server));
 }
 
 void SockPool::expire_old_connection(void) {

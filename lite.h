@@ -28,4 +28,9 @@ char * newstrcpy(char *&dest, const char *src);
 inline void safefree(char *&p){
     if (p){free(p);p=NULL;}
 }
+inline int safestrcmp(const char *a, const char *b){
+    if (!a && !b) return 0;
+    if (!a || !b) return a?1:-1;
+    return strcmp(a,b);
+}
 #endif

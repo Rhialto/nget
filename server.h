@@ -49,8 +49,8 @@ class c_server : public c_refcounted<c_server>{
 
 		c_server(ulong id, string alia, string shortnam, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea, int idletimeou);
 };
-typedef map<ulong,c_server::ptr> t_server_list;
-//typedef map<ulong,c_data_section*,less<ulong> > t_server_list;
+typedef multimap<ulong,c_server::ptr> t_server_list;
+typedef pair<t_server_list::const_iterator,t_server_list::const_iterator> t_server_list_range;
 
 
 class c_server_priority {
@@ -59,7 +59,7 @@ class c_server_priority {
 		float baseprio;
 		c_server_priority(c_server::ptr serv,float basep):server(serv),baseprio(basep){}
 };
-typedef map<ulong,c_server_priority*> t_server_priority_grouping;
+typedef map<c_server::ptr,c_server_priority*> t_server_priority_grouping;
 
 class c_server_priority_grouping {
 	public:
@@ -68,8 +68,8 @@ class c_server_priority_grouping {
 		float deflevel;
 //		vector<c_server *> servers;
 		t_server_priority_grouping priorities;
-		float getserverpriority(ulong serverid) const {
-			t_server_priority_grouping::const_iterator spgi=priorities.find(serverid);
+		float getserverpriority(const c_server::ptr &server) const {
+			t_server_priority_grouping::const_iterator spgi=priorities.find(server);
 			if (spgi!=priorities.end())
 				return (*spgi).second->baseprio;
 			else
@@ -125,8 +125,7 @@ class c_nget_config {
 		bool fatal_user_errors;
 		bool autopar_optimistic;
 
-		void check_penalized(ulong serverid) const {
-			c_server::ptr s=getserver(serverid);
+		void check_penalized(const c_server::ptr &s) const {
 			if (penaltystrikes > 0 && s && s->penalty_count >= penaltystrikes) {
 				long timeleft = s->last_penalty + s->penalty_time - time(NULL);
 				if (timeleft > 0)
@@ -137,16 +136,11 @@ class c_nget_config {
 			server->penalty_count = 0;
 		}
 		bool penalize(c_server::ptr server) const;
-		const char * getservername(ulong serverid) const {
-			c_server::ptr s=getserver(serverid);
-			if (s) return s->alias.c_str();
-			return "invalid_serverid";
+		int hasserver(ulong serverid) const {
+			return serv.count(serverid);
 		}
-		c_server::ptr getserver(ulong serverid) const {
-			t_server_list::const_iterator sli=serv.find(serverid);
-			if (sli!=serv.end())
-				return (*sli).second;
-			return NULL;
+		t_server_list_range getservers(ulong serverid) const {
+			return serv.equal_range(serverid);
 		}
 		c_server::ptr getserver(const string &name) const;
 		c_server_priority_grouping* getpriogrouping(string groupname) const {

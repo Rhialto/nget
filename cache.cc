@@ -552,7 +552,7 @@ c_nntp_cache_reader::c_nntp_cache_reader(c_file *cf, meta_mid_info *mi, t_nntp_s
 		i = f->btoks('\t',t,4);
 		if (i==4){
 			ulong serverid=atoul(t[0]);
-			if (nconfig.getserver(serverid)) {
+			if (nconfig.hasserver(serverid)) {
 				server_info.insert(t_nntp_server_info::value_type(serverid, c_nntp_server_info(serverid, atoul(t[1]), atoul(t[2]), atoul(t[3]))));
 			}else{
 				printf("warning: serverid %lu not found in server list\n",serverid);
@@ -588,7 +588,7 @@ c_nntp_file::ptr c_nntp_cache_reader::read_file(void) {
 				i = f->btoks('\t',t,4);
 				if (i==4){
 					ulong serverid=atoul(t[0]);
-					if (nconfig.getserver(serverid)) {
+					if (nconfig.hasserver(serverid)) {
 						sa=new c_nntp_server_article(serverid,group,atoul(t[1]),atoul(t[2]),atoul(t[3]));
 						//np->addserverarticle(sa);
 						np->articles.insert(t_nntp_server_articles::value_type(sa->serverid,sa));
@@ -875,7 +875,7 @@ void nntp_cache_getfiles(c_nntp_files_u *fc, ParHandler *parhandler, bool *ismul
 					}
 					//printf("file %u = %p\n", i, nf.gimmethepointer());
 					if (nf) {
-						assert(!(nf < nfiles[i]));
+						assert(!(*nf < *nfiles[i]));
 						numfiles++;
 						nfiles[i]=nf;
 					} else {

@@ -60,16 +60,16 @@ class TestNGet:
 
 		rc.write("{halias\n")
 		for i in range(0, len(servers)):
-			rc.write("""
- {host%i
-  addr=%s
-  shortname=h%i
-  id=%i
-"""%(i, ':'.join(map(str,servers[i].socket.getsockname())), i, i+1))
+			defaulthostoptions = {
+				'addr': ':'.join(map(str,servers[i].socket.getsockname())),
+				'shortname': 'h%i'%i,
+				'id': str(i+1),
+			}
+			rc.write(" {host%i\n"%i)
 			if hostoptions:
-				opts = hostoptions[i]
-				for k,v in opts.items():
-					rc.write("%s=%s\n"%(k,v))
+				defaulthostoptions.update(hostoptions[i])
+			for k,v in defaulthostoptions.items():
+				rc.write("%s=%s\n"%(k,v))
 			rc.write(" }\n")
 		rc.write("}\n")
 
