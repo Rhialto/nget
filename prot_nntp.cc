@@ -456,6 +456,8 @@ int c_prot_nntp::nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_artic
 	for (sai = part->articles.begin(); sai != part->articles.end(); ++sai){
 		sa=(*sai).second;
 		assert(sa);
+		if (force_host && sa->serverid!=force_host->serverid)
+			continue;
 		prio=group->priogrouping->getserverpriority(sa->serverid);
 		if (curservsapi){
 			if (curserverid==sa->serverid)
@@ -593,7 +595,6 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 				}
 				curserverid=sa->serverid;
 				host=nconfig.getserver(curserverid);
-				force_host=NULL;
 			}
 			ari->partnum=part->partnum;
 			ari->anum=sa->articlenum;
