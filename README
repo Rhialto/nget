@@ -1,4 +1,4 @@
-nget 0.17  Copyright 1999-2002 Matthew Mueller <donut@azstarnet.com>
+nget 0.18  Copyright 1999-2002 Matthew Mueller <donut@azstarnet.com>
 
 Note if you are upgrading from a version 0.8-0.11 to 0.12 or later:
  You will need to run the fixnames.sh script to rename your cache files to the
@@ -17,7 +17,7 @@ Install:
    http://freshmeat.net/projects/popt/
 0) if you have the nget+uulib package, or have uulib as a shared lib: 
   ./configure and skip to step 1.2a
-1) d/l uulibsrc from http://www.fpx.de/fp/Software/UUDeview/
+1) d/l uulibsrc >= 0.5.18 from http://www.fpx.de/fp/Software/UUDeview/
 1.1) unpack it and run its ./configure && make
 1.2) ./configure --with-uulib=/dir/that/has/uulib
    (see "locking note" below if you want to store your .nget4/ on a vfat/etc fs)

@@ -1,4 +1,4 @@
-2002-xx-xx v0.xx:
+2002-04-02 v0.18:
   * Remove fixed length buffers. (Fix errors with extremely long subjects, etc.)
   * If a group has articles from multiple servers show the shortname of the server each part is being retrieved from.
   * Don't force the connection to close on unequal line count.
@@ -7,6 +7,7 @@
   * Make -h work for -r/-R too. (Only download articles from the given host.  If that host doesn't have the article, skip and flag it as an error)
   * Added a connection pool to avoid continuously reconnecting when articles are spread across different servers a lot. (suggested by Thore Harald Hoye)  (Adds new .ngetrc global opts idletimeout/maxconnections, and per-server idletimeout)
   * Added "server penalization" to avoid wasting lots of time trying to connect to dead servers. (New .ngetrc global opts penaltystrikes, initialpenalty, penaltymultiplier)
+  * nget+uulib tarball includes new uulib version 0.5.18 with yEnc support.
 
 2002-02-28 v0.17:
   * Handle invalid References starting with a '.'.

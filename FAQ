@@ -5,7 +5,6 @@ Index:
 1. Why doesn't -G somegroup -r '*.png' work?
 2. Whats a regexp? I'm too lazy to read a man page.
 3. Whats this "unequal line count" error?
-4. Yenc support?
 
 
 Answers:
@@ -45,8 +44,3 @@ corruption, but in a case like this its just the server and nget
 disagree on the method of counting.  pan most likely just doesn't care
 if the line count is different.
 
-
-4. Yenc support?
-
-See:
-http://sourceforge.net/tracker/?func=detail&atid=353121&aid=518808&group_id=3121
