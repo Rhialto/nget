@@ -2,7 +2,7 @@ nget Frequently Asked Questions
 
 Index:
 
-1. Why doesn't -G somegroup -r '*.png' work?
+1. Why doesn't -G somegroup -r "*.png" work?
 2. Whats a regexp? I'm too lazy to read a man page.
 3. Whats this "unequal line count" error?
 4. I have maxconnections set at 10 but only one article is being downloaded at
@@ -13,10 +13,10 @@ match par files.
 
 Answers:
 
-1. Why doesn't nget -G somegroup -r '*.png' work?
+1. Why doesn't nget -G somegroup -r "*.png" work?
 
 nget uses regular expressions, not glob style matching.  So what you
-really meant was -r '.*\.png' (or really -r '\.png', since regexps aren't 
+really meant was -r ".*\.png" (or really -r "\.png", since regexps aren't 
 "anchored" by default.)  For regexp info see grep(1) or regex(7) or if you
 are using --with-pcre, see perlre(1).
 
