@@ -725,6 +725,17 @@ void print_nntp_file_info(c_nntp_file::ptr f) {
 	printf("\t%lil\t%s\t%s\t%s\t%s\n",f->lines(),tconvbuf,f->subject.c_str(),f->author.c_str(),p->messageid.c_str());
 }
 
+char * make_text_file_name(c_nntp_file_retr::ptr fr, bool usepath=0) {
+	char *nfn;
+	//asprintf(&nfn,"%lu.txt",f->banum());//give it a (somewhat) more sensible name
+	//give it a (somewhat) more sensible name //TODO: make it better (rand? blah.. message id or something but it might contain bad chars)
+	if (usepath)
+		asprintf(&nfn,"%s/%lu.%i.txt",fr->path.c_str(),fr->file->badate(),rand());
+	else
+		asprintf(&nfn,"%lu.%i.txt",fr->file->badate(),rand());
+	return nfn;
+}
+
 void c_prot_nntp::nntp_retrieve(const nget_options &options){
 	if (!(filec) || filec->files.empty())
 		return;
@@ -892,9 +903,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 					}
 					//				printf("\ns:%x d:%x\n",uul->state,uul->uudet);
 					if (/*uul->uudet==PT_ENCODED &&*/ strcmp(uul->filename,"0001.txt")==0){
-						char *nfn;
-						//asprintf(&nfn,"%lu.txt",f->banum());//give it a (somewhat) more sensible name
-						asprintf(&nfn,"%lu.%i.txt",f->badate(),rand());//give it a (somewhat) more sensible name //TODO: make it better (rand? blahk.. message id ar somethng but it might contain bad chars)
+						char *nfn = make_text_file_name(fr);
 						UURenameFile(uul,nfn);
 						free(nfn);
 					}else
@@ -951,6 +960,23 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 					}
 				}
 				UUCleanUp();
+				//handle posts that uulib says "no encoded data" for as text. (seems to be posts with no body)
+				if (un==0 && f->req<=0 && fnbuf.size()==1) {
+						derr--; //HACK since this error will also cause a uu_note "No encoded data found", which will incr derr, but we don't want that.
+						char *fn = *(fnbuf.begin());
+						char *nfn = make_text_file_name(fr,true);
+						while (fexists(nfn))  {
+							free(nfn);
+							nfn = make_text_file_name(fr,true);
+						}
+						if (rename(fn, nfn)!=0)
+							throw ApplicationExFatal(Ex_INIT,"nntp_retrieve:rename %s->%s : %s(%i)",fn,nfn,strerror(errno),errno);
+						free(nfn);
+						free(fn);
+						fnbuf.clear();
+						set_plaintext_ok_status();
+						un++;
+				}
 
 				//check all remaining files against what we just decoded, and remove any dupes.
 				if (!derr && !flist.empty()) {
