@@ -102,7 +102,7 @@ class XoverProgress {
 			long Bps=(dtime>0)?bytes/dtime:0;
 			long Bph=(done>0)?bytes/done:3;//if no headers have been retrieved yet, set the bytes per header to 3 just to get some sort of timeleft display.  (3=strlen(".\r\n"))
 			if (!quiet) clear_line_and_return();
-			printf("Retrieving headers %lu-%lu : %li/%li/%li %3li%% %liB/s %s",low,high,done,realtotal,total,(realtotal!=0)?((done+(total-realtotal))*100/total):0,Bps,durationstr(realtotal==done?dtime:(Bps>0)?((realtotal-done)*Bph)/(Bps):0).c_str());
+			printf("Retrieving headers %lu-%lu : %lu/%lu/%lu %3li%% %liB/s %s",low,high,done,realtotal,total,(realtotal!=0)?((done+(total-realtotal))*100/total):0,Bps,durationstr(realtotal==done?dtime:(Bps>0)?((realtotal-done)*Bph)/(Bps):0).c_str());
 			if (totalranges>1)
 				printf(" (%i/%i/%i)",doneranges,doneranges+streamed,totalranges);
 			fflush(stdout);//@@@@
