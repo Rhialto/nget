@@ -61,12 +61,18 @@ class misc_Test : public TestCase {
 			CPPUNIT_ASSERT(decode_textdate("Sun, 17 Feb 2002 22:52:46 GMT",1)==1013986366);
 			CPPUNIT_ASSERT(decode_textdate("Sun, 17 Feb 2002 15:52:46 -0700",0)==1013986366);
 			CPPUNIT_ASSERT(decode_textdate("Sun, 17 Feb 2002 15:52:46 -0700",1)==1013986366);
+			CPPUNIT_ASSERT(decode_textdate("Sun, 17 Feb 2002 15:52 -0700",0)==1013986320);
+			CPPUNIT_ASSERT(decode_textdate("Sun, 17 Feb 2002 15:52 -0700",1)==1013986320);
 			CPPUNIT_ASSERT(decode_textdate("Sun, 17 Feb 02 22:52:46 GMT",0)==1013986366);
 			CPPUNIT_ASSERT(decode_textdate("Sun, 17 Feb 02 22:52:46 GMT",1)==1013986366);
 			CPPUNIT_ASSERT(decode_textdate("17 Feb 2002 22:52:46 GMT",0)==1013986366);
 			CPPUNIT_ASSERT(decode_textdate("17 Feb 2002 22:52:46 GMT",1)==1013986366);
+			CPPUNIT_ASSERT(decode_textdate("17 Feb 2002 15:52:46 -0700",0)==1013986366);
+			CPPUNIT_ASSERT(decode_textdate("17 Feb 2002 15:52:46 -0700",1)==1013986366);
 			CPPUNIT_ASSERT(decode_textdate("17 Feb 02 22:52:46 GMT",0)==1013986366);
 			CPPUNIT_ASSERT(decode_textdate("17 Feb 02 22:52:46 GMT",1)==1013986366);
+			CPPUNIT_ASSERT(decode_textdate("17 Feb 02 15:52:46 -0700",0)==1013986366);
+			CPPUNIT_ASSERT(decode_textdate("17 Feb 02 15:52:46 -0700",1)==1013986366);
 			CPPUNIT_ASSERT(decode_textdate("17 Feb 02 22:52:46",0)==1013986366);
 			CPPUNIT_ASSERT(decode_textdate("7 Feb 2002 22:52:46 GMT",0)==1013122366);
 			CPPUNIT_ASSERT(decode_textdate("7 Feb 2002 22:52:46 GMT",1)==1013122366);
