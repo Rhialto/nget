@@ -553,7 +553,6 @@ void c_prot_nntp::nntp_dogetarticle(arinfo*ari,quinfo*toti,list<string> &buf){
 	//		sock.file_debug->save();
 #endif
 	if (!(ari->linesdone>=ari->linestot+host->lineleniencelow && ari->linesdone<=ari->linestot+host->lineleniencehigh)){
-		nntp_close();
 		printf("unequal line count %lu should equal %lu",ari->linesdone,ari->linestot);
 		if (host->lineleniencelow||host->lineleniencehigh){
 			if (host->lineleniencelow==-host->lineleniencehigh)
