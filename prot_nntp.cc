@@ -1185,7 +1185,7 @@ const char *uutypetoa(int uudet) {
 
 void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler, const nget_options &options) {
 	int optionflags = options.gflags;
-	if (!(optionflags&GETFILES_NOAUTOPAR)) {
+	if (!(optionflags&GETFILES_AUTOPAR_DISABLING_FLAGS)) {
 		parhandler.get_initial_pars(filec);
 	}
 	
@@ -1252,7 +1252,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 				qtotinfo.filesdone++;
 				filec.bytes=qtotinfo.bytesleft;//update bytes in case we have an exception and need to restart.
 
-				if (!(optionflags&GETFILES_NOAUTOPAR)) {
+				if (!(optionflags&GETFILES_AUTOPAR_DISABLING_FLAGS)) {
 					//check if this was the last file to be downloaded to its path, and if so do autoparhandling
 					int path_files_left=0;
 					for (t_nntp_files_u::iterator dfi = filec.files.begin(); dfi!=filec.files.end(); ++dfi){
