@@ -156,7 +156,7 @@ void c_nntp_file::get_server_have_map(t_server_have_map &have_map) const{
 	for (;pi!=parts.end();++pi){
 		t_nntp_server_articles::const_iterator nsai(pi->second->articles.begin());
 		c_nntp_server_article *sa;
-		int serverid;
+		ulong serverid;
 		int partnum=pi->second->partnum;
 		c_nrange servers_already_found;
 
