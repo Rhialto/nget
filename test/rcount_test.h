@@ -12,6 +12,7 @@ class rcount_Test : public TestCase {
 		class RCounted : public c_refcounted<RCounted> {
 			public:
 				int *aliveptr;
+				bool foo(void){return true;}
 				static ptr Create(int *a){return new RCounted(a);}
 				RCounted(int *a):aliveptr(a){*aliveptr=1;}
 				~RCounted(){*aliveptr=0;}
@@ -24,6 +25,7 @@ class rcount_Test : public TestCase {
 		void testSimple(void) {
 			RCounted::ptr rcounted = new RCounted(&alive);
 			CPPUNIT_ASSERT(alive);
+			CPPUNIT_ASSERT(rcounted->foo());
 			rcounted = NULL;
 			CPPUNIT_ASSERT(!alive);
 		}
@@ -33,6 +35,7 @@ class rcount_Test : public TestCase {
 			CPPUNIT_ASSERT(alive);
 			rcounted = NULL;
 			CPPUNIT_ASSERT(alive);
+			CPPUNIT_ASSERT(rc1->foo());
 			rc1 = NULL;
 			CPPUNIT_ASSERT(!alive);
 		}
@@ -48,11 +51,12 @@ class rcount_Test : public TestCase {
 			CPPUNIT_ASSERT(alive);
 			rcounted = rcounted;
 			CPPUNIT_ASSERT(alive);
+			CPPUNIT_ASSERT(rcounted->foo());
 			rcounted = NULL;
 			CPPUNIT_ASSERT(!alive);
 		}
 		void testTransient(void) {
-			RCounted::Create(&alive);
+			CPPUNIT_ASSERT(RCounted::Create(&alive)->foo());
 			CPPUNIT_ASSERT(!alive);
 		}
 		static Test *suite(void) {
