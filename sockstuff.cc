@@ -38,6 +38,7 @@
 
 #include "log.h"
 #include "strreps.h"
+#include "file.h"
 
 //not all systems have this defined...
 #ifndef INADDR_NONE
@@ -425,7 +426,7 @@ int sock_read(int sockfd, void *buf, size_t count){
 #ifdef HAVE_SELECT
 	}
 	if (i==0)
-		throw TransportExError(Ex_INIT,"sock_read timeout reached (%is)", sock_timeout);
+		throw FileEx(Ex_INIT,"sock_read timeout reached (%is)", sock_timeout);
 	return i;
 #endif
 }

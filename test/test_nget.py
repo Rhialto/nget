@@ -558,10 +558,15 @@ class XoverTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput('0002')
 
 
-class DelayingNNTPRequestHandler(nntpd.NNTPRequestHandler):
+class DelayBeforeArticleNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_article(self, args):
 		time.sleep(1)
 		nntpd.NNTPRequestHandler.cmd_article(self, args)
+
+class DelayAfterArticle2NNTPRequestHandler(nntpd.NNTPRequestHandler):
+	def cmd_article(self, args):
+		nntpd.NNTPRequestHandler.cmd_article(self, args)
+		time.sleep(2)
 
 class DiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_article(self, args):
@@ -744,8 +749,17 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[1].conns, 1)
 		self.verifyoutput('0002')
 
+	def test_timeout(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DelayAfterArticle2NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'timeout':1})
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.verifyoutput('0002')
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
+
 	def test_idletimeout(self):
-		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DelayingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DelayBeforeArticleNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'idletimeout':1})
 		self.servers.start()
 		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
