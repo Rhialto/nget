@@ -1,6 +1,6 @@
 2001-11-xx - v0.15.2:
   * Fix -df with filenames that begin or end in "non-word" chars since the \< and \> will not match because there is no word boundry in such a case. (reported by Bernhard Josef Rieder)
-  * Added LDFLAGS arg in Makefile to facilitate building on MacOSX. (Thomas Kotzian)
+  * Added LDFLAGS arg in Makefile to facilitate building with fink. (Thomas Kotzian)
   * Support systems that don't have sstream, but do have the older strstream. (Thomas Kotzian, me)
   * Added dupe checking between successive downloads.  Avoids grabbing the same file twice in the same run.
   * Fix undefined reference to cur_term link error that was showing up on some systems.
