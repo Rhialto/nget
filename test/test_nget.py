@@ -3026,6 +3026,23 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
 		self.vfailUnlessEqual(self.servers.servers[2].count("_conns"), 0)
+	
+	def test_DuplicateArticles(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.start()
+		article=self.addarticle_toserver('0001', 'uuencode_single', 'testfile.001', self.servers.servers[0])
+		for i in range(0,15):
+			self.servers.servers[0].addarticle(['test'], article)
+		self.vfailIf(self.nget.run("-g test"))
+		self.vfailIf(self.nget.run("-G test -r ."))
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
+		self.servers.servers[0].rmallarticles()
+		self.vfailIf(self.nget.run("-D -g test -r ."))
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_FlushServer(self):
 		self.servers = nntpd.NNTPD_Master(2)
