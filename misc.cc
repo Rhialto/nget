@@ -155,7 +155,9 @@ string durationstr(int_type duration){
 	oss << s << 's';
 	return oss.str();
 }
+#if (SIZEOF_LONG != SIZEOF_INT_FAST64_T)
 template string durationstr(int_fast64_t);
+#endif
 template string durationstr(ulong);
 template string durationstr(long);
 

@@ -38,11 +38,14 @@ using namespace std;
 # include <inttypes.h>
 #endif
 #ifndef HAVE_INT_FAST64_T
+# undef SIZEOF_INT_FAST64_T
 # ifdef HAVE_LONG_LONG
+#  define SIZEOF_INT_FAST64_T SIZEOF_LONG_LONG
 #  define int_fast64_t long long
 #  define uint_fast64_t unsigned long long
 # else
 //well, they may not be 64 bits but at least it should still work.
+#  define SIZEOF_INT_FAST64_T SIZEOF_LONG
 #  define int_fast64_t long
 #  define uint_fast64_t unsigned long
 # endif

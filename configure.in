@@ -228,6 +228,10 @@ SOCK_CHECK_TYPE(socklen_t, int)
 
 AC_CHECK_TYPES([long long, int_fast64_t, uint_fast64_t])
 
+AC_CHECK_SIZEOF(int_fast64_t)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
+
 dnl checks for ulong
 AC_CHECK_TYPE(ulong, unsigned long)
 dnl checks for uchar
