@@ -84,6 +84,32 @@ int atoport(const char *service, const char *proto,char * buf, int buflen) {
 	return port;
 }
 
+static int do_gethostbyname(const char *netaddress,struct in_addr *addr,char *buf, int buflen){
+	struct hostent *host=NULL;
+#if HAVE_FUNC_GETHOSTBYNAME_R_6
+	int err;
+	struct hostent hostb;
+	gethostbyname_r(netaddress,&hostb,buf,buflen,&host,&err);
+#elif HAVE_FUNC_GETHOSTBYNAME_R_5
+	int err;
+	struct hostent hostb;
+	host = gethostbyname_r(netaddress,&hostb,buf,buflen,&err);
+#elif HAVE_FUNC_GETHOSTBYNAME_R_3
+	assert(buflen >= sizeof(struct hostent_data));
+	struct hostent hostb;
+	if (gethostbyname_r(netaddress,&hostb,(struct hostent_data *)buf)==0)
+		host = &hostb;
+#else
+	host = gethostbyname(netaddress);
+#endif
+	if (host != NULL) {
+		//			addr=(struct in_addr *)*host->h_addr_list;
+		memcpy(addr,(struct in_addr *)*host->h_addr_list,sizeof(struct in_addr));
+		return 1;
+	}
+	else return 0;
+}
+
 int atoaddr(const char *netaddress,struct in_addr *addr,char *buf, int buflen){
 	if
 #ifdef HAVE_INET_ATON
@@ -93,29 +119,16 @@ int atoaddr(const char *netaddress,struct in_addr *addr,char *buf, int buflen){
 #endif
 			return 1;
 	else {
-		struct hostent *host=NULL;
-#if HAVE_FUNC_GETHOSTBYNAME_R_6
-		int err;
-		struct hostent hostb;
-		gethostbyname_r(netaddress,&hostb,buf,buflen,&host,&err);
-#elif HAVE_FUNC_GETHOSTBYNAME_R_5
-		int err;
-		struct hostent hostb;
-		host = gethostbyname_r(netaddress,&hostb,buf,buflen,&err);
-#elif HAVE_FUNC_GETHOSTBYNAME_R_3
-		assert(buflen >= sizeof(struct hostent_data));
-		struct hostent hostb;
-		if (gethostbyname_r(netaddress,&hostb,(struct hostent_data *)buf)==0)
-			host = &hostb;
-#else
-		host = gethostbyname(netaddress);
-#endif
-		if (host != NULL) {
-//			addr=(struct in_addr *)*host->h_addr_list;
-			memcpy(addr,(struct in_addr *)*host->h_addr_list,sizeof(struct in_addr));
-			return 1;
+		int r;
+		if (!(r=do_gethostbyname(netaddress, addr, buf, buflen)) && errno==ERANGE) {
+			buf = NULL;
+			do {
+				buflen *= 2;
+				buf = (char*)realloc(buf, buflen);
+			} while (!(r=do_gethostbyname(netaddress, addr, buf, buflen)) && errno==ERANGE);
+			free(buf);
 		}
-		else return 0;
+		return r;
 	}
 }
 
