@@ -23,7 +23,7 @@ ngetlite: $(LITEOBJS) .depend
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LITEOBJS) -o $@
 
 @NOUU@@UULIB@:
-@NOUU@	(cd @UUDIR@; ./configure)
+@NOUU@	(cd @UUDIR@ && ./configure)
 @NOUU@	$(MAKE) -C @UUDIR@ libuu.a
 
 
