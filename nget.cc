@@ -861,7 +861,7 @@ int main(int argc, char ** argv){
 					exit(errorflags);
 				}
 				nghome=home;
-				nghome.append("/.nget3/");
+				nghome.append("/.nget4/");
 			}
 		}
 

@@ -63,11 +63,20 @@ void c_nntp_header::setfileid(void){
 	fileid=H(subject.c_str())+H(author.c_str());//prolly not as good as crc32, but oh well.
 #endif
 }
-void c_nntp_header::set(char * str,const char *a,ulong anum,time_t d,ulong b,ulong l,const char *mid){
+void c_nntp_header::set(char * str,const char *a,ulong anum,time_t d,ulong b,ulong l,const char *mid, char *refstr){
 	assert(str);
 	assert(a);
 	author=a;articlenum=anum;date=d;bytes=b;lines=l;
 	messageid=mid;
+
+	references.clear();
+	if (refstr && *refstr) {
+		char *ref;
+		while ((ref = goodstrtok(&refstr,' '))) {
+			references.insert(ref);
+		}
+	}
+
 	const char *s=str+strlen(str)-3;//-1 for null, -2 for ), -3 for num
 	req=0;
 	for (;s>str;s--) {
@@ -121,6 +130,12 @@ c_nntp_part::~c_nntp_part(){
 	}
 }
 
+void c_nntp_file::update_references(c_nntp_header *h, const char *desc){
+	unsigned int start_num = references.size();
+	references.insert(h->references.begin(), h->references.end());
+	if (start_num!=references.size())
+		PDEBUG(DEBUG_MIN,"\nupdate_references: %s added %i of %i refs (%s)", desc, references.size()-start_num,h->references.size(), h->messageid.c_str());
+}
 
 void c_nntp_file::addpart(c_nntp_part *p){
 	assert(p);
@@ -138,7 +153,7 @@ void c_nntp_file::addpart(c_nntp_part *p){
 c_nntp_file::c_nntp_file(int r,ulong f,t_id fi,const char *s,const char *a,int po,int to):req(r),have(0),flags(f),fileid(fi),subject(s),author(a),partoff(po),tailoff(to){
 //	printf("aoeu1.1\n");
 }
-c_nntp_file::c_nntp_file(c_nntp_header *h):req(h->req),have(0),flags(0),fileid(h->fileid),subject(h->subject),author(h->author),partoff(h->partoff),tailoff(h->tailoff){
+c_nntp_file::c_nntp_file(c_nntp_header *h):req(h->req),have(0),flags(0),fileid(h->fileid),subject(h->subject),author(h->author),partoff(h->partoff),tailoff(h->tailoff),references(h->references){
 //	printf("aoeu1\n");
 }
 
@@ -250,6 +265,7 @@ int c_nntp_cache::additem(c_nntp_header *h){
 //						printf("adding %s for server %lu again?\n",h->messageid.c_str(),(*sai).second->serverid);
 //#endif
 					matchpart->addserverarticle(h);
+					f->update_references(h, "serverarticle");
 					return 0;
 				}
 				PDEBUG(DEBUG_MED,"%s was gonna add, but already have this part(sub=%s part=%i omid=%s)?\n",h->messageid.c_str(),f->subject.c_str(),h->partnum,matchpart->messageid.c_str());
@@ -258,6 +274,7 @@ int c_nntp_cache::additem(c_nntp_header *h){
 //			printf("adding\n");
 			c_nntp_part *p=new c_nntp_part(h);
 			f->addpart(p);
+			f->update_references(h, "part");
 			totalnum++;
 			return 0;
 		}
@@ -422,6 +439,15 @@ c_file *dofileopen(string file, string mode, int gz=-2){
 	return f;
 }
 
+enum {
+	START_MODE=2,
+	SERVERINFO_MODE=4,
+	FILE_MODE=0,
+	PART_MODE=1,
+	SERVER_ARTICLE_MODE=3,
+	REFERENCES_MODE=5,
+};
+
 c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),group(group_){
 	c_file *f=NULL;
 	saveit=0;
@@ -432,7 +458,7 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),gro
 	if ((f=dofileopen(file.c_str(),"rb",group->usegz))){
 		auto_ptr<c_file> fcloser(f);
 		char *buf;
-		int mode=2;
+		int mode=START_MODE;
 		c_nntp_file	*nf=NULL;
 		c_nntp_part	*np=NULL;
 		c_nntp_server_article *sa;
@@ -444,7 +470,8 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),gro
 		while (f->bgets()>0){
 			buf=f->rbufp();
 			curline++;
-			if (mode==2){//start mode
+			//printf("line %i mode %i: %s\n",curline,mode,buf);
+			if (mode==START_MODE){
 				for(i=0;i<2;i++)
 					if((t[i]=goodstrtok(&buf,'\t'))==NULL){
 						break;
@@ -459,11 +486,11 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),gro
 					f->close();fileread=0;
 					return;
 				}
-				mode=4;//go to serverinfo mode.
-			}else if (mode==4){//server_info mode
+				mode=SERVERINFO_MODE;//go to serverinfo mode.
+			}else if (mode==SERVERINFO_MODE){
 				if (buf[0]=='.'){
 					assert(buf[1]==0);
-					mode=0;//start new file mode
+					mode=FILE_MODE;//start new file mode
 					continue;
 				}else{
 					for(i=0;i<4;i++)
@@ -477,10 +504,10 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),gro
 						printf("invalid line %lu mode %i\n",curline,mode);
 				}
 			}
-			else if (mode==3 && np){//new server_article mode
+			else if (mode==SERVER_ARTICLE_MODE && np){//new server_article mode
 				if (buf[0]=='.'){
 					assert(buf[1]==0);
-					mode=1;//go back to new part mode
+					mode=PART_MODE;//go back to new part mode
 					continue;
 				}else{
 					for(i=0;i<4;i++)
@@ -497,10 +524,10 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),gro
 						printf("invalid line %lu mode %i\n",curline,mode);
 				}
 			}
-			else if (mode==1 && nf){//new part mode
+			else if (mode==PART_MODE && nf){//new part mode
 				if (buf[0]=='.'){
 					assert(buf[1]==0);
-					mode=0;//go back to new file mode
+					mode=FILE_MODE;//go back to new file mode
 			//		nf->addpart(np);//added here so that addpart will have apxlines/apxbytes to work with (set in mode 3)
 					np=NULL;
 					continue;
@@ -516,10 +543,10 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),gro
 						count++;
 					}else
 						printf("invalid line %lu mode %i\n",curline,mode);
-					mode=3;
+					mode=SERVER_ARTICLE_MODE;//start adding server_articles
 				}
 			}
-			else if (mode==0){//new file mode
+			else if (mode==FILE_MODE){//new file mode
 				for(i=0;i<7;i++)
 					if((t[i]=goodstrtok(&buf,'\t'))==NULL){
 						i=-1;break;
@@ -529,9 +556,19 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),gro
 					nf=new c_nntp_file(atoi(t[0]),atoul(t[1]),atoul(t[2]),t[3],t[4],atoi(t[5]),atoi(t[6]));
 					files.insert(t_nntp_files::value_type(nf->fileid,nf));
 //					files[nf->subject.c_str()]=nf;
-					mode=1;
+					mode=REFERENCES_MODE;
 				}else
 					printf("invalid line %lu mode %i\n",curline,mode);
+			}
+			else if (mode==REFERENCES_MODE && nf){//adding references on new file
+				if (buf[0]=='.'){
+					assert(buf[1]==0);
+					mode=PART_MODE;
+					np=NULL;
+					continue;
+				}else{
+					nf->references.insert(buf);
+				}
 			}else{
 				assert(0);//should never get here
 			}
@@ -553,13 +590,14 @@ c_nntp_cache::~c_nntp_cache(){
 			auto_ptr<c_file> fcloser(f);
 			if (quiet<2){printf("saving cache: %lu parts, %i files..",totalnum,files.size());fflush(stdout);}
 			c_nntp_file::ptr nf;
+			t_references_set::iterator ri;
 			t_nntp_file_parts::iterator pi;
 			t_nntp_server_articles::iterator sai;
 			c_nntp_server_article *sa;
 			c_nntp_part *np;
 			ulong count=0,counta=0;
-			f->putf(CACHE_VERSION"\t%lu\n",totalnum);//mode 2
-			//vv mode 4
+			f->putf(CACHE_VERSION"\t%lu\n",totalnum);//START_MODE
+			//vv SERVERINFO_MODE
 			while (!server_info.empty()){
 				si=server_info.begin()->second;
 				assert(si);
@@ -568,27 +606,31 @@ c_nntp_cache::~c_nntp_cache(){
 				delete si;
 			}
 			f->putf(".\n");
-			//end mode 4
-			//vv mode 0
+			//end SERVERINFO_MODE
+			//vv FILE_MODE
 			for(i = files.begin();i!=files.end();++i){
 				nf=(*i).second;
 				assert(!nf.isnull());
 				assert(!nf->parts.empty());
-				f->putf("%i\t%lu\t%lu\t%s\t%s\t%i\t%i\n",nf->req,nf->flags,nf->fileid,nf->subject.c_str(),nf->author.c_str(),nf->partoff,nf->tailoff);//mode 0
+				f->putf("%i\t%lu\t%lu\t%s\t%s\t%i\t%i\n",nf->req,nf->flags,nf->fileid,nf->subject.c_str(),nf->author.c_str(),nf->partoff,nf->tailoff);//FILE_MODE
+				for(ri = nf->references.begin();ri!=nf->references.end();++ri){
+					f->putf("%s\n",ri->c_str());//REFERENCES_MODE
+				}
+				f->putf(".\n");//end REFERENCES_MODE
 				for(pi = nf->parts.begin();pi!=nf->parts.end();++pi){
 					np=(*pi).second;
 					assert(np);
-					f->putf("%i\t%lu\t%s\n",np->partnum,np->date,np->messageid.c_str());//mode 1
+					f->putf("%i\t%lu\t%s\n",np->partnum,np->date,np->messageid.c_str());//PART_MODE
 					for (sai = np->articles.begin(); sai != np->articles.end(); ++sai){
 						sa=(*sai).second;
 						assert(sa);
-						f->putf("%lu\t%lu\t%lu\t%lu\n",sa->serverid,sa->articlenum,sa->bytes,sa->lines);//mode 3
+						f->putf("%lu\t%lu\t%lu\t%lu\n",sa->serverid,sa->articlenum,sa->bytes,sa->lines);//SERVER_ARTICLE_MODE
 						counta++;
 					}
-					f->putf(".\n");//end mode 3
+					f->putf(".\n");//end SERVER_ARTICLE_MODE
 					count++;
 				}
-				f->putf(".\n");//end mode 1
+				f->putf(".\n");//end PART_MODE
 				(*i).second=NULL; //free cache as we go along instead of at the end, so we don't swap more with low-mem.
 				//nf->storef(f);
 				//delete nf;

@@ -154,7 +154,7 @@ inline void c_prot_nntp::nntp_print_retrieving_headers(ulong lll,ulong hhh,ulong
 2=author
 3=date
 4=message id
-5=in reply to (for threading)
+5=references (aka in-reply-to) (used for threading)
 6=bytes
 7=lines
 ... following are optional (and possibly different):
@@ -222,7 +222,7 @@ void c_prot_nntp::doxover(ulong low, ulong high){
 		//	c=new c_nntp_cache_item(atol(t[0]),	decode_textdate(t[3]), atol(t[6]), atol(t[7]),t[1],t[2]);
 			//gcache->additem(c);
 			an=atoul(t[0]);
-			nh.set(t[1],t[2],an,decode_textdate(t[3]),atoul(t[6]),atoul(t[7]),t[4]);
+			nh.set(t[1],t[2],an,decode_textdate(t[3]),atoul(t[6]),atoul(t[7]),t[4],t[5]);
 			nh.serverid=curserverid;
 			//gcache->additem(an, decode_textdate(t[3]), atol(t[6]), atol(t[7]),t[1],t[2]);
 			gcache->additem(&nh);

@@ -3,6 +3,10 @@
   * Fix slow exit with very large midinfo files.
   * In -T mode, only print x/y parts if the post is incomplete, otherwise just print x.
   * Set default --limit to 0.
+  * Now saves References in cache file.
+  * Cache file format change, so switch default NGETHOME to ~/.nget4.
+    (Upgrade should be as simple as "mv ~/.nget3 ~/.nget4; rm ~/.nget4/*,cache*")
+  * Add heuristic to detect replies to multi-part posts and mark them as complete.  No more need to specify -i to catch replies.
 
 2001-11-24 - v0.15.2:
   * Fix -df with filenames that begin or end in "non-word" chars since the \< and \> will not match because there is no word boundry in such a case. (reported by Bernhard Josef Rieder)

@@ -32,6 +32,7 @@
 #endif
 #include <multimap.h>
 #include <list.h>
+#include <set>
 #include "file.h"
 #include "log.h"
 
@@ -44,8 +45,9 @@
 
 #include "nrange.h"
 
-#define CACHE_VERSION "NGET3"
+#define CACHE_VERSION "NGET4"
 
+typedef set<string> t_references_set;
 
 typedef unsigned long t_id;
 class c_nntp_header {
@@ -63,7 +65,8 @@ class c_nntp_header {
 		time_t date;
 		ulong bytes,lines;
 		string messageid;
-		void set(char *s,const char *a,ulong anum,time_t d,ulong b,ulong l,const char *mid);
+		t_references_set references;
+		void set(char *s,const char *a,ulong anum,time_t d,ulong b,ulong l,const char *mid,char *refstr);//note: modifies refstr
 //		c_nntp_header(char *s,const char *a,ulong anum,time_t d,ulong b,ulong l);
 };
 
@@ -136,8 +139,10 @@ class c_nntp_file : public c_refcounted<c_nntp_file>{
 		t_id fileid;
 		string subject,author;
 		int partoff,tailoff;
+		t_references_set references;
+		void update_references(c_nntp_header *h,  const char *desc);
 		void addpart(c_nntp_part *p);
-		bool iscomplete(void) {return have>=req;}
+		bool iscomplete(void) {return (have>=req) || (have<=1 && !references.empty() && lines()<1000);}
 //		ulong banum(void){assert(!parts.empty());return (*parts.begin()).second->articlenum;}
 		string bamid(void) const {assert(!parts.empty());return (*parts.begin()).second->messageid;}
 		time_t badate(void) const {assert(!parts.empty());return (*parts.begin()).second->date;}
