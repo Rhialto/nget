@@ -114,14 +114,7 @@ protected:
 
 inline bool MD5Hash::operator==(const MD5Hash &other) const
 {
-  for (unsigned int i=0; i<4; i++)
-  {
-    if (((u32*)&hash)[i] != ((u32*)&other.hash)[i])
-    {
-      return false;
-    }
-  }
-  return true;
+  return (0==memcmp(&hash, &other.hash, sizeof(hash)));
 }
 inline bool MD5Hash::operator!=(const MD5Hash &other) const
 {
@@ -130,25 +123,13 @@ inline bool MD5Hash::operator!=(const MD5Hash &other) const
 
 inline bool MD5Hash::operator<(const MD5Hash &other) const
 {
-  if (*(u32*)(&hash[12]) < *(u32*)(&other.hash[12]))
-    return true;
-  else if (*(u32*)(&hash[12]) > *(u32*)(&other.hash[12]))
-    return false;
+  size_t index = 15;
+  while (index > 0 && hash[index] == other.hash[index])
+  {
+    index--;
+  }
 
-  else if (*(u32*)(&hash[8]) < *(u32*)(&other.hash[8]))
-    return true;
-  else if (*(u32*)(&hash[8]) > *(u32*)(&other.hash[8]))
-    return false;
-
-  else if (*(u32*)(&hash[4]) < *(u32*)(&other.hash[4]))
-    return true;
-  else if (*(u32*)(&hash[4]) > *(u32*)(&other.hash[4]))
-    return false;
-
-  else if (*(u32*)(&hash[0]) < *(u32*)(&other.hash[0]))
-    return true;
-  else 
-    return false;
+  return hash[index] < other.hash[index];
 }
 inline bool MD5Hash::operator>=(const MD5Hash &other) const 
 {

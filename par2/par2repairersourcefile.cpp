@@ -68,9 +68,12 @@ void Par2RepairerSourceFile::ComputeTargetFileName(string path)
 
   // Strip the path from the filename
   string::size_type where;
-  if (string::npos != (where = filename.find_last_of('\\')) ||
-      string::npos != (where = filename.find_last_of('/')) ||
-      string::npos != (where = filename.find_last_of(':')))
+  if (string::npos != (where = filename.find_last_of('\\'))
+      || string::npos != (where = filename.find_last_of('/'))
+#ifdef WIN32
+      || string::npos != (where = filename.find_last_of(':'))
+#endif
+     )
   {
     filename = filename.substr(where+1);
   }
@@ -139,5 +142,18 @@ void Par2RepairerSourceFile::SetBlocks(u32 _blocknumber,
 
       datablock.SetLength(blocklength);
     }
+  }
+}
+
+// Determine the block count from the file size and block size.
+void Par2RepairerSourceFile::SetBlockCount(u64 blocksize)
+{
+  if (descriptionpacket)
+  {
+    blockcount = (u32)((descriptionpacket->FileSize() + blocksize-1) / blocksize);
+  }
+  else
+  {
+    blockcount = 0;
   }
 }

@@ -259,7 +259,7 @@ bool Par2Repairer::LoadPacketsFromFile(string filename)
           // Did we find the magic
           if (current <= limit)
           {
-            header = *(PACKET_HEADER*)current;
+            memcpy(&header, current, sizeof(header));
             break;
           }
         }
@@ -740,6 +740,9 @@ bool Par2Repairer::CheckPacketConsistency(void)
         continue;
       }
 
+      // Compute and store the block count from the filesize and blocksize
+      sf->second->SetBlockCount(blocksize);
+
       // Do we have a verification packet
       VerificationPacket *verificationpacket = sf->second->GetVerificationPacket();
       if (verificationpacket == 0)
@@ -836,14 +839,14 @@ bool Par2Repairer::AllocateSourceBlocks(void)
     Par2RepairerSourceFile *sourcefile = *sf;
     if (sourcefile)
     {
-      sourceblockcount += sourcefile->GetVerificationPacket()->BlockCount();
+      sourceblockcount += sourcefile->BlockCount();
     }
     else
     {
       // No details for this source file so we don't know what the
       // total number of source blocks is
-      sourceblockcount = 0;
-      break;
+//      sourceblockcount = 0;
+//      break;
     }
 
     ++sf;
@@ -875,16 +878,19 @@ bool Par2Repairer::AllocateSourceBlocks(void)
     {
       Par2RepairerSourceFile *sourcefile = *sf;
 
-      totalsize += sourcefile->GetDescriptionPacket()->FileSize();
-      u32 blockcount = sourcefile->GetVerificationPacket()->BlockCount();
+      if (sourcefile)
+      {
+        totalsize += sourcefile->GetDescriptionPacket()->FileSize();
+        u32 blockcount = sourcefile->BlockCount();
 
-      // Allocate the source and target DataBlocks to the sourcefile
-      sourcefile->SetBlocks(blocknumber, blockcount, sourceblock, targetblock, blocksize);
+        // Allocate the source and target DataBlocks to the sourcefile
+        sourcefile->SetBlocks(blocknumber, blockcount, sourceblock, targetblock, blocksize);
 
-      blocknumber++;
+        blocknumber++;
 
-      sourceblock += blockcount;
-      targetblock += blockcount;
+        sourceblock += blockcount;
+        targetblock += blockcount;
+      }
 
       ++sf;
       ++filenumber;
@@ -1599,42 +1605,49 @@ void Par2Repairer::UpdateVerificationResults(void)
   {
     Par2RepairerSourceFile *sourcefile = *sf;
 
-    // Was a perfect match for the file found
-    if (sourcefile->GetCompleteFile() != 0)
+    if (sourcefile)
     {
-      // Is it the target file or a different one
-      if (sourcefile->GetCompleteFile() == sourcefile->GetTargetFile())
+      // Was a perfect match for the file found
+      if (sourcefile->GetCompleteFile() != 0)
       {
-        completefilecount++;
+        // Is it the target file or a different one
+        if (sourcefile->GetCompleteFile() == sourcefile->GetTargetFile())
+        {
+          completefilecount++;
+        }
+        else
+        {
+          renamedfilecount++;
+        }
+
+        availableblockcount += sourcefile->BlockCount();
       }
       else
       {
-        renamedfilecount++;
-      }
+        // Count the number of blocks that have been found
+        vector<DataBlock>::iterator sb = sourcefile->SourceBlocks();
+        for (u32 blocknumber=0; blocknumber<sourcefile->BlockCount(); ++blocknumber, ++sb)
+        {
+          DataBlock &datablock = *sb;
+          
+          if (datablock.IsSet())
+            availableblockcount++;
+        }
 
-      availableblockcount += sourcefile->BlockCount();
+        // Does the target file exist
+        if (sourcefile->GetTargetExists())
+        {
+          damagedfilecount++;
+        }
+        else
+        {
+          missingfilecount++;
+        }
+      }
     }
     else
     {
-      // Count the number of blocks that have been found
-      vector<DataBlock>::iterator sb = sourcefile->SourceBlocks();
-      for (u32 blocknumber=0; blocknumber<sourcefile->BlockCount(); ++blocknumber, ++sb)
-      {
-        DataBlock &datablock = *sb;
-        
-        if (datablock.IsSet())
-          availableblockcount++;
-      }
-
-      // Does the target file exist
-      if (sourcefile->GetTargetExists())
-      {
-        damagedfilecount++;
-      }
-      else
-      {
-        missingfilecount++;
-      }
+      missingfilecount++;
     }
 
     ++filenumber;
