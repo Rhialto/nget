@@ -8,7 +8,7 @@
   * Improved skipping of command line args when bad parameters are given. (Eg, now nget -p bad -r foo -p good -r bar will still execute the -p good -r bar part, rather than exiting on the first error.)
   * Added GROUP error exit status (code 16) for when all servers fail to update a group's headers. (Previously gave an OTHER error.)
   * Search the cache for all adjacent -r/-R options in a single loop.  (Speeds up command lines like nget -Gfoo -r bar -r baz -r boo. (options -h/-G/-g/-@ split -r chains.))
-  * For -G .. -r .. search as reading rather than loading cache into memory and then searching.  (Speed up and memory usage reduction.)
+  * For -G .. -r .. search while reading rather than loading cache into memory and then searching.  (Speed up and memory usage reduction.)
   * Actually honor -c option again.  (Case sensitive matches)
   * Update configure --with-*=DIR options, now searches in both DIR and DIR/{include,lib}.  Also adds --with-*-{include,lib}=DIR to force specific locations for each.
 
