@@ -120,8 +120,12 @@ void TextHandler::save(void) const {
 			// we will use the copy, write, rename method rather than just appending to the existing mbox file for two reasons:
 			//  1) any errors during writing will not leave a partial message in the mbox
 			//  2) with gzip append compression is started again each time so the compression ratio is much less than compressing the whole thing at once.
-			string mboxpath(fr->path);
-			path_append(mboxpath, mboxname);
+			string mboxpath;
+			if (is_abspath(mboxname)) {
+				mboxpath = mboxname;
+			} else {
+				mboxpath = path_join(fr->path, mboxname);
+			}
 			string tmppath(mboxpath);
 			tmppath.append(".tmp");
 			//c_file_fd f(mboxpath.c_str(), O_CREAT|O_WRONLY|O_APPEND, PUBMODE);

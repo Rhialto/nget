@@ -325,6 +325,14 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.addarticles("mbox01", "input")
 		self.vfailIf(self.nget.run("--text=mbox:nget.mbox.gz -g test -r ."))
 		self.verifyoutput("mbox01/_gz_output")
+	def test_mbox01_abspath(self):
+		tmp2dir = os.path.join(self.nget.rcdir, 'tmp2')
+		os.mkdir(tmp2dir)
+		self.addarticles('0001', 'uuencode_single')
+		self.addarticles("mbox01", "input")
+		self.vfailIf(self.nget.run("--text=mbox:%s -g test -r ."%(os.path.join(tmp2dir,'nget.mbox'))))
+		self.verifyoutput(['0001'])
+		self.verifyoutput("mbox01", tmpdir=tmp2dir)
 	def test_mergesa01_input(self):
 		self.do_test_auto()
 	def test_textnotuu_input(self):

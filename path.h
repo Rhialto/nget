@@ -35,6 +35,7 @@ inline bool is_pathsep(char c) {return c=='/';}
 inline bool is_abspath(const char *p) {return p[0]=='/';}
 #define PATHSEP '/'
 #endif
+inline bool is_abspath(const string &s) {return is_abspath(s.c_str());}
 
 string& path_append(string &a, string b);//modifies and returns 'a'
 string path_join(string a, string b);//returns a new string

@@ -104,6 +104,7 @@ Specifies how to handle text posts.  The default is files.
 OPT can be ignore to save only binaries, "files" to save each text post in a different file, and "mbox" to save each text post as a message in a mbox format mailbox.
 The name of the mbox file to save in can be specified with mbox:filename, the default is nget.mbox.
 If the filename ends in .gz, it will automatically be gzipped.
+Unless the filename has an absolute path, it is interpreted as relative to the retrieve path.
 .IP "--save-binary-info yes,no"
 Specifies whether to save text messages for posts that contained only binary data. (If you want to see the headers.)
 .IP "--test-multiserver OPT"
