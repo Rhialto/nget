@@ -325,6 +325,8 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.do_test_auto()
 	def test_textnotuu_input(self):
 		self.do_test_auto(msg="your uulib likes to misidentify text as uudata.  *** See http://nget.sf.net/patches/ ***")
+	def test_longheader_input(self):
+		self.do_test_auto(msg="your uulib dislikes long headers.  *** See http://nget.sf.net/patches/ ***")
 
 	def test_article_expiry(self):
 		article = self.addarticle_toserver('0001', 'uuencode_single', 'testfile.001', self.servers.servers[0])

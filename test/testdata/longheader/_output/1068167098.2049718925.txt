@@ -1,0 +1,9 @@
+From: foo <baar@baaaz.here>
+Newsgroups: test
+Subject: Hi!
+Date: 7 Nov 2003 01:04:58 GMT
+Message-ID: <longheader01@foo>
+Path: foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar!baz!foo!bar
+Lines: 1
+
+Hello.
