@@ -27,9 +27,17 @@
 #include <errno.h>
 #include "sockstuff.h"
 #include "strreps.h"
+#include "path.h"
 
 
 void xxrename(const char *oldpath, const char *newpath) {
+#ifdef WIN32
+	//On windows rename will not replace an existing file, so check first and remove it.
+	if (fexists(newpath)) {
+		if (unlink(newpath))
+			throw FileEx(Ex_INIT, "rename: unlink %s: %s(%i)\n",newpath,strerror(errno),errno);
+	}
+#endif
 	if (rename(oldpath, newpath))
 		throw FileEx(Ex_INIT, "rename %s > %s: %s(%i)\n",oldpath,newpath,strerror(errno),errno);
 }
