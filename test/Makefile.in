@@ -22,7 +22,7 @@ $(NGET) $(NGETLITE): ../*.cc ../*.h
 test: all $(NGET) $(NGETLITE)
 	./test_nget.py
 
-OBJS=TestRunner.o dupe_file_test.o misc_test.o nrangetest.o  rcount_test.o auto_container_test.o  strtoker_test.o knapsack_test.o ../file.o ../sockstuff.o ../nrange.o ../log.o ../dupe_file.o ../myregex.o ../strtoker.o ../misc.o ../path.o ../knapsack.o
+OBJS=TestRunner.o dupe_file_test.o misc_test.o nrangetest.o  rcount_test.o auto_container_test.o  strtoker_test.o knapsack_test.o ../file.o ../sockstuff.o ../nrange.o ../log.o ../dupe_file.o ../myregex.o ../strtoker.o ../misc.o ../path.o ../knapsack.o ../compat/compat.a
 TestRunner: $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LIBS) `cppunit-config --libs`
 
