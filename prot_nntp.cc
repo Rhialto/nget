@@ -428,6 +428,8 @@ inline void arinfo::print_retrieving_articles(time_t curtime, quinfo*tot){
 	dtime=curtime-starttime;
 	Bps=(dtime>0)?bytesdone/dtime:0;
 	if (!quiet) clear_line_and_return();
+	if (tot && tot->doarticle_show_multi!=NO_SHOW_MULTI)
+		printf("%s ",server_name);
 	printf("%li (%i/%i): %li/%liL %li/%liB %3li%% %liB/s %s",
 			anum,partnum,partreq,linesdone,linestot,bytesdone,bytestot,
 			(linestot!=0)?(linesdone*100/linestot):0,Bps,
@@ -601,6 +603,10 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 			ari->linestot=sa->lines;
 			ari->linesdone=0;
 			ari->bytesdone=0;
+			if (toti->doarticle_show_multi==SHOW_MULTI_SHORT)
+				ari->server_name=host->shortname.c_str();
+			else if (toti->doarticle_show_multi==SHOW_MULTI_LONG)
+				ari->server_name=host->alias.c_str();
 			PDEBUG(DEBUG_MED,"trying server %lu article %lu",sa->serverid,sa->articlenum);
 			list<string> buf;//use a list of strings instead of char *.  Easier and it cleans up after itself too.
 			try {
@@ -773,6 +779,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 	//c_nntp_file *f;
 	c_nntp_file::ptr f;
 	c_nntp_file_retr::ptr fr;
+	bool gcache_ismultiserver = gcache->ismultiserver();
 
 	//hmm, maybe not now. //well, now we need to keep it around again, so we can set the read flag.  At least with the new cache implementation its not quite such a memory hog.
 //	if (gcache){
@@ -828,6 +835,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 //		qtotinfo.linestot=filec->lines;
 		qtotinfo.filestot=filec->files.size();
 		qtotinfo.bytesleft=filec->bytes;
+		qtotinfo.doarticle_show_multi=gcache_ismultiserver?SHOW_MULTI_SHORT:NO_SHOW_MULTI;
 		c_nntp_part *p;
 //		s_part_u *bp;
 		t_nntp_file_parts::iterator curp;

@@ -321,6 +321,7 @@ class c_nntp_cache : public c_refcounted<c_nntp_cache>{
 		c_group_info::ptr group;
 		int saveit;
 		int fileread;
+		bool ismultiserver(void);
 		//int additem(ulong an,char *s,const char * a,time_t d, ulong b, ulong l){
 		int additem(c_nntp_header *h);
 		ulong flushlow(c_nntp_server_info *servinfo, ulong newlow, c_mid_info *midinfo);

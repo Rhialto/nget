@@ -235,6 +235,14 @@ file_match_loop_end: ;
 	return fc;
 }
 
+bool c_nntp_cache::ismultiserver(void) {
+	int num=0;
+	for (t_nntp_server_info::iterator sii=server_info.begin(); sii!=server_info.end(); ++sii)
+		if (sii->second->num > 0)
+			num++;
+	return num > 1;
+}
+
 c_nntp_server_info* c_nntp_cache::getserverinfo(ulong serverid){
 	c_nntp_server_info* servinfo=server_info[serverid];
 	if (servinfo==NULL){

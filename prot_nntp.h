@@ -43,11 +43,13 @@ struct quinfo {
 	int_fast64_t bytesleft;
 	long filestot,filesdone;
 	time_t starttime;
+	t_show_multiserver doarticle_show_multi;
 };
 struct arinfo {
 	long Bps;
 	time_t dtime;
 
+	const char *server_name;//if doarticle_show_multi
 	long anum;
 	long linesdone,linestot;
 	long bytesdone,bytestot;
