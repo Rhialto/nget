@@ -98,6 +98,10 @@ class DecodeTestCase(unittest.TestCase):
 		self.do_test_auto()
 	def test_0001_yenc_multi(self):
 		self.do_test_auto()
+	def test_0001_yenc_single_size_error(self):
+		self.do_test_auto_decodeerror()
+	def test_0001_yenc_multi_size_error(self):
+		self.do_test_auto_decodeerror()
 	def test_0001_yenc_single_crc32_error(self):
 		self.do_test_auto_decodeerror()
 	def test_0001_yenc_multi_crc32_error(self):
