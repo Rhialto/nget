@@ -234,7 +234,7 @@ class c_nntp_server_info {
 };
 typedef map<ulong,c_nntp_server_info*,less<ulong> > t_nntp_server_info;
 
-class c_message_state {
+class c_message_state : public c_refcounted<c_message_state>{
 	public:
 		string messageid;
 		time_t date_added,date_removed;
@@ -242,9 +242,9 @@ class c_message_state {
 };
 
 #ifdef HAVE_HASH_MAP_H
-typedef hash_map<const char*, c_message_state*, hash<const char*>, eqstr> t_message_state_list;
+typedef hash_map<const char*, c_message_state::ptr, hash<const char*>, eqstr> t_message_state_list;
 #else
-typedef map<const char*, c_message_state*, hash<const char*>, ltstr> t_message_state_list;
+typedef map<const char*, c_message_state::ptr, hash<const char*>, ltstr> t_message_state_list;
 #endif
 
 //hrm.
@@ -265,20 +265,19 @@ class c_mid_info {
 		void insert(string mid){
 			if (check(mid))return;
 			changed=1;
-			c_message_state *s=new c_message_state(mid,time(NULL),TIME_T_MAX1);
+			c_message_state::ptr s=new c_message_state(mid,time(NULL),TIME_T_MAX1);
 			states.insert(t_message_state_list::value_type(s->messageid.c_str(),s));
 			return;
 		}
 		void insert_full(string mid, time_t a, time_t d){
 			t_message_state_list::iterator i=states.find(mid.c_str());
-			c_message_state *s;
+			c_message_state::ptr s;
 			if (i!=states.end()){
 				s=(*i).second;
 //				if ((*i).second->changed)return;/arrrr
 				if (d==TIME_T_MAX1 && s->date_removed!=TIME_T_MAX1) return;//ours has been deleted but not what we merging
 				if (s->date_removed!=TIME_T_MAX1 && s->date_removed > d) return; //both are deleted, but ours has more recent time?
 				states.erase(i);
-				delete s;
 			}
 			s=new c_message_state(mid,a,d);
 			states.insert(t_message_state_list::value_type(s->messageid.c_str(),s));
@@ -293,8 +292,6 @@ class c_mid_info {
 		}
 		void clear(void){
 			if (!states.empty()){
-				for (t_message_state_list::iterator i = states.begin(); i!=states.end(); ++i)
-					delete i->second;
 				states.clear();
 				changed=1;
 			}

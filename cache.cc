@@ -634,7 +634,7 @@ c_nntp_files_u::~c_nntp_files_u(){
 #define MID_INFO_MIN_KEEP_DEL (7*24*60*60)
 void c_mid_info::do_delete_fun(c_mid_info &rel_mid){
 	t_message_state_list::iterator i=states.begin();
-	c_message_state *s;
+	c_message_state::ptr s;
 	int deld=0;
 	time_t curtime=time(NULL);
 	for (;i!=states.end();++i){
@@ -716,7 +716,7 @@ int c_mid_info::save(void){
 		auto_ptr<c_file> fcloser(f);
 		if (debug){printf("saving mid_info: %i infos..",states.size());fflush(stdout);}
 		t_message_state_list::iterator sli;
-		c_message_state* ms;
+		c_message_state::ptr ms;
 		for (sli=states.begin(); sli!=states.end(); ++sli){
 			ms=(*sli).second;
 			if (ms->date_removed==TIME_T_DEAD)
