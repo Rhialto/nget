@@ -32,7 +32,7 @@
 #endif
 #include <multimap.h>
 #include <list.h>
-#include <set>
+#include <vector>
 #include "file.h"
 #include "log.h"
 
@@ -47,13 +47,13 @@
 
 #define CACHE_VERSION "NGET4"
 
-typedef set<string> t_references_set;
+typedef vector<string> t_references;
 
 typedef unsigned long t_id;
 class c_nntp_header {
 	private:
 		int parsepnum(const char *str,const char *soff);
-		void setfileid(void);
+		void setfileid(char *refstr, unsigned int refstrlen);
 	public:
 		ulong serverid;
 		int partnum, req;
@@ -65,7 +65,7 @@ class c_nntp_header {
 		time_t date;
 		ulong bytes,lines;
 		string messageid;
-		t_references_set references;
+		t_references references;
 		void set(char *s,const char *a,ulong anum,time_t d,ulong b,ulong l,const char *mid,char *refstr);//note: modifies refstr
 //		c_nntp_header(char *s,const char *a,ulong anum,time_t d,ulong b,ulong l);
 };
@@ -139,8 +139,7 @@ class c_nntp_file : public c_refcounted<c_nntp_file>{
 		t_id fileid;
 		string subject,author;
 		int partoff,tailoff;
-		t_references_set references;
-		void update_references(c_nntp_header *h,  const char *desc);
+		t_references references;
 		void addpart(c_nntp_part *p);
 		bool iscomplete(void) {return (have>=req) || (have<=1 && !references.empty() && lines()<1000);}
 //		ulong banum(void){assert(!parts.empty());return (*parts.begin()).second->articlenum;}
@@ -201,6 +200,8 @@ struct e_nntp_file_subject : public e_nntp_file<typename Op::arg1_type,typename 
 };
 */
 #endif
+
+
 //typedef hash_map<const char*, c_nntp_file*, hash<const char*>, eqstr> t_nntp_files;
 #ifdef HAVE_HASH_MAP_H
 typedef hash_multimap<t_id, c_nntp_file::ptr, hash<t_id>, equal_to<t_id> > t_nntp_files;
@@ -220,6 +221,11 @@ class c_nntp_files_u {
 	public:
 		uint_fast64_t bytes, lines;
 		t_nntp_files_u files;
+		void addfile(c_nntp_file::ptr f, const string &path, const string &temppath) {
+			files.insert(t_nntp_files_u::value_type(f->badate(), new c_nntp_file_retr(path,temppath,f)));
+			lines+=f->lines();
+			bytes+=f->bytes();
+		}
 		c_nntp_files_u(void):bytes(0),lines(0){}
 		~c_nntp_files_u();
 };

@@ -53,14 +53,18 @@ int c_nntp_header::parsepnum(const char *str,const char *soff){
 	return -1;
 }
 
-void c_nntp_header::setfileid(void){
+void c_nntp_header::setfileid(char *refstr, unsigned int refstrlen){
 #ifdef CHECKSUM
 	fileid=CHECKSUM(0L, Z_NULL, 0);
 	fileid=CHECKSUM(fileid,(Byte*)subject.c_str(),subject.size());
 	fileid=CHECKSUM(fileid,(Byte*)author.c_str(),author.size());
+	if (refstrlen)
+		fileid=CHECKSUM(fileid,(Byte*)refstr,refstrlen);
 #else
 	hash<char *> H;
 	fileid=H(subject.c_str())+H(author.c_str());//prolly not as good as crc32, but oh well.
+	if (refstrlen)
+		fileid+=H(refstr, refstrlen);
 #endif
 }
 void c_nntp_header::set(char * str,const char *a,ulong anum,time_t d,ulong b,ulong l,const char *mid, char *refstr){
@@ -68,12 +72,13 @@ void c_nntp_header::set(char * str,const char *a,ulong anum,time_t d,ulong b,ulo
 	assert(a);
 	author=a;articlenum=anum;date=d;bytes=b;lines=l;
 	messageid=mid;
+	int refstrlen=refstr?strlen(refstr):0;
 
 	references.clear();
 	if (refstr && *refstr) {
-		char *ref;
-		while ((ref = goodstrtok(&refstr,' '))) {
-			references.insert(ref);
+		char *ref, *refstr_copy=refstr;
+		while ((ref = goodstrtok(&refstr_copy,' '))) {
+			references.push_back(ref);
 		}
 	}
 
@@ -86,7 +91,7 @@ void c_nntp_header::set(char * str,const char *a,ulong anum,time_t d,ulong b,ulo
 				subject.append(str,partoff);
 				subject.append("*");
 				subject.append(s);
-				setfileid();
+				setfileid(refstr, refstrlen);
 				return;
 			}
 	}
@@ -94,7 +99,7 @@ void c_nntp_header::set(char * str,const char *a,ulong anum,time_t d,ulong b,ulo
 //	partnum=0;
 	partnum=-1;
 	subject=str;
-	setfileid();
+	setfileid(refstr, refstrlen);
 }
 
 c_nntp_server_article::c_nntp_server_article(ulong _server,ulong _articlenum,ulong _bytes,ulong _lines):serverid(_server),articlenum(_articlenum),bytes(_bytes),lines(_lines){}
@@ -130,13 +135,6 @@ c_nntp_part::~c_nntp_part(){
 	}
 }
 
-void c_nntp_file::update_references(c_nntp_header *h, const char *desc){
-	unsigned int start_num = references.size();
-	references.insert(h->references.begin(), h->references.end());
-	if (start_num!=references.size())
-		PDEBUG(DEBUG_MIN,"\nupdate_references: %s added %i of %i refs (%s)", desc, references.size()-start_num,h->references.size(), h->messageid.c_str());
-}
-
 void c_nntp_file::addpart(c_nntp_part *p){
 	assert(p);
 	//assert((req==-1 && p->partnum<=0) || (p->partnum<=req));//#### req==-1 hack for old version that set non-multipart messages partnum to 0 instead of -1
@@ -164,7 +162,6 @@ c_nntp_file::~c_nntp_file(){
 		delete (*i).second;
 	}
 }
-
 
 c_nntp_files_u* c_nntp_cache::getfiles(const string &path, const string &temppath, c_nntp_files_u * fc,c_mid_info *midinfo,generic_pred *pred,int flags){
 //c_nntp_files_u* c_nntp_cache::getfiles(c_nntp_files_u * fc,c_nrange *grange,const char *match, unsigned long linelimit,int flags){
@@ -204,9 +201,7 @@ c_nntp_files_u* c_nntp_cache::getfiles(const string &path, const string &temppat
 //			f->inc_rcount();
 //			fc->files[banum]=f;
 			//fc->files.insert(t_nntp_files_u::value_type(f->badate(),f));
-			fc->files.insert(t_nntp_files_u::value_type(f->badate(), new c_nntp_file_retr(path,temppath,f)));
-			fc->lines+=f->lines();
-			fc->bytes+=f->bytes();
+			fc->addfile(f,path,temppath);
 		}
 file_match_loop_end: ;
 	}
@@ -255,6 +250,10 @@ int c_nntp_cache::additem(c_nntp_header *h){
 				PDEBUG(DEBUG_MED,"%lu->%s was gonna add, but subject is different?\n",h->articlenum,f->bamid().c_str());
 				continue;
 			}
+			if (!(f->references==h->references)){
+				PDEBUG(DEBUG_MED,"%lu->%s was gonna add, but references are different?\n",h->articlenum,f->bamid().c_str());
+				continue;
+			}
 			t_nntp_file_parts::iterator op;
 			if ((op=f->parts.find(h->partnum))!=f->parts.end()){
 				c_nntp_part *matchpart=(*op).second;
@@ -265,7 +264,6 @@ int c_nntp_cache::additem(c_nntp_header *h){
 //						printf("adding %s for server %lu again?\n",h->messageid.c_str(),(*sai).second->serverid);
 //#endif
 					matchpart->addserverarticle(h);
-					f->update_references(h, "serverarticle");
 					return 0;
 				}
 				PDEBUG(DEBUG_MED,"%s was gonna add, but already have this part(sub=%s part=%i omid=%s)?\n",h->messageid.c_str(),f->subject.c_str(),h->partnum,matchpart->messageid.c_str());
@@ -274,7 +272,6 @@ int c_nntp_cache::additem(c_nntp_header *h){
 //			printf("adding\n");
 			c_nntp_part *p=new c_nntp_part(h);
 			f->addpart(p);
-			f->update_references(h, "part");
 			totalnum++;
 			return 0;
 		}
@@ -567,7 +564,7 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),gro
 					np=NULL;
 					continue;
 				}else{
-					nf->references.insert(buf);
+					nf->references.push_back(buf);
 				}
 			}else{
 				assert(0);//should never get here
@@ -590,7 +587,7 @@ c_nntp_cache::~c_nntp_cache(){
 			auto_ptr<c_file> fcloser(f);
 			if (quiet<2){printf("saving cache: %lu parts, %i files..",totalnum,files.size());fflush(stdout);}
 			c_nntp_file::ptr nf;
-			t_references_set::iterator ri;
+			t_references::iterator ri;
 			t_nntp_file_parts::iterator pi;
 			t_nntp_server_articles::iterator sai;
 			c_nntp_server_article *sa;
