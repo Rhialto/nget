@@ -78,7 +78,7 @@ typedef unsigned int     size_t;
 #else // WIN32
 #ifdef HAVE_CONFIG_H
 
-#include <config.h>
+#include "../config.h"
 
 #ifdef HAVE_STDLIB_H
 #  include <stdlib.h>
