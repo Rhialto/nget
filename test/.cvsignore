@@ -1,2 +1,3 @@
 Makefile *.d TestRunner
+*.bb *.bbg *.da *.gcov
 *.py[co]
