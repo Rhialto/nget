@@ -185,50 +185,48 @@ c_nntp_file::~c_nntp_file(){
 	}
 }
 
-void c_nntp_cache::getfiles(c_nntp_files_u *fc, c_mid_info *midinfo, const t_nntp_getinfo_list &getinfos) { 
+static void nntp_cache_getfile(c_nntp_files_u *fc, c_mid_info *midinfo, const t_nntp_getinfo_list &getinfos, c_nntp_file::ptr &f) {
+	pair<t_nntp_files_u::const_iterator,t_nntp_files_u::const_iterator> firange;
 	t_nntp_getinfo_list::const_iterator gii, giibegin=getinfos.begin(), giiend=getinfos.end();
 	c_nntp_getinfo::ptr info;
 	for (gii=giibegin; gii!=giiend; ++gii) {
 		info = *gii;
-		if (!(info->flags&GETFILES_NODUPEFILECHECK)) {
-			info->flist.addfrompath(info->path);
-		}
-	}
-
-	t_nntp_files::const_iterator fi;
-	pair<t_nntp_files_u::const_iterator,t_nntp_files_u::const_iterator> firange;
-	c_nntp_file::ptr f;
-	for(fi = files.begin();fi!=files.end();++fi){
-		f=(*fi).second;
-		for (gii=giibegin; gii!=giiend; ++gii) {
-			info = *gii;
-			if ((info->flags&GETFILES_GETINCOMPLETE || f->iscomplete()) && (info->flags&GETFILES_NODUPEIDCHECK || !(midinfo->check(f->bamid()))) && (*info->pred)(f.gimmethepointer())){//matches user spec
-				firange=fc->files.equal_range(f->badate());
-				for (;firange.first!=firange.second;++firange.first){
-					if ((*firange.first).second->file->bamid()==f->bamid())
-	//					continue;
-						goto file_match_loop_end;//can't continue out of multiple loops
-				}
-
-				if (!(info->flags&GETFILES_NODUPEFILECHECK) && info->flist.checkhavefile(f->subject.c_str(),f->bamid(),f->bytes())){
-					if (info->flags&GETFILES_DUPEFILEMARK)
-						midinfo->insert(f->bamid());
-					continue;
-				}
-				fc->addfile(f,info->path,info->temppath);
-				goto file_match_loop_end;//can't continue out of multiple loops
+		if ((info->flags&GETFILES_GETINCOMPLETE || f->iscomplete()) && (info->flags&GETFILES_NODUPEIDCHECK || !(midinfo->check(f->bamid()))) && (*info->pred)(f.gimmethepointer())){//matches user spec
+			firange=fc->files.equal_range(f->badate());
+			for (;firange.first!=firange.second;++firange.first){
+				if ((*firange.first).second->file->bamid()==f->bamid())
+					return;
 			}
+
+			if (!(info->flags&GETFILES_NODUPEFILECHECK) && info->flist.checkhavefile(f->subject.c_str(),f->bamid(),f->bytes())){
+				if (info->flags&GETFILES_DUPEFILEMARK)
+					midinfo->insert(f->bamid());
+				continue;
+			}
+			fc->addfile(f,info->path,info->temppath);
+			return;
 		}
-file_match_loop_end: ;
 	}
 }
 
-bool c_nntp_cache::ismultiserver(void) const {
+void c_nntp_cache::getfiles(c_nntp_files_u *fc, c_mid_info *midinfo, const t_nntp_getinfo_list &getinfos) { 
+	t_nntp_files::const_iterator fi;
+	c_nntp_file::ptr f;
+	for(fi = files.begin();fi!=files.end();++fi){
+		f=(*fi).second;
+		nntp_cache_getfile(fc, midinfo, getinfos, f);
+	}
+}
+
+static bool cache_ismultiserver(const t_nntp_server_info &server_info) {
 	int num=0;
 	for (t_nntp_server_info::const_iterator sii=server_info.begin(); sii!=server_info.end(); ++sii)
 		if (sii->second->num > 0)
 			num++;
 	return num > 1;
+}
+bool c_nntp_cache::ismultiserver(void) const {
+	return cache_ismultiserver(server_info);
 }
 
 c_nntp_server_info* c_nntp_cache::getserverinfo(ulong serverid){
@@ -454,76 +452,88 @@ enum {
 	REFERENCES_MODE=5,
 };
 
-c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midinfo):totalnum(0),group(group_){
-	saveit=0;
-	//file=nid;
-	file=path+"/"+group->group + ",cache";
-	setfilenamegz(file,group->usegz);
-	fileread=0;
-	c_file *f;
-	try {
-		f=dofileopen(file.c_str(),"rb",group->usegz);
-	}catch(FileNOENTEx &e){
-		return;
-	}
-	auto_ptr<c_file> fcloser(f);
+DEFINE_EX_SUBCLASS(CacheEx, baseEx, false);
+class c_nntp_cache_reader {
+	protected:
+		c_file *f;
+		c_mid_info *midinfo;
+	public:
+		ulong count,counta,curline,countdeada,totalnum;
+		c_nntp_cache_reader(c_file *cf, c_mid_info*mi, t_nntp_server_info &server_infoi);
+		c_nntp_file::ptr read_file(void);
+		void check_counts(void);
+};
+
+c_nntp_cache_reader::c_nntp_cache_reader(c_file *cf, c_mid_info *mi, t_nntp_server_info &server_info):f(cf), midinfo(mi) {
+	count=0;counta=0;curline=0;countdeada=0;totalnum=0;
+	
+	c_nntp_server_info *si;
 	char *buf;
-	int mode=START_MODE;
-	c_nntp_file	*nf=NULL;
+	char *t[5];
+	int i;
+	if (f->bgets()<=0)
+		throw CacheEx(Ex_INIT, "unexpected EOF on cache file line %i",curline);
+	buf=f->rbufp();
+	curline++;
+	//(mode==START_MODE)
+	for(i=0;i<2;i++)
+		if((t[i]=goodstrtok(&buf,'\t'))==NULL){
+			break;
+		}
+	if (i>=2 && (strcmp(t[0],CACHE_VERSION))==0){
+		totalnum=atoul(t[1]);
+	}else{
+		if (i>0 && strncmp(t[0],"NGET",4)==0)
+			throw CacheEx(Ex_INIT,"cache is from a different version of nget");
+		else
+			throw CacheEx(Ex_INIT,"cache does not seem to be an nget cache file");
+	}
+
+	while (1) {
+		if (f->bgets()<=0)
+			throw CacheEx(Ex_INIT, "unexpected EOF on cache file line %i",curline);
+		buf=f->rbufp();
+		curline++;
+		//(mode==SERVERINFO_MODE)
+		if (buf[0]=='.') {
+			assert(buf[1]==0);
+			//mode=FILE_MODE;//start new file mode
+			return;
+		}
+		for(i=0;i<4;i++)
+			if((t[i]=goodstrtok(&buf,'\t'))==NULL){
+				i=-1;break;
+			}
+		if (i>=4){
+			ulong serverid=atoul(t[0]);
+			if (nconfig.getserver(serverid)) {
+				si=new c_nntp_server_info(serverid,atoul(t[1]),atoul(t[2]),atoul(t[3]));
+				server_info[si->serverid]=si;
+			}else{
+				printf("warning: serverid %lu not found in server list\n",serverid);
+				set_cache_warn_status();
+			}
+		}else{
+			printf("invalid line %lu mode %i\n",curline,SERVERINFO_MODE);//mode);
+			set_cache_warn_status();
+		}
+	}
+
+}
+
+c_nntp_file::ptr c_nntp_cache_reader::read_file(void) {
+	int mode=FILE_MODE;
+	//c_nntp_file	*nf=NULL;
+	c_nntp_file::ptr nf=NULL;
 	c_nntp_part	*np=NULL;
 	c_nntp_server_article *sa;
-	c_nntp_server_info *si;
+	char *buf;
 	char *t[8];
 	int i;
-	fileread=1;
-	ulong count=0,counta=0,curline=0,countdeada=0;
 	while (f->bgets()>0){
 		buf=f->rbufp();
 		curline++;
-		//printf("line %i mode %i: %s\n",curline,mode,buf);
-		if (mode==START_MODE){
-			for(i=0;i<2;i++)
-				if((t[i]=goodstrtok(&buf,'\t'))==NULL){
-					break;
-				}
-			if (i>=2 && (strcmp(t[0],CACHE_VERSION))==0){
-				totalnum=atoul(t[1]);
-			}else{
-				if (i>0 && strncmp(t[0],"NGET",4)==0)
-					printf("%s is from a different version of nget\n",file.c_str());
-				else
-					printf("%s does not seem to be an nget cache file\n",file.c_str());
-				set_cache_warn_status();
-				f->close();fileread=0;
-				return;
-			}
-			mode=SERVERINFO_MODE;//go to serverinfo mode.
-		}else if (mode==SERVERINFO_MODE){
-			if (buf[0]=='.'){
-				assert(buf[1]==0);
-				mode=FILE_MODE;//start new file mode
-				continue;
-			}else{
-				for(i=0;i<4;i++)
-					if((t[i]=goodstrtok(&buf,'\t'))==NULL){
-						i=-1;break;
-					}
-				if (i>=4){
-					ulong serverid=atoul(t[0]);
-					if (nconfig.getserver(serverid)) {
-						si=new c_nntp_server_info(serverid,atoul(t[1]),atoul(t[2]),atoul(t[3]));
-						server_info[si->serverid]=si;
-					}else{
-						printf("warning: serverid %lu not found in server list\n",serverid);
-						set_cache_warn_status();
-					}
-				}else{
-					printf("invalid line %lu mode %i\n",curline,mode);
-					set_cache_warn_status();
-				}
-			}
-		}
-		else if (mode==SERVER_ARTICLE_MODE && np){//new server_article mode
+		if (mode==SERVER_ARTICLE_MODE && np){//new server_article mode
 			if (buf[0]=='.'){
 				assert(buf[1]==0);
 				mode=PART_MODE;//go back to new part mode
@@ -560,19 +570,13 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midi
 			if (buf[0]=='.'){
 				assert(buf[1]==0);
 				if (nf->parts.empty()){
-					pair<t_nntp_files::iterator,t_nntp_files::iterator> firange;
-					firange=files.equal_range(nf->fileid);
-					for (t_nntp_files::iterator fi=firange.first; fi!=firange.second; ++fi){
-						if (fi->second.gimmethepointer()==nf){
-							files.erase(fi);
-							break;
-						}
-					}
-				}
-				mode=FILE_MODE;//go back to new file mode
-		//		nf->addpart(np);//added here so that addpart will have apxlines/apxbytes to work with (set in mode 3)
-				np=NULL;
-				continue;
+					set_cache_warn_status();
+					printf("empty nntp_file finished at line %lu mode %i\n",curline,mode);
+					nf=NULL;
+					np=NULL;
+					mode=FILE_MODE;//go back to new file mode
+				}else
+					return nf;
 			}else{
 				for(i=0;i<3;i++)
 					if((t[i]=goodstrtok(&buf,'\t'))==NULL){
@@ -598,8 +602,6 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midi
 			if (i>=7){
 				assert(i==7);
 				nf=new c_nntp_file(atoi(t[0]),atoul(t[1]),atoul(t[2]),t[3],t[4],atoi(t[5]),atoi(t[6]));
-				files.insert(t_nntp_files::value_type(nf->fileid,nf));
-//					files[nf->subject.c_str()]=nf;
 				mode=REFERENCES_MODE;
 			}else{
 				printf("invalid line %lu mode %i\n",curline,mode);
@@ -619,8 +621,11 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midi
 			assert(0);//should never get here
 		}
 	}
-	f->close();
-	PDEBUG(DEBUG_MIN,"read %lu parts (%lu sa) %lu files",count,counta,(ulong)files.size());
+	if (nf)
+		throw CacheEx(Ex_INIT, "unexpected EOF on cache file line %i",curline);
+	return NULL;
+}
+void c_nntp_cache_reader::check_counts(void) {
 	if (countdeada){
 		printf("warning: read (and ignored) %lu articles with bad serverids\n",countdeada);
 		set_cache_warn_status();
@@ -630,6 +635,35 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midi
 		totalnum=count;
 		set_cache_warn_status();
 	}
+}
+
+c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midinfo):totalnum(0),group(group_){
+	saveit=0;
+	//file=nid;
+	c_file *f;
+	file=path+"/"+group->group + ",cache";
+	setfilenamegz(file,group->usegz);
+	fileread=0;
+	try {
+		f=dofileopen(file.c_str(),"rb",group->usegz);
+	}catch(FileNOENTEx &e){
+		return;
+	}
+	auto_ptr<c_file> fcloser(f);
+	try{
+		c_nntp_cache_reader reader(f, midinfo, server_info);
+		c_nntp_file::ptr nf;
+		while ((nf=reader.read_file()))
+			files.insert(t_nntp_files::value_type(nf->fileid,nf));
+		fileread=1;
+		PDEBUG(DEBUG_MIN,"read %lu parts (%lu sa) %lu files",reader.count,reader.counta,(ulong)files.size());
+		reader.check_counts();
+		totalnum = reader.totalnum;
+	} catch (CacheEx &e) {
+		set_cache_warn_status();
+		printf("%s: %s\n", file.c_str(), e.getExStr());
+	}
+	f->close();
 }
 c_nntp_cache::~c_nntp_cache(){
 	t_nntp_files::iterator i;
@@ -728,6 +762,39 @@ c_nntp_files_u::~c_nntp_files_u(){
 //	for(i = files.begin();i!=files.end();++i){
 //		(*i).second->dec_rcount();
 //	}
+}
+
+
+void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c_group_info::ptr group, c_mid_info*midinfo, const t_nntp_getinfo_list &getinfos){
+
+	string file=path+"/"+group->group + ",cache";
+	setfilenamegz(file,group->usegz);
+	c_file *f;
+	try {
+		f=dofileopen(file.c_str(),"rb",group->usegz);
+	}catch(FileNOENTEx &e){
+		return;
+	}
+	auto_ptr<c_file> fcloser(f);
+	try{
+		t_nntp_server_info server_info;
+		ulong numfiles=0;
+		c_nntp_cache_reader reader(f, midinfo, server_info);
+		*ismultiserver = cache_ismultiserver(server_info);
+		c_nntp_file::ptr nf;
+
+		while ((nf=reader.read_file())) {
+			nntp_cache_getfile(fc, midinfo, getinfos, nf);
+			numfiles++;
+		}
+
+		PDEBUG(DEBUG_MIN,"scanned %lu parts (%lu sa) %lu files",reader.count,reader.counta,numfiles);
+		reader.check_counts();
+	} catch (CacheEx &e) {
+		set_cache_warn_status();
+		printf("%s: %s\n", file.c_str(), e.getExStr());
+	}
+	f->close();
 }
 
 

@@ -312,7 +312,11 @@ class c_nntp_getinfo : public c_refcounted<c_nntp_getinfo>{
 		generic_pred *pred;
 		int flags;
 		dupe_file_checker flist;
-		c_nntp_getinfo(const string &pat, const string &temppat,generic_pred *pre,int flag):path(pat), temppath(temppat), pred(pre), flags(flag) {}
+		c_nntp_getinfo(const string &pat, const string &temppat,generic_pred *pre,int flag):path(pat), temppath(temppat), pred(pre), flags(flag) {
+			if (!(flags&GETFILES_NODUPEFILECHECK)) {
+				flist.addfrompath(path);
+			}
+		}
 		~c_nntp_getinfo() { delete pred; }
 };
 typedef list<c_nntp_getinfo::ptr> t_nntp_getinfo_list;
@@ -337,5 +341,7 @@ class c_nntp_cache : public c_refcounted<c_nntp_cache>{
 		c_nntp_cache(string path,c_group_info::ptr group,c_mid_info*midinfo);
 		virtual ~c_nntp_cache();
 };
+
+void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c_group_info::ptr group, c_mid_info*midinfo, const t_nntp_getinfo_list &getinfos);
 
 #endif

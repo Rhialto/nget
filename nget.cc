@@ -710,8 +710,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				return 1;
 			default:
 				if (!getinfos.empty()){
-					nntp.nntp_group(options.group,0,options);
-					nntp.nntp_retrieve(getinfos, options);
+					nntp.nntp_retrieve(options.group, getinfos, options);
 					getinfos.clear();
 				}
 				switch (c){

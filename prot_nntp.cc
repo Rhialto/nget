@@ -712,9 +712,21 @@ char * make_text_file_name(c_nntp_file_retr::ptr fr, bool usepath=0) {
 	return nfn;
 }
 
-void c_prot_nntp::nntp_retrieve(const t_nntp_getinfo_list &getinfos, const nget_options &options){
+void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_list &getinfos, const nget_options &options){
 	c_nntp_files_u filec;
-	gcache->getfiles(&filec, midinfo, getinfos);
+	if (gcache) {
+		gcache->getfiles(&filec, midinfo, getinfos);
+	} else {
+		if (rgroup != group) {
+			cleanupcache();
+			group = rgroup;
+		}
+		if (!midinfo) {
+			midinfo=new c_mid_info((nghome + group->group + ",midinfo"));
+		}
+		
+		nntp_cache_getfiles(&filec, &gcache_ismultiserver, ngcachehome, group, midinfo, getinfos);
+	}
 	if (filec.files.empty())
 		return;
 
