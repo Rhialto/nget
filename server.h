@@ -116,6 +116,7 @@ class c_nget_config {
 		int maxconnections;
 		int penaltystrikes, initialpenalty;
 		float penaltymultiplier;
+		bool fatal_user_errors;
 
 		void check_penalized(ulong serverid) const {
 			c_server::ptr s=getserver(serverid);
@@ -201,6 +202,7 @@ class c_nget_config {
 			penaltystrikes=3;
 			initialpenalty=180;
 			penaltymultiplier=2.0;
+			fatal_user_errors=false;
 		}
 		~c_nget_config(){
 			delete trustsizes;

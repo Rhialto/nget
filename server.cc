@@ -100,6 +100,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 	}
 	cfg->getitemi("usegz",&usegz);
 	fullxover=cfg->geti("fullxover", fullxover);
+	fatal_user_errors=cfg->geti("fatal_user_errors", fatal_user_errors);
 	cfg->getitemi("unequal_line_error",&unequal_line_error);
 	cfg->getitemi("maxstreaming",&maxstreaming);
 	cfg->getitemi("maxconnections",&maxconnections);

@@ -29,6 +29,7 @@
 #penaltystrikes=3
 #initialpenalty=180
 #penaltymultiplier=2.0
+#fatal_user_errors=0
 
 //hostname aliases
 {halias

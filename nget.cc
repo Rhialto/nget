@@ -152,6 +152,17 @@ void print_error_status(void){
 		printf("\n");
 }
 
+class FatalUserException { };
+void set_path_error_status_and_do_fatal_user_error(int incr=1) {
+	set_path_error_status();
+	if (nconfig.fatal_user_errors)
+		throw FatalUserException();
+}
+void set_user_error_status_and_do_fatal_user_error(int incr=1) {
+	set_user_error_status();
+	if (nconfig.fatal_user_errors)
+		throw FatalUserException();
+}
 
 #define NUM_OPTIONS 33
 #ifndef HAVE_LIBPOPT
@@ -614,27 +625,27 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 						grouplistgetinfos.push_back(new c_grouplist_getinfo(p, options.gflags));
 					}catch(RegexEx &e){
 						printCaughtEx(e);
-						set_user_error_status();
+						set_user_error_status_and_do_fatal_user_error();
 					}catch(UserEx &e){
 						printCaughtEx(e);
-						set_user_error_status();
+						set_user_error_status_and_do_fatal_user_error();
 					}
 					break;
 				}
 				if (!options.badskip){
 					if(options.group.isnull()){
 						printf("no group specified\n");
-						set_user_error_status();
+						set_user_error_status_and_do_fatal_user_error();
 					}else{
 						try {
 							nntp_file_pred *p=make_nntpfile_pred(loptarg, options.gflags);
 							getinfos.push_back(new c_nntp_getinfo(options.path, options.temppath, p, options.gflags));
 						}catch(RegexEx &e){
 							printCaughtEx(e);
-							set_user_error_status();
+							set_user_error_status_and_do_fatal_user_error();
 						}catch(UserEx &e){
 							printCaughtEx(e);
-							set_user_error_status();
+							set_user_error_status_and_do_fatal_user_error();
 						}
 					}
 				}
@@ -656,7 +667,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 						grouplistgetinfos.push_back(new c_grouplist_getinfo(p, options.gflags));
 					}catch(RegexEx &e){
 						printCaughtEx(e);
-						set_user_error_status();
+						set_user_error_status_and_do_fatal_user_error();
 					}catch(UserEx &e){
 						printCaughtEx(e);
 						set_fatal_error_status();//if make_pred breaks during -r, it can't be the users fault, since they only supply the regex
@@ -666,7 +677,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				if (!options.badskip){
 					if(options.group.isnull()){
 						printf("no group specified\n");
-						set_user_error_status();
+						set_user_error_status_and_do_fatal_user_error();
 					}else{
 						arglist_t e_parts;
 						e_parts.push_back("subject");
@@ -690,7 +701,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 							getinfos.push_back(new c_nntp_getinfo(options.path, options.temppath, p, options.gflags));
 						}catch(RegexEx &e){
 							printCaughtEx(e);
-							set_user_error_status();
+							set_user_error_status_and_do_fatal_user_error();
 						}catch(UserEx &e){
 							printCaughtEx(e);
 							set_fatal_error_status();//if make_pred breaks during -r, it can't be the users fault, since they only supply the regex
@@ -766,7 +777,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					}
 				}else{
 					printf("could not change temppath to %s\n",loptarg);
-					set_path_error_status();
+					set_path_error_status_and_do_fatal_user_error();
 					options.badskip |= BAD_TEMPPATH;
 				}
 				break;
@@ -782,14 +793,14 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					}
 				}else{
 					printf("could not change to %s\n",loptarg);
-					set_path_error_status();
+					set_path_error_status_and_do_fatal_user_error();
 					options.badskip |= (BAD_TEMPPATH | BAD_PATH);
 				}
 				break;
 			case 'F':
 				{
 					c_server::ptr server=nconfig.getserver(loptarg);
-					if (!server) {printf("no such server %s\n",loptarg);set_user_error_status();break;}
+					if (!server) {printf("no such server %s\n",loptarg);set_user_error_status_and_do_fatal_user_error();break;}
 					if (options.grouplistmode) {
 						nntp.nntp_grouplist(0, options);
 						nntp.glist->flushserver(server->serverid);
@@ -797,7 +808,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					}
 					if (!options.group){
 						printf("specify group before -F\n");
-						set_user_error_status();
+						set_user_error_status_and_do_fatal_user_error();
 						break;
 					}
 					nntp.nntp_group(options.group,0,options);
@@ -824,13 +835,13 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 			case 0://POPT_CONTEXT_ARG_OPTS
 			case 1://getopt arg
 				printf("invalid command line arg: %s\n", loptarg);
-				set_user_error_status();
+				set_user_error_status_and_do_fatal_user_error();
 				return 1;
 			default:
 				if (!grouplistgetinfos.empty()) {
 					if(!(options.gflags&GETFILES_TESTMODE)){
 						printf("testmode required for grouplist\n");
-						set_user_error_status();
+						set_user_error_status_and_do_fatal_user_error();
 					}else{
 						nntp.nntp_grouplist_search(grouplistgetinfos, options);
 					}
@@ -855,14 +866,14 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 										parseargs(arglist, f.rbufp(), true);
 									} catch(UserExFatal &e) {
 										printCaughtEx(e);
-										set_user_error_status();
+										set_user_error_status_and_do_fatal_user_error();
 										break;
 									}
 								}
 								f.close();
 							}catch (FileNOENTEx &e){
 								printf("error: %s\n",e.getExStr());
-								set_user_error_status();
+								set_user_error_status_and_do_fatal_user_error();
 								break;
 							}
 							if (!arglist.empty()){
@@ -920,7 +931,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 								if (options.host.isnull()){
 									options.badskip |= BAD_HOST;
 									printf("invalid host %s (must be configured in .ngetrc first)\n",loptarg);
-									set_user_error_status();
+									set_user_error_status_and_do_fatal_user_error();
 								}
 								else
 									options.badskip &= ~BAD_HOST;
@@ -1053,6 +1064,8 @@ int main(int argc, const char ** argv){
 			nntp.initready();
 			do_args(argc,argv,options,0);
 		}
+	}catch(FatalUserException &e){
+		printf("fatal_user_errors enabled, exiting\n");
 	}catch(ConfigEx &e){
 		set_fatal_error_status();
 		printCaughtEx(e);

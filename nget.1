@@ -240,6 +240,8 @@ Default for duplicate file filter. (0=-dF, 1=-df)
 Default for quiet option. (0=normal, 1=-q)
 .IP "tempshortnames (boolean, default=0)"
 1=Use 8.3 tempfile names (for old dos partitions, etc), 0=Use 17.3 tempfile names
+.IP "fatal_user_errors (boolean, default=0)"
+Makes user/path errors cause an immediate exit rather than continuing if possible.
 .IP "unequal_line_error (boolean, default=0)"
 If set, downloaded articles whose actual number of lines does not match the expected value will be regarded as an error and ignored.
 If 0, a warning will be generated but the article will be accepted.

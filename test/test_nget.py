@@ -698,6 +698,53 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
 
 
+class FatalUserErrorsTestCase(TestCase, DecodeTest_base):
+	def setUp(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'fatal_user_errors':1}) 
+		self.addarticles('0001', 'uuencode_single')
+		self.servers.start()
+	
+	def tearDown(self):
+		self.servers.stop()
+		self.nget.clean_all()
+
+	def test_badpath(self):
+		self.vfailUnlessExitstatus(self.nget.run('-p badpath -g test'), 2)
+		self.vfailUnlessExitstatus(self.nget.run('-P badpath -g test'), 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_badhost(self):
+		self.vfailUnlessExitstatus(self.nget.run('-h badhost -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_retrieve_badregex(self):
+		self.vfailUnlessExitstatus(self.nget.run('-Gtest -r "*" -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_retrieve_nogroup(self):
+		self.vfailUnlessExitstatus(self.nget.run('-r . -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_expretrieve_badexp(self):
+		self.vfailUnlessExitstatus(self.nget.run('-Gtest -R foo -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_expretrieve_badregex(self):
+		self.vfailUnlessExitstatus(self.nget.run('-Gtest -R "subject * ==" -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_flush_nogroup(self):
+		self.vfailUnlessExitstatus(self.nget.run('-F host0 -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_flush_badserver(self):
+		self.vfailUnlessExitstatus(self.nget.run('-g test -F badserv -r .'), 4)
+		self.verifyoutput([])
+	def test_flush_available_badserver(self):
+		self.vfailUnlessExitstatus(self.nget.run('-A -F badserv -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_bad_arg(self):
+		self.vfailUnlessExitstatus(self.nget.run('badarg -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_list_nonexistant(self):
+		self.vfailUnlessExitstatus(self.nget.run('-@ foo -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+
+
 
 class XoverTestCase(TestCase, DecodeTest_base):
 	def setUp(self):
