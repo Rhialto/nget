@@ -54,8 +54,8 @@ Portability:
 nget is developed on linux (glibc2), and has been successfully compiled/tested
 on: linux x86(gcc 2.95.4, gcc 3.0.4, gcc 3.2), linux alpha(gcc 2.95.2),
 macosx(gcc 2.95.2), freebsd x86(gcc 2.95.4, gcc 3.0.4), solaris sparc(gcc
-2.95.2) and should compile without modifications on other systems using g++
-2.95+ or other up to date compliers.
+2.95.2), win32(mingw or cygwin) and should compile without modifications on
+other systems using g++ 2.95+ or other up to date compliers.
 Older compilers like gcc 2.7.x can no longer build nget, but can (probably)
 still build ngetlite, so you can still use it to download on an older comp if
 you have a recent comp that you can use nget to write the listfiles on (-w
