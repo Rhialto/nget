@@ -989,6 +989,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 						if (!(optionflags&GETFILES_NODUPEFILECHECK))
 							flist.addfile(fr->path, uul->filename); //#### is this the right place? what about dupes saved as different names??
 						switch (uul->uudet){
+							case YENC_ENCODED:set_yenc_ok_status();break;
 							case UU_ENCODED:set_uu_ok_status();break;
 							case B64ENCODED:set_base64_ok_status();break;
 							case XX_ENCODED:set_xx_ok_status();break;

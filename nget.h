@@ -55,6 +55,7 @@ void set_dupe_warn_status(int incr=1);
 void set_cache_warn_status(int incr=1);
 
 void set_total_ok_status(int incr=1);
+void set_yenc_ok_status(int incr=1);
 void set_uu_ok_status(int incr=1);
 void set_base64_ok_status(int incr=1);
 void set_xx_ok_status(int incr=1);

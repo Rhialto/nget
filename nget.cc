@@ -80,6 +80,7 @@ SET_x_OK_STATUS(xx, 8);
 SET_x_OK_STATUS(binhex, 16);
 SET_x_OK_STATUS(plaintext, 32);
 SET_x_OK_STATUS(qp, 64);
+SET_x_OK_STATUS(yenc, 128);
 SET_x_OK_STATUS(dupe, 256);
 SET_x_OK_STATUS(unknown, 512);
 SET_x_OK_STATUS(group, 1024);
@@ -101,6 +102,7 @@ void print_error_status(void){
 		pf++;
 		printf("OK:");
 		print_x_OK_STATUS(total);
+		print_x_OK_STATUS(yenc);
 		print_x_OK_STATUS(uu);
 		print_x_OK_STATUS(base64);
 		print_x_OK_STATUS(xx);
