@@ -1,4 +1,4 @@
-.TH nget 1 "05 Apr 2004"
+.TH nget 1 "21 Dec 2004"
 .SH NAME
 nget \- retrieve files from NNTP (usenet news) hosts
 .SH SYNOPSIS
@@ -13,142 +13,142 @@ Parts from multiple servers will be combined if needed.
 The order options are specified is significant.
 In general, an option will only affect options that come after it on the command line.
 .PP
-.IP "-q/--quiet"
+.IP "\-q/\-\-quiet"
 When specified once, will disable printing of auto-updating text to allow the output to be 
 redirected/logged without garbage in it.
 When specified twice, will disable printing of merely informative messages.  Errors will still be printed.
-.IP "-h/--host host"
+.IP "\-h/\-\-host host"
 Force only the given host to be used for subsequent commands.  (Must be configured in .ngetrc.)
-Can reset to standard auto-choosing method with -h ""
-.IP "-a/--available"
+Can reset to standard auto-choosing method with \-h ""
+.IP "\-a/\-\-available"
 Update the list of available newsgroups.
-Subsequent -r/-R commands can be use to search for newsgroups.
-.IP "-A/--quickavailable"
-Like -a/--available, but does not update the list, only makes it available for searching.
-.IP "-X/--xavailable"
+Subsequent \-r/\-R commands can be use to search for newsgroups.
+.IP "\-A/\-\-quickavailable"
+Like \-a/\-\-available, but does not update the list, only makes it available for searching.
+.IP "\-X/\-\-xavailable"
 Search the group list, but without loading cache file or retrieving full group list.
 Instead, the search will be done on the server.
-Compared to -a/-A this has the advantage of not requiring any disk space for cache files,
+Compared to \-a/\-A this has the advantage of not requiring any disk space for cache files,
 and not requiring the initial retrieval of the full group list.
 The disadvantages are not all servers supporting the required NNTP extensions,
 the inability to use complex regexs due to the need to convert it to the simpler wildmat format,
 and the possibility that the commands can be quite slow if the server is overloaded (you may need to increase the timeout value in some cases).
-.IP "-g/--group group(s)"
+.IP "\-g/\-\-group group(s)"
 Update the list of available files in group(s).
 Multiple groups can be specified by seperating them with commas.
 All cached groups can be selected with "*".
 If a host has been specified before
-with -h, it will retrieve headers only from that host.  Otherwise it will
+with \-h, it will retrieve headers only from that host.  Otherwise it will
 retrieve headers for all hosts above _glevel (see configuration section for
 more info on priorities.)
-Subsequent -r/-R commands can be used to retrieve files.
-.IP "-G/--quickgroup group(s)"
-Like --group, but does not retrieve new headers.
-.IP "-x/--xgroup group(s)"
-Use group(s) for subsequent -r commands, but without loading cache file or retrieving full header list.
+Subsequent \-r/\-R commands can be used to retrieve files.
+.IP "\-G/\-\-quickgroup group(s)"
+Like \-\-group, but does not retrieve new headers.
+.IP "\-x/\-\-xgroup group(s)"
+Use group(s) for subsequent \-r commands, but without loading cache file or retrieving full header list.
 Instead, the XPAT command will used to retrieve only the matching headers.
-Compared to -g/-G this has the advantage of not requiring any disk space for cache files,
+Compared to \-g/\-G this has the advantage of not requiring any disk space for cache files,
 and not requiring the initial retrieval of the full header list.
 The disadvantages are not all servers supporting XPAT,
 the inability to use complex regexs due to the need to convert it to the simpler wildmat format,
 and the possibility that the xpat command can be quite slow if the server is overloaded (you may need to increase the timeout value in some cases).
-.IP "-F/--flushserver host"
-Following -g/-G:
+.IP "\-F/\-\-flushserver host"
+Following \-g/\-G:
 Flush all headers for server from current group(s).
 .br
-Following -a/-A:
+Following \-a/\-A:
 Flush all groups/descriptions for server from grouplist.
-.IP "-r/--retrieve regex"
-Following -g/-G/-x:
+.IP "\-r/\-\-retrieve regex"
+Following \-g/\-G/\-x:
 Matches regex against subjects of previously selected group(s), and retrieves ones
 that match.
 .br
-Following -a/-A:
-Matches regex against newsgroup names and descriptions and lists ones that match. (-T required)
-.IP "-R/--expretrieve expression"
-Like -r, but matches expression instead of merely a regexp.
+Following \-a/\-A:
+Matches regex against newsgroup names and descriptions and lists ones that match. (\-T required)
+.IP "\-R/\-\-expretrieve expression"
+Like \-r, but matches expression instead of merely a regexp.
 (see EXPRETRIEVE EXPRESSIONS section for more info.)
 Expression is a postfix expression that can contain these keywords:
 .br
-Following -g/-G:
-subject, author, lines, bytes, have, req, date, age, update, updateage, messageid(or mid), references.  Note that the --limit
+Following \-g/\-G:
+subject, author, lines, bytes, have, req, date, age, update, updateage, messageid(or mid), references.  Note that the \-\-limit
 argument does not affect the option, if you want to limit based on number
 of lines, add it as part of the expression.
 .br
-Following -a/-A:
+Following \-a/\-A:
 group, desc.
-.IP "-@/--list LISTFILE"
+.IP "\-@/\-\-list LISTFILE"
 Specify a file to load a list of command line args from.  Looks in ~/.nget5/lists/ dir by default.
 A # char in a listfile that is the first character on a line or is preceeded by whitespace and not quoted starts a comment which lasts until the end of the line.
-.IP "-p/--path DIRECTORY"
+.IP "\-p/\-\-path DIRECTORY"
 Path to store subsequent retrieves.
-Also sets -P, and clears previously specified dupepaths.
+Also sets \-P, and clears previously specified dupepaths.
 Relative to path which nget was started in.
-(Except in the case of inside a -@, which will be relative to the cwd at the
-time of the -@.)
-.IP "-P/--temppath DIRECTORY"
+(Except in the case of inside a \-@, which will be relative to the cwd at the
+time of the \-@.)
+.IP "\-P/\-\-temppath DIRECTORY"
 Store temporary files in path instead of the current dir.
-.IP "--dupepath DIRECTORY"
+.IP "\-\-dupepath DIRECTORY"
 Check for dupe files from specified path in addition to normal path.
 Can be specified multiple times.
-.IP "-m/--makedirs no,yes,ask,<max # of directory levels to create>"
-Make dirs specified by -p and -P.  Default is no.  If yes, will make dirs automatically.
+.IP "\-m/\-\-makedirs no,yes,ask,<max # of directory levels to create>"
+Make dirs specified by \-p and \-P.  Default is no.  If yes, will make dirs automatically.
 If #, if the number of directories that would need to be created is greater than the number given, the answer will be interpreted as no.
 If ask, nget will prompt the user when trying to change to a dir that does not exist.  
 Valid responses to the prompt are y[es], n[o], and a max number of directory levels to create.
 (This means that if you get in the habit of answering "1" rather than "y", and one day typo the first portion of a path you won't accidentally create a bunch of dirs in the wrong place.)
-.IP "-T/--testmode"
-Causes --retrieve to merely print out all matching files.
-.IP "--text ignore,files,mbox[:filename]"
+.IP "\-T/\-\-testmode"
+Causes \-\-retrieve to merely print out all matching files.
+.IP "\-\-text ignore,files,mbox[:filename]"
 Specifies how to handle text posts.  The default is files. 
 OPT can be ignore to save only binaries, "files" to save each text post in a different file, and "mbox" to save each text post as a message in a mbox format mailbox.
 The name of the mbox file to save in can be specified with mbox:filename, the default is nget.mbox.
 If the filename ends in .gz, it will automatically be gzipped.
 Unless the filename has an absolute path, it is interpreted as relative to the retrieve path.
-.IP "--save-binary-info yes,no"
+.IP "\-\-save\-binary\-info yes,no"
 Specifies whether to save text messages for posts that contained only binary data. (If you want to see the headers.)
-.IP "--test-multiserver OPT"
+.IP "\-\-test\-multiserver OPT"
 Causes testmode to display which servers have parts of each file.  OPT may be no to disable(default), long for a verbose output, and short for a more condensed form. (In short mode, the shortname of each server is printed with no seperating space, and it is upper-cased if that server does not have all the parts.  If the server has no shortname specified, it defaults to the first char of the server alias.)
-.IP "--fullxover OPT"
+.IP "\-\-fullxover OPT"
 Override the fullxover settings of the config file.
-The default is -1, which doesn't override.
-.IP "-M/--mark"
+The default is \-1, which doesn't override.
+.IP "\-M/\-\-mark"
 Mark matched files as retrieved.
-.IP "-U/--unmark"
-Unmark matched files as retrieved.  (Automatically sets -dI)
-.IP "-t/--tries int"
-Set maximum number of retries.  -1 will retry indefinatly (probably not a good
+.IP "\-U/\-\-unmark"
+Unmark matched files as retrieved.  (Automatically sets \-dI)
+.IP "\-t/\-\-tries int"
+Set maximum number of retries.  \-1 will retry indefinatly (probably not a good
 idea).
-.IP "-l/--limit int"
+.IP "\-l/\-\-limit int"
 Set the minimum number of lines a message (or total number of lines for a
 multi-part message) must have to be considered for retrieval.
-.IP "-L/--maxlines int"
-Set the maximum number of lines a message must have to be considered for retrieval. (-1 for unlimited)
-.IP "-s/--delay int"
+.IP "\-L/\-\-maxlines int"
+Set the maximum number of lines a message must have to be considered for retrieval. (\-1 for unlimited)
+.IP "\-s/\-\-delay int"
 Set the number of seconds to wait between retry attempts.
-.IP "--timeout int"
+.IP "\-\-timeout int"
 Set the number of seconds to wait for a reply from the nntp server before giving up.
-.IP "-i/--incomplete"
+.IP "\-i/\-\-incomplete"
 Retrieve files with missing parts.
-.IP "-I/--complete"
+.IP "\-I/\-\-complete"
 Retrieve only files with all parts.
-.IP "--decode"
+.IP "\-\-decode"
 Decode and delete temp files (default)
-.IP "-k/--keep"
+.IP "\-k/\-\-keep"
 Decode and keep temp files.
-.IP "-K/--no-decode"
+.IP "\-K/\-\-no\-decode"
 Keep temp files, and don't try to decode them.
-.IP "-c/--case"
+.IP "\-c/\-\-case"
 Match case sensitively.
-.IP "-C/--nocase"
+.IP "\-C/\-\-nocase"
 Match case insensitively.
-.IP "--autopar"
+.IP "\-\-autopar"
 Enable automatic parfile handling. (default)
 Only download as many par files as needed to replace missing or corrupt files.
-.IP "--no-autopar"
+.IP "\-\-no\-autopar"
 Disable automatic parfile handling.
 All parfiles that match the expression will be downloaded.
-.IP "-d/--dupecheck FLAGS"
+.IP "\-d/\-\-dupecheck FLAGS"
 Check to make sure you don't already have files.  This is done in two ways.
 The first ("f") is by compiling a list of all files in the current directory, then
 checking against all messages to be retrieved to see if one of the filenames
@@ -160,22 +160,22 @@ enough not to skip messages that merely have a word containing "a".
 .br
 The second
 method ("i") is by setting a flag in the header cache that will prevent it from being
-retrieved again.  You can use combos such as -dfi to check both, -dFi to only
-check the flag, -dfI to only check files, etc.
+retrieved again.  You can use combos such as \-dfi to check both, \-dFi to only
+check the flag, \-dfI to only check files, etc.
 .br
 The third ("m") will cause files that are found by the dupe file check ("f") to
 be marked as retrieved in the cache. (Useful for handling crossposted binaries
 and/or binaries saved with another newsreader.)
-.IP "-D/--nodupecheck"
-Don't check either of the --dupecheck methods, retrieve any messages that
+.IP "\-D/\-\-nodupecheck"
+Don't check either of the \-\-dupecheck methods, retrieve any messages that
 match.
-.IP "-N/--noconnect"
+.IP "\-N/\-\-noconnect"
 Do not connect to any server for retrieving articles.
 Useful for trying to decode as much as you have.
-(if you got stuff with -K or ngetlite.)
-.IP "-w/--writelite LITEFILE"
+(if you got stuff with \-K or ngetlite.)
+.IP "\-w/\-\-writelite LITEFILE"
 Write a list of parts to retrieve with ngetlite.
-.IP "--help"
+.IP "\-\-help"
 Show help.
 .SH "EXPRETRIEVE EXPRESSIONS"
 Expressions are in postfix order.
@@ -189,7 +189,7 @@ Infix: <keyword> <operator> <value>  Postfix: <keyword> <value> <operator>
 Comparisons can be joined with &&(and), ||(or).
 .br
 Infix: <comparison> && <comparison>  Postfix: <comparison> <comparison> &&
-.SS "-g/-G keywords"
+.SS "\-g/\-G keywords"
 .IP "subject (regex)"
 Matches the Subject: header.
 .IP "author (regex)"
@@ -223,7 +223,7 @@ Matches the time since the update of the cache item.
 Matches the Message-ID header.  (For multi-part posts, it matches the message-id of the first part.)
 .IP "references (regex)"
 Matches any of the message's References.
-.SS "-a/-A keywords"
+.SS "\-a/\-A keywords"
 .IP "group (regex)"
 Matches the newsgroup name.
 .IP "desc (regex)"
@@ -253,14 +253,14 @@ where data is any number of options.
 .P
 .SS "Global Configuration Options"
 .IP "limit (int, default=0)"
-Default value for -l/--limit
+Default value for \-l/\-\-limit
 .IP "tries (int, default=20)"
-Default value for -t/--tries
+Default value for \-t/\-\-tries
 .IP "delay (int, default=1)"
-Default value for -s/--delay
-.IP "usegz (int, default=-1)"
+Default value for \-s/\-\-delay
+.IP "usegz (int, default=\-1)"
 Default gzip compression level to use for cache/midinfo files (can be overridden on a per-group basis).
-Acceptable values are -1=zlib default, 0=uncompressed, and 1-9.
+Acceptable values are \-1=zlib default, 0=uncompressed, and 1-9.
 .IP "timeout (int, default=180)"
 Seconds to wait for a reply from the nntp server before giving up.
 .IP "maxstreaming (int, default=64)"
@@ -269,8 +269,8 @@ maxstreaming=0 will disable streaming.  Note that setting
 maxstreaming too high can cause your connection to deadlock if the write buffer
 is filled up and the write command blocks, but the server will never read more
 commands since it is waiting for us to read what it has already sent us.
-.IP "maxconnections (int, default=-1)"
-Maximum number of connections to open at once, -1 to allow unlimited open connections.
+.IP "maxconnections (int, default=\-1)"
+Maximum number of connections to open at once, \-1 to allow unlimited open connections.
 When reached, the servers used least recently will be disconnected first.
 (Note that regardless of this setting, nget never opens more than one connection per server.)
 .IP "idletimeout (int, default=300)"
@@ -279,27 +279,27 @@ Max seconds to keep an idle connection to a nntp server open.
 Priority multiplier given to servers which are currently connected.
 This can be used to avoid excessive server switching.  (Set to 1.0 if you want to disable it.)
 .IP "penaltystrikes (int, default=3)"
-Number of consecutive connect errors before penalizing a server, -1 to disable penalization.
+Number of consecutive connect errors before penalizing a server, \-1 to disable penalization.
 .IP "initialpenalty (int, default=180)"
 Number of seconds to ignore a penalized server for.
 .IP "penaltymultiplier (float, default=2.0)"
 Multiplier for penalty time for each time the penalty time runs out and the server continues to be down.
 .IP "case (boolean, default=0)"
-Default for regex case sensitivity. (0=-C/--nocase, 1=-c/--case)
+Default for regex case sensitivity. (0=\-C/\-\-nocase, 1=\-c/\-\-case)
 .IP "complete (boolean, default=1)"
-Default for incomplete file filter. (0=-i/--incomplete, 1=-I/--complete)
+Default for incomplete file filter. (0=\-i/\-\-incomplete, 1=\-I/\-\-complete)
 .IP "dupeidcheck (boolean, default=1)"
-Default for already downloaded file filter. (0=-dI, 1=-di)
+Default for already downloaded file filter. (0=\-dI, 1=\-di)
 .IP "dupefilecheck (boolean, default=1)"
-Default for duplicate file filter. (0=-dF, 1=-df)
+Default for duplicate file filter. (0=\-dF, 1=\-df)
 .IP "autopar (boolean, default=1)"
-Default for automatic par handling. (0=--no-autopar, 1=--autopar)
+Default for automatic par handling. (0=\-\-no\-autopar, 1=\-\-autopar)
 .IP "autopar_optimistic (boolean, default=0)"
 One problem with automatic par handling, is that sometimes people do multi-day posts and post the par files first.
 If autopar_optimistic is enabled, it will assume that when there aren't enough .pxx files, that it must just be a multi-day post and will not grab any pxx files.
 If autopar_optimistic is off, it grab all the pxx files so that if they expire before more are posted, we will already have them.
 .IP "quiet (boolean, default=0)"
-Default for quiet option. (0=normal, 1=-q)
+Default for quiet option. (0=normal, 1=\-q)
 .IP "tempshortnames (boolean, default=0)"
 1=Use 8.3 tempfile names (for old dos partitions, etc), 0=Use 17.3 tempfile names
 .IP "fatal_user_errors (boolean, default=0)"
@@ -313,13 +313,13 @@ fullxover=0 will follow the nntp spec and assume articles are always added and r
 fullxover=1 will assume articles may be added out of order, but are still removed in order.
 fullxover=2 handles articles being added and removed in any order.
 .IP "makedirs (special, default=no)"
-Create non-existant directories specified by -p/-P? (yes/no/ask/#)
+Create non-existant directories specified by \-p/\-P? (yes/no/ask/#)
 .IP "test_multiserver (special, default=no)"
 Display multiserver file complition info in testmode output? (no=no, short=show shortname of each server that has parts of the file, lowercase when complete and uppercase when that server only has some parts, long=show fullname of each server along with a count of how many parts it has if it does not have them all.)
 .IP "text (special, default=files)"
-Default for the --text option (possible values are ignore,files,mbox[:filename]).
+Default for the \-\-text option (possible values are ignore,files,mbox[:filename]).
 .IP "save_binary_info (boolean, default=0)"
-Default for the --save-binary-info option.
+Default for the \-\-save\-binary\-info option.
 .IP "cachedir (string)"
 Specifies a different location to store cache files.  Could be used to share a single cache dir between a trusted group of users, to reduce HD/bandwidth usage, while still allowing each user to have their own config/midinfo files.)
 .SS "Host Configuration"
@@ -349,9 +349,9 @@ Override global maxstreaming setting for this server only.
 Override global idletimeout setting for this server only.
 .IP "linelenience (special, default=0)"
 The linelenience option may be specified as either a single int, or two ints seperated by a comma.
-If only a single int, X is specified, then it will be interpeted as shorthand for "-X,+X".
+If only a single int, X is specified, then it will be interpeted as shorthand for "\-X,+X".
 These values specify the ammount that the real (recieved) number of lines (inclusive) for an article may deviate from
-the values returned by the server in the header listings.  For example, "-1,2" means that the real number
+the values returned by the server in the header listings.  For example, "\-1,2" means that the real number
 of lines may be one less than, equal to, one greater than, or two greater than the expected amount.
 .P
 For example, the following host section defines a single host "host1", with
@@ -372,7 +372,7 @@ option enabled.
 .br
 .B   fullxover=1
 .br
-.B   linelenience=-1,2
+.B   linelenience=\-1,2
 .RE
 .B  }
 .RE
@@ -383,13 +383,13 @@ option enabled.
 Multiserver priorities are defined in the hpriority section.  Multiple priority
 groups can be made, and different newsgroups can be configured to use their own
 priority grouping, or they will default to the "default" group.
-The -a option will use the "_grouplist" priority group if it exists, otherwise it will use the "default" group.
+The \-a option will use the "_grouplist" priority group if it exists, otherwise it will use the "default" group.
 .P
 The hpriority
 section contains a subsection for each priority group, with data items of
 server=prio-multiplier, and the special items _level=float and _glevel=float.
 _level sets the priority level assigned to any host not listed in the group,
-and _glevel sets the required priority needed for -g and -a to automatically use that
+and _glevel sets the required priority needed for \-g and \-a to automatically use that
 host.  Both _level and _glevel default to 1.0 if not specified.
 .P
 The priority group "trustsizes" also has special meaning, and is used to choose which servers
@@ -399,7 +399,7 @@ For example, the following section defines the default priority group and the
 trustsizes priority group.  If all hosts have a certain article, goodhost will
 be most likely to be chosen, and badhost least likely.  It also sets the
 default priority level to 1.01, meaning any hosts not listed in this group will have a
-priority of 1.01.  When using -g without first specifying a host, only those
+priority of 1.01.  When using \-g without first specifying a host, only those
 with prios 1.2 or above will be selected.
 .RS
 .B {hpriority
@@ -505,7 +505,7 @@ Updating newsgroup list failed for some (but not all) attempted servers.
 .IP "retrieve"
 Article retrieval failed for some (but not all) attempted servers.
 .IP "undecoded"
-Articles were not decoded (usually because -K was used).
+Articles were not decoded (usually because \-K was used).
 .IP "unequal_line_count"
 Some articles retrieved had different line counts than the server said they should.
 (And unequal_line_error is set to 0).
@@ -523,9 +523,9 @@ Number of file decoding errors.
 .IP "autopar (exit code 2)"
 Number of parity sets that could not be completed.
 .IP "path (exit code 4)"
-Errors changing to paths specified with -p or -P.
+Errors changing to paths specified with \-p or \-P.
 .IP "user (exit code 4)"
-User errors, such as trying -r without specifying a group first.
+User errors, such as trying \-r without specifying a group first.
 .IP "retrieve (exit code 8)"
 Number of times article retrieval failed for all attempted servers.
 .IP "group (exit code 16)"
@@ -541,49 +541,49 @@ Any other kind of error.
 The simplest possible example.  Retrieve and decode everything from alt.binaries.test that you haven't already gotten before:
 .br
 .B
-nget -g alt.binaries.test -r ""
+nget \-g alt.binaries.test \-r ""
 .P
 get listing of all files matching penguin.*png from alt.binaries.pictures.linux (note this is a regex, equivilant to standard shell glob of penguin*png.. see the regex(7) or grep manpage for more info on regular expressions.)
 .br
 .B
-nget -g alt.binaries.pictures.linux -DTr "penguin.*png"
+nget \-g alt.binaries.pictures.linux \-DTr "penguin.*png"
 .P
 retrieve all the ones that have more than 50 lines:
 .br
 .B
-nget -g alt.binaries.pictures.linux -l 50 -r "penguin.*png"
+nget \-g alt.binaries.pictures.linux \-l 50 \-r "penguin.*png"
 .P
-equivilant to above, using -R:
+equivilant to above, using \-R:
 .br
 .B
-nget -g alt.binaries.pictures.linux -R "lines 50 > subject penguin.*png == &&"
+nget \-g alt.binaries.pictures.linux \-R "lines 50 > subject penguin.*png == &&"
 .br
 (basically (lines > 50) && (subject == penguin.*png))
 .P
 flush all headers from host goodhost in group alt.binaries.pictures.linux:
 .br
 .B
-nget -Galt.binaries.pictures.linux -Fgoodhost
+nget \-Galt.binaries.pictures.linux \-Fgoodhost
 .P
 retrieve/update group list, and list all groups with "linux" in the name or description:
 .br
 .B
-nget -a -Tr linux
+nget \-a \-Tr linux
 .P
-equivilant to above, using -R:
+equivilant to above, using \-R:
 .br
 .B
-nget -a -TR "group linux == desc linux == ||"
+nget \-a \-TR "group linux == desc linux == ||"
 .P
 flush all groups from host goodhost in grouplist:
 .br
 .B
-nget -A -Fgoodhost
+nget \-A \-Fgoodhost
 .SH NOTES
 Running multiple copies of nget at once should be safe.  It uses file locking,
 so there should be no way for the files to actually get corrupted.
-However if you have two ngets doing a -g on the same group at the same time, it
-would duplicate the download for both processes.  If you are using -G there is
+However if you have two ngets doing a \-g on the same group at the same time, it
+would duplicate the download for both processes.  If you are using \-G there is
 no problem at all.  (Theoretically you might be able to cause some sort of
 problems by downloading the same files from the same group in the same
 directory at the same time..)
@@ -621,7 +621,7 @@ http://www.dakotacom.net/~donut/programs/
 Frank Pilhofer, author of uulib, which nget depends upon for uudecoding the files once they are downloaded.
 http://www.fpx.de/fp/Software/UUDeview/
 .P
-Peter Brian Clements, author of par2-cmdline, which nget uses a stripped down version of for its par2 checking.
+Peter Brian Clements, author of par2\-cmdline, which nget uses a stripped down version of for its par2 checking.
 http://parchive.sourceforge.net/
 .P
 The Unix-socket-faq, which my url for has gone bad, but

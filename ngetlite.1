@@ -7,21 +7,21 @@ ngetlite \- retrieve files from NNTP hosts
 .B ngetlite
 retrieves messages as described in each listfile.  Listfiles are generated with:
 .br
-.B nget -w <listfile> <retrieval args>
+.B nget \-w <listfile> <retrieval args>
 .PP
 In almost all circumstances, you will want to download and decode directly with nget.
 However, in some cases
 ngetlite can be useful on computers with low ram or cpu, that can't handle the large cache
-files needed for some groups.  You can run nget -w on some other computer and then do 
+files needed for some groups.  You can run nget \-w on some other computer and then do 
 the actual downloading with ngetlite using very little resources.
 .SH EXAMPLES
 The following sequence of commands demonstrates a typical usage:
 .br
-nget -w foo.list -G alt.foo -r "\\.png"
+nget \-w foo.list \-G alt.foo \-r "\\.png"
 .br
 ngetlite foo.list
 .br
-nget -N -G alt.foo -r "\\.png"
+nget \-N \-G alt.foo \-r "\\.png"
 .SH ENVIRONMENT
 .PP
 .IP "NGETLITE_TIMEOUT"
