@@ -30,7 +30,7 @@
 #include "_sstream.h"
 
 
-bool pathexists(const char *p);
+bool direxists(const char *p);
 int fexists(const char * f);
 string fcheckpath(const char *fn,string path);
 int testmkdir(const char * dir,int mode);

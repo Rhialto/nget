@@ -62,7 +62,7 @@ time_t timegm (const struct tm *gmtimein) {
 }
 #endif
 
-bool pathexists(const char *p) {
+bool direxists(const char *p) {
 	bool ret=false;
 	char *oldp;
 	goodgetcwd(&oldp);
