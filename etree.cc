@@ -242,19 +242,7 @@ generic_pred * make_pred(const char *optarg){
 				PDEBUG(DEBUG_MIN,"%s %i %i",nntp_matches[match].name,nntp_matches[match].type,nntp_matches[match].ofs);
 				if (nntp_matches[match].type==E_STRING){
 					//c_regex_nosub *reg=new c_regex_nosub(optarg,REG_EXTENDED + ((gflags&GETFILES_CASESENSITIVE)?0:REG_ICASE));
-					c_regex_nosub *reg=NULL;
-					try{
-						reg=new c_regex_nosub(y->c_str(),REG_EXTENDED|REG_ICASE);
-						if (!reg)
-							throw ApplicationExFatal(Ex_INIT,"couldn't allocate regex");
-					}catch (c_regex_error *regerr) {
-						char buf[256];
-						regerr->strerror(buf,256);
-						int e=regerr->geterror();
-						delete reg;//shouldn't be needed, but shouldn't hurt either
-						delete regerr;
-						throw ApplicationExFatal(Ex_INIT,"regex error %i:%s",e,buf);
-					}
+					c_regex_nosub *reg=new c_regex_nosub(y->c_str(),REG_EXTENDED|REG_ICASE);
 					if ((*i).compare("=~")==0 || (*i).compare("==")==0)
 						e_str_=&str_eq;
 					else if ((*i).compare("!~")==0 || (*i).compare("!=")==0)

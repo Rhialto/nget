@@ -45,41 +45,25 @@
 #ifdef _REENTRANT
 #include "mythread.h"
 #endif
+#include "log.h"
+DEFINE_EX_SUBCLASS(RegexEx, ApplicationExFatal, true);
 
 //  use strerror for a textual description of problem.  same as regerror(), but without the first arg(s).
 
-class c_regex_error{
-	protected:
-		regex_t *regex;
-		int re_err;
-	public:
-		size_t strerror(char *buf,size_t bufsize);
-		int geterror(void){return re_err;}
-		c_regex_error(int err,regex_t *regexp):regex(regexp),re_err(err){
-/*			char a[200];
-			strerror(a,200);
-			printf("c_regex_error constructed: %i %s\n",geterror(),a);*/
-		}
-		~c_regex_error(){if (regex) {regfree(regex);delete regex;}}
-};
-
-//throws a c_regex_error if there is an error during the constructor, since the member data will be destroyed on the throw
+//throws a RegexEx if there is an error during the constructor
 class c_regex_base{
 	protected:
-		//	regex_t regex;
-		regex_t *regex;
+		regex_t regex;
 	public:
 		c_regex_base(const char * pattern,int cflags);
 		~c_regex_base();
-//		~c_regex_base(){if (regex) {regfree(regex);delete regex;regex=NULL;}}
-		size_t strerror(int re_err,char *buf,size_t bufsize){return regerror(re_err,regex,buf,bufsize);}
-//		int geterror(void){return re_err;}
+		size_t strerror(int re_err,char *buf,size_t bufsize){return regerror(re_err,&regex,buf,bufsize);}
 };
 
 //thread safe
 class c_regex_nosub : public c_regex_base{
   public:
-	int match(const char *str)const{return regexec(regex,str,0,NULL,0);}
+	int match(const char *str)const{return regexec(&regex,str,0,NULL,0);}
 	c_regex_nosub(const char * pattern,int cflags=REG_EXTENDED);
 //	~c_regex_nosub();
 };

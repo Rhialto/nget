@@ -22,34 +22,21 @@
 #include <stdlib.h>
 #include "myregex.h"
 
-size_t c_regex_error::strerror(char *buf,size_t bufsize){
-//	if (regex)
-		return regerror(re_err,regex,buf,bufsize);
-/*	else{//dunno if all this is needed
-		if(buf){
-			strncpy(buf,"null regex_t*",bufsize-1);
-			buf[bufsize-1]=0;//buf is null terminated
-		}
-		return 14;//returns the size of the errbuf required to contain the null-terminated  error message string.
-	}*/
-}
-
 c_regex_base::c_regex_base(const char * pattern,int cflags){
 	if (!pattern)
 		pattern="";
-	regex=new regex_t;
 	int re_err;
-	if ((re_err=regcomp(regex,pattern,cflags))){
-//		throw re_err;
-		c_regex_error*err=new c_regex_error(re_err,regex);
-		regex=NULL;//set NULL so dtor won't free
-//		exit(10);
-		throw err;
+	if ((re_err=regcomp(&regex,pattern,cflags))){
+		char buf[256];
+		regerror(re_err,&regex,buf,256);
+		regfree(&regex);
+		throw RegexEx(Ex_INIT, "regcomp: %s", buf);
 	}
 }
 c_regex_base::~c_regex_base(){
-	if (regex) {regfree(regex);delete regex;regex=NULL;}
+	regfree(&regex);
 }
+
 c_regex_nosub::c_regex_nosub(const char * pattern,int cflags):c_regex_base(pattern,cflags|REG_NOSUB){
 }
 
@@ -92,7 +79,6 @@ c_regex_subs::c_regex_subs(int nregm):nregmatch(-1){
 }
 c_regex_subs::~c_regex_subs(){
 	freesub();
-//	if (regex) regfree(regex);//handled by c_regex_base
 	if (regmatch){
 		delete [] regmatch;
 //		free(regmatch);
@@ -114,7 +100,7 @@ int c_regex_r::match(const char *str,c_regex_subs*subs){
 	c_mutex_locker lock(mutex);//I dunno wether regexec is reentrant, so lets be safe.
 #endif
 	subs->setnregmatch(nregmatch);
-	return subs->doregex(regex,str);
+	return subs->doregex(&regex,str);
 }
 c_regex_subs * c_regex_r::match(const char *str){
 	c_regex_subs *subs=new c_regex_subs(nregmatch);
