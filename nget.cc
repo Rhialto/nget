@@ -601,11 +601,11 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					e_parts.push_back(loptarg);
 					e_parts.push_back("=~");
 
-					/*e_parts.push_back("desc");
+					e_parts.push_back("desc");
 					e_parts.push_back(loptarg);
 					e_parts.push_back("=~");
 
-					e_parts.push_back("||");*/
+					e_parts.push_back("||");
 					try {
 						nntp_grouplist_pred *p=make_grouplist_pred(e_parts, options.gflags);
 						grouplistgetinfos.push_back(new c_grouplist_getinfo(p, options.gflags));

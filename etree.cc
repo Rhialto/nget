@@ -210,12 +210,22 @@ nntp_file_pred * make_nntpfile_pred(const char *optarg, int gflags) {
 	return make_nntpfile_pred(e_parts, gflags);
 }
 
+//Somewhat hacky way to allow desc keyword.  Works quite nicely, but this method won't be usable if more than a single attribute of the class needs to be tested.
+inline bool operator == (const t_server_group_description_map &m, const c_regex_nosub &r) {
+	for (t_server_group_description_map::const_iterator i = m.begin(); i!=m.end(); ++i)
+		if (i->second->description == r)
+			return true;
+	return false;
+}
+inline bool operator != (const t_server_group_description_map &m, const c_regex_nosub &r) {
+	return (!(m==r));
+}
 nntp_grouplist_pred *grouplist_comparison_maker(const string &i, const string *x, const string *y, int re_flags) {
 	const char *n = x->c_str();
 	if (strcasecmp(n, "group")==0)
 		return comparison_re<const c_group_availability>(i, &c_group_availability::groupname, y->c_str(), re_flags);
-//	else if (strcasecmp(n, "desc")==0)
-//		return comparison_re<const c_group_availability>(i, &c_group_availability::groupname, y->c_str(), re_flags);
+	else if (strcasecmp(n, "desc")==0)
+		return comparison_re<const c_group_availability>(i, &c_group_availability::servergroups, y->c_str(), re_flags);
 	else
 		return NULL;
 }

@@ -620,6 +620,42 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 2)
 		self.vfailUnlessEqual(self.servers.servers[0].count("newgroups"), 1)
 		self.vfailUnlessEqual(self.servers.servers[0].count("list_"), 1)
+
+	def test_available_r(self):
+		self.servers.servers[0].addgroup("aa.group")
+		self.servers.servers[0].addgroup("bb.group")
+		self.servers.servers[0].addgroup("group.one", "aa.desc")
+		self.servers.servers[0].addgroup("group.two", "bb.desc")
+		apath = os.path.join(self.nget.rcdir, 'avail.out')
+		self.vfailIf(self.nget.run('-a -T -r aa > %s'%apath))
+		output = open(apath).read()
+		print output
+		self.failUnless(output.find("aa.group")>=0)
+		self.failUnless(output.find("aa.desc")>=0)
+		self.failIf(output.find("bb")>=0)
+
+	def test_available_R_desc(self):
+		self.servers.servers[0].addgroup("group.bbb")
+		self.servers.servers[0].addgroup("group.one", "aaa")
+		self.servers.servers[0].addgroup("group.two", "bbb")
+		apath = os.path.join(self.nget.rcdir, 'avail.out')
+		self.vfailIf(self.nget.run('-a -T -R "desc bbb ==" > %s'%apath))
+		output = open(apath).read()
+		print output
+		self.failUnless(re.search(r"^h0\tgroup.two\tbbb \[h0\]$",output, re.M))
+		self.failIf(output.find(".one")>=0)
+		self.failIf(output.find("group.bbb")>=0)
+
+	def test_available_R_not_desc(self):
+		self.servers.servers[0].addgroup("group.bbb")
+		self.servers.servers[0].addgroup("group.one", "aaa")
+		self.servers.servers[0].addgroup("group.two", "bbb")
+		apath = os.path.join(self.nget.rcdir, 'avail.out')
+		self.vfailIf(self.nget.run('-a -T -R "desc bbb !=" > %s'%apath))
+		output = open(apath).read()
+		print output
+		self.failUnless(re.search(r"^h0\tgroup.one\taaa \[h0\][\r\n]+h0\tgroup.bbb[\r\n]+h0\ttest$",output, re.M))
+		self.failIf(output.find(".two")>=0)
 	
 	def test_available_overrides_group(self):
 		self.vfailIf(self.nget.run('-g test -A -T -r .'))

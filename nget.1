@@ -43,7 +43,7 @@ Matches regex against subjects of previously selected group, and retrieves ones
 that match.
 .br
 Following -a/-A:
-Matches regex against groupnames and lists ones that match. (-T required)
+Matches regex against newsgroup names and descriptions and lists ones that match. (-T required)
 .IP "-R/--expretrieve expression"
 Like -r, but matches expression instead of merely a regexp.
 Expression is a
@@ -55,7 +55,7 @@ argument does not affect the option, if you want to limit based on number
 of lines, add it as part of the expression.
 .br
 Following -a/-A:
-group.
+group, desc.
 .IP "-@/--list LISTFILE"
 Specify a file to load a list of command line args from.  Looks in ~/.nget4/lists/ dir by default.
 A # char in a listfile that is the first character on a line or is preceeded by whitespace and not quoted starts a comment which lasts until the end of the line.
