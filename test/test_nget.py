@@ -270,6 +270,8 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.do_test_auto()
 	def test_0001_uuenview_uue_mime_single(self):
 		self.do_test_auto()
+	def test_0001_uuencode_multi_uudumbness(self):
+		self.do_test_auto()
 	def test_0001_yenc_multi(self):
 		self.do_test_auto()
 	def test_0001_yenc_single_size_error(self):

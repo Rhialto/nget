@@ -1277,8 +1277,8 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 			printf("Retrieving: ");
 			print_nntp_file_info(f, options.retr_show_multi);
 //			bp=f->parts.begin()->second;
-			list<char *> fnbuf;
-			list<char *>::iterator fncurb;
+			list<pair<int,char *> > fnbuf;
+			list<pair<int,char *> >::iterator fncurb;
 //			int derr=0;
 			uu_err_status uustatus;
 			int un=0;
@@ -1332,15 +1332,15 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 //				UULoadFile(fn,NULL,0);//load once they are all d/l'd
 				//				delete fn;
 				if (fn)
-					fnbuf.push_back(fn);
+					fnbuf.push_back(pair<int,char*>(p->partnum,fn));
 			}
 			if (!uustatus.derr && !(optionflags&GETFILES_NODECODE) && !fnbuf.empty()){
 				int r;
-				TextHandler texthandler(options.texthandling, options.save_text_for_binaries, options.mboxfname, fr, fnbuf.front());
+				TextHandler texthandler(options.texthandling, options.save_text_for_binaries, options.mboxfname, fr, fnbuf.front().second);
 				uustatus.th = &texthandler;
 				if ((r=UUInitialize())!=UURET_OK)
 					throw ApplicationExFatal(Ex_INIT,"UUInitialize: %s",UUstrerror(r));
-				UUSetOption(UUOPT_DUMBNESS,0,NULL); // need smartness for uulib to notice some kinds of decode errors
+				UUSetOption(UUOPT_DUMBNESS,1,NULL); // "smartness" barfs on some subjects
 				//UUSetOption(UUOPT_FAST,1,NULL);//we store each message in a seperate file
 				//actually, I guess that won't work, since some messages have multiple files in them anyway.
 				UUSetOption(UUOPT_OVERWRITE,0,NULL);//no thanks.
@@ -1350,7 +1350,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 				UUSetBusyCallback(NULL,uu_busy_callback,1000);
 				UUSetFNameFilter(&fr->path,uu_fname_filter);
 				for(fncurb = fnbuf.begin();fncurb!=fnbuf.end();++fncurb){
-					UULoadFile((*fncurb),NULL,0);
+					UULoadFileWithPartNo((*fncurb).second,NULL,0,(*fncurb).first);
 				}
 				uulist * uul;
 				dupe_file_checker flist;
@@ -1486,7 +1486,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 			}
 			char *p;
 			for(fncurb = fnbuf.begin();fncurb!=fnbuf.end();++fncurb){
-				p=(*fncurb);
+				p=(*fncurb).second;
 				if (!uustatus.derr)
 					unlink(p);
 				free(p);
