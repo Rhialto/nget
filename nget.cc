@@ -373,14 +373,14 @@ void nget_cleanup(void) {
 	}catch(baseEx &e){
 		printCaughtEx(e);
 	}catch(exception &e){
-		printf("nget_cleanup: caught std exception %s\n",e.what());
+		PERROR("nget_cleanup: caught std exception %s",e.what());
 	}catch(...){
-		printf("nget_cleanup: caught unknown exception\n");
+		PERROR("nget_cleanup: caught unknown exception");
 	}
 }
 
 static void term_handler(int s){
-	printf("\nterm_handler: signal %i, shutting down.\n",s);
+	PERROR("\nterm_handler: signal %i, shutting down.",s);
 	nget_cleanup();
 	exit(errorflags);
 }
@@ -446,7 +446,7 @@ int nget_options::set_save_text_for_binaries(const char *s){
 	else if (strcasecmp(s,"no")==0)
 		save_text_for_binaries=false;
 	else{
-		printf("set_save_text_for_binaries invalid option %s\n",s);
+		PERROR("set_save_text_for_binaries invalid option %s",s);
 		return 0;
 	}
 	return 1;
@@ -466,7 +466,7 @@ int nget_options::set_text_handling(const char *s){
 	else if (strcasecmp(s,"ignore")==0)
 		texthandling=TEXT_IGNORE;
 	else{
-		printf("set_text_handling invalid option %s\n",s);
+		PERROR("set_text_handling invalid option %s",s);
 		return 0;
 	}
 	return 1;
@@ -483,7 +483,7 @@ int nget_options::set_test_multi(const char *s){
 	else if (strcasecmp(s,"no")==0)
 		test_multi=NO_SHOW_MULTI;
 	else{
-		printf("set_test_multi invalid option %s\n",s);
+		PERROR("set_test_multi invalid option %s",s);
 		return 0;
 	}
 	return 1;
@@ -505,7 +505,7 @@ int nget_options::set_makedirs(const char *s){
 		char *erp;
 		int numcreate = strtol(s,&erp,10);
 		if (*s=='\0' || *erp!='\0' || numcreate < 0) {
-			printf("set_makedirs invalid option %s\n",s);
+			PERROR("set_makedirs invalid option %s",s);
 			return 0;
 		}
 		makedirs = numcreate;
@@ -669,7 +669,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				break;
 			case 'R':
 				if (options.cmdmode==NOCACHE_GROUPLIST_MODE) {
-					printf("-R is not yet supported with -X\n");
+					PERROR("-R is not yet supported with -X");
 					set_user_error_status_and_do_fatal_user_error();
 					break;
 				}
@@ -688,12 +688,12 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				}
 				if (!options.badskip){
 					if (options.cmdmode==NOCACHE_RETRIEVE_MODE) {
-						printf("-R is not yet supported with -x\n");
+						PERROR("-R is not yet supported with -x");
 						set_user_error_status_and_do_fatal_user_error();
 						break;
 					}
 					if(options.group.isnull()){
-						printf("no group specified\n");
+						PERROR("no group specified");
 						set_user_error_status_and_do_fatal_user_error();
 					}else{
 						try {
@@ -736,7 +736,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				}
 				if (!options.badskip){
 					if(options.group.isnull()){
-						printf("no group specified\n");
+						PERROR("no group specified");
 						set_user_error_status_and_do_fatal_user_error();
 					}else{
 						arglist_t e_parts;
@@ -807,25 +807,25 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				options.retrydelay=atoi(loptarg);
 				if (options.retrydelay<0)
 					options.retrydelay=1;
-				printf("retry delay set to %i\n",options.retrydelay);
+				PMSG("retry delay set to %i",options.retrydelay);
 				break;
 			case 't':
 				options.maxretry=atoi(loptarg);
 				if (options.maxretry==-1)
 					options.maxretry=INT_MAX-1;
-				printf("max retries set to %i\n",options.maxretry);
+				PMSG("max retries set to %i",options.maxretry);
 				break;
 			case 'L':
 				options.maxlinelimit=atoul(loptarg);
-				printf("maximum line limit set to %lu\n",options.maxlinelimit);
+				PMSG("maximum line limit set to %lu",options.maxlinelimit);
 				break;
 			case 'l':
 				options.linelimit=atoul(loptarg);
-				printf("minimum line limit set to %lu\n",options.linelimit);
+				PMSG("minimum line limit set to %lu",options.linelimit);
 				break;
 			case 'w':
 				options.writelite=loptarg;
-				printf("writelite to %s\n",options.writelite.c_str());
+				PMSG("writelite to %s",options.writelite.c_str());
 				break;
 			case 'm':
 				options.set_makedirs(loptarg);
@@ -833,14 +833,14 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 			case 'P':
 				if (!maybe_mkdir_chdir(loptarg,options.makedirs)){
 					options.get_temppath();
-					printf("temppath:%s\n",options.temppath.c_str());
+					PMSG("temppath:%s",options.temppath.c_str());
 					options.badskip &= ~BAD_TEMPPATH;
 					if (chdir(options.startpath.c_str())){
 						set_path_error_status();
 						throw ApplicationExFatal(Ex_INIT, "could not change to startpath: %s",options.startpath.c_str());
 					}
 				}else{
-					printf("could not change temppath to %s\n",loptarg);
+					PERROR("could not change temppath to %s",loptarg);
 					set_path_error_status_and_do_fatal_user_error();
 					options.badskip |= BAD_TEMPPATH;
 				}
@@ -849,14 +849,14 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				if (!maybe_mkdir_chdir(loptarg,options.makedirs)){
 					options.get_path();
 					options.get_temppath();
-					printf("(temp)path:%s\n",options.path.c_str());
+					PMSG("(temp)path:%s",options.path.c_str());
 					options.badskip &= ~(BAD_TEMPPATH | BAD_PATH);
 					if (chdir(options.startpath.c_str())){
 						set_path_error_status();
 						throw ApplicationExFatal(Ex_INIT, "could not change to startpath: %s",options.startpath.c_str());
 					}
 				}else{
-					printf("could not change to %s\n",loptarg);
+					PERROR("could not change to %s",loptarg);
 					set_path_error_status_and_do_fatal_user_error();
 					options.badskip |= (BAD_TEMPPATH | BAD_PATH);
 				}
@@ -864,9 +864,9 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 			case 'F':
 				{
 					c_server::ptr server=nconfig.getserver(loptarg);
-					if (!server) {printf("no such server %s\n",loptarg);set_user_error_status_and_do_fatal_user_error();break;}
+					if (!server) {PERROR("no such server %s",loptarg);set_user_error_status_and_do_fatal_user_error();break;}
 					if (options.cmdmode==NOCACHE_RETRIEVE_MODE || options.cmdmode==NOCACHE_GROUPLIST_MODE) {
-						printf("nothing to flush in nocache mode\n");
+						PERROR("nothing to flush in nocache mode");
 						set_user_error_status_and_do_fatal_user_error();
 						break;
 					}
@@ -876,7 +876,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 						break;
 					}
 					if (!options.group){
-						printf("specify group before -F\n");
+						PERROR("specify group before -F");
 						set_user_error_status_and_do_fatal_user_error();
 						break;
 					}
@@ -888,7 +888,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					break;
 				}
 #ifdef HAVE_LIBPOPT
-#define POPT_ERR_CASE(a) case a: printf("%s: %s\n",#a,optCon.BadOption(0)); print_help(); return 1;
+#define POPT_ERR_CASE(a) case a: PERROR("%s: %s",#a,optCon.BadOption(0)); print_help(); return 1;
 			POPT_ERR_CASE(POPT_ERROR_NOARG);
 			POPT_ERR_CASE(POPT_ERROR_BADOPT);
 			POPT_ERR_CASE(POPT_ERROR_OPTSTOODEEP);
@@ -903,13 +903,13 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				return 1;
 			case 0://POPT_CONTEXT_ARG_OPTS
 			case 1://getopt arg
-				printf("invalid command line arg: %s\n", loptarg);
+				PERROR("invalid command line arg: %s", loptarg);
 				set_user_error_status_and_do_fatal_user_error();
 				return 1;
 			default:
 				if (!grouplistgetinfos.empty()) {
 					if(!(options.gflags&GETFILES_TESTMODE)){
-						printf("testmode required for grouplist\n");
+						PERROR("testmode required for grouplist");
 						set_user_error_status_and_do_fatal_user_error();
 					}else if (!patinfos.empty()){
 						nntp.nntp_grouplist_search(grouplistgetinfos, patinfos, options);
@@ -949,7 +949,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 								}
 								f.close();
 							}catch (FileNOENTEx &e){
-								printf("error: %s\n",e.getExStr());
+								PERROR("error: %s",e.getExStr());
 								set_user_error_status_and_do_fatal_user_error();
 								break;
 							}
@@ -967,7 +967,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 								if (options.host)
 									nntp.nntp_open(options.host);
 								if (!chdir(options.startpath.c_str())){
-									printf("path:%s\n",options.path.c_str());
+									PMSG("path:%s",options.path.c_str());
 								}else{
 									set_path_error_status();
 									throw ApplicationExFatal(Ex_INIT, "could not change to startpath: %s",options.startpath.c_str());
@@ -977,7 +977,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 							}
 						}
 #else
-						printf("This option is only available when libpopt is used.\n");
+						PERROR("This option is only available when libpopt is used.");
 #endif
 						break;
 					case 'a':
@@ -1014,7 +1014,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 								options.host=nconfig.getserver(loptarg);
 								if (options.host.isnull()){
 									options.badskip |= BAD_HOST;
-									printf("invalid host %s (must be configured in .ngetrc first)\n",loptarg);
+									PERROR("invalid host %s (must be configured in .ngetrc first)",loptarg);
 									set_user_error_status_and_do_fatal_user_error();
 								}
 								else
@@ -1155,20 +1155,20 @@ int main(int argc, const char ** argv){
 			do_args(argc,argv,options,0);
 		}
 	}catch(FatalUserException &e){
-		printf("fatal_user_errors enabled, exiting\n");
+		PERROR("fatal_user_errors enabled, exiting");
 	}catch(ConfigEx &e){
 		set_fatal_error_status();
 		printCaughtEx(e);
 		PERROR("(see man nget for configuration info)");
 	}catch(baseEx &e){
 		set_fatal_error_status();
-		printf("main():");printCaughtEx(e);
+		PERROR_nnl("main():");printCaughtEx(e);
 	}catch(exception &e){
 		set_fatal_error_status();
-		printf("caught std exception %s\n",e.what());
+		PERROR("caught std exception %s",e.what());
 	}catch(...){
 		set_fatal_error_status();
-		printf("caught unknown exception\n");
+		PERROR("caught unknown exception");
 	}
 	nget_cleanup();
 

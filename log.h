@@ -27,10 +27,12 @@
 #include <string>
 #include "strreps.h"
 //#include <string.h>
-#define PERROR(a, args...) fprintf(stderr,a "\n" , ## args)
-#define PMSG(a, args...) printf(a "\n" , ## args)
-//#define PDEBUG(a, args...) printf(a , ## args)
-#define PDEBUG(d, a, args...) {if (debug>=d) printf(a "\n" , ## args);}
+#define PERROR_nnl(a, args...) fprintf(stderr, a, ## args)
+#define PMSG_nnl(a, args...) {if (quiet<2) printf(a, ## args);}
+#define PDEBUG_nnl(d, a, args...) {if (debug>=d) printf(a, ## args);}
+#define PERROR(a, args...) PERROR_nnl(a "\n" , ## args)
+#define PMSG(a, args...) PMSG_nnl(a "\n" , ## args)
+#define PDEBUG(d, a, args...) PDEBUG_nnl(d, a "\n" , ## args)
 extern int debug;
 #define DEBUG_MIN 1
 #define DEBUG_MED 2
@@ -87,8 +89,8 @@ DEFINE_EX_SUBCLASS(CacheEx, baseEx, false);
 
 #define Ex_INIT __FILE__,__LINE__
 
-#define printCaughtEx_nnl(e) printf("%s:%i:caught exception %s:%i:%s: %s",__FILE__,__LINE__,e.getExFile(),e.getExLine(),e.getExType(),e.getExStr());
-#define printCaughtEx(e) printCaughtEx_nnl(e);printf("\n");
+#define printCaughtEx_nnl(e) PERROR_nnl("%s:%i:caught exception %s:%i:%s: %s",__FILE__,__LINE__,e.getExFile(),e.getExLine(),e.getExType(),e.getExStr())
+#define printCaughtEx(e) {printCaughtEx_nnl(e);PERROR_nnl("\n");}
 
 
 #endif

@@ -59,7 +59,7 @@ c_server::c_server(ulong id, string alia, string shortnam, string add, string us
 	else
 		fullxover=nconfig.fullxover;
 	if (maxstrea<0) {
-		printf("invalid maxstreaming %i for host %s\n",maxstrea,addr.c_str());
+		PERROR("invalid maxstreaming %i for host %s",maxstrea,addr.c_str());
 		maxstreaming = 0;
 	}else
 		maxstreaming = maxstrea;
@@ -68,7 +68,7 @@ c_server::c_server(ulong id, string alia, string shortnam, string add, string us
 		if (!parse_int_pair(ll,&l,&h)){
 			lineleniencelow=l;lineleniencehigh=h;
 		}else{
-			printf("invalid linelenience %s for host %s\n",ll,addr.c_str());
+			PERROR("invalid linelenience %s for host %s",ll,addr.c_str());
 			lineleniencelow=lineleniencehigh=0;
 		}
 	}else{
@@ -96,7 +96,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 		if (f)
 			nconfig.curservmult=f;
 		else
-			printf("invalid curservmult: %s\n",cp);
+			PERROR("invalid curservmult: %s",cp);
 	}
 	cfg->getitemi("usegz",&usegz);
 	fullxover=cfg->geti("fullxover", fullxover);
@@ -113,32 +113,32 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 		if (f>0)
 			nconfig.penaltymultiplier=f;
 		else
-			printf("invalid penaltymultiplier: %s\n",cp);
+			PERROR("invalid penaltymultiplier: %s",cp);
 	}
 	//halias
 	assert(hinfo);
 	for (dli=hinfo->data.begin();dli!=hinfo->data.end();++dli){
 		di=(*dli).second;
 		if (di->type!=1){
-			printf("h not a section\n");
+			PERROR("h not a section");
 			continue;
 		}
 		//				ds=dynamic_cast<c_data_section*>(di);
 		ds=(c_data_section*)(di);//TODO: ok, this is bad, but dynamic_cast doesn't work. ??
 		if (!ds){
-			printf("h !ds\n");continue;
+			PERROR("h !ds");continue;
 		}
 		if (!ds->getitema("addr")){
-			printf("host %s no addr\n",ds->key.c_str());
+			PERROR("host %s no addr",ds->key.c_str());
 			continue;
 		}
 		if (!(sida=ds->getitema("id"))){
-			printf("host %s no id\n",ds->key.c_str());
+			PERROR("host %s no id",ds->key.c_str());
 			continue;
 		}
 		tul=atoul(sida);
 		if (tul==0){
-			printf("host %s invalid id '%s'\n",ds->key.c_str(),sida);
+			PERROR("host %s invalid id '%s'",ds->key.c_str(),sida);
 			continue;
 		}
 		server=new c_server(tul,ds->key,ds->getitems("shortname"),ds->getitems("addr"),ds->getitems("user"),ds->getitems("pass"),ds->getitema("fullxover"),ds->getitema("linelenience"),ds->geti("maxstreaming",maxstreaming),ds->geti("idletimeout",idletimeout));
@@ -149,13 +149,13 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 		for (dli=pinfo->data.begin();dli!=pinfo->data.end();++dli){
 			di=(*dli).second;
 			if (di->type!=1){
-				printf("p not a section\n");
+				PERROR("p not a section");
 				continue;
 			}
 			//				ds=dynamic_cast<c_data_section*>(di);
 			ds=(c_data_section*)(di);//TODO: ok, this is bad, but dynamic_cast doesn't work. ??
 			if (!ds){
-				printf("p !ds\n");continue;
+				PERROR("p !ds");continue;
 			}
 			c_server_priority_grouping *pgrouping=new c_server_priority_grouping(ds->key);
 			for (dlj=ds->data.begin();dlj!=ds->data.end();++dlj){
@@ -167,7 +167,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 				}else{
 					server=getserver(di->key);
 					if (!server){
-						printf("prio section %s, server %s not found\n",ds->key.c_str(),di->key.c_str());
+						PERROR("prio section %s, server %s not found",ds->key.c_str(),di->key.c_str());
 						continue;
 					}
 					c_server_priority *sprio=new c_server_priority(server,atof(di->str.c_str()));
@@ -196,7 +196,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 				//				ds=dynamic_cast<c_data_section*>(di);
 				ds=(c_data_section*)(di);//TODO: ok, this is bad, but dynamic_cast doesn't work. ??
 				if (!ds){
-					printf("g !ds\n");continue;
+					PERROR("g !ds");continue;
 				}
 				addgroup(ds->key,ds->getitems("group"),ds->getitems("prio"),ds->geti("usegz",-2));
 			}
