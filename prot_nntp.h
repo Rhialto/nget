@@ -88,9 +88,6 @@ class c_prot_nntp /*: public c_transfer_protocol */{
 		void doxover(c_nrange *r);
 //		void nntp_queueretrieve(const char *match, ulong linelimit, int getflags);
 		void nntp_retrieve(const nget_options &options);
-		void nntp_print_retrieving_headers(ulong lll,ulong hhh,ulong ccc,ulong bbb);
-//		void nntp_print_retrieving_articles(long nnn, long tot,long done,long btot,long bbb);
-//		void nntp_print_retrieving_articles(arinfo *ari, arinfo*tot);
 		void nntp_group(c_group_info::ptr group, int getheaders, const nget_options &options);
 		void nntp_dogroup(int getheaders);
 		//void nntp_doarticle(long num,long ltotal,long btotal,char *fn);

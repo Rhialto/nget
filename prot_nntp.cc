@@ -88,7 +88,6 @@ int c_prot_nntp::doputline(int echo,const char * str,va_list ap){
 	if (echo)
 		printf(">%s\n",fpbuf);
 	fpbuf[i]='\r';fpbuf[i+1]='\n';
-	time(&lasttime);
 //	if (((i=sockprintf(ch,"%s\r\n",fpbuf))<=0)){
 //	if (((i=sock.putf("%s\r\n",fpbuf))<=0)){
 //	if (((i=sock.putf("%s\r\n",fpbuf))<=0)){
@@ -110,7 +109,6 @@ int c_prot_nntp::getline(int echo){
 		throw TransportExError(Ex_INIT,"nntp_getline:%i %s(%i)",i,strerror(errno),errno);
 	}else {
 		cbuf=sock.rbufp();
-		time(&lasttime);
 		if (echo)
 			printf("%s\n",cbuf);
 	}
@@ -135,15 +133,28 @@ int c_prot_nntp::getreply(int echo){
 	return code;
 }
 
-inline void c_prot_nntp::nntp_print_retrieving_headers(ulong lll,ulong hhh,ulong ccc,ulong bbb){
-	long tot=hhh-lll+1,done=ccc-lll+1;
-	time_t dtime=lasttime-starttime;
-	long Bps=(dtime>0)?bbb/dtime:0;
-	long Bph=(done>0)?bbb/done:0;
-	if (!quiet) clear_line_and_return();
-	printf("Retrieving headers %lu-%lu: %li %3li%% %liB/s %s",lll,hhh,done,(tot!=0)?(done*100/tot):0,Bps,durationstr((Bps>0)?((hhh-ccc)*Bph)/(Bps):0).c_str());
-	fflush(stdout);//@@@@
-}
+class XoverProgress {
+	public:
+		time_t lasttime, starttime, curt;
+		void print_retrieving_headers(ulong low,ulong high,ulong cur,ulong bytes){
+			long tot=high-low+1,done=cur-low+1;
+			time_t dtime=lasttime-starttime;
+			long Bps=(dtime>0)?bytes/dtime:0;
+			long Bph=(done>0)?bytes/done:0;
+			if (!quiet) clear_line_and_return();
+			printf("Retrieving headers %lu-%lu: %li %3li%% %liB/s %s",low,high,done,(tot!=0)?(done*100/tot):0,Bps,durationstr((Bps>0)?((high-cur)*Bph)/(Bps):0).c_str());
+			fflush(stdout);//@@@@
+			time(&lasttime);
+		};
+		bool needupdate(void) {
+			time(&curt);
+			return !quiet && curt>lasttime;
+		};
+		XoverProgress(void) {
+			lasttime = 0;
+			starttime = time(NULL);
+		};
+};
 /*
 2019    Re: question    Katya Moon <MoonAngel@shadowrealm.com>  Wed, 17 Nov 1999 09:42:53 -0600 <xMwyOI+pJ=mVLqMociXeHexHGW92@4ax.com>      <3830CF31.D41E1511@tampabay.rr.com>     1145    9       Xref: rQdQ alt.chocobo:2019
 2020    Re: well then!  Katya Moon <MoonAngel@shadowrealm.com>  Wed, 17 Nov 1999 09:44:37 -0600 <Fs0yOEVKaIamwKGBgE=82Fk21OcM@4ax.com>      <3831B98A.72815A01@tampabay.rr.com>     1209    10      Xref: rQdQ alt.chocobo:2020
@@ -167,23 +178,19 @@ examining the response to the LIST OVERVIEW.FMT command. Where no data
 exists, a null field must be provided
 */
 void c_prot_nntp::doxover(ulong low, ulong high){
+	XoverProgress progress;
 	char *p;
-	time_t curt,lastt=0;
 	char *t[10];
 	ulong bytes=0,realnum=0,lowest=0;
-	int i,dcounter=0,dtrip=10,dtripmax=50,dtripmin=2,dtripdiv=50;
+	int i;
 	nntp_doopen();
 	nntp_dogroup(0);
-	if (quiet<2)
-		time(&starttime);
 	if (!quiet)
-		nntp_print_retrieving_headers(low,high,low,0);
+		progress.print_retrieving_headers(low,high,low,0);
 	if (low==high)
 		chkreply(stdputline(debug>=DEBUG_MED,"XOVER %lu",low));//save a few bytes
 	else
 		chkreply(stdputline(debug>=DEBUG_MED,"XOVER %lu-%lu",low,high));
-	time(&starttime);
-	time(&curt);
 	//stdgetreply(debug);
 	unsigned long an=0;
 	c_nntp_header nh;
@@ -230,19 +237,9 @@ void c_prot_nntp::doxover(ulong low, ulong high){
 			realnum++;
 			if (lowest==0){
 				lowest=an;
-				dtrip=(high-lowest)/dtripdiv;
-				if (dtrip>dtripmax)
-					dtrip=dtripmax;
-				else if (dtrip<dtripmin)
-					dtrip=dtripmin;
 			}
-			dcounter++;
-			time(&curt);
-			if (!quiet && dcounter>=dtrip && curt>lastt){
-				nntp_print_retrieving_headers(lowest,high,an,bytes);
-				dcounter=0;
-				time(&lastt);
-			}
+			if (progress.needupdate())
+				progress.print_retrieving_headers(lowest,high,an,bytes);
 		}else{
 			printf("error retrieving xover (%i<=7): ",i);
 			for (int j=0;j<i;j++)
@@ -255,7 +252,7 @@ void c_prot_nntp::doxover(ulong low, ulong high){
 	if(quiet<2 /*&& an*/){
 		if (lowest==0)
 			lowest=an=low;
-		nntp_print_retrieving_headers(lowest,high,an,bytes);
+		progress.print_retrieving_headers(lowest,high,an,bytes);
 		printf(" (%li)\n",realnum);
 	}
 }
@@ -1056,7 +1053,6 @@ void c_prot_nntp::nntp_doopen(void){
 		if(!host){
 			throw UserExFatal(Ex_INIT,"nntp_doopen: no host selected");
 		}
-		time(&lasttime);
 		int i;
 	//	if((ch=make_connection("nntp",SOCK_STREAM,host.c_str(),NULL,cbuf,cbuf_size))<0){
 		if((i=sock.open(host->addr.c_str(),"nntp"))<0){

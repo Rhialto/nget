@@ -132,8 +132,6 @@ void print_error_status(void){
 }
 
 
-time_t lasttime;
-
 #define NUM_OPTIONS 30
 #ifndef HAVE_LIBPOPT
 
@@ -865,8 +863,7 @@ int main(int argc, char ** argv){
 		}
 
 
-		time(&lasttime);
-		srand(lasttime);
+		srand(time(NULL));
 		if (argc<2){
 			print_help();
 		}

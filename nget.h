@@ -26,7 +26,6 @@
 //#include "datfile.h"
 
 //extern c_data_file cfg;
-extern time_t lasttime;
 extern string nghome;
 /*extern c_server_list servers;
 extern c_group_info_list groups;
