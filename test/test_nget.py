@@ -2110,6 +2110,27 @@ class ConfigErrorTestCase(TestCase, DecodeTest_base):
 		output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput('-g test -r .'), 4)
 		self.verifyoutput('0001')
 		self.vfailUnlessEqual(output.count("ERRORS: 2 user"), 1)
+	
+	def test_NGETRC(self):
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, rcfilename='_config1')
+		rc=os.path.join(self.nget.rcdir,'_config1')
+		output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput('-g test -r .'), 128) #is 128 really the best exit status for this?
+		self.failUnless(output.count("ngetrc"))
+		os.environ['NGETRC'] = rc
+		try:
+			self.vfailIf(self.nget.run('-g test -r .'))
+			self.verifyoutput('0001')
+		finally:
+			del os.environ['NGETRC']
+
+	def test_bad_NGETRC(self):
+		os.environ['NGETRC'] = "foobar1"
+		try:
+			self.nget = util.TestNGet(ngetexe, self.servers.servers)
+			output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput('-g test -r .'), 128) #is 128 really the best exit status for this?
+		finally:
+			del os.environ['NGETRC']
+		self.failUnless(output.count("foobar1"))
 
 
 class XoverTest_base(DecodeTest_base):

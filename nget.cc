@@ -1024,11 +1024,21 @@ int main(int argc, const char ** argv){
 		else {
 			nget_options options;
 			{
-				string ngetrcfn = nghome + ".ngetrc";
-				if (!fexists(ngetrcfn)) {
-					ngetrcfn = nghome + "_ngetrc";
+				char *cp;
+				cp = getenv("NGETRC");
+				string ngetrcfn;
+				if (cp) {
+					ngetrcfn = cp;
 					if (!fexists(ngetrcfn))
+						throw ConfigExFatal(Ex_INIT,"NGETRC %s: not found", ngetrcfn.c_str());
+				}
+				else {
+					ngetrcfn = nghome + ".ngetrc";
+					if (!fexists(ngetrcfn)) {
+						ngetrcfn = nghome + "_ngetrc";
+						if (!fexists(ngetrcfn))
 							throw ConfigExFatal(Ex_INIT,"neither %s nor %s exist", (nghome + ".ngetrc").c_str(), ngetrcfn.c_str());
+					}
 				}
 				CfgSection cfg(ngetrcfn);
 				const CfgSection *galias,*halias,*hpriority;
@@ -1071,7 +1081,7 @@ int main(int argc, const char ** argv){
 				options.set_makedirs(cfg.geta("makedirs"));
 				
 				cfg.get("cachedir",ngcachehome);//.ngetrc setting overrides default
-				char *cp=getenv("NGETCACHE");//environment var overrides .ngetrc
+				cp=getenv("NGETCACHE");//environment var overrides .ngetrc
 				if (cp)
 					ngcachehome=cp;
 				ngcachehome = path_join(ngcachehome, "");

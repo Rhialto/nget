@@ -3,6 +3,7 @@
   * Change fileid calculation for single-part posts to include the message-id, fixes problem with multiple posts with the same subject/author not downloading when using -K.
   * Support IPv6 if available. (Can force off with configure --disable-ipv6)
   * If a hostname resolves to multiple ip addresses, try as many as needed to find one that works.
+  * Add NGETRC environment variable to specify alternate config file directly.
 
 2003-12-27 v0.26:
   * Add simplest possible example to manpage.
