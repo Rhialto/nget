@@ -85,10 +85,11 @@ class AuthInfo:
 			return self.caps.get('*', 1) #default to full auth
 		return self.caps[cmd]
 
-def cmd_split(rcmd):
+def split_cmd(rcmd):
 	rs = rcmd.split(' ',1)
+	rs[0] = rs[0].lower()
 	if len(rs)==1:
-		return rs[0], None
+		return rs[0], ''
 	else:
 		return rs
 
@@ -115,7 +116,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			rcmd = readline()
 			if not rcmd: break
 			rcmd = rcmd.strip()
-			cmd,args = cmd_split(rcmd.lower())
+			cmd,args = split_cmd(rcmd)
 			try:
 				self.call_command(cmd, args)
 			except NNTPDisconnect, d:
@@ -126,7 +127,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 				self.nwrite(str(e))
 
 	def cmd_authinfo(self, args):
-		cmd,arg = args.split(' ',1)
+		cmd,arg = split_cmd(args)
 		if cmd=='user':
 			self._tmpuser=arg
 			raise NNTPAuthPassRequired
@@ -147,10 +148,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 		self.nwrite("111 "+time.strftime("%Y%m%d%H%M%S",time.gmtime()))
 	
 	def cmd_list(self, args):
-		if args:
-			subcmd, args = cmd_split(args)
-		else:
-			subcmd = ''
+		subcmd, args = split_cmd(args)
 		self.call_command('list_'+subcmd, args)
 	def cmd_list_newsgroups(self, args):
 		self.nwrite("215 information follows")
