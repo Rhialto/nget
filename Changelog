@@ -1,3 +1,6 @@
+2002-xx-xx v0.xx:
+  * Handle invalid References starting with a '.'.
+
 2002-01-23 v0.16:
   * Print info line about each file before beginning retrieval.
   * Fix slow exit with very large midinfo files.

@@ -558,12 +558,12 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),gro
 					printf("invalid line %lu mode %i\n",curline,mode);
 			}
 			else if (mode==REFERENCES_MODE && nf){//adding references on new file
-				if (buf[0]=='.'){
-					assert(buf[1]==0);
+				if (buf[0]=='.' && buf[1]==0){
 					mode=PART_MODE;
 					np=NULL;
 					continue;
 				}else{
+					if (buf[0]=='.') buf++;//unescape any invalid references that started with .
 					nf->references.push_back(buf);
 				}
 			}else{
@@ -612,6 +612,7 @@ c_nntp_cache::~c_nntp_cache(){
 					assert(!nf->parts.empty());
 					f->putf("%i\t%lu\t%lu\t%s\t%s\t%i\t%i\n",nf->req,nf->flags,nf->fileid,nf->subject.c_str(),nf->author.c_str(),nf->partoff,nf->tailoff);//FILE_MODE
 					for(ri = nf->references.begin();ri!=nf->references.end();++ri){
+						if ((*ri)[0]=='.') f->putf("."); //escape possible invalid references that might start with .
 						f->putf("%s\n",ri->c_str());//REFERENCES_MODE
 					}
 					f->putf(".\n");//end REFERENCES_MODE
