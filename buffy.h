@@ -1,6 +1,6 @@
 /*
     buffy.* - simple buffering for low cpu gets() functionality (ex. for sockets).
-    Copyright (C) 2000,2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 2000,2002-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -44,6 +44,7 @@ class CharBuffer {
 		int size(void)const{return bsize;}
 		bool empty(void)const{return !bsize;}
 		void clear(void){bsize=0;}
+		char operator[](int i) const {return cbuf[i];}
 		char *data(void){return cbuf;}
 		char *c_str(void){
 			if (bsize>=reserved)

@@ -333,14 +333,14 @@ int parfile_check(const string &parfilename, const string &path, const t_nocase_
 	c_file_fd f(parfilename.c_str(), "rb");
 	if (parfile_check_header(f))
 		return 1;
-	uchar buf[2048];
-	f.readfull(buf, 16 + 16 + 8);//ignore control hash, set hash, volume number
+	CharBuffer buf(64);
+	f.readfull(buf.data(), 16 + 16 + 8);//ignore control hash, set hash, volume number
 	uint32_t numfiles;
 	uint32_t filelistsize;
 	f.read_le_u32(&numfiles);
-	f.readfull(buf, 4 + 8); //ignore high dword of numfiles, start offset of the file list
+	f.readfull(buf.data(), 4 + 8); //ignore high dword of numfiles, start offset of the file list
 	f.read_le_u32(&filelistsize);
-	f.readfull(buf, 4 + 8 + 8); //ignore high dword of filelistsize, start offset of the data, data size
+	f.readfull(buf.data(), 4 + 8 + 8); //ignore high dword of filelistsize, start offset of the data, data size
 
 	for (unsigned int i=0;i<numfiles;++i) {
 		uint32_t entrysize;
@@ -349,20 +349,21 @@ int parfile_check(const string &parfilename, const string &path, const t_nocase_
 		uchar file_hash[16];
 
 		f.read_le_u32(&entrysize);
-		f.readfull(buf, 4); //ignore high dword of entrysize
+		f.readfull(buf.data(), 4); //ignore high dword of entrysize
 		f.readfull(&status, 1);
-		f.readfull(buf, 7); //rest of status field is unused
+		f.readfull(buf.data(), 7); //rest of status field is unused
 		f.read_le_u64(&filesize);
 		f.readfull(file_hash, 16);
-		f.readfull(buf, 16); //ignore 16k hash
-		f.readfull(buf, entrysize - 0x38); ///#####don't overflow buf
+		f.readfull(buf.data(), 16); //ignore 16k hash
+		buf.reserve(entrysize - 0x38);
+		f.readfull(buf.data(), entrysize - 0x38);
 		
 		if (!(status & 1)) //handle status bit0 = 0 - file is not saved in the parity volume set
 			continue; //if the file isn't in the parity set, then retrieving more pxxs won't help if it is bad, so don't bother checking it.
 		
 		string filename;
 		for (unsigned int n=0; n<(entrysize-0x38)/2; ++n) {
-			if (buf[n*2]>127 || buf[n*2+1]) {
+			if ((uchar)buf[n*2]>127 || buf[n*2+1]) {
 				PERROR("in %s: can't handle non-ascii filename for file %u", parfilename.c_str(), i);
 				set_autopar_warn_status();
 				++needed;
