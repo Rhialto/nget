@@ -98,14 +98,17 @@ bool ParInfo::maybe_add_parfile(const c_nntp_file::ptr &f) {
 	return false;
 }
 
-void ParInfo::get_initial_pars(c_nntp_files_u &fc) {
+int ParInfo::get_initial_pars(c_nntp_files_u &fc) {
+	int count=0;
 	for (t_server_file_list::const_iterator spi=serverpars.begin(); spi!=serverpars.end(); ++spi){
 		fc.addfile(spi->second, path, temppath);
+		count++;
 	}
 	serverpars.clear();
 	for (t_parset_map::iterator psi=parsets.begin(); psi!=parsets.end(); ++psi){
-		psi->second.get_initial_pars(fc, path, temppath);
+		count+=psi->second.get_initial_pars(fc, path, temppath);
 	}
+	return count;
 }
 
 int ParInfo::get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nntp_files_u &fc) {
@@ -167,7 +170,7 @@ void ParInfo::maybe_get_pxxs(c_nntp_files_u &fc) {
 		assert(r);
 	}
 
-	get_initial_pars(fc);
+	int total_added = get_initial_pars(fc);
 
 	for (t_basefilenames_map::const_iterator bfni=localpars.basefilenames.begin(); bfni!=localpars.basefilenames.end(); ++bfni) {
 		if (finished_parsets.find(bfni->first)!=finished_parsets.end())
@@ -200,14 +203,21 @@ void ParInfo::maybe_get_pxxs(c_nntp_files_u &fc) {
 			PDEBUG(DEBUG_MIN, "parset %s in %s: %i goodpxxs, %i badp??s, %i bad/missing files, trying to get %i more", hexstr(bfni->first).c_str(), path.c_str(), goodvols.size(), badcount, bad, needed);
 		}
 		if (needed) {
-			if (!get_pxxs(needed, goodvols, bfni->first, fc)) {//modifies goodvols, but we don't care.
+			int parset_added = get_pxxs(needed, goodvols, bfni->first, fc);//modifies goodvols, but we don't care.
+			if (!parset_added) {
 				set_autopar_error_status();
 				finished_parsets.insert(bfni->first);
 			}
+			total_added += parset_added;
 		}else{
 			set_autopar_ok_status();
 			finished_parsets.insert(bfni->first);
+			finished_okcount++;
 		}
+	}
+	
+	if (!total_added) {
+		PDEBUG(DEBUG_MIN, "par checking in %s done (%i/%i parsets ok)", path.c_str(), finished_okcount, finished_parsets.size());
 	}
 }
 

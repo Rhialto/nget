@@ -46,15 +46,19 @@ class ParSetInfo {
 		void addserverpxx(const c_nntp_file::ptr &f) {
 			serverpxxs.insert(t_server_file_list::value_type(f->badate(), f));
 		}
-		void get_initial_pars(c_nntp_files_u &fc, const string &path, const string &temppath) {
+		int get_initial_pars(c_nntp_files_u &fc, const string &path, const string &temppath) {
+			int count=0;
 			for (t_server_file_list::const_iterator spi=serverpars.begin(); spi!=serverpars.end(); ++spi){
 				fc.addfile(spi->second, path, temppath);
+				count++;
 			}
 			if (serverpars.empty() && !serverpxxs.empty()){
 				fc.addfile(serverpxxs.begin()->second, path, temppath);
+				count++;
 				serverpxxs.erase(serverpxxs.begin());
 			}
 			serverpars.clear();
+			return count;
 		}
 		void release_unclaimed_pxxs(vector<c_nntp_file::ptr> &unclaimedfiles){
 			for (t_server_file_list::const_iterator spi=serverpxxs.begin(); spi!=serverpxxs.end(); ++spi){
@@ -102,19 +106,20 @@ class ParInfo {
 		t_server_file_list serverpxxs;
 		typedef map<string, ParSetInfo> t_parset_map;
 		set<string> finished_parsets; // which sethashes we have finished (either tested ok, or exhausted all hope)
+		int finished_okcount; // how many of the finished_parsets were ok
 		t_parset_map parsets;
 		LocalParFiles localpars;
 		const string path;
 		const string temppath;
 	public:
-		ParInfo(const string &p,const string &t):path(p),temppath(t){//well, saving and using only the first temppath encountered isn't exactly perfect, but I doubt many people really download multiple things to the same path but with different temp paths.  And I'm lazy.
+		ParInfo(const string &p,const string &t):finished_okcount(0),path(p),temppath(t){//well, saving and using only the first temppath encountered isn't exactly perfect, but I doubt many people really download multiple things to the same path but with different temp paths.  And I'm lazy.
 			localpars.addfrompath(path);
 		}
 		ParSetInfo *parset(const string &basename) { 
 			return &parsets[basename]; // will insert a new ParSetInfo into parsets if needed.
 		}
 		bool maybe_add_parfile(const c_nntp_file::ptr &f);
-		void get_initial_pars(c_nntp_files_u &fc);
+		int get_initial_pars(c_nntp_files_u &fc);
 		int get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nntp_files_u &fc);
 		void maybe_get_pxxs(c_nntp_files_u &fc);
 };
