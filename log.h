@@ -95,7 +95,7 @@ DEFINE_EX_CLASSES(Application, baseEx);
 #include <sys/time.h>
 #include <unistd.h>
 #include <stdarg.h>
-#include <list.h>
+#include <list>
 #include <zlib.h>
 
 #define DEBUGLOGPUTF(a, args...) putf(__FILE__,__FUNCTION__,__LINE__,a "\n" , ## args)

@@ -22,11 +22,7 @@
 #include "config.h"
 #endif
 #include <string>
-#ifdef HAVE_HASH_MAP_H
-#include <hash_map.h>
-#else
-#include <map.h>
-#endif
+#include "_hash_map.h"
 #include <stdio.h>
 #include "stlhelp.h"
 #include "file.h"
@@ -82,7 +78,7 @@ class c_data_item
 		virtual ~c_data_item(){}
 };
 
-#ifdef HAVE_HASH_MAP_H
+#ifdef USE_HASH_MAP
 typedef hash_map<const char*, c_data_item*, hash<const char*>, eqstr> data_list ;
 #else
 typedef map<const char*, c_data_item*, ltstr> data_list ;

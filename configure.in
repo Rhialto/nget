@@ -14,7 +14,7 @@ MY_CHECK_EXCEPTIONS
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h getopt.h hash_map.h sstream regex.h term.h inttypes.h)
+AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h getopt.h hash_map ext/hash_map hash_map.h sstream regex.h term.h inttypes.h)
 
 dnl SunOS needs seperate libs for network stuff.
 AC_SEARCH_LIBS(socket, socket)

@@ -24,7 +24,7 @@
 #endif
 #include <string>
 #include <sys/types.h>
-#include <map.h>
+#include <map>
 #include <stdio.h>
 #include "file.h"
 

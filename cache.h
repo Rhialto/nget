@@ -23,15 +23,9 @@
 #endif
 #include <sys/types.h>
 #include <string>
-//#include <map.h>
-#include <map>//#### hmmmm? needed for cygwin instead of map.h?
-#ifdef HAVE_HASH_MAP_H
-#include <hash_map.h>
-//#else
-//#include <multimap.h>
-#endif
-#include <multimap.h>
-#include <list.h>
+#include <map>
+#include "_hash_map.h"
+#include <list>
 #include <vector>
 #include "file.h"
 #include "log.h"
@@ -192,7 +186,7 @@ struct e_nntp_file_subject : public e_nntp_file<typename Op::arg1_type,typename 
 
 
 //typedef hash_map<const char*, c_nntp_file*, hash<const char*>, eqstr> t_nntp_files;
-#ifdef HAVE_HASH_MAP_H
+#ifdef USE_HASH_MAP
 typedef hash_multimap<t_id, c_nntp_file::ptr> t_nntp_files;
 #else
 typedef multimap<t_id, c_nntp_file::ptr> t_nntp_files;
@@ -242,7 +236,7 @@ class c_message_state : public c_refcounted<c_message_state>{
 		c_message_state(string mid,time_t da,time_t dr):messageid(mid),date_added(da),date_removed(dr){}
 };
 
-#ifdef HAVE_HASH_MAP_H
+#ifdef USE_HASH_MAP
 typedef hash_map<const char*, c_message_state::ptr, hash<const char*>, eqstr> t_message_state_list;
 #else
 typedef map<const char*, c_message_state::ptr, ltstr> t_message_state_list;

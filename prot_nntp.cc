@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 #include "prot_nntp.h"
-#include <list.h>
+#include <list>
 #include <stdio.h>
 #include <ctype.h>
 

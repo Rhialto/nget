@@ -26,7 +26,7 @@
 
 #include <sys/types.h>
 #include <string>
-#include <multimap.h>
+#include <map>
 
 #include "myregex.h"
 
