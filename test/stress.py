@@ -22,7 +22,7 @@ from __future__ import nested_scopes
 import nntpd,util
 
 import os, sys, time, random, atexit
-from optik import Option, OptionValueError
+from optparse import Option, OptionValueError
 def check_long (option, opt, value):
 	try:
 		return long(value)
@@ -34,7 +34,7 @@ class MyOption (Option):
 	TYPE_CHECKER = Option.TYPE_CHECKER.copy()
 	TYPE_CHECKER["long"] = check_long
 
-from optik import OptionParser
+from optparse import OptionParser
 parser = OptionParser(option_class=MyOption)
 #parser.add_option("-t", "--threads",
 #		action="store", type="int", dest="threads",
