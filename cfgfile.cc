@@ -47,7 +47,8 @@ void CfgSection::load(c_file *f) {
 			//				printf("new item: %s=%s\n",n,v);
 		}
 		else {
-			printf("invalid line\n");
+			PERROR("%s: invalid line '%s'",f->name(),buf);
+			set_user_error_status();
 		}
 	}
 }
