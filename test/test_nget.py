@@ -613,6 +613,11 @@ class RetrieveTest_base(DecodeTest_base):
 		self.addarticles('0002', 'uuencode_multi3', groups=[""])
 		self.vfailIf(self.nget_run('-g "" -ir .'))
 		self.verifyoutput(['0002'])
+	
+	def test_galias(self):
+		self.nget.writerc(self.servers.servers, extratail="{galias\nfoobar=test\n}\n")
+		self.vfailIf(self.nget_run('-g foobar -r foo'))
+		self.verifyoutput(['0001'])
 
 	def test_decode_overrides_k_and_K(self):
 		self.vfailIf(self.nget_run('-k -g test --decode -r joy'))
