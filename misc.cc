@@ -48,10 +48,9 @@ void init_my_timezone(void){
 }
 #else
 void init_my_timezone(void){
-	struct tm tm;
 	time_t t;
 	time(&t);
-	struct tm *lt = localtime_r(&t);
+	struct tm *lt = localtime(&t);
 	my_timezone=lt->tm_gmtoff;
 //	printf("my_timezone2=%li\n",my_timezone);
 }
