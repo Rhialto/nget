@@ -375,7 +375,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 	int opt_idx;
 #endif
 #endif
-	int redo=0,redone=0;
+	int redo=0,redone=0,mustredo_on_skip=0;
 	const char * loptarg=NULL;
 	//printf("limit:%i tries:%i case:%i complete:%i dupcheck:%i\n",linelimit,maxretry,gflags&GETFILES_CASESENSITIVE,!(gflags&GETFILES_GETINCOMPLETE),!(gflags&GETFILES_NODUPECHECK));
 
@@ -603,8 +603,10 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 					return 1;
 				default:
 					if (options.qstatus){
+						mustredo_on_skip = 1;
 						if (!options.badskip) nntp.nntp_retrieve(options.gflags,options.writelite);
 						options.qstatus=0;
+						mustredo_on_skip = 0;
 					}
 					switch (c){
 						case '@':
@@ -726,6 +728,11 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 			printf(" (fatal, aborting..)\n");
 			if (options.host)
 				options.badskip=2;//only set badskip if we are forcing a single host, otherwise we could exclude other hosts that are working
+			if (mustredo_on_skip) {
+				redo=1;
+				mustredo_on_skip=0;
+				options.qstatus=0;
+			}
 			set_fatal_error_status();
 		}catch(ExFatal &e){
 			printCaughtEx_nnl(e);
@@ -733,6 +740,11 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 			//else if (n==EX_U_FATAL)
 			if (options.host)
 				options.badskip=1;//only set badskip if we are forcing a single host, otherwise we could exclude other hosts that are working
+			if (mustredo_on_skip) {
+				redo=1;
+				mustredo_on_skip=0;
+				options.qstatus=0;
+			}
 			set_fatal_error_status();
 		}catch(ExError &e){
 		//}catch(baseEx &e){//doesn't work..?
@@ -747,7 +759,12 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				printf("\n");
 				if (c==-1)
 					return 0;//end of args.
-				redo=0;redone=0;
+				redone=0;
+				if (mustredo_on_skip) {
+					redo=1;
+					mustredo_on_skip=0;
+					options.qstatus=0;
+				}
 			}
 		}
 	}
