@@ -342,20 +342,20 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 					s=(*dsi);
 					assert(s);
 					PDEBUG(DEBUG_MED,"nntp_group: serv(%lu) %f>=%f",s->serverid,group->priogrouping->getserverpriority(s->serverid),group->priogrouping->defglevel);
-					ConnectionHolder holder(&sockpool, &connection, s->serverid);
-					nntp_doopen();
 					try {
+						ConnectionHolder holder(&sockpool, &connection, s->serverid);
+						nntp_doopen();
 						nntp_dogroup(getheaders);
 						succeeded++;
 					} catch (baseCommEx &e) {
 						printCaughtEx(e);
 						if (e.isfatal()) {
-							printf("fatal error, won't try %s again\n",s->addr.c_str());
+							printf("fatal error, won't try %s again\n", s->alias.c_str());
 							//fall through to removing server from list below.
 						}else{
 							//if this is the last retry, don't say that we will try it again.
 							if (redone+1 < options.maxretry)
-								printf("will try %s again\n",s->addr.c_str());
+								printf("will try %s again\n", s->alias.c_str());
 							++dsi;
 							continue;//don't remove server from list
 						}
@@ -555,21 +555,21 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 		for (sapi = sap.begin(); sapi != sap.end();){
 			sa=(*sapi).second;
 			assert(sa);
-			ConnectionHolder holder(&sockpool, &connection, sa->serverid);
-			nntp_doopen();
 			ari->partnum=part->partnum;
 			ari->anum=sa->articlenum;
 			ari->bytestot=sa->bytes;
 			ari->linestot=sa->lines;
 			ari->linesdone=0;
 			ari->bytesdone=0;
-			if (toti->doarticle_show_multi==SHOW_MULTI_SHORT)
-				ari->server_name=connection->server->shortname.c_str();
-			else if (toti->doarticle_show_multi==SHOW_MULTI_LONG)
-				ari->server_name=connection->server->alias.c_str();
 			PDEBUG(DEBUG_MED,"trying server %lu article %lu",sa->serverid,sa->articlenum);
 			list<string> buf;//use a list of strings instead of char *.  Easier and it cleans up after itself too.
 			try {
+				ConnectionHolder holder(&sockpool, &connection, sa->serverid);
+				nntp_doopen();
+				if (toti->doarticle_show_multi==SHOW_MULTI_SHORT)
+					ari->server_name=connection->server->shortname.c_str();
+				else if (toti->doarticle_show_multi==SHOW_MULTI_LONG)
+					ari->server_name=connection->server->alias.c_str();
 				nntp_dogroup(0);
 				chkreply(stdputline(debug>=DEBUG_MED,"ARTICLE %li",sa->articlenum));
 #ifdef FILE_DEBUG
@@ -586,14 +586,14 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 			} catch (baseCommEx &e) {
 				printCaughtEx(e);
 				if (e.isfatal()) {
-					printf("fatal error, won't try %s again\n",connection->server->addr.c_str());
+					printf("fatal error, won't try %s again\n", nconfig.getservername(sa->serverid));
 					sap_erase_i = sapi;
 					++sapi;
 					sap.erase(sap_erase_i);
 				}else{
 					//if this is the last retry, don't say that we will try it again.
 					if (redone+1 < options.maxretry)
-						printf("will try %s again\n",connection->server->addr.c_str());
+						printf("will try %s again\n", nconfig.getservername(sa->serverid));
 					++sapi;
 				}
 				continue;

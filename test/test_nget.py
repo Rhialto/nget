@@ -34,8 +34,10 @@ class DecodeTest_base(unittest.TestCase):
 				continue
 			server.addarticle(["test"], nntpd.FileArticle(open(fn, 'r')))
 			
-	def addarticles(self, testnum, dirname):
-		for server in self.servers.servers:
+	def addarticles(self, testnum, dirname, servers=None):
+		if not servers:
+			servers = self.servers.servers
+		for server in servers:
 			self.addarticles_toserver(testnum, dirname, server)
 
 	def verifyoutput(self, testnum):
@@ -152,7 +154,30 @@ class ConnectionErrorTestCase(unittest.TestCase, DecodeTest_base):
 		self.failIf(self.nget.run("-g test"), "nget process returned with an error")
 		self.servers.stop()
 		del self.servers
-		self.failUnless(os.WEXITSTATUS(self.nget.run("-G test -r .")) & 64, "nget process did not detect connection error")
+		self.failUnless(os.WEXITSTATUS(self.nget.run("-G test -r .")) & 8, "nget process did not detect connection error")
+	
+	def test_OneLiveServer(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		deadserver = nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)
+		self.nget = util.TestNGet(ngetexe, [deadserver]+self.servers.servers+[deadserver], priorities=[3, 1, 3])
+		deadserver.server_close()
+		self.servers.start()
+		self.addarticles('0002', 'uuencode_multi')
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.verifyoutput('0002')
+	
+	def test_OneLiveServerRetr(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		deadservers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, deadservers.servers+self.servers.servers+deadservers.servers, priorities=[3, 1, 3])
+		deadservers.start()
+		self.servers.start()
+		self.addarticles('0002', 'uuencode_multi')
+		self.addarticles('0002', 'uuencode_multi', deadservers.servers)
+		self.failIf(self.nget.run("-g test"), "nget process returned with an error")
+		deadservers.stop()
+		self.failIf(self.nget.run("-G test -r ."), "nget process returned with an error")
+		self.verifyoutput('0002')
 	
 	def test_DiscoServer(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler)])

@@ -18,7 +18,7 @@
 import os, random, sys, shutil
 
 class TestNGet:
-	def __init__(self, nget, servers):
+	def __init__(self, nget, servers, priorities=None):
 		self.exe = nget
 		self.rcdir = os.path.join(os.environ.get('TMPDIR') or '/tmp', 'nget_test_'+hex(random.randrange(0,sys.maxint)))
 		os.mkdir(self.rcdir)
@@ -31,6 +31,7 @@ class TestNGet:
 		rc.write("delay=0\n")
 #		rc.write("debug=3\n")
 #		rc.write("debug=2\n")
+
 		rc.write("{halias\n")
 		for i in range(0, len(servers)):
 			rc.write("""
@@ -42,7 +43,19 @@ class TestNGet:
  }
 """%(i, ':'.join(map(str,servers[i].socket.getsockname())), i, i+1))
 		rc.write("}\n")
+
+		if priorities:
+			rc.write("{hpriority\n")
+			rc.write(" {default\n")
+			for i,p in zip(range(0, len(servers)), priorities):
+				rc.write("  host%i=%s\n"%(i, p))
+			rc.write(" }\n")
+			rc.write("}\n")
+			
 		rc.close()
+
+		#print 'begin ngetrc:\n',open(os.path.join(self.rcdir, '_ngetrc'), 'r').read()
+		#print '--end ngetrc'
 	
 	def run(self, args):
 		os.environ['NGETHOME'] = self.rcdir

@@ -110,6 +110,11 @@ class c_nget_config {
 		int idletimeout;
 		int maxconnections;
 
+		const char * getservername(ulong serverid) const {
+			c_server *s=getserver(serverid);
+			if (s) return s->alias.c_str();
+			return "invalid_serverid";
+		}
 		c_server* getserver(ulong serverid) const {
 			t_server_list::const_iterator sli=serv.find(serverid);
 			if (sli!=serv.end())
