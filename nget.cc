@@ -1,6 +1,6 @@
 /*
     nget - command line nntp client
-    Copyright (C) 1999-2001  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -225,7 +225,7 @@ static void addoptions(void)
 };
 static void print_help(void){
 	printf("nget v0.15.2 - nntp command line fetcher\n");
-	printf("Copyright 1999-2001 Matthew Mueller <donut@azstarnet.com>\n");
+	printf("Copyright 1999-2002 Matthew Mueller <donut@azstarnet.com>\n");
 	printf("\n\
 This program is free software; you can redistribute it and/or modify\n\
 it under the terms of the GNU General Public License as published by\n\
