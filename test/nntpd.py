@@ -73,6 +73,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 	def nwrite(self, s):
 		self.wfile.write(s+"\r\n")
 	def handle(self):
+		self.server.incr_conn()
 		readline = self.rfile.readline
 		self.nwrite("200 Hello World, %s"%(':'.join(map(str,self.client_address))))
 		self.group = None
@@ -140,6 +141,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			self.nwrite(str(anum)+'\t%(subject)s\t%(author)s\t%(date)s\t%(mid)s\t%(references)s\t%(bytes)s\t%(lines)s'%vars(article))
 		self.nwrite('.')
 	def cmd_article(self, args):
+		self.server.incr_retr()
 		if args[0]=='<':
 			try:
 				article = self.server.articles[args]
@@ -198,7 +200,19 @@ class NNTPTCPServer(StoppableThreadingTCPServer):
 		self.midindex = {}
 		self.auth = {}
 		self.adduser('','')
+		self.lock = threading.Lock()
+		self.conns = 0
+		self.retrs = 0
 		
+	def incr_conn(self):
+		self.lock.acquire()
+		self.conns += 1
+		self.lock.release()
+	def incr_retr(self):
+		self.lock.acquire()
+		self.retrs += 1
+		self.lock.release()
+
 	def adduser(self, user, password, caps=None):
 		self.auth[user]=AuthInfo(user, password, caps)
 

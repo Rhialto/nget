@@ -81,6 +81,10 @@ class TestNGet:
 			os.chdir(olddir)
 
 	
+	def clean_tmp(self):
+		shutil.rmtree(self.tmpdir)
+		os.mkdir(self.tmpdir)
+		
 	def clean_all(self):
 		shutil.rmtree(self.rcdir)
 		

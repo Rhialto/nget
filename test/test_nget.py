@@ -273,6 +273,37 @@ class RetrieveTestCase(unittest.TestCase, DecodeTest_base):
 	def test_date_iso(self):
 		self.failIf(self.nget.run('-g test -R "date 20020307T112059+0000 =="'), "nget process returned with an error")
 		self.verifyoutput('0002')
+	
+	def test_dupef(self):
+		self.failIf(self.nget.run('-g test -r joy'), "nget process returned with an error")
+		self.verifyoutput('0002')
+		self.failIf(self.nget.run('-G test -U -D -r joy'), "nget process returned with an error") #remove from midinfo so that we can test if the file dupe check catches it
+		self.failIf(self.nget.run('-G test -r joy'), "nget process returned with an error")
+		self.failUnlessEqual(self.servers.servers[0].conns, 1)
+
+	def test_dupef_D(self):
+		self.failIf(self.nget.run('-g test -r joy'), "nget process returned with an error")
+		self.verifyoutput('0002')
+		self.failIf(self.nget.run('-G test -U -D -r joy'), "nget process returned with an error")
+		self.failIf(self.nget.run('-G test -D -r joy'), "nget process returned with an error")
+		self.verifyoutput('0002')
+		self.failUnlessEqual(self.servers.servers[0].conns, 2)
+
+	def test_dupei(self):
+		self.failIf(self.nget.run('-g test -r .'), "nget process returned with an error")
+		self.verifyoutput(['0002','0001','0003'])
+		self.nget.clean_tmp()
+		self.failIf(self.nget.run('-G test -r .'), "nget process returned with an error")
+		self.verifyoutput([])
+		self.failUnlessEqual(self.servers.servers[0].conns, 1)
+
+	def test_dupei_D(self):
+		self.failIf(self.nget.run('-g test -r .'), "nget process returned with an error")
+		self.verifyoutput(['0002','0001','0003'])
+		self.nget.clean_tmp()
+		self.failIf(self.nget.run('-G test -D -r .'), "nget process returned with an error")
+		self.verifyoutput(['0002','0001','0003'])
+		self.failUnlessEqual(self.servers.servers[0].conns, 2)
 
 
 class XoverTestCase(unittest.TestCase, DecodeTest_base):
