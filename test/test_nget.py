@@ -1935,6 +1935,17 @@ class MetaGrouping_CacheRetrieveTestCase(TestCase, MetaGrouping_RetrieveTest_bas
 		self.vfailIf(self.nget.run('-G "*" -ir .'))
 		self.verifyoutput(['0002','0001','0004','refs01','refs02'])
 
+		#test that -G* uses the correct dir to look for the cache files.
+		os.environ['NGETCACHE'] = self.nget.tmpdir
+		try:
+			self.vfailUnlessExitstatus(self.nget.run('-G "*" -Dir .'), 4)
+		finally:
+			del os.environ['NGETCACHE']
+		
+		self.nget.writerc(self.servers.servers, options={'cachedir':self.nget.tmpdir})
+		self.vfailUnlessExitstatus(self.nget.run('-G "*" -Dir .'), 4)
+		
+
 class MetaGrouping_RetrieveTestCase(TestCase, MetaGrouping_RetrieveTest_base):
 	def setUp(self):
 		MetaGrouping_RetrieveTest_base.setUp(self)

@@ -229,7 +229,7 @@ c_group_info::ptr c_nget_config::addgroup(const string &alias, const string &nam
 }
 
 void c_nget_config::dogetallcachedgroups(vector<c_group_info::ptr> &groups) {
-	DIR *dir=opendir(nghome.c_str());
+	DIR *dir=opendir(ngcachehome.c_str());
 	struct dirent *de;
 	if (!dir)
 		throw PathExFatal(Ex_INIT,"opendir: %s(%i)",strerror(errno),errno);
