@@ -44,6 +44,7 @@ install_nget: nget
 
 install_ngetlite: ngetlite
 	$(install) -s -o root -g bin -m 0755 ngetlite $(bindir)
+	$(install) -o root -g bin -m 0644 ngetlite.1 $(mandir)/man1
 
 install: install_nget install_ngetlite
 

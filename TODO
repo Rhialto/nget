@@ -22,7 +22,6 @@ look into using a memory debugger
 *make -W switch to read in -w files and decode it all. (also if downloading any, update the file )
 
 definataly gonna do:
-*make manpage for ngetlite
 *make MID_INFO_MIN_KEEP, etc config options
 *update STL includes/etc to use new non-.h files, and std namespace
 *fix EINTR (should try read again, not err (also should keep the same timeout within multiple tries?))
