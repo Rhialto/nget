@@ -90,10 +90,6 @@ int c_prot_nntp::getreply(int echo){
 	int code;
 	if ((code=getline(echo))>=0)
 		code=atoi(cbuf);
-//	if (cbuf[3]=='-')
-//		do{
-//			ftp_getline(cbuf,cbuf_size);
-//		}while((atoi(cbuf)!=code)||(cbuf[3]!=' '));
 	return code;
 }
 
@@ -318,7 +314,6 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 		if (force_host){
 			ConnectionHolder holder(&sockpool, &connection, force_host->serverid);
 			nntp_doopen();
-//			assert(host);
 			nntp_dogroup(getheaders);
 		}else{
 			c_server* s;
@@ -542,7 +537,6 @@ void c_prot_nntp::nntp_dogetarticle(arinfo*ari,quinfo*toti,list<string> &buf){
 }
 
 int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *fn, const nget_options &options){
-	//c_file_stream f;
 	c_file_fd f;
 	c_nntp_server_article *sa=NULL;
 	t_nntp_server_articles_prioritized sap;
@@ -666,27 +660,6 @@ char * uu_fname_filter(void *v,char *fn){
 	PDEBUG(DEBUG_MED,"uu_fname_filter: filtered %s to %s",fn,buf);
 	return buf;
 }
-/*void c_prot_nntp::nntp_queueretrieve(const char *match, ulong linelimit, int getflags){
-	//if (!(filec=gcache->getfiles(filec,grange,match,linelimit,getflags)))
-	c_regex_nosub *reg=new c_regex_nosub(match,REG_EXTENDED + ((getflags&GETFILES_CASESENSITIVE)?0:REG_ICASE));
-	if (!reg)
-		throw new c_error(EX_A_FATAL,"couldn't allocate regex");
-	if (reg->geterror()){
-		char buf[256];
-		int e=reg->geterror();
-		reg->strerror(buf,256);
-		delete reg;
-		throw new c_error(EX_A_FATAL,"regex error %i:%s",e,buf);
-	}
-	nntp_pred *p=ecompose2(new e_land<bool>,
-			new e_binder2nd<e_nntp_file_lines<e_ge<ulong> > >(linelimit),
-			new e_binder2nd_p<e_nntp_file_subject<e_eq<string,c_regex_nosub*> > >(reg));
-
-	filec=gcache->getfiles(filec,grange,p,getflags);
-	delete p;
-	if (!filec)
-		throw new c_error(EX_U_WARN,"nntp_retrieve: no match for %s",match);
-}*/
 
 void print_nntp_file_info(c_nntp_file::ptr f, t_show_multiserver show_multi) {
 	char tconvbuf[TCONV_DEF_BUF_LEN];
@@ -1044,23 +1017,6 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 	cleanupcache();
 }
 void c_prot_nntp::nntp_auth(void){
-	/*if (user.size()<=0){
-		string fn=nghome+"/"+host+"/.authinfo";
-		c_file_fd f;
-		f.initrbuf(256);
-		if (!f.open(fn.c_str(),O_RDONLY)){
-//			char buf[256];
-			if (f.bgets()){
-				user=f.rbuffer->rbufp;
-				if (f.bgets()){
-//					buf[strlen(buf)]=0;
-					pass=f.rbuffer->rbufp;
-				}
-			}
-			f.close();
-		}
-	}
-	nntp_doauth(user.c_str(),pass.c_str());*/
 	nntp_doauth(connection->server->user.c_str(),connection->server->pass.c_str());
 }
 void c_prot_nntp::nntp_doauth(const char *user, const char *pass){

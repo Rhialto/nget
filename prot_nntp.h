@@ -59,7 +59,7 @@ struct arinfo {
 	void print_retrieving_articles(time_t curtime,quinfo*tot);
 };
 
-class c_prot_nntp /*: public c_transfer_protocol */{
+class c_prot_nntp {
 	public:
 //		int ch;
 		char *cbuf;
@@ -85,18 +85,15 @@ class c_prot_nntp /*: public c_transfer_protocol */{
 		int chkreply(int reply);
 		void doxover(ulong low, ulong high);
 		void doxover(c_nrange *r);
-//		void nntp_queueretrieve(const char *match, ulong linelimit, int getflags);
 		void nntp_retrieve(const nget_options &options);
 		void nntp_group(c_group_info::ptr group, int getheaders, const nget_options &options);
 		void nntp_dogroup(int getheaders);
-		//void nntp_doarticle(long num,long ltotal,long btotal,char *fn);
 		int nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_articles_prioritized &sap,bool docurservmult);
 		int nntp_dowritelite_article(c_file &fw,c_nntp_part *part,char *fn);
 		int nntp_doarticle(c_nntp_part*part,arinfo*ari,quinfo*toti,char *fn, const nget_options &options);
 		void nntp_dogetarticle(arinfo*ari,quinfo*toti,list<string> &buf);
 		void nntp_auth(void);
 		void nntp_doauth(const char *user, const char *pass);
-		//void nntp_open(const char *h,const char *u,const char *p);
 		void nntp_open(c_server *h);
 		void nntp_doopen(void);
 		void cleanupcache(void);
