@@ -154,7 +154,7 @@ void parse_host(string &saddr, string &sservice, const string &host, const strin
 service is the default port name/number (can be overridden in netaddress),
 netaddress is the host name to connect to.
 The function returns the socket, ready for action.*/
-sock_t make_connection(const char *netaddress,const char *service){
+sock_t make_connection(const char *netaddress, const char *service, const char *bindaddress){
 	PERROR("make_connection(%s,%s)", netaddress, service);
 	sock_t sock;
 	int connected;
@@ -163,7 +163,7 @@ sock_t make_connection(const char *netaddress,const char *service){
 	string saddr,sservice;
 	parse_host(saddr, sservice, netaddress, service);
 
-	struct addrinfo hints, *res, *res0;
+	struct addrinfo hints, *res, *res0, *bindres=NULL;
 	char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 	int error;
 	
@@ -171,9 +171,16 @@ sock_t make_connection(const char *netaddress,const char *service){
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
+	if (bindaddress && *bindaddress) {
+		error = getaddrinfo(bindaddress, NULL, &hints, &bindres);
+		if (error)
+			throw FileEx(Ex_INIT, "getaddrinfo %s: %s", bindaddress, gai_strerror(error));
+	}
 	error = getaddrinfo(saddr.c_str(), sservice.c_str(), &hints, &res0);
-	if (error)
+	if (error) {
+		if (bindres) freeaddrinfo(bindres);
 		throw FileEx(Ex_INIT, "getaddrinfo: %s", gai_strerror(error));
+	}
 
 	/* try all the sockaddrs until connection goes successful */
 	for (res = res0; res; res = res->ai_next) {
@@ -181,9 +188,19 @@ sock_t make_connection(const char *netaddress,const char *service){
 				sizeof(hbuf), sbuf, sizeof(sbuf),
 				NI_NUMERICHOST | NI_NUMERICSERV);
 		if (error) {
-			PMSG_nnl("Connecting to <getnameinfo error: %s> ...", gai_strerror(error));
+			PMSG_nnl("Connecting to <getnameinfo error: %s>", gai_strerror(error));
 		} else
-			PMSG_nnl("Connecting to [%s]:%s ... ",hbuf,sbuf);
+			PMSG_nnl("Connecting to [%s]:%s",hbuf,sbuf);
+		if (bindres) {
+			error = getnameinfo(bindres->ai_addr, bindres->ai_addrlen, hbuf,
+					sizeof(hbuf), NULL, 0,
+					NI_NUMERICHOST);
+			if (error) {
+				PMSG_nnl(" from <getnameinfo error: %s>", gai_strerror(error));
+			} else
+				PMSG_nnl(" from %s",hbuf);
+		}
+		PMSG_nnl(" ... ");
 		fflush(stdout);
 
 		sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -191,6 +208,15 @@ sock_t make_connection(const char *netaddress,const char *service){
 			lasterrorfunc="socket";lasterror=sock_strerror(sock_errno);
 			PMSG("%s: %s",lasterrorfunc, lasterror);
 			continue;
+		}
+
+		if (bindres) {
+			if (bind(sock, bindres->ai_addr, bindres->ai_addrlen) < 0) {
+				lasterrorfunc="bind";lasterror=sock_strerror(sock_errno);
+				PMSG("%s: %s",lasterrorfunc, lasterror);
+				sock_close(sock);
+				continue;
+			}
 		}
 
 #if defined(HAVE_SELECT) && defined(HAVE_FCNTL)
@@ -239,11 +265,13 @@ sock_t make_connection(const char *netaddress,const char *service){
 			sock_close(sock);
 			continue;
 		}
+		if (bindres) freeaddrinfo(bindres);
 		freeaddrinfo(res0);
 		PMSG("connected.");
 		return sock;
 	}
 
+	if (bindres) freeaddrinfo(bindres);
 	freeaddrinfo(res0);
 	throw FileEx(Ex_INIT, "%s: %s",lasterrorfunc,lasterror);
 }

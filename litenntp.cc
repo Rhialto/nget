@@ -194,7 +194,7 @@ void c_prot_nntp::doopen(const char *host, const char *user, const char *pass){
 
 	doclose();
 	try {
-		cursock.reset(new c_file_tcp(host,"nntp"));
+		cursock.reset(new c_file_tcp(host,"nntp",NULL));
 		cursock->initrbuf();
 	} catch (FileEx &e) {
 		throw TransportExError(Ex_INIT,"nntp_doopen: %s",e.getExStr());

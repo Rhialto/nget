@@ -251,7 +251,7 @@ void c_prot_nntp::nntp_grouplist(int update, const nget_options &options){
 				assert(s);
 				PDEBUG(DEBUG_MED,"nntp_grouplist: serv(%s) %f>=%f",s->alias.c_str(),priogroup->getserverpriority(s),priogroup->defglevel);
 				try {
-					ConnectionHolder holder(&sockpool, &connection, s);
+					ConnectionHolder holder(&sockpool, &connection, s, options.bindaddr);
 					nntp_doopen();
 					nntp_dogrouplist();
 					nntp_dogroupdescriptions();//####make this a seperate option?
@@ -304,7 +304,7 @@ void c_prot_nntp::nntp_xgrouplist(const t_xpat_list &patinfos, const nget_option
 			assert(s);
 			PDEBUG(DEBUG_MED,"nntp_xgrouplist: serv(%s) %f>=%f",s->alias.c_str(),priogroup->getserverpriority(s),priogroup->defglevel);
 			try {
-				ConnectionHolder holder(&sockpool, &connection, s);
+				ConnectionHolder holder(&sockpool, &connection, s, options.bindaddr);
 				nntp_doopen();
 				for (t_xpat_list::const_iterator i = patinfos.begin(); i != patinfos.end(); ++i) {
 					nntp_dogrouplist((*i)->wildmat.c_str());
@@ -685,7 +685,7 @@ void c_prot_nntp::nntp_xgroup(const c_group_info::ptr &group, const t_xpat_list 
 			assert(s);
 			PDEBUG(DEBUG_MED,"nntp_xgroup: serv(%s) %f>=%f",s->alias.c_str(),group->priogrouping->getserverpriority(s),group->priogrouping->defglevel);
 			try {
-				ConnectionHolder holder(&sockpool, &connection, s);
+				ConnectionHolder holder(&sockpool, &connection, s, options.bindaddr);
 				nntp_doopen();
 				ulong num,low,high;
 				nntp_dogroup(group, num,low,high);
@@ -750,7 +750,7 @@ void c_prot_nntp::nntp_group(const c_group_info::ptr &ngroup, bool getheaders, c
 				assert(s);
 				PDEBUG(DEBUG_MED,"nntp_group: serv(%s) %f>=%f",s->alias.c_str(),group->priogrouping->getserverpriority(s),group->priogrouping->defglevel);
 				try {
-					ConnectionHolder holder(&sockpool, &connection, s);
+					ConnectionHolder holder(&sockpool, &connection, s, options.bindaddr);
 					nntp_doopen();
 					nntp_dogroup(ngroup, getheaders, options.fullxover);
 					succeeded++;
@@ -966,7 +966,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 			PDEBUG(DEBUG_MED,"trying server %s(%lu) article %lu",s->alias.c_str(),sa->serverid,sa->articlenum);
 			list<string> buf;//use a list of strings instead of char *.  Easier and it cleans up after itself too.
 			try {
-				ConnectionHolder holder(&sockpool, &connection, s);
+				ConnectionHolder holder(&sockpool, &connection, s, options.bindaddr);
 				nntp_doopen();
 				if (toti->doarticle_show_multi==SHOW_MULTI_SHORT)
 					ari->server_name=connection->server->shortname.c_str();

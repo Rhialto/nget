@@ -53,7 +53,7 @@ extern "C" {
 #include "status.h"
 
 
-#define NUM_OPTIONS 43
+#define NUM_OPTIONS 44
 #ifndef HAVE_LIBPOPT
 
 #ifndef HAVE_GETOPT_LONG
@@ -109,6 +109,7 @@ enum {
 	OPT_AUTOPAR,
 	OPT_NOAUTOPAR,
 	OPT_FULLXOVER,
+	OPT_BINDADDR,
 	OPT_HELP,
 	OPT_MIN_SHORTNAME //sentinel, must be last element.
 };
@@ -145,6 +146,7 @@ static void addoptions(void)
 {
 	addoption("quiet",0,'q',0,"supress extra info");
 	addoption("host",1,'h',"HOSTALIAS","force nntp host to use (must be configured in .ngetrc)");
+	addoption("bindaddr",1,OPT_BINDADDR,"ADDR","local address to connect from");
 	addoption("available",0,'a',0,"update/load available newsgroups list");
 	addoption("quickavailable",0,'A',0,"load available newsgroups list");
 	addoption("xavailable",0,'X',0,"search available newsgroups list without using cache files");
@@ -966,6 +968,9 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 							}
 							nntp.nntp_open(options.host);
 						}
+						break;
+					case OPT_BINDADDR:
+						options.bindaddr = loptarg;
 						break;
 					case -1://end of args.
 						return 0;

@@ -34,6 +34,7 @@
 #save_binary_info=0
 #autopar=1
 #autopar_optimistic=0
+#bindaddr=
 
 //hostname aliases
 {halias
@@ -41,6 +42,7 @@
   addr=<yourhostaddress>
   id=1
 #optional host config settings:
+#  bindaddr=<localaddress>
 #  user=<name>
 #  pass=<password>
 #  fullxover=1

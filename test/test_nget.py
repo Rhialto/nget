@@ -3204,6 +3204,83 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 2)
 		self.verifyoutput('0002')
+	
+	def test_bindaddr_perserv_error(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, hostoptions=[{'bindaddr':'foobarred'}])
+		self.servers.start()
+		self.vfailUnlessExitstatus(self.nget.run('-a'), 32)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	
+	def test_bindaddr_global_error(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'bindaddr':'foobarred'})
+		self.servers.start()
+		self.vfailUnlessExitstatus(self.nget.run('-a'), 32)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	
+	def test_bindaddr_commandline_error(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.start()
+		self.vfailUnlessExitstatus(self.nget.run('--bindaddr=foobarred -a'), 32)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+		
+	def test_bindaddr_perserv_overrides_global(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'bindaddr':'foobarred'}, hostoptions=[{'bindaddr':nntpd.serveraddr}])
+		self.servers.start()
+		self.vfailIf(self.nget.run('-a'))
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+
+	def test_bindaddr_commandline_overrides_all(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'bindaddr':'foobarred'}, hostoptions=[{'bindaddr':'foobarred2'}])
+		self.servers.start()
+		self.vfailIf(self.nget.run('--bindaddr="%s" -a'%(nntpd.serveraddr)))
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 1)
+
+	def test_bindaddr_commandline_overrides_all_reset(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'bindaddr':'foobarred'}, hostoptions=[{'bindaddr':'foobarred2'}])
+		self.servers.start()
+		self.addarticles('0001', 'yenc_multi')
+		self.vfailUnlessExitstatus(self.nget.run('--bindaddr="%s" -a --bindaddr="" -gtest'%(nntpd.serveraddr)), 16)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("group"), 0)
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 1)
+
+	def test_bindaddr_commandline_changes(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.start()
+		self.addarticles('0001', 'yenc_multi')
+		self.vfailUnlessExitstatus(self.nget.run('--bindaddr=foobarred -gtest --bindaddr="%s" -a'%(nntpd.serveraddr)), 16)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("group"), 0)
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 1)
+
+	def test_bindaddr_commandline_reset(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.start()
+		self.addarticles('0001', 'yenc_multi')
+		self.vfailUnlessExitstatus(self.nget.run('--bindaddr=foobarred -gtest --bindaddr="" -a'), 16)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("group"), 0)
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 1)
+
+	def test_bindaddr_commandline_changes2(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.start()
+		self.addarticles('0001', 'yenc_multi')
+		self.vfailUnlessExitstatus(self.nget.run('--bindaddr="%s" -gtest --bindaddr=foobarred -r .'%(nntpd.serveraddr)), 8)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("group"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 0)
+		self.verifyoutput([])
 
 
 class AuthTestCase(TestCase, DecodeTest_base):

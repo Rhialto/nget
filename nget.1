@@ -20,6 +20,9 @@ When specified twice, will disable printing of merely informative messages.  Err
 .IP "\-h/\-\-host host"
 Force only the given host to be used for subsequent commands.  (Must be configured in .ngetrc.)
 Can reset to standard auto-choosing method with \-h ""
+.IP "\-\-bindaddr addr"
+Local address to connect from.  Overrides any bindaddr set in .ngetrc.
+Can be reset to default with \-\-bindaddr ""
 .IP "\-a/\-\-available"
 Update the list of available newsgroups.
 Subsequent \-r/\-R commands can be use to search for newsgroups.
@@ -284,6 +287,8 @@ Number of consecutive connect errors before penalizing a server, \-1 to disable 
 Number of seconds to ignore a penalized server for.
 .IP "penaltymultiplier (float, default=2.0)"
 Multiplier for penalty time for each time the penalty time runs out and the server continues to be down.
+.IP "bindaddr (string)"
+Local address to connect from.
 .IP "case (boolean, default=0)"
 Default for regex case sensitivity. (0=\-C/\-\-nocase, 1=\-c/\-\-case)
 .IP "complete (boolean, default=1)"
@@ -328,6 +333,9 @@ host containing its options:
 .IP "address (string, required)"
 Address of the server, with optional port number seperated by a colon.
 To specify a literal IPv6 address with a port number, use the format "[address]:port".
+.IP "bindaddr (string)"
+Local address to connect from.
+Overrides the global bindaddr setting for this server only.
 .IP "id (int, required)"
 An identifier for this server.
 The id uniquely identifies a certain set of header cache data.

@@ -40,6 +40,7 @@ class c_server : public c_refcounted<c_server>{
 		string shortname;
 		string addr;
 		string user,pass;
+		string bindaddr;
 		int fullxover;
 		int maxstreaming;
 		int lineleniencelow,lineleniencehigh;
@@ -49,6 +50,9 @@ class c_server : public c_refcounted<c_server>{
 		time_t penalty_time;
 		int penalty_count;
 
+		string get_bindaddr(const string &force_bindaddr) const {
+			return force_bindaddr.empty() ? bindaddr : force_bindaddr;
+		}
 		c_server(ulong id, const CfgSection *ds);
 };
 typedef multimap<ulong,c_server::ptr> t_server_list;
@@ -126,6 +130,7 @@ class c_nget_config {
 		float penaltymultiplier;
 		bool fatal_user_errors;
 		bool autopar_optimistic;
+		string bindaddr;
 
 		void check_penalized(const c_server::ptr &s) const {
 			if (penaltystrikes > 0 && s && s->penalty_count >= penaltystrikes) {

@@ -161,7 +161,7 @@ class c_file_tcp : public c_file {
   public:
 	bool datawaiting(void) const;
 	virtual int isopen(void) const;
-	c_file_tcp(const char *name,const char * port);
+	c_file_tcp(const char *name,const char * port,const char *bindhost);
 	~c_file_tcp(){close_noEx();};
 };
 

@@ -235,13 +235,13 @@ ssize_t c_file_stream::doread(void *data,size_t len){
 #endif
 
 
-c_file_tcp::c_file_tcp(const char *host,const char * port):c_file(host){
+c_file_tcp::c_file_tcp(const char *host,const char * port,const char *bindhost):c_file(host){
 	if (m_name.find(':')<0){//this isn't quite right with ipv6 addrs, but its only for error messages so who cares ;)
 		m_name+=':';
 		m_name+=port;
 	}
 	try {
-		sock=make_connection(host,port);
+		sock=make_connection(host,port,bindhost);
 	} catch (FileEx &e) {
 		throw FileEx(Ex_INIT,"open %s (%s)", name(), e.getExStr());
 	}
