@@ -1,4 +1,4 @@
-//example .ngetrc, copy to your ~/.nget3/ dir, and edit to your liking.
+//example .ngetrc, copy to your ~/.nget4/ dir, and edit to your liking.
 
 //global settings - (defaults, merely listed for your convenience)
 tries=20

@@ -868,13 +868,15 @@ int main(int argc, char ** argv){
 				nghome.append("/");
 			} else {
 				home=getenv("HOME");
-				if (!home){
-					printf("HOME or NGETHOME environment var not set.");
-					set_fatal_error_status();
-					exit(errorflags);
-				}
-				nghome=home;
-				nghome.append("/.nget4/");
+				if (!home)
+					throw ConfigExFatal(Ex_INIT,"HOME or NGETHOME environment var not set.");
+				nghome = home;
+				if (fexists((nghome + "/.nget4/").c_str()))
+					nghome.append("/.nget4/");
+				else if (fexists((nghome + "/_nget4/").c_str()))
+					nghome.append("/_nget4/");
+				else
+					throw ConfigExFatal(Ex_INIT,"neither %s nor %s exist", (nghome + "/.nget4/").c_str(), (nghome + "/_nget4/").c_str());
 			}
 		}
 
@@ -898,15 +900,19 @@ int main(int argc, char ** argv){
 			{
 				c_data_file cfg;
 				c_data_section *galias,*halias,*hpriority;
-				cfg.setfilename((nghome + ".ngetrc").c_str());
+				string ngetrcfn = nghome + ".ngetrc";
+				if (!fexists(ngetrcfn.c_str())) {
+					ngetrcfn = nghome + "_ngetrc";
+					if (!fexists(ngetrcfn.c_str()))
+							throw ConfigExFatal(Ex_INIT,"neither %s nor %s exist", (nghome + ".ngetrc").c_str(), ngetrcfn.c_str());
+				}
+				cfg.setfilename(ngetrcfn.c_str());
 				cfg.read();
 				halias=cfg.data.getsection("halias");
 				hpriority=cfg.data.getsection("hpriority");
 				galias=cfg.data.getsection("galias");
-				if (!halias) {
-					fprintf (stderr,"no halias section (or no ngetrc at all), please configure first. (see man nget)\n");
-					return 1;
-				}
+				if (!halias)
+					throw ConfigExFatal(Ex_INIT,"no halias section (or error reading ngetrc)");
 				nconfig.setlist(&cfg.data,halias,hpriority,galias);
 				const char *cp=cfg.data.getitema("curservmult");
 				float f;
@@ -948,6 +954,10 @@ int main(int argc, char ** argv){
 			nntp.initready();
 			do_args(argc,argv,options,0);
 		}
+	}catch(ConfigEx &e){
+		set_fatal_error_status();
+		printCaughtEx(e);
+		PERROR("(see man nget for configuration info)");
 	}catch(baseEx &e){
 		printf("main():");printCaughtEx(e);
 	}catch(exception &e){

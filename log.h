@@ -91,6 +91,7 @@ DEFINE_EX_CLASSES(Transport, baseCommEx);
 DEFINE_EX_CLASSES(Protocol, baseCommEx);
 DEFINE_EX_CLASSES(Path, baseEx);
 DEFINE_EX_CLASSES(User, baseEx);
+DEFINE_EX_CLASSES(Config, baseEx);
 DEFINE_EX_CLASSES(Application, baseEx);
 
 #define Ex_INIT __FILE__,__LINE__
