@@ -157,23 +157,6 @@ size_t tconv(char * timestr, int max, time_t *curtime,const char * formatstr, in
 //	return timestr;
 }
 
-template <class int_type>
-string durationstr(int_type duration){
-	int_type s = duration%60, m = duration/60%60, h = duration/60/60;
-	ostringstream oss; 
-	if (h)
-		oss << h << 'h';
-	if (h || m)
-		oss << m << 'm';
-	oss << s << 's';
-	return oss.str();
-}
-#if (SIZEOF_LONG != SIZEOF_INT_FAST64_T)
-template string durationstr(int_fast64_t);
-#endif
-template string durationstr(ulong);
-template string durationstr(long);
-
 char *text_month[13]={"Jan", "Feb", "Mar", "Apr",
 	"May", "Jun", "Jul", "Aug",
 	"Sep", "Oct", "Nov", "Dec"
