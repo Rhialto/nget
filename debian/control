@@ -2,7 +2,8 @@ Source: nget
 Section: news
 Priority: optional
 Maintainer: Matthew Mueller <donut@azstarnet.com>
-Standards-Version: 3.0.1
+Build-Depends: debhelper (>> 3.0.0), libuu-dev (>> 0.5.15), libpopt-dev, libncurses-dev, zlib1g-dev
+Standards-Version: 3.5.2
 
 Package: nget
 Architecture: any
