@@ -19,3 +19,11 @@
 #include "log.h"
 
 int quiet=0,debug=0;
+
+void baseEx::set_params(const char *file, int line, const char * s, va_list ap) {
+    mfile = file; mline = line;
+    char *cstr;
+    vasprintf(&cstr,s,ap);
+    str=cstr;
+    free(cstr);
+}

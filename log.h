@@ -42,6 +42,7 @@ class baseEx {
 		string str;
 		const char *mfile;
 		int mline;
+		void set_params(const char *file, int line, const char * s, va_list ap);
 	public:
 		const char* getExFile(void)const{return mfile;}
 		int getExLine(void)const{return mline;}
@@ -58,14 +59,10 @@ class baseEx {
 		virtual bool isfatal(void)const{return fatalv;}\
 		virtual const char* getExType(void)const{return #name ;}\
 		name(const char *file, int line, const char * s, ...) {\
-			mfile = file; mline = line;\
-			char *cstr;\
 			va_list ap;\
 			va_start(ap,s);\
-			vasprintf(&cstr,s,ap);\
+			set_params(file, line, s, ap);\
 			va_end(ap);\
-			str=cstr;\
-			free(cstr);\
 			/*PDEBUG(DEBUG_MIN,"%s:%i:Created exception %s with %s(%p)",mfile,mline,getExType(), getExStr(), getExStr());*/\
 		}\
 };
