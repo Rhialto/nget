@@ -90,6 +90,8 @@ class DecodeTestCase(unittest.TestCase):
 	
 	def test_0001_yenc_single(self):
 		self.do_test_auto()
+	def test_0001_yenc_single_rawtabs(self):
+		self.do_test_auto()
 	def test_0001_uuencode_single(self):
 		self.do_test_auto()
 	def test_0001_uuenview_uue_mime_single(self):
