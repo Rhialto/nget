@@ -70,13 +70,14 @@ class c_regex_base{
 class c_regex_nosub : public c_regex_base{
   public:
 	int match(const char *str)const{return regexec(&regex,str,0,NULL,0);}
+	int match(const string &str)const{return regexec(&regex,str.c_str(),0,NULL,0);}
 	c_regex_nosub(const char * pattern,int cflags=REG_EXTENDED);
 //	~c_regex_nosub();
 };
-inline bool operator == (const string &a,const c_regex_nosub &r){return r.match(a.c_str())==0;}
-inline bool operator == (const string &a,const c_regex_nosub *r){return r->match(a.c_str())==0;}
-inline bool operator != (const string &a,const c_regex_nosub &r){return r.match(a.c_str())!=0;}
-inline bool operator != (const string &a,const c_regex_nosub *r){return r->match(a.c_str())!=0;}
+inline bool operator == (const string &a,const c_regex_nosub &r){return r.match(a)==0;}
+inline bool operator == (const string &a,const c_regex_nosub *r){return r->match(a)==0;}
+inline bool operator != (const string &a,const c_regex_nosub &r){return r.match(a)!=0;}
+inline bool operator != (const string &a,const c_regex_nosub *r){return r->match(a)!=0;}
 inline bool operator == (const char *a,const c_regex_nosub &r){return r.match(a)==0;}
 
 //thread safe version
@@ -106,7 +107,9 @@ class c_regex_r : public c_regex_base{
 		int nregmatch;
 	public:
 		int match(const char *str,c_regex_subs* subs);
+		int match(const string &str,c_regex_subs* subs) {return match(str.c_str(), subs);}
 		c_regex_subs* match(const char *str);
+		c_regex_subs* match(const string &str) {return match(str.c_str());}
 		c_regex_r(const char * pattern,int cflags=REG_EXTENDED);
 	//	~c_regex_r();
 };
@@ -115,6 +118,7 @@ class c_regex_r : public c_regex_base{
 class c_regex : protected c_regex_r, public c_regex_subs{
 	public:
 		int match(const char *str){return c_regex_r::match(str,this);}
+		int match(const string &str){return c_regex_r::match(str,this);}
 		c_regex(const char * pattern,int cflags=REG_EXTENDED):c_regex_r(pattern,cflags){setnregmatch(c_regex_r::nregmatch);}
 //		~c_regex();
 };
