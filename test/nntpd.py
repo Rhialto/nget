@@ -22,6 +22,11 @@ import time
 import threading
 import SocketServer
 
+def chomp(line):
+	if line[-2:] == '\r\n': return line[:-2]
+	elif line[-1:] in '\r\n': return line[:-1]
+	return line
+
 import fnmatch
 class WildMat:
 	def __init__(self, pat):
@@ -449,9 +454,9 @@ class FileArticle:
 		a.append('')
 		for l in fobj.xreadlines():
 			if l[0]=='.':
-				a.append('.'+l.rstrip("\r\n"))
+				a.append('.'+chomp(l))
 			else:
-				a.append(l.rstrip("\r\n"))
+				a.append(chomp(l))
 		self.text = '\r\n'.join(a)
 		self.lines = len(a) - 1 - len(msg.headers)
 		self.bytes = len(self.text)
