@@ -19,7 +19,7 @@
 
 from __future__ import nested_scopes
 
-import os, sys, unittest, glob, filecmp, re, time, errno
+import os, sys, unittest, glob, filecmp, re, time, errno, copy
 import StringIO
 import nntpd, util
 
@@ -1645,6 +1645,23 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 2)
 		self.vfailUnlessEqual(self.servers.servers[0].count("newgroups"), 1)
 		self.vfailUnlessEqual(self.servers.servers[0].count("list_"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("date"), 2)
+
+	def test_available_newgroups_nodatecmd(self):
+		self.servers.servers[0].RequestHandlerClass = copy.copy(self.servers.servers[0].RequestHandlerClass)
+		self.servers.servers[0].RequestHandlerClass.cmd_date = None
+		self.vfailIf(self.nget.run('-a'))
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_"), 1)
+		time.sleep(1.1)
+		self.servers.servers[0].addgroup("a.new.group","whee")
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-a -T -r .'))
+		self.failUnless(re.search(r"^h0\ta.new.group\twhee \[h0\][\n\r]+h0\ttest$", output, re.M))
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("newgroups"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("date"), 0)
 
 	def test_available_r(self):
 		self.servers.servers[0].addgroup("aa.group")
