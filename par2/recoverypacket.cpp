@@ -39,29 +39,6 @@ RecoveryPacket::~RecoveryPacket(void)
   delete packetcontext;
 }
 
-// Write data from the buffer to the data block on disk
-bool RecoveryPacket::WriteData(u64 position, 
-                               size_t size, 
-                               const void *buffer)
-{
-  // Update the packet hash
-  packetcontext->Update(buffer, size);
-
-  // Write the data to the data block
-  size_t wrote;
-  return datablock.WriteData(position, size, buffer, wrote);
-}
-
-// Write the header of the packet to disk
-bool RecoveryPacket::WriteHeader(void)
-{
-  // Finish computing the packet hash
-  packetcontext->Final(packet.header.hash);
-
-  // Write the header to disk
-  return diskfile->Write(offset, &packet, sizeof(packet));  
-}
-
 // Load the recovery packet from disk.
 //
 // The header of the packet will already have been read from disk. The only

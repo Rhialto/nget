@@ -39,7 +39,7 @@
 #include <cassert>
 
 // System includes
-#ifdef WIN32
+#ifdef _MSC_VER
 
 #include <stdio.h>
 #include <string.h>
@@ -158,8 +158,6 @@ typedef unsigned long long u64;
 #  include <unistd.h>
 #endif
 
-#define _MAX_PATH 255
-
 #if HAVE_ENDIAN_H
 #  include <endian.h>
 #  ifndef __LITTLE_ENDIAN
@@ -198,7 +196,6 @@ typedef unsigned long long u64;
 
 #include <errno.h>
 
-#define _MAX_PATH 255
 #define stricmp strcasecmp
 #define _stat stat
 

@@ -27,13 +27,6 @@ static char THIS_FILE[]=__FILE__;
 #endif
 #endif
 
-bool CriticalPacket::WritePacket(DiskFile &diskfile, u64 fileoffset) const
-{
-  assert(&diskfile != 0 && packetdata != 0 && packetlength != 0);
-
-  return diskfile.Write(fileoffset, packetdata, packetlength);
-}
-
 void CriticalPacket::FinishPacket(const MD5Hash &setid)
 {
   assert(packetdata != 0 && packetlength >= sizeof(PACKET_HEADER));

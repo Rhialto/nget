@@ -36,14 +36,6 @@ public:
   ~RecoveryPacket(void);
 
 public:
-  // Write some data to the recovery data block and update the recovery packet.
-  bool WriteData(u64         position,  // Relative position within the data block
-                 size_t      size,      // Size of data to write to block
-                 const void *buffer);   // Buffer containing the data to write
-  // Finish computing the hash of the recovery packet and write the header to disk.
-  bool WriteHeader(void);
-
-public:
   // Load a recovery packet from a specified file
   bool Load(DiskFile *diskfile, u64 offset, PACKET_HEADER &header);
 

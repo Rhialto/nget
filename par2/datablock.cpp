@@ -76,32 +76,3 @@ bool DataBlock::ReadData(u64    position, // Position within the block
   return true;
 }
 
-// Write some data at a specified position within a datablock
-// from memory to disk
-
-bool DataBlock::WriteData(u64         position, // Position within the block
-                          size_t      size,     // Size of the memory buffer
-                          const void *buffer,   // Pointer to memory buffer
-                          size_t     &wrote)    // Amount actually written
-{
-  assert(diskfile != 0);
-
-  wrote = 0;
-
-  // Check to see if the position from which data is to be written
-  // is within the bounds of the data block
-  if (length > position)
-  {
-    // Compute the file offset and how much data to physically write to disk
-    u64    fileoffset = offset + position;
-    size_t have       = (size_t)min((u64)size, length - position);
-
-    // Write the data from the buffer to disk
-    if (!diskfile->Write(fileoffset, buffer, have))
-      return false;
-
-    wrote = have;
-  }
-
-  return true;
-}

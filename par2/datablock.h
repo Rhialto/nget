@@ -63,9 +63,6 @@ public:
   // Read some of the data from disk into memory.
   bool ReadData(u64 position, size_t size, void *buffer);
 
-  // Write some of the data from memory to disk
-  bool WriteData(u64 position, size_t size, const void *buffer, size_t &wrote);
-
 protected:
   DiskFile *diskfile;  // Which disk file is the block associated with
   u64       offset;    // What is the file offset

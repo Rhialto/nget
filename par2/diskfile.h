@@ -29,12 +29,6 @@ public:
   DiskFile(void);
   ~DiskFile(void);
 
-  // Create a file and set its length
-  bool Create(string filename, u64 filesize);
-
-  // Write some data to the file
-  bool Write(u64 offset, const void *buffer, size_t length);
-
   // Open the file
   bool Open(void);
   bool Open(string filename);
@@ -61,13 +55,6 @@ public:
 
   // Does the file exist
   bool Exists(void) const {return exists;}
-
-  // Rename the file
-  bool Rename(void); // Pick a filename automatically
-  bool Rename(string filename);
-
-  // Delete the file
-  bool Delete(void);
 
 public:
   static string GetCanonicalPathname(string filename);

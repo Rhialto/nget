@@ -41,7 +41,9 @@
 
 #ifdef WIN32
 #pragma pack(push, 1)
+#ifndef PACKED
 #define PACKED
+#endif
 #else
 #define PACKED __attribute__ ((packed))
 #endif

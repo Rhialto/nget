@@ -38,7 +38,6 @@ static char THIS_FILE[]=__FILE__;
 
 DiskFile::DiskFile(void)
 {
-  filename;
   filesize = 0;
   offset = 0;
 
@@ -51,119 +50,6 @@ DiskFile::~DiskFile(void)
 {
   if (hFile != INVALID_HANDLE_VALUE)
     ::CloseHandle(hFile);
-}
-
-// Create new file on disk and make sure that there is enough
-// space on disk for it.
-bool DiskFile::Create(string _filename, u64 _filesize)
-{
-  assert(hFile == INVALID_HANDLE_VALUE);
-
-  filename = _filename;
-  filesize = _filesize;
-
-  // Create the file
-  hFile = ::CreateFileA(_filename.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
-  if (hFile == INVALID_HANDLE_VALUE)
-  {
-    DWORD error = ::GetLastError();
-
-    cerr << "Could not create \"" << _filename << "\": " << ErrorMessage(error) << endl;
-
-    return false;
-  }
-
-  if (filesize > 0)
-  {
-    // Seek to the end of the file
-    LONG lowoffset = ((LONG*)&filesize)[0];
-    LONG highoffset = ((LONG*)&filesize)[1];
-
-    if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, lowoffset, &highoffset, FILE_BEGIN))
-    {
-      DWORD error = ::GetLastError();
-
-      cerr << "Could not set size of \"" << _filename << "\": " << ErrorMessage(error) << endl;
-
-      ::CloseHandle(hFile);
-      hFile = INVALID_HANDLE_VALUE;
-      ::DeleteFile(_filename.c_str());
-
-      return false;
-    }
-
-    // Set the end of the file
-    if (!::SetEndOfFile(hFile))
-    {
-      DWORD error = ::GetLastError();
-
-      cerr << "Could not set size of \"" << _filename << "\": " << ErrorMessage(error) << endl;
-
-      ::CloseHandle(hFile);
-      hFile = INVALID_HANDLE_VALUE;
-      ::DeleteFile(_filename.c_str());
-
-      return false;
-    }
-  }
-
-  offset = filesize;
-
-  exists = true;
-  return true;
-}
-
-// Write some data to disk
-
-bool DiskFile::Write(u64 _offset, const void *buffer, size_t length)
-{
-  assert(hFile != INVALID_HANDLE_VALUE);
-
-  if (offset != _offset)
-  {
-    LONG lowoffset = ((LONG*)&_offset)[0];
-    LONG highoffset = ((LONG*)&_offset)[1];
-
-    // Seek to the required offset
-    if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, lowoffset, &highoffset, FILE_BEGIN))
-    {
-      DWORD error = ::GetLastError();
-
-      cerr << "Could not write " << (u64)length << " bytes to \"" << filename << "\" at offset " << _offset << ": " << ErrorMessage(error) << endl;
-
-      return false;
-    }
-    offset = _offset;
-  }
-
-  if (length > MaxLength)
-  {
-    cerr << "Could not write " << (u64)length << " bytes to \"" << filename << "\" at offset " << _offset << ": " << "Write too long" << endl;
-
-    return false;
-  }
-
-  DWORD write = (LengthType)length;
-  DWORD wrote;
-
-  // Write the data
-  if (!::WriteFile(hFile, buffer, write, &wrote, NULL))
-  {
-    DWORD error = ::GetLastError();
-
-    cerr << "Could not write " << (u64)length << " bytes to \"" << filename << "\" at offset " << _offset << ": " << ErrorMessage(error) << endl;
-
-    return false;
-  }
-
-  offset += length;
-
-  if (filesize < offset)
-  {
-    filesize = offset;
-  }
-
-  return true;
 }
 
 // Open the file
@@ -722,31 +608,6 @@ bool DiskFile::Open(string _filename)
 
 
 
-// Delete the file
-
-bool DiskFile::Delete(void)
-{
-#ifdef WIN32
-  assert(hFile == INVALID_HANDLE_VALUE);
-#else
-  assert(file == 0);
-#endif
-
-  if (filename.size() > 0 && 0 == unlink(filename.c_str()))
-  {
-    return true;
-  }
-  else
-  {
-    cerr << "Cannot delete " << filename << endl;
-
-    return false;
-  }
-}
-
-
-
-
 
 
 
@@ -869,49 +730,6 @@ string DiskFile::TranslateFilename(string filename)
   }
 
   return result;
-}
-
-bool DiskFile::Rename(void)
-{
-  char newname[_MAX_PATH+1];
-  u32 index = 0;
-
-  struct stat st;
-
-  do
-  {
-    int length = snprintf(newname, _MAX_PATH, "%s.%d", filename.c_str(), ++index);
-    if (length < 0)
-    {
-      cerr << filename << " cannot be renamed." << endl;
-      return false;
-    }
-    newname[length] = 0;
-  } while (stat(newname, &st) == 0);
-
-  return Rename(newname);
-}
-
-bool DiskFile::Rename(string _filename)
-{
-#ifdef WIN32
-  assert(hFile == INVALID_HANDLE_VALUE);
-#else
-  assert(file == 0);
-#endif
-
-  if (::rename(filename.c_str(), _filename.c_str()) == 0)
-  {
-    filename = _filename;
-
-    return true;
-  }
-  else
-  {
-    cerr << filename << " cannot be renamed to " << _filename << endl;
-
-    return false;
-  }
 }
 
 #ifdef WIN32

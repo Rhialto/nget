@@ -32,9 +32,6 @@ public:
   ~CriticalPacket(void);
 
 public:
-  // Write a copy of the packet to the specified file at the specified offset
-  bool    WritePacket(DiskFile &diskfile, u64 fileoffset) const;
-
   // Obtain the lenght of the packet.
   size_t  PacketLength(void) const;
 
@@ -80,66 +77,6 @@ inline void* CriticalPacket::AllocatePacket(size_t length, size_t extra)
   memset(packetdata, 0, length+extra);
 
   return packetdata;
-}
-
-// Class used to record the fact that a copy of a particular critical packet
-// will be written to a particular file at a specific offset.
-
-class CriticalPacketEntry
-{
-public:
-  CriticalPacketEntry(DiskFile *_diskfile, 
-                      u64 _offset, 
-                      const CriticalPacket *_packet)
-    : diskfile(_diskfile)
-    , offset(_offset)
-    , packet(_packet)
-  {}
-  CriticalPacketEntry(void)
-    : diskfile(0)
-    , offset(0)
-    , packet(0)
-  {}
-  CriticalPacketEntry(const CriticalPacketEntry &other)
-    : diskfile(other.diskfile)
-    , offset(other.offset)
-    , packet(other.packet)
-  {}
-  CriticalPacketEntry& operator=(const CriticalPacketEntry &other)
-  {
-    diskfile = other.diskfile;
-    offset = other.offset;
-    packet = other.packet;
-    return *this;
-  }
-
-public:
-  // Write the packet to disk.
-  bool   WritePacket(void) const;
-
-  // Obtain the length of the packet.
-  u64    PacketLength(void) const;
-
-protected:
-  DiskFile             *diskfile;
-  u64                   offset;
-  const CriticalPacket *packet;
-};
-
-inline bool CriticalPacketEntry::WritePacket(void) const
-{
-  assert(packet != 0 && diskfile != 0);
-
-  // Tell the packet to write itself to disk
-  return packet->WritePacket(*diskfile, offset);
-}
-
-inline u64 CriticalPacketEntry::PacketLength(void) const
-{
-  assert(packet != 0);
-
-  // Ask the packet how big it is.
-  return packet->PacketLength();
 }
 
 #endif // __CRITICALPACKET_H__

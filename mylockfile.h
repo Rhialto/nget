@@ -85,6 +85,8 @@ class c_lockfile{
 		}
 };
 #elif HAVE_LOCKFILE
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
 class c_lockfile{
 	public:
