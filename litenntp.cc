@@ -57,7 +57,7 @@ int c_prot_nntp::stdputline(int echo,const char * str,...){
 int c_prot_nntp::doputline(int echo,const char * str,va_list ap){
 	int i,j=-234533;//initialize j to kill compiler warning
 
-	if ((((i=cursock.vprintf(str,ap)<=0)))||(((j=cursock.printf("\r\n")<=0)))){
+	if ((((i=cursock.vprintf(str,ap))<=0))||(((j=cursock.printf("\r\n"))<=0))){
 		doclose();
 		throw TransportExError(Ex_INIT,"nntp_putline:%i %s(%i)",i>=0?j:i,strerror(errno),errno);
 	}
