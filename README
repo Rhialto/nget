@@ -11,7 +11,7 @@ Note if you are upgrading from a version 0.8-0.15.2 to 0.16 or later:
 
 Requirements:
   GNU Make (sometimes installed as gmake)
-  uulib >= 0.5.18     http://www.fpx.de/fp/Software/UUDeview/
+  uulib >= 0.5.19     http://www.fpx.de/fp/Software/UUDeview/
     (included in the +uulib package)
   zlib                http://www.gzip.org/zlib/
     (recommended, needed for compressed cache)
