@@ -274,6 +274,8 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.do_test_auto_decodeerror()
 	def test_0002_yenc_multi(self):
 		self.do_test_auto()
+	def test_0002_yenc_multi3(self):
+		self.do_test_auto()
 	def test_0002_uuencode_multi(self):
 		self.do_test_auto()
 	def test_0002_uuencode_multi3(self):
