@@ -46,8 +46,8 @@ Following -a/-A:
 Matches regex against newsgroup names and descriptions and lists ones that match. (-T required)
 .IP "-R/--expretrieve expression"
 Like -r, but matches expression instead of merely a regexp.
-Expression is a
-postfix expression that can contain these keywords:
+(see EXPRETRIEVE EXPRESSIONS section for more info.)
+Expression is a postfix expression that can contain these keywords:
 .br
 Following -g/-G:
 subject, author, lines, bytes, have, req, date, age, messageid(or mid), references.  Note that the --limit
@@ -127,6 +127,49 @@ Do not connect to any server.  Useful for trying to decode as much as you have.
 Write a list of parts to retrieve with ngetlite.
 .IP "-?/--help"
 Show help.
+.SH "EXPRETRIEVE EXPRESSIONS"
+Expressions are in postfix order.
+For the int, date, and age types, standard int comparisons are allowed (==, !=, <, <=, >, >=).
+For regex types, ==(=~), !=(!~) are allowed.  
+.P
+Thus a comparison would take the following form:
+.br
+Infix: <keyword> <operator> <value>  Postfix: <keyword> <value> <operator>
+.P
+Comparisons can be joined with &&(and), ||(or).
+.br
+Infix: <comparison> && <comparison>  Postfix: <comparison> <comparison> &&
+.SS "-g/-G keywords"
+.IP "subject (regex)"
+Matches the Subject: header.
+.IP "author (regex)"
+Matches the From: header.
+.IP "lines (int)"
+Matches the Lines: header.
+.IP "bytes (int)"
+Matches the length of the message in bytes
+.IP "have (int)"
+Matches the number of parts of a multipart file that we have.
+.IP "req (int)"
+Matches the total number of parts of a multipart file.
+.IP "date (date)"
+Matches the Date: header.
+All the standard formats are accepted.
+.IP "age (age)"
+Matches the time since the Date: header.
+.br
+Format: [X y[ears]] [X mo[nths]] [X w[eeks]] [X d[ays]] [X h[ours]] [X m[inutes]] [X s[econds]]
+.br
+Ex.: "6 months 7 hours 8 minutes"
+.br
+Ex.: "6mo7h8m"
+.IP "references (regex)"
+Matches any of the message's References.
+.SS "-a/-A keywords"
+.IP "group (regex)"
+Matches the newsgroup name.
+.IP "desc (regex)"
+Matches the newsgroup description.
 .SH CONFIGURATION
 Upon startup, nget will read ~/.nget4/.ngetrc for default configuration values and host/group
 aliases.  An example .ngetrc should have been included with nget.
@@ -428,10 +471,15 @@ flush all headers from host goodhost in group alt.binaries.pictures.linux:
 .B
 nget -Galt.binaries.pictures.linux -Fgoodhost
 .P
-retrieve/update group list, and list all groups with "linux" in the name:
+retrieve/update group list, and list all groups with "linux" in the name or description:
 .br
 .B
 nget -a -Tr linux
+.P
+equivilant to above, using -R:
+.br
+.B
+nget -a -TR "group linux == desc linux == ||"
 .P
 flush all groups from host goodhost in grouplist:
 .br

@@ -6,6 +6,7 @@
   * Fix an invalid line error while loading cache in PART_MODE (mode 1) from causing an endless loop by advancing to SERVER_ARTICLE_MODE without a valid part. (reported by Pharos)
   * Add -a/-A options to get available group list from servers. (-a/-A followed by -Tr blah to list matching group names.)
   * Add "references" keyword to -R to search by the contents of the References: header.
+  * Add section to manpage describing -R usage in more detail.
 
 2002-07-11 v0.20:
   * Use timegm func in date string parser if available, fixes possibility of some times being parsed an hour off due to daylight savings time.
