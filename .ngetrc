@@ -1,4 +1,5 @@
 //example .ngetrc, copy to your ~/.nget4/ dir, and edit to your liking.
+#lines that start with either '#' or '//' are considered comments and ignored.
 
 //global settings - (defaults, merely listed for your convenience)
 tries=20

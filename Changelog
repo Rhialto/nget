@@ -8,6 +8,7 @@
   * Some portability fixes. (Now builds on SunOS.)
   * Handle server_articles left in the cache that have no server with a matching serverid in .ngetrc.
   * .ngetrc now has global fullxover and maxstreaming options to set the default for all host entries that don't specify their own.
+  * Update .ngetrc handling to allow # to be used for comment lines (in addition to //), and to not require the // to be on the first column.
 
 2002-01-23 v0.16:
   * Print info line about each file before beginning retrieval.

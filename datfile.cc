@@ -62,8 +62,8 @@ void c_data_section::cleanup(void){
 }
 
 void c_data_section::read_list(c_file *f){
-	char *n,*v,*buf;
-	int slen,r;
+	char *v,*buf;
+	int slen;
 	while ((slen=f->bgets())>=0){
 		buf=f->rbufp();
 //		slen=strlen(buf);
@@ -72,28 +72,31 @@ void c_data_section::read_list(c_file *f){
 		}*/
 		if (slen<1)
 			continue;
-		r=strspn(buf," \t");
-		if (buf[r]=='}') {
+		buf+=strspn(buf," \t");
+		if (!*buf)
+			continue;
+		if (*buf=='}') {
 //			printf("end section\n");
 			break;
 		}
-		if (!(slen>r))
-			continue;
-		if (buf[r]=='{')
+		if (*buf=='{')
 		{
-			c_data_section *d=new c_data_section(buf+r+1);
+			c_data_section *d=new c_data_section(buf+1);
 			//		c->data[buf+r+1]=d;
 			additem(d);
 //			printf("new section: %s\n",buf+r+1);
 			d->read_list(f);
 		}
-		else if (buf[0]!='/')
+		else if (*buf=='#')
+			;//ignore
+		else if (buf[0]=='/' && buf[1]=='/')
+			;//ignore
+		else
 		{
-			n=buf+r;
-			if((v=strchr(n,'='))){
+			if((v=strchr(buf,'='))){
 				*v=0;
 				v++;
-				additem(new c_data_item(n,v));
+				additem(new c_data_item(buf,v));
 //				printf("new item: %s=%s\n",n,v);
 			}
 		}
