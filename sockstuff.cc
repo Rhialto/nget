@@ -39,6 +39,11 @@
 #include "log.h"
 #include "strreps.h"
 
+//not all systems have this defined...
+#ifndef INADDR_NONE
+#define INADDR_NONE (-1)
+#endif
+
 //comment the next line out if by chance you actually don't have select.
 #define HAVE_SELECT
 
