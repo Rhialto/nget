@@ -1,6 +1,7 @@
 2002-xx-xx v0.xx:
   * Handle invalid References starting with a '.'.
   * Fix --without-zlib build.
+  * Optimized cache file loading and dupe file checking speed.
   * Added cachedir config option and NGETCACHE env var.
 
 2002-01-23 v0.16:
