@@ -1,4 +1,4 @@
-2001-08-01 - v0.14:
+2001-08-02 - v0.14:
   * Fix exception if files in current dir contained '{' or '}'. (reported by Brian Keefer)
   * Remove autoconf AC_C_CONST, its only for C progs and breaks g++.
   * Fixed east/west of GMT timezone discrepancy if timezone var not found by configure.
@@ -11,6 +11,7 @@
   * Fixed ngetlite building on platforms without vasprintf. (reported by Michael J. Paluka)
   * Added -d [mM] flags. (Andres Heinloo)
   * Added -[MU] options. (Andres Heinloo, me)
+  * nget+uulib tarball includes new uulib version 0.5.15
 
 2001-02-08 - v0.13.2:
   * Add trailing / onto NGETHOME var so you don't need to.
