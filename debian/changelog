@@ -1,0 +1,145 @@
+nget (0.26-1) unstable; urgency=low
+
+  * New release.
+
+ -- Matthew Mueller <donut@users.sourceforge.net>  Sat, 27 Dec 2003 19:58:58 -0700
+
+nget (0.25-0.1) unstable; urgency=low
+
+  * "downstream" Debian package is orphaned, so here I go again.
+
+ -- Matthew Mueller <donut@users.sourceforge.net>  Tue, 25 Nov 2003 18:20:01 -0700
+
+nget (0.23-1) unstable; urgency=low
+
+  * Not-so-new upstream release.  (Closes: #181293)
+
+ -- Chris Lawrence <lawrencc@debian.org>  Mon, 23 Jun 2003 05:41:26 -0500
+
+nget (0.22.1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Bumped urgency to medium, since .22 was six days old.
+
+ -- Chris Lawrence <lawrencc@debian.org>  Tue, 29 Oct 2002 11:02:24 -0600
+
+nget (0.22-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Chris Lawrence <lawrencc@debian.org>  Fri, 18 Oct 2002 22:54:28 -0500
+
+nget (0.21-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Chris Lawrence <lawrencc@debian.org>  Mon,  5 Aug 2002 14:20:57 -0500
+
+nget (0.20-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Chris Lawrence <lawrencc@debian.org>  Thu, 11 Jul 2002 17:30:53 -0500
+
+nget (0.19.1-1) unstable; urgency=low
+
+  * New upstream release.
+  * Fixes segfault in 'nget -F free'. (Closes: #150288)
+
+ -- Chris Lawrence <lawrencc@debian.org>  Mon, 17 Jun 2002 22:06:38 -0500
+
+nget (0.18.2-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Chris Lawrence <lawrencc@debian.org>  Sat, 18 May 2002 23:49:38 -0500
+
+nget (0.18.1-1) unstable; urgency=low
+
+  * New upstream release.  Includes 64-bit compliation patch from 0.18-2.
+  * Updated to debhelper v3.
+
+ -- Chris Lawrence <lawrencc@debian.org>  Thu,  9 May 2002 02:08:38 -0500
+
+nget (0.18-2) unstable; urgency=low
+
+  * Only instantiate durationstr(int_fast64_t) on 32-bit platforms.
+    This should fix build failures on ia64 and alpha.
+
+ -- Chris Lawrence <lawrencc@debian.org>  Tue,  9 Apr 2002 18:48:29 -0500
+
+nget (0.18-1) unstable; urgency=low
+
+  * New upstream release.
+    + Added yEnc support.  (Closes: #135684)
+    + Other cool new features, of course.  (See upstream changelog.)
+  * Remove period from end of short description, per proposed policy
+    amendment.
+  
+ -- Chris Lawrence <lawrencc@debian.org>  Sat,  6 Apr 2002 22:28:34 -0600
+
+nget (0.17-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Chris Lawrence <lawrencc@debian.org>  Sat,  2 Mar 2002 19:00:52 -0600
+
+nget (0.16-1) unstable; urgency=low
+
+  * First release in Debian, per RFP.  (Closes: #106780)
+    My changes were minimal; mainly moving examples into a proper examples
+    directory.
+  * New version.  (NOTE: the cache file format has changed, see main
+    README and Changelog for more info.)
+
+ -- Chris Lawrence <lawrencc@debian.org>  Wed, 30 Jan 2002 23:19:12 -0600
+
+nget (0.15.2-1) unstable; urgency=low
+
+  * New version.
+
+ -- Matthew Mueller <donut@azstarnet.com>  Sat, 24 Nov 2001 05:24:48 -0700
+
+nget (0.15.1-1) unstable; urgency=low
+
+  * New version.
+  * Include build-deps.
+
+ -- Matthew Mueller <donut@azstarnet.com>  Sat,  7 Nov 2001 21:41:27 -0700
+
+nget (0.15-1) unstable; urgency=low
+
+  * New version.
+
+ -- Matthew Mueller <donut@azstarnet.com>  Thu,  1 Nov 2001 16:44:38 -0700
+
+nget (0.14-2) unstable; urgency=low
+
+  * Fix the problem with apt-get source nget in the last upload.
+
+ -- Matthew Mueller <donut@azstarnet.com>  Thu, 20 Sep 2001 14:25:52 -0700
+
+nget (0.14-1) unstable; urgency=low
+
+  * New version.
+
+ -- Matthew Mueller <donut@azstarnet.com>  Thu,  2 Aug 2001 18:25:38 -0700
+
+nget (0.13.2-1) unstable; urgency=low
+
+  * New version.
+  * removed unused suidregister thingy from rules.
+
+ -- Matthew Mueller <donut@azstarnet.com>  Thu,  8 Feb 2001 04:54:40 -0700
+
+nget (0.13.1-1) unstable; urgency=low
+
+  * New version.
+
+ -- Matthew Mueller <donut@azstarnet.com>  Mon,  8 Jan 2001 16:40:39 -0700
+
+nget (0.13-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Matthew Mueller <donut@azstarnet.com>  Tue,  5 Sep 2000 19:24:28 -0700

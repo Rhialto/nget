@@ -1,0 +1,18 @@
+Source: nget
+Section: news
+Priority: optional
+Maintainer: Matthew Mueller <donut@users.sourceforge.net>
+Build-Depends: debhelper (>> 3.0.0), libuu-dev (>> 0.5.19), libpopt-dev, libncurses-dev, zlib1g-dev, autoconf (>> 2.53)
+Standards-Version: 3.5.10
+
+Package: nget
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: auto-resuming command line NNTP file grabber
+ nget is a command line NNTP file grabber. It automatically pieces
+ together multipart postings for easy retrieval, even substituting parts
+ from multiple servers. It handles disconnects gracefully, resuming
+ after the last part successfully downloaded. nget also caches header
+ data for quick access.
+ .
+ Home Page: http://nget.sf.net
