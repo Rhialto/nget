@@ -1,4 +1,4 @@
-.TH nget 1 "03 Oct 2001"
+.TH nget 1 "07 Oct 2001"
 .SH NAME
 nget \- retrieve files from NNTP hosts
 .SH SYNOPSIS
@@ -242,6 +242,59 @@ grouping when deciding what server to retrieve from.
 .B  }
 .br
 .B }
+.SH EXIT STATUS
+On exit,  nget will display a summary of the run.  The summary is split into three parts:
+.PP
+.IP "OK"
+Lists successful operations.
+.RS
+.IP "total"
+Total number of "logical messages" retrieved (after joining parts).
+.IP "uu"
+Number of uuencoded files.
+.IP "base64"
+Number of Base64 (Mime) files.
+.IP "XX"
+Number of xxencoded files.
+.IP "binhex"
+Number of Binhex encoded files.
+.IP "plaintext"
+Number of plaintext files saved.
+.IP "qp"
+Number of Quoted-Printable encoded files.
+.IP "dupe"
+Number of decoded files that were exact dupes of existing files, and thus deleted.
+.IP "group"
+Number of groups successfully updated.
+.RE
+.IP "WARNINGS"
+.RS
+.IP "group"
+Updating group info failed for some (but not all) attempted servers.
+.IP "retrieve"
+Article retrieval failed for some (but not all) attempted servers.
+.IP "unequal_line_count"
+Some articles retrieved had different line counts than the server said they should.
+(And unequal_line_error is set to 0).
+.IP "dupe"
+Number of decoded files that had the same name as existing files, but different content.
+.RE
+.IP "ERRORS"
+Lists errors that occured.  In addition, the exit status will be set to a bitwise OR of the codes of all errors that occured.
+.RS
+.IP "decode (exit code 1)"
+Number of file decoding errors.
+.IP "path (exit code 2)"
+Errors changing to paths specified with -p or -P.
+.IP "user (exit code 4)"
+User errors, such as trying -r without specifying a group first.
+.IP "retrieve (exit code 8)"
+Number of times article retrieval failed for all attempted servers.
+.IP "fatal (exit code 128)"
+Error preventing further operation, such as "No space left on device".
+.IP "other (exit code 64)"
+Any other kind of error.
+.RE
 .SH EXAMPLES
 get listing of all files matching penguin.*png from alt.binaries.pictures.linux (note this is a regex, equivilant to standard shell glob of penguin*png.. see the regex(7) or grep manpage for more info on regular expressions.)
 .br
