@@ -31,8 +31,7 @@
 
 
 int fexists(const char * f);
-#define FSEARCHPATH_ALLOWDIRS 1 //search for f in the paths even if it contains a slash
-const char *fsearchpath(const char * f,const char **paths,int flags);
+string fcheckpath(const char *fn,string path);
 int testmkdir(const char * dir,int mode);
 char *goodgetcwd(char **p);
 

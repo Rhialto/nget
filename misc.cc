@@ -22,6 +22,7 @@
 #include "misc.h"
 #include "strreps.h"
 #include "log.h"
+#include "path.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -64,25 +65,13 @@ int fexists(const char * f){
 	struct stat statbuf;
 	return (!stat(f,&statbuf));
 }
-const char *fsearchpath(const char * f,const char **paths,int flags){
-	char *s;
-	int i;
-	if (!f) return NULL;
-	if (f[0]!='~' && f[0]!='/' && (flags&FSEARCHPATH_ALLOWDIRS || strchr(f,'/')==NULL))
-		for (i=0;paths[i];i++){
-			asprintf(&s,"%s/%s",paths[i],f);
-//			PDEBUG(DEBUG_MIN,"fsearchpath:%s",s);
-			if (fexists(s))
-				return s;
-			free(s);
-		}
-//	PDEBUG(DEBUG_MIN,"fsearchpath:%s",f);
-	if (fexists(f)){
-//		asprintf(&s,"%s",f);
-//		return s;
-		return f;//not dynamically allocated
+string fcheckpath(const char *fn, string path){
+	if (!is_abspath(fn)) {
+		string pfn = path_join(path,fn);
+		if (fexists(pfn.c_str()))
+			return pfn;
 	}
-	return NULL;
+	return fn;
 }
 
 int testmkdir(const char * dir,int mode){

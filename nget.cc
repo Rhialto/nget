@@ -41,6 +41,7 @@ extern "C" {
 #include "_sstream.h"
 #include "_fileconf.h"
 
+#include "path.h"
 #include "misc.h"
 #include "termstuff.h"
 #include "strreps.h"
@@ -389,8 +390,8 @@ nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.re
 void nget_options::get_path(void){do_get_path(path);}
 void nget_options::get_temppath(void){
 	do_get_path(temppath);
-	if (temppath[temppath.size()-1]!='/')
-		temppath.append("/");
+	path_append(temppath,"");//ensure temppath ends with seperator
+	assert(is_pathsep(temppath[temppath.size()-1]));
 }
 void nget_options::parse_dupe_flags(const char *opt){
 	while(*opt){
@@ -454,7 +455,7 @@ int maybe_mkdir_chdir(const char *dir, char makedir){
 			bool doit=0;
 			if (makedir==2){
 				char buf[40],*p;
-				if (dir[0]!='/'){
+				if (!is_abspath(dir)){
 					goodgetcwd(&p);
 					printf("in %s, ",p);
 					free(p);
@@ -741,17 +742,11 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					case '@':
 #ifdef HAVE_LIBPOPT
 						{
-							const char *paths[2]={(nghome + "lists/").c_str(),NULL};
-							const char *filename=fsearchpath(loptarg,paths,FSEARCHPATH_ALLOWDIRS);
-							if (!filename) {
-								printf("error opening %s: %s(%i)\n",loptarg,strerror(errno),errno);errno=0;
-								set_user_error_status();
-								break;
-							}
+							string filename=fcheckpath(loptarg,path_join(nghome,"lists"));
 							s_argv larg;
 							arglist_t arglist;
 							try {
-								c_file_fd f(filename,O_RDONLY);
+								c_file_fd f(filename.c_str(),O_RDONLY);
 								f.initrbuf();
 								while (f.bgets()>0){
 									try{
@@ -764,7 +759,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 								}
 								f.close();
 							}catch (FileNOENTEx &e){
-								printf("error opening %s: %s(%i)\n",filename?:loptarg,strerror(errno),errno);errno=0;
+								printf("error: %s\n",e.getExStr());
 								set_user_error_status();
 								break;
 							}
@@ -790,8 +785,6 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 
 								free(larg.argv);
 							}
-							if (filename!=loptarg)
-								free(const_cast<char*>(filename));//const_cast away the warning
 						}
 #else
 						printf("This option is only available when libpopt is used.\n");
@@ -832,16 +825,6 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				}
 		}
 	}
-}
-
-string path_join(string a, string b) {
-	char c=a[a.size()-1];
-	if (c!='/')
-		return a + '/' + b;
-	return a + b;
-}
-string path_join(string a, string b, string c) {
-	return path_join(path_join(a,b), c);
 }
 
 int main(int argc, const char ** argv){

@@ -18,6 +18,7 @@
 */
 #include "dupe_file.h"
 #include "log.h"
+#include "path.h"
 
 #include <dirent.h>
 #include <ctype.h>
@@ -58,7 +59,7 @@ void dupe_file_checker::add(const char *filename, ulong size){
 void dupe_file_checker::addfile(const string &path, const char *filename) {
 	ulong size=0;
 	struct stat stbuf;
-	if (stat((path+'/'+filename).c_str(), &stbuf)==0)
+	if (stat(path_join(path,filename).c_str(), &stbuf)==0)
 		size=stbuf.st_size;
 	add(filename, size);
 }
