@@ -85,10 +85,12 @@ TextHandler::TextHandler(t_text_handling texthandlin, bool save_text_for_binarie
 }
 
 c_file * maybegzopen(const char *fn, const char *mode) {
+#ifdef HAVE_LIBZ
 	int len=strlen(fn);
 	if ((len>=3 && fn[len-3]=='.' && fn[len-2]=='g' && fn[len-1]=='z') ||
 		(len>=7 && strcmp(fn+len-7, ".gz.tmp")==0))
 		return new c_file_gz(fn, mode);
+#endif
 	return new c_file_fd(fn, mode);
 }
 
