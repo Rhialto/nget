@@ -55,7 +55,7 @@ int vasprintf(char **str,const char *format,va_list ap){
 	if (l>buflen) l=buflen;
 	*str=(char*)malloc(l+1);
 	memcpy(*str,buf,l);
-	*str[l]=0;
+	(*str)[l]=0;
 	return l;
 }
 #endif
