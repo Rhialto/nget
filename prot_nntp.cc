@@ -23,6 +23,7 @@
 #include "prot_nntp.h"
 #include <list.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #ifndef PROTOTYPES
 #define PROTOTYPES //required for uudeview.h to prototype function args.
