@@ -136,13 +136,15 @@ class DecodeTest_base:
 		for server in servers:
 			self.rmarticles_fromserver(testnum, dirname, server, **kw)
 
-	def verifyoutput(self, testnums, tmpdir=None):
+	def verifyoutput(self, testnums, tmpdir=None, output=None, enctype=None):
 		if tmpdir is None:
 			tmpdir = self.nget.tmpdir
 		ok = []
 		if type(testnums)==type(""):
 			testnums=[testnums]
 		outputs=[]
+		num_output_txt=0
+		num_output_bin=0
 		if type(testnums)==type({}):
 			for testnum,expected in testnums.items():
 				for n in expected:
@@ -167,10 +169,12 @@ class DecodeTest_base:
 				self.failIf(len(g) == 0, "decoded zero file %s does not exist"%dfnglob)
 				self.failIf(len(g) != 1, "decoded zero file %s matches multiple"%dfnglob)
 				dfn = g[0]
+				num_output_txt = num_output_txt + 1
 			else:
 				dfnglob = os.path.join(tmpdir, tail+'.*.*')
 				gfns = glob.glob(dfnglob)
 				dfn = os.path.join(tmpdir, tail)
+				num_output_bin = num_output_bin + 1
 			self.failUnless(os.path.exists(dfn), "decoded file %s does not exist"%dfn)
 			self.failUnless(os.path.isfile(dfn), "decoded file %s is not a file"%dfn)
 			if r:
@@ -192,6 +196,18 @@ class DecodeTest_base:
 		extra = [fn for fn in os.listdir(tmpdir) if fn not in ok]
 		self.failIf(extra, "extra files decoded: "+`extra`)
 
+		if output:
+			statline = output.splitlines()[-1].strip()
+			if num_output_txt:
+				self.failIf(statline.find(' %i plaintext'%num_output_txt)<0)
+			else:
+				self.failIf(statline.find(' plaintext')>=0)
+			if enctype:
+				if num_output_bin:
+					self.failIf(statline.find(' %i %s'%(num_output_bin,enctype))<0)
+				else:
+					self.failIf(statline.find(' %s'%enctype)>=0)
+
 
 class DecodeTestCase(TestCase, DecodeTest_base):
 	def setUp(self):
@@ -203,12 +219,12 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.servers.stop()
 		self.nget.clean_all()
 
-	def do_test(self, testnum, dirname, msg=None):
+	def do_test(self, testnum, dirname, enctype, msg=None):
 		self.addarticles(testnum, dirname)
 
-		self.vfailIf(self.nget.run("-g test -r ."), msg)
+		output = self.vfailIf_getoutput(self.nget.run_getoutput("-g test -r ."), msg)
 		
-		self.verifyoutput(testnum)
+		self.verifyoutput(testnum, output=output, enctype=enctype)
 	
 	def do_test_decodeerror(self):
 		self.vfailUnlessExitstatus(self.nget.run("-g test -r ."), 1, "nget process did not detect decode error")
@@ -219,13 +235,20 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		import inspect
 		frame = inspect.currentframe().f_back.f_back
 		foo, testnum, testname = frame.f_code.co_name.split('_',2)
-		return testnum, testname
+		if testname.find('yenc')>=0:
+			enctype = 'yenc'
+		elif testname.find('uue')>=0:
+			enctype = 'uu'
+		else:
+			enctype = None
+		return testnum, testname, enctype
 	
 	def do_test_auto(self, **kw):
 		self.do_test(*self.get_auto_args(), **kw)
 
 	def do_test_auto_decodeerror(self):
-		self.addarticles(*self.get_auto_args())
+		testnum, testname, enctype = self.get_auto_args()
+		self.addarticles(testnum, testname)
 
 		self.do_test_decodeerror()
 	

@@ -9,6 +9,7 @@
   * Document the messageid/mid keywords in the expretrieve expressions section of the manpage.
   * Fix ngetlite reusing a va_list (caused segfault on opteron.)
   * Fix segfault on empty group name.
+  * Fix count of plaintext messages on exit.
 
 2002-12-24 v0.23:
   * Add --decode arg so -k and -K can be negated.

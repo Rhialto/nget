@@ -97,6 +97,8 @@ c_file * maybegzopen(const char *fn, const char *mode) {
 void TextHandler::save(void) {
 	if (infocount==0 && decodeinfocount && !save_text_for_binaries && !save_whole_tempfile)
 		return;
+	if (infocount || decodeinfocount==0 || save_whole_tempfile)
+		set_plaintext_ok_status();
 	switch (texthandling) {
 		case TEXT_FILES: {
 			char *textfn = make_text_file_name(fr);
