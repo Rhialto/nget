@@ -238,12 +238,12 @@ sock_t make_connection(const char *netaddress,const char *service){
 			sock_close(sock);
 			continue;
 		}
-		freeaddrinfo(res);
+		freeaddrinfo(res0);
 		PMSG("connected.");
 		return sock;
 	}
 
-	freeaddrinfo(res);
+	freeaddrinfo(res0);
 	throw FileEx(Ex_INIT, "%s: %s",lasterrorfunc,lasterror);
 }
 
