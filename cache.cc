@@ -235,9 +235,9 @@ file_match_loop_end: ;
 	return fc;
 }
 
-bool c_nntp_cache::ismultiserver(void) {
+bool c_nntp_cache::ismultiserver(void) const {
 	int num=0;
-	for (t_nntp_server_info::iterator sii=server_info.begin(); sii!=server_info.end(); ++sii)
+	for (t_nntp_server_info::const_iterator sii=server_info.begin(); sii!=server_info.end(); ++sii)
 		if (sii->second->num > 0)
 			num++;
 	return num > 1;
@@ -317,14 +317,14 @@ int c_nntp_cache::additem(c_nntp_header *h){
 	return 1;
 }
 
-void c_nntp_cache::getxrange(c_nntp_server_info *servinfo,ulong newlow,ulong newhigh, c_nrange *range){
+void c_nntp_cache::getxrange(c_nntp_server_info *servinfo,ulong newlow,ulong newhigh, c_nrange *range) const {
 	range->clear();
 	range->insert(newlow<servinfo->low?newlow:servinfo->low,newhigh);
-	t_nntp_files::iterator i;
+	t_nntp_files::const_iterator i;
 	c_nntp_file::ptr nf;
-	t_nntp_file_parts::iterator pi;
+	t_nntp_file_parts::const_iterator pi;
 	c_nntp_part *np;
-	pair<t_nntp_server_articles::iterator,t_nntp_server_articles::iterator> sarange;
+	pair<t_nntp_server_articles::const_iterator,t_nntp_server_articles::const_iterator> sarange;
 	c_nntp_server_article *sa;
 	for(i = files.begin();i!=files.end();++i){
 		nf=(*i).second;

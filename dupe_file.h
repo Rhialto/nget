@@ -1,6 +1,6 @@
 /*
     dupe_file.* - dupe file detection code
-    Copyright (C) 1999-2001  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ class dupe_file_checker {
 		void addfrompath(const string &path);
 		void addfile(const string &path, const char *filename);
 		void add(const char *filename, ulong size);
-		int checkhavefile(const char *f, const string &messageid, ulong bytes);
+		int checkhavefile(const char *f, const string &messageid, ulong bytes) const;
 		bool empty (void) const {return flist.empty();}
 		void clear(void);
 		~dupe_file_checker() {clear();}

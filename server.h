@@ -61,8 +61,8 @@ class c_server_priority_grouping {
 		float deflevel;
 //		vector<c_server *> servers;
 		t_server_priority_grouping priorities;
-		float getserverpriority(ulong serverid){
-			t_server_priority_grouping::iterator spgi=priorities.find(serverid);
+		float getserverpriority(ulong serverid) const {
+			t_server_priority_grouping::const_iterator spgi=priorities.find(serverid);
 			if (spgi!=priorities.end())
 				return (*spgi).second->baseprio;
 			else
@@ -107,22 +107,22 @@ class c_nget_config {
 		bool fullxover;
 		int maxstreaming;
 
-		c_server* getserver(ulong serverid){
-			t_server_list::iterator sli=serv.find(serverid);
+		c_server* getserver(ulong serverid) const {
+			t_server_list::const_iterator sli=serv.find(serverid);
 			if (sli!=serv.end())
 				return (*sli).second;
 			return NULL;
 		}
-		c_server* getserver(string name){
+		c_server* getserver(string name) const {
 			serv_match_by_name name_matcher;
 			name_matcher.mname=name.c_str();
-			t_server_list::iterator sli=find_if(serv.begin(),serv.end(),name_matcher);
+			t_server_list::const_iterator sli=find_if(serv.begin(),serv.end(),name_matcher);
 			if (sli!=serv.end())
 				return (*sli).second;
 			return NULL;
 		}
-		c_server_priority_grouping* getpriogrouping(string groupname){
-			t_server_priority_grouping_list::iterator spgli = prioritygroupings.find(groupname.c_str());
+		c_server_priority_grouping* getpriogrouping(string groupname) const {
+			t_server_priority_grouping_list::const_iterator spgli = prioritygroupings.find(groupname.c_str());
 			if (spgli != prioritygroupings.end())
 				return (*spgli).second;
 			return NULL;

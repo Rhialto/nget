@@ -1,3 +1,21 @@
+/*
+    dupe_file.* - dupe file detection code
+    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*/
 #include "dupe_file.h"
 #include "log.h"
 
@@ -58,8 +76,8 @@ void dupe_file_checker::addfrompath(const string &path){
 	closedir(dir);
 }
 
-int dupe_file_checker::checkhavefile(const char *f, const string &messageid, ulong bytes){
-	filematchmap::iterator curl = flist.upper_bound(bytes/2); //find first fm with size*2 > bytes
+int dupe_file_checker::checkhavefile(const char *f, const string &messageid, ulong bytes) const {
+	filematchmap::const_iterator curl = flist.upper_bound(bytes/2); //find first fm with size*2 > bytes
 	file_match *fm;
 	for (;curl!=flist.end() && curl->first<bytes;++curl){ //keep going as long as size < bytes
 		fm=curl->second;

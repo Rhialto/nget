@@ -1,6 +1,6 @@
 /*
     cache.* - nntp header cache code
-    Copyright (C) 1999-2001  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -128,7 +128,7 @@ class c_nntp_file : public c_refcounted<c_nntp_file>{
 		int partoff,tailoff;
 		t_references references;
 		void addpart(c_nntp_part *p);
-		bool iscomplete(void) {return (have>=req) || (have<=1 && !references.empty() && lines()<1000);}
+		bool iscomplete(void) const {return (have>=req) || (have<=1 && !references.empty() && lines()<1000);}
 		void get_server_have_map(t_server_have_map &have_map) const;
 //		ulong banum(void){assert(!parts.empty());return (*parts.begin()).second->articlenum;}
 		string bamid(void) const {assert(!parts.empty());return (*parts.begin()).second->messageid;}
@@ -258,7 +258,7 @@ class c_mid_info {
 		string file;
 		int changed;
 		t_message_state_list states;
-		int check(string mid){
+		int check(string mid) const {
 			if (states.find(mid.c_str())!=states.end())
 				return 1;
 			return 0;
@@ -321,11 +321,11 @@ class c_nntp_cache : public c_refcounted<c_nntp_cache>{
 		c_group_info::ptr group;
 		int saveit;
 		int fileread;
-		bool ismultiserver(void);
+		bool ismultiserver(void) const;
 		//int additem(ulong an,char *s,const char * a,time_t d, ulong b, ulong l){
 		int additem(c_nntp_header *h);
 		ulong flushlow(c_nntp_server_info *servinfo, ulong newlow, c_mid_info *midinfo);
-		void getxrange(c_nntp_server_info *servinfo, ulong newlow, ulong newhigh, c_nrange *range);
+		void getxrange(c_nntp_server_info *servinfo, ulong newlow, ulong newhigh, c_nrange *range) const;
 		//c_nntp_files_u* getfiles(c_nntp_files_u * fc,c_nrange *grange,const char *match, unsigned long linelimit,int flags);
 		//c_nntp_files_u* getfiles(c_nntp_files_u * fc,c_nrange *grange,nntp_pred *pred,int flags);
 		c_nntp_files_u* getfiles(const string &path, const string &temppath, c_nntp_files_u * fc,c_mid_info *midinfo,generic_pred *pred,int flags);
