@@ -548,6 +548,7 @@ void c_prot_nntp::dolistgroup(c_nrange &existing, ulong lowest, ulong highest, u
 
 void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, ulong &num, ulong &low, ulong &high) {
 	assert(connection);
+	connection->curgroup=NULL; //unset curgroup, in case the group we asked for does not exist, some servers will keep us in the old group, whereas others will put us into the no group selected state.
 	int reply = stdputline(quiet<2,"GROUP %s",group->group.c_str());
 	if (reply/100==4) // if group doesn't exist, set ok flag.  Otherwise let XOVER/ARTICLE reply set it. (If we always set it here, failure of xover/article would never result in penalization.  But if we only set it after xover/article, then a host could be incorrectly penalized just because it didn't have the group (eg, if maxconnections=1 so it closed connection before any other commands could succeed and setok))
 		chkreply_setok(reply);
@@ -979,11 +980,8 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 					ari->server_name=connection->server->shortname.c_str();
 				else if (toti->doarticle_show_multi==SHOW_MULTI_LONG)
 					ari->server_name=connection->server->alias.c_str();
-				if (group) {
-					nntp_dogroup(group, 0);
-					chkreply_setok(stdputline(debug>=DEBUG_MED,"ARTICLE %lu",sa->articlenum));
-				} else //#### should we just use sa->group and articlenum instead of messageid? ARTICLE messageid may be slower..
-					chkreply_setok(stdputline(debug>=DEBUG_MED,"ARTICLE %s",part->messageid.c_str()));
+				nntp_dogroup(sa->group, 0);
+				chkreply_setok(stdputline(debug>=DEBUG_MED,"ARTICLE %lu",sa->articlenum));
 				nntp_dogetarticle(ari,toti,buf);
 				connection->server_ok=true;
 			} catch (baseCommEx &e) {
