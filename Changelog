@@ -5,6 +5,7 @@
   * Use 64bit int for total bytes/lines if available.  Fixes negative/weird time left displays for large queues. 
   * Make timeout a config option.
   * Add manpage for ngetlite.
+  * No longer attempt to set user/group in make install.
   
 2001-08-02 - v0.14:
   * Fix exception if files in current dir contained '{' or '}'. (reported by Brian Keefer)

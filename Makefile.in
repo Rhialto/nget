@@ -39,12 +39,12 @@ dep depend .depend:
 	$(CXX) $(CXXFLAGS) -MM *.cc > .depend
 
 install_nget: nget
-	$(install) -s -o root -g bin -m 0755 nget $(bindir)
-	$(install) -o root -g bin -m 0644 nget.1 $(mandir)/man1
+	$(install) -s -m 0755 nget $(bindir)
+	$(install) -m 0644 nget.1 $(mandir)/man1
 
 install_ngetlite: ngetlite
-	$(install) -s -o root -g bin -m 0755 ngetlite $(bindir)
-	$(install) -o root -g bin -m 0644 ngetlite.1 $(mandir)/man1
+	$(install) -s -m 0755 ngetlite $(bindir)
+	$(install) -m 0644 ngetlite.1 $(mandir)/man1
 
 install: install_nget install_ngetlite
 
