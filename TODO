@@ -1,5 +1,3 @@
-* Make sock timeout an option (for both nget and ngetlite? how to config for ngetlite?)
-
 * fullxoverthreshold.  Or sending multiple requests before recieving response (possible protocol breakage?)
 
 * exit with non-zero exit status if paths cannot be changed to (and other errors?)

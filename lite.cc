@@ -152,6 +152,10 @@ dofile_done:
 }
 
 int main (int argc, char ** argv){
+	char *timeout_str=getenv("NGETLITE_TIMEOUT");
+	if (timeout_str)
+		sock_timeout=atoi(timeout_str);
+	
 	quiet=0;debug=1;
 
 	if (argc<2) showhelp();

@@ -43,7 +43,6 @@
 #include "strreps.h"
 
 int sock_timeout=3*60;
-//int sock_timeout=10;
 
 /* Take a service name, and a service type, and return a port number.  If the
 service name is not found, it tries it as a decimal number.  The number

@@ -29,6 +29,8 @@
 #include <arpa/inet.h>
 #include <stdarg.h>
 
+extern int sock_timeout;
+
 int atosockaddr(const char *netaddress, const char *defport, const char *proto,struct sockaddr_in *address, char * buf, int buflen);
 
 int atoport(const char *service,const char *proto,char * buf, int buflen);

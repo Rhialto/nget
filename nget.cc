@@ -844,6 +844,7 @@ int main(int argc, char ** argv){
 							nntp.nntp_open(options.host,NULL,NULL);*/
 				/*			options.host=halias->getsection("default");
 							nntp.nntp_open(options.host);*/
+				cfg.data.getitemi("timeout",&sock_timeout);
 				cfg.data.getitemi("debug",&debug);
 				cfg.data.getitemi("quiet",&quiet);
 				cfg.data.getitemul("limit",&options.linelimit);
