@@ -109,7 +109,7 @@ enum {
 	OPT_AUTOPAR,
 	OPT_NOAUTOPAR,
 	OPT_FULLXOVER,
-	OPT_MIN_SHORTNAME
+	OPT_MIN_SHORTNAME //sentinel, must be last element.
 };
 
 static void addoption(char *longo,int needarg,char shorto,char *adesc,char *desc){
