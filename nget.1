@@ -78,7 +78,7 @@ of lines, add it as part of the expression.
 Following -a/-A:
 group, desc.
 .IP "-@/--list LISTFILE"
-Specify a file to load a list of command line args from.  Looks in ~/.nget4/lists/ dir by default.
+Specify a file to load a list of command line args from.  Looks in ~/.nget5/lists/ dir by default.
 A # char in a listfile that is the first character on a line or is preceeded by whitespace and not quoted starts a comment which lasts until the end of the line.
 .IP "-p/--path DIRECTORY"
 Path to store subsequent retrieves.
@@ -228,10 +228,10 @@ Matches the newsgroup name.
 .IP "desc (regex)"
 Matches the newsgroup description.
 .SH CONFIGURATION
-Upon startup, nget will read ~/.nget4/.ngetrc for default configuration values and host/group
+Upon startup, nget will read ~/.nget5/.ngetrc for default configuration values and host/group
 aliases.  An example .ngetrc should have been included with nget.
 .P
-nget will also check ~/_nget4/ and _ngetrc if needed, to handle OS and filesystems that can't (or won't) handle files starting with a period.
+nget will also check ~/_nget5/ and _ngetrc if needed, to handle OS and filesystems that can't (or won't) handle files starting with a period.
 .P
 Options are specified one per line in the form:
 .RS
@@ -589,7 +589,7 @@ directory at the same time..)
 .SH ENVIRONMENT
 .PP
 .IP "HOME"
-Where to put .nget4 directory. (put nget files $HOME/.nget4/)
+Where to put .nget5 directory. (put nget files $HOME/.nget5/)
 .IP "NGETHOME"
 Override HOME var (put nget files in $NGETHOME)
 .IP "NGETCACHE"
@@ -598,17 +598,17 @@ Override HOME/NGETHOME vars and .ngetrc cachedir option (put nget cache files in
 Alternate configuration file to use.
 .SH FILES
 .PP
-.IP "~/.nget4/"
-All configuration and cache files are stored here.  Changed to .nget4/ because
-cache format changed in nget 0.16.
+.IP "~/.nget5/"
+All configuration and cache files are stored here.  Changed to .nget5/ because
+cache format changed in nget 0.27.
 (The 4 in the directory name is for file format version 4, not nget version 4.)
-To upgrade a .nget3 directory to .nget4, simply run "mv ~/.nget3 ~/.nget4 ; rm ~/.nget4/*,cache*"
-.IP "~/.nget4/.ngetrc"
+To upgrade a .nget4 directory to .nget5, simply run "mv ~/.nget4 ~/.nget5 ; rm ~/.nget5/*,cache*"
+.IP "~/.nget5/.ngetrc"
 Configuration file.  If you store authentication information here, be sure to
 set it readable only by owner.
-.IP "~/_nget4/_ngetrc"
+.IP "~/_nget5/_ngetrc"
 Alternate location, use this if you can't create a dir/file starting with a period.
-.IP "~/.nget4/lists/"
+.IP "~/.nget5/lists/"
 Default directory for listfiles.
 .SH AUTHOR
 Matthew Mueller <donut AT dakotacom.net>
