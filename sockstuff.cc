@@ -231,9 +231,10 @@ service is the port name/number,
 type is either SOCK_STREAM or SOCK_DGRAM, and
 netaddress is the host name to connect to.
 The function returns the socket, ready for action.*/
-int make_connection(int type,const char *netaddress,const char *service,char * buf, int buflen){
+sock_t make_connection(int type,const char *netaddress,const char *service,char * buf, int buflen){
 	PERROR("make_connection(%i,%s,%s,%p,%i)",type, netaddress, service,buf, buflen);
-	int sock, connected;
+	sock_t sock;
+	int connected;
 	struct sockaddr_in address;
 	char *prot;
 	if (type == SOCK_STREAM)
@@ -251,7 +252,7 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 	PMSG("Connecting to %i.%i.%i.%i:%i",i[0],i[1],i[2],i[3],ntohs(address.sin_port));
 
 	sock = socket(address.sin_family, type, 0);
-	if (sock < 0)
+	if (!sock_isvalid(sock))
 		throw FileEx(Ex_INIT,"socket: %s",sock_strerror(sock_errno));
 
 	if (type == SOCK_STREAM) {
@@ -306,7 +307,7 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 
 /* This is just like the write() system call, accept that it will
 make sure that all data is transmitted. */
-int sock_write_ensured(int sockfd, const char *buf, size_t count) {
+int sock_write_ensured(sock_t sockfd, const char *buf, size_t count) {
 	size_t bytes_sent = 0;
 	int this_write;
 
@@ -324,7 +325,7 @@ int sock_write_ensured(int sockfd, const char *buf, size_t count) {
 
 
 //like read(), but uses select() to enforce a timeout.  read() blocks forever if the connection is lost unexpectadly (modem disconnect, etc)
-int sock_read(int sockfd, void *buf, size_t count){
+int sock_read(sock_t sockfd, void *buf, size_t count){
 #ifdef HAVE_SELECT
 	fd_set r;
 	struct timeval tv;
@@ -345,7 +346,7 @@ int sock_read(int sockfd, void *buf, size_t count){
 #endif
 }
 
-bool sock_datawaiting(int sockfd){
+bool sock_datawaiting(sock_t sockfd){
 #ifdef HAVE_SELECT
 	fd_set r;
 	struct timeval tv;

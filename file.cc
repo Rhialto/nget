@@ -234,7 +234,7 @@ const char *c_file_tcp::dostrerror(void) {
 }
 int c_file_tcp::doflush(void){
 #ifdef HAVE_FSYNC
-	if (sock>=0)
+	if (sock_isvalid(sock))
 		return fsync(sock);
 #endif
 	return 0;
@@ -242,11 +242,11 @@ int c_file_tcp::doflush(void){
 int c_file_tcp::doclose(void){
 	int i=0;
 	i=sock_close(sock);
-	sock=-1;
+	sock=SOCK_INVALID;
 	return i;
 }
 inline int c_file_tcp::isopen(void)const{
-	return (sock>=0);
+	return sock_isvalid(sock);
 }
 inline ssize_t c_file_tcp::dowrite(const void *data,size_t len){
 	//don't need to use sock_write_ensured since c_file::write handles the looping.

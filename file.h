@@ -25,6 +25,7 @@
 #include <stdio.h>
 
 #include "_fileconf.h"
+#include "sockstuff.h"
 
 #ifdef HAVE_LIBZ
 #include <zlib.h>
@@ -132,7 +133,7 @@ class c_file_stream : public c_file {
 
 class c_file_tcp : public c_file {
   private:
-	int sock;
+	sock_t sock;
 
 	virtual ssize_t dowrite(const void *buf,size_t len);
 	virtual ssize_t doread(void *buf,size_t len);

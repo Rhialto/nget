@@ -24,8 +24,11 @@
 #include <sys/types.h>
 #ifdef HAVE_WINSOCK_H
 #include <winsock.h>
+typedef SOCKET sock_t;
+inline bool sock_isvalid(sock_t s) {return s!=INVALID_SOCKET;}
+#define SOCK_INVALID INVALID_SOCKET
 void sockstuff_init(void);
-inline int sock_close(int s) {return closesocket(s);}
+inline int sock_close(sock_t s) {return closesocket(s);}
 #define sock_errno WSAGetLastError()
 #define sock_h_errno WSAGetLastError()
 const char* sock_strerror(int e);
@@ -39,8 +42,11 @@ const char* sock_strerror(int e);
 #include <errno.h>
 #include <string.h>
 #include "strreps.h"
+typedef int sock_t;
+inline bool sock_isvalid(sock_t s) {return s>=0;}
+#define SOCK_INVALID -1
 #define sockstuff_init()
-inline int sock_close(int s) {return close(s);}
+inline int sock_close(sock_t s) {return close(s);}
 #define sock_errno errno
 #define sock_h_errno h_errno
 inline const char* sock_strerror(int e) {return strerror(e);}
@@ -48,7 +54,7 @@ inline const char* sock_hstrerror(int e) {return hstrerror(e);}
 #endif /* !HAVE_WINSOCK_H */
 #include <stdarg.h>
 
-inline int sock_write(int sockfd, const char *buf, size_t count) {
+inline int sock_write(sock_t sockfd, const char *buf, size_t count) {
 	//return write(sockfd, buf, count);
 	return send(sockfd, buf, count, 0);
 }
@@ -60,10 +66,10 @@ void atosockaddr(const char *netaddress, const char *defport, const char *proto,
 int atoport(const char *service,const char *proto,char * buf, int buflen);
 void atoaddr(const char *netaddress,struct in_addr *addr,char *buf, int buflen);
 
-int make_connection(int type,const char *netaddress,const char *service,char * buf, int buflen);
+sock_t make_connection(int type,const char *netaddress,const char *service,char * buf, int buflen);
 
-int sock_write_ensured(int sockfd, const char *buf, size_t count);
-int sock_read(int sockfd, void *buf, size_t count);
-bool sock_datawaiting(int sockfd);
+int sock_write_ensured(sock_t sockfd, const char *buf, size_t count);
+int sock_read(sock_t sockfd, void *buf, size_t count);
+bool sock_datawaiting(sock_t sockfd);
 
 #endif
