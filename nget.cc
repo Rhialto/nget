@@ -270,7 +270,7 @@ static void addoptions(void)
 	addoption("save-binary-info",1,OPT_SAVE_TEXT_FOR_BINARIES,"OPT","save text files for posts that contained only binaries (yes/no(default))");
 	addoption("tries",1,'t',"INT","set max retries (-1 unlimits, default 20)");
 	addoption("delay",1,'s',"INT","seconds to wait between retry attempts(default 1)");
-	addoption("timeout",1,OPT_TIMEOUT,"INT","seconds to wait for reply from server");
+	addoption("timeout",1,OPT_TIMEOUT,"INT","seconds to wait for data from server(default 180)");
 	addoption("limit",1,'l',"INT","min # of lines a 'file' must have(default 0)");
 	addoption("maxlines",1,'L',"INT","max # of lines a 'file' must have(default -1)");
 	addoption("incomplete",0,'i',0,"retrieve files with missing parts");
