@@ -79,9 +79,11 @@ Valid responses to the prompt are y[es], n[o], and a max number of directory lev
 (This means that if you get in the habit of answering "1" rather than "y", and one day typo the first portion of a path you won't accidentally create a bunch of dirs in the wrong place.)
 .IP "-T/--testmode"
 Causes --retrieve to merely print out all matching files.
-.IP "--text ignore,files,mbox"
+.IP "--text ignore,files,mbox[:filename]"
 Specifies how to handle text posts.  The default is files. 
 OPT can be ignore to save only binaries, "files" to save each text post in a different file, and "mbox" to save each text post as a message in a mbox format mailbox.
+The name of the mbox file to save in can be specified with mbox:filename, the default is nget.mbox.
+If the filename ends in .gz, it will automatically be gzipped.
 .IP "--save-binary-info yes,no"
 Specifies wether to save text messages for posts that contained only binary data. (If you want to see the headers.)
 .IP "--test-multiserver OPT"
@@ -268,7 +270,7 @@ Create non-existant directories specified by -p/-P? (yes/no/ask/#)
 .IP "test_multiserver (special, default=no)"
 Display multiserver file complition info in testmode output? (no=no, short=show shortname of each server that has parts of the file, lowercase when complete and uppercase when that server only has some parts, long=show fullname of each server along with a count of how many parts it has if it does not have them all.)
 .IP "text (special, default=files)"
-Default for the --text option (possible values are ignore,files,mbox).
+Default for the --text option (possible values are ignore,files,mbox[:filename]).
 .IP "save_binary_info (boolean, default=0)"
 Default for the --save-binary-info option.
 .IP "cachedir (string)"

@@ -263,7 +263,7 @@ static void addoptions(void)
 //	addoption("testretrieve",1,'R',"REGEX","test what would have been retrieved");
 	addoption("testmode",0,'T',0,"test what would have been retrieved");
 	addoption("test-multiserver",1,OPT_TEST_MULTI,"OPT","make testmode display per-server completion info (no(default)/long/short)");
-	addoption("text",1,OPT_TEXT_HANDLING,"OPT","how to handle text posts (files(default)/mbox/ignore)");
+	addoption("text",1,OPT_TEXT_HANDLING,"OPT","how to handle text posts (files(default)/mbox[:filename]/ignore)");
 	addoption("save-binary-info",1,OPT_SAVE_TEXT_FOR_BINARIES,"OPT","save text files for posts that contained only binaries (yes/no(default))");
 	addoption("tries",1,'t',"INT","set max retries (-1 unlimits, default 20)");
 	addoption("delay",1,'s',"INT","seconds to wait between retry attempts(default 1)");
@@ -456,6 +456,10 @@ int nget_options::set_text_handling(const char *s){
 		texthandling=TEXT_FILES;
 	else if (strcasecmp(s,"mbox")==0)
 		texthandling=TEXT_MBOX;
+	else if (strncasecmp(s,"mbox:",5)==0) {
+		texthandling=TEXT_MBOX;
+		mboxfname=s+5;
+	}
 	else if (strcasecmp(s,"ignore")==0)
 		texthandling=TEXT_IGNORE;
 	else{

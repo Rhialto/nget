@@ -97,6 +97,10 @@ class c_file {
 	virtual int isopen(void) const = 0;
 };
 
+
+void copyfile(c_file *of, c_file *nf);
+
+
 class c_file_fd : public c_file {
   private:
 	int fd;

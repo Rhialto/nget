@@ -22,6 +22,7 @@
 #include "mylockfile.h"
 #include "myregex.h"
 #include <time.h>
+#include <memory>
 
 char * make_text_file_name(c_nntp_file_retr::ptr fr) {
 	char *nfn;
@@ -77,6 +78,14 @@ void TextHandler::writeinfo(c_file *f, bool escape_From=false) {
 TextHandler::TextHandler(t_text_handling texthandlin, bool save_text_for_binarie, const string &mboxnam, c_nntp_file_retr::ptr frp, const char *firsttempf): texthandling(texthandlin), save_text_for_binaries(save_text_for_binarie), mboxname(mboxnam), fr(frp), firsttempfn(firsttempf), infocount(0), decodeinfocount(0) {
 }
 
+c_file * maybegzopen(const char *fn, const char *mode) {
+	int len=strlen(fn);
+	if ((len>=3 && fn[len-3]=='.' && fn[len-2]=='g' && fn[len-1]=='z') ||
+		(len>=7 && strcmp(fn+len-7, ".gz.tmp")==0))
+		return new c_file_gz(fn, mode);
+	return new c_file_fd(fn, mode);
+}
+
 TextHandler::~TextHandler() {
 	if (infocount==0 && decodeinfocount && !save_text_for_binaries)
 		return;
@@ -94,15 +103,36 @@ TextHandler::~TextHandler() {
 			break;
 		}
 		case TEXT_MBOX: { // see http://www.qmail.org/man/man5/mbox.html for mbox format info.
+			// we will use the copy, write, rename method rather than just appending to the existing mbox file for two reasons:
+			//  1) any errors during writing will not leave a partial message in the mbox
+			//  2) with gzip append compression is started again each time so the compression ratio is much less than compressing the whole thing at once.
 			string mboxpath(fr->path);
 			path_append(mboxpath, mboxname);
-			c_file_fd f(mboxpath.c_str(), O_CREAT|O_WRONLY|O_APPEND, PUBMODE);
+			string tmppath(mboxpath);
+			tmppath.append(".tmp");
+			//c_file_fd f(mboxpath.c_str(), O_CREAT|O_WRONLY|O_APPEND, PUBMODE);
 			c_lockfile locker(mboxpath.c_str(), WANT_EX_LOCK);
-			time_t curtime = time(NULL);
-			f.putf("From nget-"PACKAGE_VERSION" %s", ctime(&curtime)); //ctime has a \n already.
-			writeinfo(&f, true);
-			f.putf("\n");
-			f.close();
+			auto_ptr<c_file> f(maybegzopen(tmppath.c_str(), "w"));
+			try {
+				try {
+					auto_ptr<c_file> of(maybegzopen(mboxpath.c_str(), "r"));
+					copyfile(of.get(), f.get());
+					of->close();
+				}catch (FileNOENTEx &e) {
+					//ignore
+				}
+				time_t curtime = time(NULL);
+				f->putf("From nget-"PACKAGE_VERSION" %s", ctime(&curtime)); //ctime has a \n already.
+				writeinfo(f.get(), true);
+				f->putf("\n");
+				f->close();
+			}catch(FileEx &e){
+				printCaughtEx(e);
+				if (unlink(tmppath.c_str()))
+					perror("unlink:");
+				fatal_exit();
+			}
+			xxrename(tmppath.c_str(), mboxpath.c_str());
 			break;
 		}
 		case TEXT_IGNORE:

@@ -42,6 +42,13 @@ void xxrename(const char *oldpath, const char *newpath) {
 		throw FileEx(Ex_INIT, "rename %s > %s: %s(%i)\n",oldpath,newpath,strerror(errno),errno);
 }
 
+void copyfile(c_file *of, c_file *nf) {
+	char buf[4096];
+	int len;
+	while ((len=of->read(buf, 4096)) != 0)
+		nf->write(buf, len);
+}
+
 int c_file_buffy::bfill(uchar *b,int l){
 	return fileptr->read(b,l);
 }
@@ -149,7 +156,7 @@ int fopen2open(const char *mode){
 }
 c_file_fd::c_file_fd(const char *name,const char *mode):c_file(name){
 	int flags=fopen2open(mode);
-	fd=::open(name,flags,S_IRWXU|S_IRWXG|S_IRWXO);
+	fd=::open(name,flags,PUBMODE);
 	if (fd<0)
 		THROW_OPEN_ERROR("open %s (%s)", name, strerror(errno));
 }
