@@ -1,6 +1,5 @@
 wishlist of things to add to nget:
 
-- proper ordering of -p path settings (ie, no need to respecify -G or -g to set group options)
 - less verbose reporting modes:
     all standard information, but no percentage counters (to include statistics)
     ability to put logging/statistics information to stdout or stderr, and percentage counters to the other
