@@ -1236,19 +1236,20 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 		c_nntp_part *p;
 //		s_part_u *bp;
 		t_nntp_file_parts::iterator curp;
-		t_nntp_files_u::iterator lastf=filec.files.end();
 		char *fn;
 		if (!options.writelite.empty())
 			optionflags |= GETFILES_NODECODE;
-		for(curf = filec.files.begin();curf!=filec.files.end();++curf){
-			int r;
-			if (lastf!=filec.files.end()){
+		curf=filec.files.end();
+		while (1){
+			if (curf!=filec.files.end()){
 //				delete (*lastf).second;//new cache implementation uses pointers to the same data
-				filec.files.erase(lastf);
+				filec.files.erase(curf);
 				qtotinfo.filesdone++;
 				filec.bytes=qtotinfo.bytesleft;//update bytes in case we have an exception and need to restart.
 			}
-			lastf=curf;
+			if (filec.files.empty())
+				break;
+			curf = filec.files.begin();
 			fr=(*curf).second;
 			f=fr->file;
 			printf("Retrieving: ");
@@ -1312,6 +1313,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 					fnbuf.push_back(fn);
 			}
 			if (!uustatus.derr && !(optionflags&GETFILES_NODECODE) && !fnbuf.empty()){
+				int r;
 				TextHandler texthandler(options.texthandling, options.save_text_for_binaries, options.mboxfname, fr, fnbuf.front());
 				uustatus.th = &texthandler;
 				if ((r=UUInitialize())!=UURET_OK)
@@ -1421,6 +1423,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 								filec.files.erase(del_fi);
 								qtotinfo.filestot--;
 								qtotinfo.bytesleft-=df->bytes();
+								filec.bytes=qtotinfo.bytesleft;//update bytes in case we have an exception and need to restart.
 								continue;
 							}
 						}
