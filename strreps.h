@@ -29,6 +29,11 @@ int asprintf(char **str,const char *format,...)
         __attribute__ ((format (printf, 2, 3)));
 #endif
 
+#ifndef HAVE_VSNPRINTF
+#include <stdarg.h>
+int vsnprintf(char *str, size_t size, const char *format, va_list ap);
+#endif
+        
 #ifndef HAVE_VASPRINTF
 #include <stdarg.h>
 int vasprintf(char **str,const char *format,va_list ap);

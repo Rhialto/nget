@@ -36,16 +36,26 @@ int asprintf(char **str,const char *format,...){
 }
 #endif
 
+#ifndef HAVE_VSNPRINTF
+int vsnprintf(char *str, size_t size, const char *format, va_list ap) {
+	//if your libc doesn't even have vsnprintf.. oh well, not much to be done about it.
+	return vsprintf(str, format, ap);
+}
+#endif
+
 #ifndef HAVE_VASPRINTF
 int vasprintf(char **str,const char *format,va_list ap){
+	const int buflen=4096;
 #ifndef _REENTRANT
 	static
 #endif
-		char buf[4096];
+		char buf[buflen];
 	int l;
-	l=vsprintf(buf,format,ap);
+	l=vsnprintf(buf,buflen,format,ap);
+	if (l>buflen) l=buflen;
 	*str=(char*)malloc(l+1);
-	memcpy(*str,buf,l+1);
+	memcpy(*str,buf,l);
+	*str[l]=0;
 	return l;
 }
 #endif
