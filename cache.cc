@@ -503,6 +503,7 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midi
 						printf("%s is from a different version of nget\n",file.c_str());
 					else
 						printf("%s does not seem to be an nget cache file\n",file.c_str());
+					set_cache_warn_status();
 					f->close();fileread=0;
 					return;
 				}
@@ -526,8 +527,10 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midi
 							printf("warning: serverid %lu not found in server list\n",serverid);
 							set_cache_warn_status();
 						}
-					}else
+					}else{
 						printf("invalid line %lu mode %i\n",curline,mode);
+						set_cache_warn_status();
+					}
 				}
 			}
 			else if (mode==SERVER_ARTICLE_MODE && np){//new server_article mode
@@ -550,8 +553,10 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midi
 							counta++;
 						}else
 							countdeada++;
-					}else
+					}else{
 						printf("invalid line %lu mode %i\n",curline,mode);
+						set_cache_warn_status();
+					}
 				}
 			}
 			else if (mode==PART_MODE && nf){//new part mode
@@ -588,8 +593,10 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midi
 						np=new c_nntp_part(atoi(t[0]),atoul(t[1]),t[2]);
 						nf->addpart(np);//add at '.' section (above) ... o r not.
 						count++;
-					}else
+					}else{
 						printf("invalid line %lu mode %i\n",curline,mode);
+						set_cache_warn_status();
+					}
 					mode=SERVER_ARTICLE_MODE;//start adding server_articles
 				}
 			}
@@ -604,8 +611,10 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midi
 					files.insert(t_nntp_files::value_type(nf->fileid,nf));
 //					files[nf->subject.c_str()]=nf;
 					mode=REFERENCES_MODE;
-				}else
+				}else{
 					printf("invalid line %lu mode %i\n",curline,mode);
+					set_cache_warn_status();
+				}
 			}
 			else if (mode==REFERENCES_MODE && nf){//adding references on new file
 				if (buf[0]=='.' && buf[1]==0){
@@ -701,6 +710,7 @@ c_nntp_cache::~c_nntp_cache(){
 			if (quiet<2) printf(" done. (%lu sa)\n",counta);
 			if (count!=totalnum){
 				printf("warning: wrote %lu parts from cache, expecting %lu\n",count,totalnum);
+				set_cache_warn_status();
 			}
 			if (rename(tmpfn.c_str(), file.c_str())){
 				printf("error renaming %s > %s: %s(%i)\n",tmpfn.c_str(),file.c_str(),strerror(errno),errno);
