@@ -9,6 +9,7 @@ Index:
 a time.  Why?
 5. -r with --no-autopar (or things that imply it: -T/-M/-U/-K) still doesn't
 match par files.
+6. After download, some files have weird names like foo.bar.293874837.283747324
 
 
 Answers:
@@ -66,4 +67,13 @@ match par files.
 
 Order of arguments matters.  These args must appear before the -r/-R in
 order for the -r/-R to know not to treat par files specially.
+
+
+6. After download, some files have weird names like foo.bar.293874837.283747324
+
+When nget downloads an incomplete or broken file, it will change the filename
+in order to avoid the dupechecking algorithm thinking you have a correct copy
+already.  In addition, when par2 files are present and autopar is on, nget
+may purposely download incomplete files even when you don't specify -i, in
+order to aquire enough data for par2 to repair the set.
 
