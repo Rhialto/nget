@@ -10,9 +10,7 @@ Install:
 -1) it is recommending you install libpopt if you don't have it already.  Since
   getopt is not reentrant, popt is required for the -@ option to function.
   Assuming your distro doesn't already include it:
-   ftp://ftp.redhat.com/pub/redhat/code/popt/
-  or a mirror, such as:
-   ftp://ftp.valinux.com/pub/mirrors/redhat/redhat/code/popt/
+   http://freshmeat.net/projects/popt/
 0) if you have the nget+uulib package, or have uulib as a shared lib: 
   ./configure and skip to step 1.2a
 1) d/l uulibsrc from http://www.fpx.de/fp/Software/UUDeview/
