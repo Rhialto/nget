@@ -317,3 +317,6 @@ inline char * c_file_tcp::dogets(char *data,size_t len){
 	return data;
 	//return sock_gets(sock,data,len);
 }
+bool c_file_tcp::datawaiting(void) const {
+	return sock_datawaiting(sock);
+}

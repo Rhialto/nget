@@ -72,12 +72,24 @@ void SockPool::connection_erase(t_connection_map::iterator i) {
 }
 
 Connection* SockPool::connect(ulong serverid) {
+	Connection *c;
+
 	//use existing connection when possible
 	t_connection_map::iterator i = connections.find(serverid);
 	if (i!=connections.end()){
-		if (i->second->isopen()) {
-			i->second->touch();
-			return i->second;
+		c = i->second;	
+		if (c->isopen()) {
+			try {
+				while (c->sock.datawaiting()) {
+					c->getline(1);
+				}
+			} catch (baseCommEx &e) {//ignore transport errors (probably server timeout)
+				printCaughtEx_nnl(e);printf(" (ignored)\n");
+			}
+		}
+		if (c->isopen()) {
+			c->touch();
+			return c;
 		} else {
 			connection_erase(i);
 		}
@@ -91,7 +103,7 @@ Connection* SockPool::connect(ulong serverid) {
 		expire_old_connection();
 	
 	//create new connection
-	Connection *c = new Connection(nconfig.getserver(serverid));
+	c = new Connection(nconfig.getserver(serverid));
 	if (c->open()<0){
 		nconfig.penalize(c->server);
 		delete c;

@@ -240,6 +240,12 @@ class DiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 		nntpd.NNTPRequestHandler.cmd_article(self, args)
 		return -1
 
+class ErrorDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	def cmd_article(self, args):
+		nntpd.NNTPRequestHandler.cmd_article(self, args)
+		self.nwrite("503 You are now disconnected. Have a nice day.")
+		return -1
+
 class ConnectionErrorTestCase(unittest.TestCase, DecodeTest_base):
 	def tearDown(self):
 		if hasattr(self, 'servers'):
@@ -311,6 +317,26 @@ class ConnectionErrorTestCase(unittest.TestCase, DecodeTest_base):
 		self.addarticles_toserver('0002', 'uuencode_multi', self.servers.servers[0])
 		self.failIf(self.nget.run("-g test"), "nget process returned with an error")
 		self.failUnless(os.WEXITSTATUS(self.nget.run("-h host1 -G test -r .")) & 8, "nget process did not detect retrieve error")
+	
+	def test_AbruptTimeout(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.verifyoutput('0002')
+
+	def test_ErrorTimeout(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), ErrorDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.verifyoutput('0002')
 
 
 class AuthTestCase(unittest.TestCase, DecodeTest_base):

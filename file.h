@@ -179,6 +179,7 @@ class c_file_tcp : public c_file {
 	virtual int doflush(void);
 	virtual int doclose(void);
   public:
+	bool datawaiting(void) const;
 	virtual int isopen(void) const;
 	int open(const char *name,const char * port);
 	c_file_tcp(void){sock=-1;};

@@ -1,3 +1,6 @@
+2002-xx-xx v0.x:
+  * Fix handling of timeout where the server prints an error before disconnecting. (Reported by Scott Kay)
+
 2002-05-17 v0.18.2:
   * Work around exception handling segfaults with older versions of gcc by not using multiple inheritance in exception classes. (reported by Waldemar la Tendresse)
   * Fix redefinition of SIZEOF_INT_FAST64_T compile warnings on systems without int_fast64_t.

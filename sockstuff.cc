@@ -424,6 +424,22 @@ int sock_read(int sockfd, void *buf, size_t count){
 #endif
 }
 
+bool sock_datawaiting(int sockfd){
+#ifdef HAVE_SELECT
+	fd_set r;
+	struct timeval tv;
+	int i;
+	tv.tv_sec=0;
+	tv.tv_usec=0;
+	FD_ZERO(&r);
+	FD_SET(sockfd,&r);
+	if ((i=select(sockfd+1,&r,NULL,NULL,&tv))>0){
+		return true;
+	}
+#endif
+	return false;
+}
+
 /* This function reads from a socket, until it recieves a linefeed
    character.  It fills the buffer "str" up to the maximum size "count".
 
