@@ -460,7 +460,6 @@ int c_prot_nntp::nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_artic
 		if (curservsapi){
 			if (curserverid==sa->serverid)
 				prio*=nconfig.curservmult;
-//				prio*=2.0;//TODO: set curservpriomult upon cfg?
 		}
 		PDEBUG(DEBUG_MED,"prioritizing server %lu article %lu prio %f",sa->serverid,sa->articlenum,prio);
 		if (curservsapi && curserverid==sa->serverid)
@@ -472,7 +471,7 @@ int c_prot_nntp::nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_artic
 		prio=(**curservsapi).first;
 		sa=(**curservsapi).second;
 		sap.erase(*curservsapi);
-		prio*=1.5;
+		prio*=1.001;
 		sap.insert(t_nntp_server_articles_prioritized::value_type(prio,sa));
 		PDEBUG(DEBUG_MED,"server %lu article %lu reprioritized %f",sa->serverid,sa->articlenum,prio);
 	}
