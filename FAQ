@@ -5,6 +5,8 @@ Index:
 1. Why doesn't -G somegroup -r '*.png' work?
 2. Whats a regexp? I'm too lazy to read a man page.
 3. Whats this "unequal line count" error?
+4. I have maxconnections set at 10 but only one article is being downloaded at
+a time.  Why?
 
 
 Answers:
@@ -43,4 +45,16 @@ The main reason this check is in there is to catch any possible download
 corruption, but in a case like this its just the server and nget
 disagree on the method of counting.  pan most likely just doesn't care
 if the line count is different.
+
+
+4. I have maxconnections set at 10 but only one article is being downloaded at
+a time.  Why?
+
+The maxconnections setting allows connections to multiple servers to be left
+open simultaneously, so that when retrieving posts that are not all available
+on one server, it doesn't have to keep reconnecting each time it needs to
+change server.
+
+Support for retrieving multiple articles at once (either from the same server
+or seperate ones) is not currently implemented, though it is on my todo.
 
