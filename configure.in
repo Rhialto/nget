@@ -228,7 +228,7 @@ dnl Checks for library functions.
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
 dnl AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(mkdir mktime regcomp select socket strerror strstr strtol strtoul atoul asprintf vasprintf vdprintf getservbyname_r gethostbyname_r localtime_r inet_aton getaddrinfo getnameinfo getopt_long flock)
+AC_CHECK_FUNCS(mkdir mktime regcomp select socket strerror atoul asprintf vasprintf vdprintf getservbyname_r gethostbyname_r localtime_r inet_aton getaddrinfo getnameinfo getopt_long flock)
 
 MY_CHECK_OPTIMIZATION
 
