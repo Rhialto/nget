@@ -208,6 +208,12 @@ class StoppableThreadingTCPServer(SocketServer.ThreadingTCPServer):
 		try:
 			SocketServer.ThreadingTCPServer.serve_forever(self)
 		except _TimeToQuit:
+			if hasattr(self.controlw, 'close'):
+				self.controlr.close()
+				self.controlw.close()
+			else:
+				os.close(self.controlr)
+				os.close(self.controlw)
 			self.server_close() # Clean up before we leave
 
 class NNTPTCPServer(StoppableThreadingTCPServer):
