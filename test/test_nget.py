@@ -1971,6 +1971,19 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[2].count("_conns"), 1)
 		self.verifyoutput('0002')
 
+	def test_force_host_reset(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.start()
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[1])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[1])
+		self.vfailIf(self.nget.run('-g test'))
+		self.vfailIf(self.nget.run('-G test -h host0 -r nothing -h "" -r .'))
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 2)
+		self.verifyoutput('0002')
+
 
 class AuthTestCase(TestCase, DecodeTest_base):
 	def tearDown(self):
