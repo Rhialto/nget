@@ -22,13 +22,14 @@ import threading
 import SocketServer
 
 class NNTPRequestHandler(SocketServer.StreamRequestHandler):
+	def syntax_error(self):
+		self.nwrite("500 Syntax error or bad command")
+	def nwrite(self, s):
+		self.wfile.write(s+"\r\n")
 	def handle(self):
-		readline, writef = self.rfile.readline, self.wfile.write
-		def nwrite(s):
-			writef(s+"\r\n")
-		nwrite("200 Hello World, %s"%(':'.join(map(str,self.client_address))))
-		serv = self.server
-		group = None
+		readline = self.rfile.readline
+		self.nwrite("200 Hello World, %s"%(':'.join(map(str,self.client_address))))
+		self.group = None
 		while 1:
 			rcmd = readline()
 			if not rcmd: break
@@ -36,39 +37,52 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			rs = rcmd.lower().split(' ',1)
 			if len(rs)==1:
 				cmd = rs[0]
+				args = None
 			else:
 				cmd,args = rs
-			if cmd=='group':
-				group = serv.groups[args]
-				nwrite("200 %i %i %i group %s selected"%(group.high-group.low+1, group.low, group.high, args))
-			elif cmd=='xover':
-				rng = args.split('-')
-				if len(rng)>1:
-					low,high = map(int, rng)
-				else:
-					low = high = int(rng[0])
-				keys = [k for k in group.articles.keys() if k>=low and k<=high]
-				keys.sort()
-				nwrite("200 XOVER "+str(rng))
-				for anum in keys:
-					article = group.articles[anum]
-					nwrite(str(anum)+'\t%(subject)s\t%(author)s\t%(date)s\t%(mid)s\t%(references)s\t%(bytes)s\t%(lines)s'%vars(article))
-				nwrite('.')
-			elif cmd=='article':
-				if args[0]=='<':
-					article = serv.articles[args]
-				else:
-					article = group.articles[int(args)]
-				nwrite("200 Article "+args)
-				nwrite(article.text)
-				nwrite('.')
-			elif cmd=='mode' and args=='reader':
-				nwrite("200 MODE READER enabled")
-			elif cmd=='quit':
-				nwrite("200 Goodbye")
-				break
+			func = getattr(self, 'cmd_'+cmd, None)
+			if func and callable(func):
+				r=func(args)
+				if r==-1:
+					break
 			else:
-				nwrite("500 command %r not recognized"%rcmd)
+				self.nwrite("500 command %r not recognized"%rcmd)
+
+	def cmd_group(self, args):
+		self.group = self.server.groups.get(args)
+		if self.group:
+			self.nwrite("200 %i %i %i group %s selected"%(self.group.high-self.group.low+1, self.group.low, self.group.high, args))
+		else:
+			self.nwrite("411 no such news group")
+	def cmd_xover(self, args):
+		rng = args.split('-')
+		if len(rng)>1:
+			low,high = map(int, rng)
+		else:
+			low = high = int(rng[0])
+		keys = [k for k in self.group.articles.keys() if k>=low and k<=high]
+		keys.sort()
+		self.nwrite("200 XOVER "+str(rng))
+		for anum in keys:
+			article = self.group.articles[anum]
+			self.nwrite(str(anum)+'\t%(subject)s\t%(author)s\t%(date)s\t%(mid)s\t%(references)s\t%(bytes)s\t%(lines)s'%vars(article))
+		self.nwrite('.')
+	def cmd_article(self, args):
+		if args[0]=='<':
+			article = self.server.articles[args]
+		else:
+			article = self.group.articles[int(args)]
+		self.nwrite("200 Article "+args)
+		self.nwrite(article.text)
+		self.nwrite('.')
+	def cmd_mode(self, args):
+		if args=='reader':
+			self.nwrite("200 MODE READER enabled")
+		else:
+			self.syntax_error()
+	def cmd_quit(self, args):
+		self.nwrite("205 Goodbye")
+		return -1
 
 
 class _TimeToQuit(Exception): pass
@@ -98,8 +112,8 @@ class StoppableThreadingTCPServer(SocketServer.ThreadingTCPServer):
 			self.server_close() # Clean up before we leave
 
 class NNTPTCPServer(StoppableThreadingTCPServer):
-	def __init__(self, addr):
-		StoppableThreadingTCPServer.__init__(self, addr, NNTPRequestHandler)
+	def __init__(self, addr, RequestHandlerClass=NNTPRequestHandler):
+		StoppableThreadingTCPServer.__init__(self, addr, RequestHandlerClass)
 		self.groups = {}
 		self.midindex = {}
 		
@@ -169,12 +183,25 @@ class FakeArticle:
 				add('.'+l)
 			else:
 				add(l)
-		#a.append("")#ensure last line has crlf
 		self.text = '\r\n'.join(a)
 		self.bytes = len(self.text)
-#Date: Mon, 01 Oct 2001 07:47:13 GMT
-#NNTP-Posting-Host: 65.1.111.84
-#X-Complaints-To: abuse@home.net
-#X-Trace: news2.rdc2.tx.home.com 1001922433 65.1.111.84 (Mon, 01 Oct 2001 00:47:13 PDT)
-#NNTP-Posting-Date: Mon, 01 Oct 2001 00:47:13 PDT
-#Xref: sn-us alt.binaries.foo:880414
+
+import rfc822
+class FileArticle:
+	def __init__(self, fobj):
+		msg = rfc822.Message(fobj)
+		self.author = msg.get("From")
+		self.subject = msg.get("Subject")
+		self.date = msg.get("Date")
+		self.mid = msg.get("Message-ID")
+		self.references = msg.get("References", '')
+		a = [l.rstrip() for l in msg.headers]
+		a.append('')
+		for l in fobj.xreadlines():
+			if l[0]=='.':
+				a.append('.'+l.rstrip())
+			else:
+				a.append(l.rstrip())
+		self.text = '\r\n'.join(a)
+		self.lines = len(a) - 1 - len(msg.headers)
+		self.bytes = len(self.text)
