@@ -19,6 +19,21 @@
 #include "server.h"
 #include "strreps.h"
 
+bool c_nget_config::penalize(c_server::ptr server) const {
+	if (penaltystrikes<=0)
+		return false;//penalization disabled
+	++server->penalty_count;
+	if (server->penalty_count == penaltystrikes) {
+		server->penalty_time = initialpenalty;
+	}
+	else if (server->penalty_count > penaltystrikes) {
+		server->penalty_time = (time_t)(server->penalty_time * penaltymultiplier);
+	}
+	server->last_penalty = time(NULL);
+	PDEBUG(DEBUG_MED, "penalized %s: count %i, last %li, time %li", server->alias.c_str(), server->penalty_count, server->last_penalty, server->penalty_time);
+	return server->penalty_count >= penaltystrikes;
+}
+
 int parse_int_pair(const char *s, int *l, int *h){
 	const char *p;
 	char *erp;
