@@ -230,7 +230,8 @@ class ConnectionErrorTestCase(unittest.TestCase, DecodeTest_base):
 	def tearDown(self):
 		if hasattr(self, 'servers'):
 			self.servers.stop()
-		self.nget.clean_all()
+		if hasattr(self, 'nget'):
+			self.nget.clean_all()
 
 	def test_DeadServer(self):
 		servers = [nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)]
