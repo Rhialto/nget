@@ -4,9 +4,11 @@ CPPFLAGS=@UUINC@ @CPPFLAGS@
 LDFLAGS=@LDFLAGS@
 
 CXX=@CXX@
+STRIP=@STRIP@
 LIBS=@LIBS@
 LITELIBS=@LITELIBS@
 
+EXEEXT=@EXEEXT@
 srcdir=@srcdir@
 
 prefix=@prefix@
@@ -18,16 +20,20 @@ install_data=${install} -m 0644
 install_bin=${install} -s -m 0755
 install_dir=${install} -d
 
-all: .autostuff nget ngetlite
+NGET=nget$(EXEEXT)
+NGETLITE=ngetlite$(EXEEXT)
+
+all: .autostuff $(NGET) $(NGETLITE)
 
 INSTALLDIRS=$(bindir) $(mandir)/man1
+W32DISTFILES=COPYING Changelog FAQ README.win32 nget.txt ngetlite.txt $(NGET) $(NGETLITE)
 
 OBJS=nget.o prot_nntp.o sockpool.o sockstuff.o cache.o dupe_file.o file.o termstuff.o misc.o strtoker.o strreps.o myregex.o datfile.o argparser.o etree.o nrange.o log.o server.o @UULIB@
-nget: $(OBJS) .depend 
+$(NGET): $(OBJS) .depend 
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
 
 LITEOBJS=lite.o litenntp.o log.o sockstuff.o strreps.o
-ngetlite: $(LITEOBJS) .depend 
+$(NGETLITE): $(LITEOBJS) .depend 
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LITEOBJS) -o $@ $(LITELIBS)
 
 @NOUU@@UULIB@:
@@ -49,12 +55,12 @@ dep depend .depend:
 $(INSTALLDIRS):
 	$(install_dir) $@
 
-install_nget: $(INSTALLDIRS) nget
-	$(install_bin) nget $(bindir)
+install_nget: $(INSTALLDIRS) $(NGET)
+	$(install_bin) $(NGET) $(bindir)
 	$(install_data) nget.1 $(mandir)/man1
 
-install_ngetlite: $(INSTALLDIRS) ngetlite
-	$(install_bin) ngetlite $(bindir)
+install_ngetlite: $(INSTALLDIRS) $(NGETLITE)
+	$(install_bin) $(NGETLITE) $(bindir)
 	$(install_data) ngetlite.1 $(mandir)/man1
 
 install: install_nget install_ngetlite
@@ -62,10 +68,22 @@ install: install_nget install_ngetlite
 nget.txt ngetlite.txt: %.txt: %.1
 	man -l $< | sed -e 's/.//g' > $@
 
-win32dist: nget.txt ngetlite.txt
-	-rm nget ngetlite
-	$(MAKE) CXX="$(CXX) -static" nget ngetlite
-	zip -j -9 ../nget-$(VERSION).win32.zip COPYING Changelog FAQ README.win32 nget.txt ngetlite.txt nget.exe ngetlite.exe /bin/cygwin1.dll
+win32dist: $(W32DISTFILES)
+	$(STRIP) $(NGET) $(NGETLITE)
+	zip -j -9 ../nget-$(VERSION).win32.zip $(W32DISTFILES)
+win32dist-static: $(W32DISTFILES)
+	-rm $(NGET) $(NGETLITE)
+	$(MAKE) CXX="$(CXX) -static" $(NGET) $(NGETLITE)
+	$(STRIP) $(NGET) $(NGETLITE)
+	zip -j -9 ../nget-$(VERSION).win32.zip $(W32DISTFILES)
+cygwin32dist: $(W32DISTFILES)
+	$(STRIP) $(NGET) $(NGETLITE)
+	zip -j -9 ../nget-$(VERSION).cygwin32.zip $(W32DISTFILES)
+cygwin32dist-static: $(W32DISTFILES)
+	-rm $(NGET) $(NGETLITE)
+	$(MAKE) CXX="$(CXX) -static" $(NGET) $(NGETLITE)
+	$(STRIP) $(NGET) $(NGETLITE)
+	zip -j -9 ../nget-$(VERSION).cygwin32.zip $(W32DISTFILES) /bin/cygwin1.dll
 
 
 .autostuff: configure config.h.in config.h Makefile config.status
@@ -96,7 +114,7 @@ config.status: configure
 #	cd ..;tar -czhf nget/distro/nget-`egrep "nget v[0-9.]+ -" nget/nget.cc | sed "s/.*v\([0-9.]\+\).*/\1/"`.tar.gz nget/README nget/Changelog nget/COPYING nget/*.cc nget/*.h nget/Makefile nget/nget.1
 
 clean:
-	-rm nget ngetlite *.o nget.txt ngetlite.txt
+	-rm $(NGET) $(NGETLITE) *.o nget.txt ngetlite.txt
 	-$(MAKE) -C uulib clean
 	-$(MAKE) -C test clean
 

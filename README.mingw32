@@ -38,4 +38,4 @@ cd ..
 CC=i586-mingw32msvc-gcc CXX=i586-mingw32msvc-g++ ./configure --build=i386-linux --host=i586-mingw32msvc --with-popt-prefix=/somedir/mingw32/popt1.6.4/ --with-pcre-prefix=/somedir/mingw32/pcre-3.9 --with-zlib-prefix=/somedir/mingw32/zlib1.1.4
 make
 
-all done! (wellll, it really should name them .exe, and such... ;)
+all done!

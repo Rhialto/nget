@@ -16,6 +16,7 @@ AC_LANG_CPLUSPLUS
 
 dnl Checks for programs.
 AC_PROG_CXX
+AC_CHECK_TOOL(STRIP, strip)
 AC_PROG_INSTALL
 dnl AC_PROG_MAKE_SET
 
