@@ -687,6 +687,11 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				{
 					c_server::ptr server=nconfig.getserver(loptarg);
 					if (!server) {printf("no such server %s\n",loptarg);set_user_error_status();break;}
+					if (!options.group){
+						printf("specify group before -F\n");
+						set_user_error_status();
+						break;
+					}
 					nntp.nntp_group(options.group,0,options);
 					c_nntp_server_info* servinfo=nntp.gcache->getserverinfo(server->serverid);
 

@@ -500,6 +500,12 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 2)
 
+	def test_flush_nogroup(self):
+		self.vfailUnlessEqual(self.nget.run('-F host0'), 4)
+	
+	def test_flush_badserver(self):
+		self.vfailUnlessEqual(self.nget.run('-g test -F badserv'), 4)
+
 
 class XoverTestCase(TestCase, DecodeTest_base):
 	def setUp(self):
@@ -747,6 +753,19 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
 		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
 		self.verifyoutput('0001')
+
+	def test_FlushServer(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+		self.addarticles_toserver('0002', 'uuencode_multi', self.servers.servers[0])
+		self.addarticles_toserver('0001', 'yenc_multi', self.servers.servers[1])
+		self.vfailIf(self.nget.run("-g test"))
+		self.vfailIf(self.nget.run("-G test -F host0"))
+		self.vfailIf(self.nget.run("-G test -r ."))
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 1)
+		self.vfailUnlessEqual(self.servers.servers[1].conns, 2)
 	
 	def test_AbruptTimeout(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
