@@ -632,7 +632,7 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		print output
 		self.failUnless(output.find("aa.group")>=0)
 		self.failUnless(output.find("aa.desc")>=0)
-		self.failIf(output.find("bb")>=0)
+		self.failIf(output.find("bb.")>=0)
 
 	def test_available_R_desc(self):
 		self.servers.servers[0].addgroup("group.bbb")
@@ -654,7 +654,7 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.vfailIf(self.nget.run('-a -T -R "desc bbb !=" > %s'%apath))
 		output = open(apath).read()
 		print output
-		self.failUnless(re.search(r"^h0\tgroup.one\taaa \[h0\][\r\n]+h0\tgroup.bbb[\r\n]+h0\ttest$",output, re.M))
+		self.failUnless(re.search(r"^h0\tgroup.bbb[\r\n]+h0\tgroup.one\taaa \[h0\][\r\n]+h0\ttest$",output, re.M))
 		self.failIf(output.find(".two")>=0)
 	
 	def test_available_overrides_group(self):
