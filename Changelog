@@ -1,4 +1,4 @@
-2003-xx-xx v0.xx:
+2003-10-04 v0.24.2:
   * Use gcc's automatic dependancy generation rather than a seperate depend rule.
   * Reenable UUOPT_DUMBNESS, fixes problems with uulib mis-parsing some subject lines.
   * Instead, requires a patched version of uulib that allows us to explicitly tell it what part number each file is. (http://nget.sourceforge.net/patches/uulib-0.5.18-LoadFileWithPartNo.patch)
