@@ -9,7 +9,6 @@ wishlist of things to add to nget:
     uudecode output in the message body (replacing the old uuencoded information).
     To make the file mutt readable, allow an option to add a "From blah@foo.net Mon Jun 21 21:01:34 2000" line to the top
     of each header section (of course, containing relevant information from the article).
-- add option to create non-existant paths specified with -p or -P
 
 - verbosity levels: (<- superceded below)
     * 0: print nothing

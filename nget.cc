@@ -244,7 +244,7 @@ static void addoptions(void)
 	addoption("retrieve",1,'r',"REGEX","retrieve files matching regex");
 	addoption("list",1,'@',"LISTFILE","read commands from listfile");
 	addoption("path",1,'p',"DIRECTORY","path to store subsequent retrieves");
-	addoption("makedirs",1,'m',"no,yes,ask","make dirs specified by -p and -P");
+	addoption("makedirs",1,'m',"no,yes,ask,#","make dirs specified by -p and -P");
 //	addoption("mark",1,'m',"MARKNAME","name of high water mark to test files against");
 //	addoption("testretrieve",1,'R',"REGEX","test what would have been retrieved");
 	addoption("testmode",0,'T',0,"test what would have been retrieved");
@@ -435,41 +435,75 @@ int nget_options::set_test_multi(const char *s){
 	}
 	return 1;
 }
+#define MAKEDIRS_YES -1
+#define MAKEDIRS_ASK -2
 int nget_options::set_makedirs(const char *s){
 	if (!s) {
 		//printf("set_makedirs s=NULL\n");
 		return 0;
 	}
 	if (strcasecmp(s,"yes")==0)
-		makedirs=1;
+		makedirs=MAKEDIRS_YES;
 	else if (strcasecmp(s,"ask")==0)
-		makedirs=2;
+		makedirs=MAKEDIRS_ASK;
 	else if (strcasecmp(s,"no")==0)
 		makedirs=0;
 	else{
-		printf("set_makedirs invalid option %s\n",s);
-		return 0;
+		char *erp;
+		int numcreate = strtol(s,&erp,10);
+		if (*s=='\0' || *erp!='\0' || numcreate < 0) {
+			printf("set_makedirs invalid option %s\n",s);
+			return 0;
+		}
+		makedirs = numcreate;
 	}
 	return 1;
 }
 //	~nget_options(){del_path();}
 
 int makedirs(const char *dir, int mode){
-	//eventually, maybe, this shall be made recursive. for now only the leaf can be made.
-	return mkdir(dir,mode);
+	string head(dir), tail;
+	list<string> parts;
+	while (!head.empty() && !direxists(head)) {
+		path_split(head, tail);
+		parts.push_front(tail);
+	}
+	while (!parts.empty()) {
+		path_append(head, parts.front());
+		parts.pop_front();
+		if (mkdir(head.c_str(),mode))
+			return -1;
+	}
+	return 0;
 }
-int maybe_mkdir_chdir(const char *dir, char makedir){
+
+static int missing_path_tail_count(const char *dir) {
+	string head(dir), tail;
+	int count=0;
+	while (!head.empty() && !direxists(head)) {
+		path_split(head, tail);
+		count++;
+	}
+	return count;
+}
+
+int maybe_mkdir_chdir(const char *dir, int makedir){
 	if (chdir(dir)){
-		if (errno==ENOENT){
+		if (errno==ENOENT && makedir){
+			int missing_count = missing_path_tail_count(dir);
+			assert(missing_count>0);
 			bool doit=0;
-			if (makedir==2){
+			if (makedir==MAKEDIRS_ASK){
 				char buf[40],*p;
 				if (!is_abspath(dir)){
 					goodgetcwd(&p);
 					printf("in %s, ",p);
 					free(p);
 				}
-				printf("do you want to make dir %s?",dir);fflush(stdout);
+				printf("do you want to make dir %s?",dir);
+				if (missing_count>1)
+					printf(" (%i non-existant parts) ",missing_count);
+				fflush(stdout);
 				while (1){
 					if (fgets(buf,39,stdin)){
 						if ((p=strpbrk(buf,"\r\n"))) *p=0;
@@ -479,13 +513,22 @@ int maybe_mkdir_chdir(const char *dir, char makedir){
 						if (strcasecmp(buf,"no")==0 || strcasecmp(buf,"n")==0){
 							break;
 						}
-						printf("%s?? enter y[es], or n[o].\n",buf);
+						char *erp;
+						int numcreate = strtol(buf,&erp,10);
+						if (*buf!='\0' && *erp=='\0') {
+							if (numcreate >= missing_count)
+								doit=1;
+							break;
+						}
+						printf("%s?? enter y[es], n[o], or max # of dirs to create.\n",buf);
 					}else{
 						perror("fgets");
 						return -1;
 					}
 				}
-			}else if(makedir==1)
+			}else if(makedir==MAKEDIRS_YES)
+				doit=1;
+			else if (makedir>=missing_count)
 				doit=1;
 			if (doit){
 				if (makedirs(dir,PUBXMODE)){
@@ -925,9 +968,9 @@ int main(int argc, const char ** argv){
 				if (!home)
 					throw ConfigExFatal(Ex_INIT,"HOME or NGETHOME environment var not set.");
 				nghome = home;
-				if (direxists(path_join(home,".nget4","").c_str()))
+				if (direxists(path_join(home,".nget4","")))
 					nghome=path_join(home,".nget4","");
-				else if (direxists(path_join(home,"_nget4","").c_str()))
+				else if (direxists(path_join(home,"_nget4","")))
 					nghome=path_join(home,"_nget4","");
 				else
 					throw ConfigExFatal(Ex_INIT,"neither %s nor %s exist", path_join(home,".nget4","").c_str(), path_join(home,"_nget4","").c_str());
@@ -1002,7 +1045,7 @@ int main(int argc, const char ** argv){
 				if (cp)
 					ngcachehome=cp;
 				ngcachehome = path_join(ngcachehome, "");
-				if (!direxists(ngcachehome.c_str()))
+				if (!direxists(ngcachehome))
 					throw ConfigExFatal(Ex_INIT,"cache dir %s does not exist", ngcachehome.c_str());
 			}
 			init_term_stuff();

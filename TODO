@@ -34,8 +34,6 @@ might do eventually:
    Hm, actually it might not be that hard.. since mids are globally unique, it
    could just use the same midinfo for _all_ groups?  sound good/bad?
  * ditch/fix uulib?   Are there any alternatives?
- * allow -p/-P to create dirs (ala mkdir -P).  Perhaps enabled by config option
-   or other switch?
  * per group (.ngetrc) config setting for "base directory", then -p/-P could be
    relative of that.  (maybe if you put / or ./ in front, it would be
    relative to root/current instead of base)

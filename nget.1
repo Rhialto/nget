@@ -63,10 +63,12 @@ A # char in a listfile that is the first character on a line or is preceeded by 
 Path to store subsequent retrieves.  Also sets -P.  Relative to path which nget was started in.
 (Except in the case of inside a -@, which will be relative to the cwd at the
 time of the -@.)
-.IP "-m/--makedirs no,yes,ask"
-Make dirs specified by -p and -P.  Default is no.  If yes, will make dirs automatically.  If ask, nget will prompt the user
-when trying to change to a dir that does not exist.  Currently this option only works for single level of non-existance, like
-mkdir.  A future version of nget will support multi-level creating, like mkdir -p.
+.IP "-m/--makedirs no,yes,ask,<max # of directory levels to create>"
+Make dirs specified by -p and -P.  Default is no.  If yes, will make dirs automatically.
+If #, if the number of directories that would need to be created is greater than the number given, the answer will be interpreted as no.
+If ask, nget will prompt the user when trying to change to a dir that does not exist.  
+Valid responses to the prompt are y[es], n[o], and a max number of directory levels to create.
+(This means that if you get in the habit of answering "1" rather than "y", and one day typo the first portion of a path you won't accidentally create a bunch of dirs in the wrong place.)
 .IP "-T/--testmode"
 Causes --retrieve to merely print out all matching files.
 .IP "--test-multiserver OPT"
@@ -247,7 +249,7 @@ fullxover=0 will follow the nntp spec and assume articles are always added and r
 fullxover=1 will assume articles may be added out of order, but are still removed in order.
 fullxover=2 handles articles being added and removed in any order.
 .IP "makedirs (special, default=no)"
-Create non-existant directories specified by -p/-P? (yes/no/ask)
+Create non-existant directories specified by -p/-P? (yes/no/ask/#)
 .IP "test_multiserver (special, default=no)"
 Display multiserver file complition info in testmode output? (no=no, short=show shortname of each server that has parts of the file, lowercase when complete and uppercase when that server only has some parts, long=show fullname of each server along with a count of how many parts it has if it does not have them all.)
 .IP "cachedir (string)"

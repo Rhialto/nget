@@ -80,7 +80,7 @@ struct nget_options {
 	int gflags,badskip,qstatus;
 	t_show_multiserver test_multi;
 	t_show_multiserver retr_show_multi; 
-	char makedirs;
+	int makedirs;
 	bool grouplistmode;
 	c_group_info::ptr group;//,*host;
 //	c_data_section *host;

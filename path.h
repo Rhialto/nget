@@ -5,6 +5,7 @@
 #include "config.h"
 #endif
 #include <string>
+#include <list>
 
 #ifdef WIN32
 inline bool is_pathsep(char c) {return c=='/' || c=='\\';}
@@ -20,7 +21,9 @@ string& path_append(string &a, string b);//modifies and returns 'a'
 string path_join(string a, string b);//returns a new string
 string path_join(string a, string b, string c);//convenience func
 
-bool direxists(const char *p);
+void path_split(string &head, string &tail);
+
+bool direxists(const string &p);
 int fexists(const char * f);
 string fcheckpath(const char *fn,string path);
 int testmkdir(const char * dir,int mode);

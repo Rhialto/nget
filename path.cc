@@ -16,6 +16,10 @@ bool is_abspath(const char *p) {
 #endif
 
 string& path_append(string &a, string b) {
+	if (a.empty()) {
+		a=b;
+		return a;
+	}
 	char c=a[a.size()-1];
 	if (!is_pathsep(c))
 		a += PATHSEP;
@@ -29,12 +33,26 @@ string path_join(string a, string b, string c) {
 	return path_append(path_append(a,b), c);
 }
 
+void path_split(string &head, string &tail) {
+	tail = "";
+	while (!head.empty()) {
+		char c = *head.rbegin();
+		head.resize(head.size()-1);
+		if (is_pathsep(c)) {
+			if (head.empty())
+				tail = c + tail;
+			if (!tail.empty())
+				return;
+		}else
+			tail = c + tail;
+	}
+}
 
-bool direxists(const char *p) {
+bool direxists(const string &p) {
 	bool ret=false;
 	char *oldp;
 	goodgetcwd(&oldp);
-	if (chdir(p)==0)
+	if (chdir(p.c_str())==0)
 		ret=true;
 	if (chdir(oldp)) {
 		free(oldp);

@@ -418,6 +418,30 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput(['0002','0001','0003'])
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 
+	def test_p_mkdir(self):
+		path = os.path.join(self.nget.tmpdir,'aaa','bbb','ccc')
+		self.vfailIf(self.nget.run('-m yes -g test -p '+path+' -r foo'))
+		self.verifyoutput('0001', tmpdir=path)
+
+	def test_p_mkdirmaxcreate(self):
+		path = os.path.join(self.nget.tmpdir,'aaa','bbb','ccc')
+		self.vfailUnlessExitstatus(self.nget.run('-m no -g test -p '+path+' -r foo'), 2)
+		self.vfailUnlessExitstatus(self.nget.run('-m 0 -g test -p '+path+' -r foo'), 2)
+		self.vfailUnlessExitstatus(self.nget.run('-m 2 -g test -p '+path+' -r foo'), 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 0)
+		self.vfailIf(self.nget.run('-m 3 -g test -p '+path+' -r foo'))
+		self.verifyoutput('0001', tmpdir=path)
+
+	def test_p_relative_mkdir(self):
+		d = os.getcwd()
+		tail = os.path.join('aaa','bbb','ccc')
+		try:
+			os.chdir(self.nget.tmpdir)
+			self.vfailIf(self.nget.run('-m yes -g test -p '+tail+' -r foo'))
+		finally:
+			os.chdir(d)
+		self.verifyoutput('0001', tmpdir=os.path.join(self.nget.tmpdir,tail))
+
 	def test_p_relative(self):
 		d = os.getcwd()
 		try:
