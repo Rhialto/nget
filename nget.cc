@@ -315,6 +315,7 @@ static void term_handler(int s){
 
 
 string nghome;
+string ngcachehome;
 
 //c_server_list servers;
 //c_group_info_list groups;
@@ -847,6 +848,16 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 #endif
 }
 
+string path_join(string a, string b) {
+	char c=a[a.size()-1];
+	if (c!='/')
+		return a + '/' + b;
+	return a + b;
+}
+string path_join(string a, string b, string c) {
+	return path_join(path_join(a,b), c);
+}
+
 int main(int argc, char ** argv){
 #ifdef HAVE_SETLINEBUF
 	setlinebuf(stdout); //force stdout to be line buffered, useful if redirecting both stdout and err to a file, to keep them from getting out of sync.
@@ -864,22 +875,21 @@ int main(int argc, char ** argv){
 			char *home;
 			home=getenv("NGETHOME");
 			if (home) {
-				nghome=home;
-				nghome.append("/");
+				nghome=path_join(home,"");
 			} else {
 				home=getenv("HOME");
 				if (!home)
 					throw ConfigExFatal(Ex_INIT,"HOME or NGETHOME environment var not set.");
 				nghome = home;
-				if (fexists((nghome + "/.nget4/").c_str()))
-					nghome.append("/.nget4/");
-				else if (fexists((nghome + "/_nget4/").c_str()))
-					nghome.append("/_nget4/");
+				if (fexists(path_join(home,".nget4","").c_str()))
+					nghome=path_join(home,".nget4","");
+				else if (fexists(path_join(home,"_nget4","").c_str()))
+					nghome=path_join(home,"_nget4","");
 				else
-					throw ConfigExFatal(Ex_INIT,"neither %s nor %s exist", (nghome + "/.nget4/").c_str(), (nghome + "/_nget4/").c_str());
+					throw ConfigExFatal(Ex_INIT,"neither %s nor %s exist", path_join(home,".nget4","").c_str(), path_join(home,"_nget4","").c_str());
 			}
 		}
-
+		ngcachehome = nghome;
 
 		srand(time(NULL));
 		if (argc<2){
@@ -948,6 +958,14 @@ int main(int argc, char ** argv){
 				if (!cfg.data.getitemi("tempshortnames",&t) && t==1)
 					options.gflags|= GETFILES_TEMPSHORTNAMES;
 				options.set_makedirs(cfg.data.getitema("makedirs"));
+				
+				cfg.data.getitems("cachedir",&ngcachehome);//.ngetrc setting overrides default
+				cp=getenv("NGETCACHE");//environment var overrides .ngetrc
+				if (cp)
+					ngcachehome=cp;
+				ngcachehome = path_join(ngcachehome, "");
+				if (!fexists(ngcachehome.c_str()))
+					throw ConfigExFatal(Ex_INIT,"cache dir %s does not exist", ngcachehome.c_str());
 			}
 			init_term_stuff();
 			options.get_path();

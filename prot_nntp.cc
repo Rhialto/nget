@@ -348,7 +348,7 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 
 	midinfo=new c_mid_info((nghome + group->group + ",midinfo"));
 	//gcache=new c_nntp_cache(nghome,group->group + ",cache");
-	gcache=new c_nntp_cache(nghome, group);
+	gcache=new c_nntp_cache(ngcachehome, group);
 	groupselected=0;
 	if (getheaders){
 		if (force_host){

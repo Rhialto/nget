@@ -113,6 +113,11 @@ class c_data_section: public c_data_item
 		if (i && i->type==0 && i->ierr==0) {*l=i->i;return 0;}
 		return -1;
 	};
+	int getitems(string name, string *dest){
+		c_data_item *i=rgetitem(name.c_str());
+		if (i && i->type==0) {*dest = i->str; return 0;}
+		return -1;
+	};
 	string getitems(string name){
 		c_data_item *i=rgetitem(name.c_str());
 		if (i && i->type==0) return i->str;

@@ -17,6 +17,7 @@ makedirs=no
 usegz=-1
 timeout=180
 unequal_line_error=0
+//cachedir=/home/user/.nget4
 
 //hostname aliases
 {halias

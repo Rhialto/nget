@@ -27,6 +27,7 @@
 
 //extern c_data_file cfg;
 extern string nghome;
+extern string ngcachehome;
 /*extern c_server_list servers;
 extern c_group_info_list groups;
 extern c_server_priority_grouping_list priogroups;*/

@@ -1,5 +1,3 @@
-* Support a NGETCACHE var or config option, to put cache in a different dir than config/midinfo/etc.  Possible use would be to have a system-wide cache dir that is shared by a group of (trusted) users, to redure HD and bandwidth waste. (Anyone want this ?  Let me know.)
-
 * Keep some sort of connection pool, so that in multi-server usage we don't have to keep reopening connections when switching back and forth between servers. 
 
 should uu_msg(1) (Note) be a decode error?
