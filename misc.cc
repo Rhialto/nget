@@ -204,6 +204,7 @@ int decode_texttz(const char * buf){
 //Sun, 15 Aug 1999 19:56 +0100 (BST) // no seconds
 //Sun, 7 Jul 2002 15:6:5 GMT //1 digit minutes, seconds
 //Tue, 07 Aug 2002  0:21:00 GMT //1 digit hour with space pad
+//Sun, 8 Sep 2002 0:19:2 GMT //1 digit hour, no pad
 
 //Sunday,
 // 06-Nov-94 08:49:37 GMT ; RFC 850, obsoleted by RFC 1036
@@ -216,7 +217,7 @@ int decode_texttz(const char * buf){
 //#define TIME_REG "([0-9]{1,2}):([0-9]{2}):([0-9]{2})"
 
 //allows for optional seconds
-#define TIME_REG2 "([0-9 ][0-9]):([0-9]{1,2})(:([0-9]{1,2}))?"
+#define TIME_REG2 "([0-9 ]?[0-9]):([0-9]{1,2})(:([0-9]{1,2}))?"
 c_regex_r xrfc("^[A-Za-z, ]*([0-9]{1,2})[- ](.{3,9})[- ]([0-9]{2,4}) "TIME_REG2" *(.*)$"),
 	xasctime("^[A-Za-z,]* *(...) +([0-9]{1,2}) "TIME_REG2" ([0-9]{2,4}) *(.*)$"),
 	xlsl("^(...) +([0-9]{1,2}) +([0-9:]{4,5})$"),

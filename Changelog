@@ -7,7 +7,7 @@
   * Add fatal_user_errors ngetrc setting to make user errors cause an immediate exit rather than continuing if possible.
   * Add -x option to retrieve based on XPAT searches rather than retrieving all headers and using a cache file. (suggested by Naveen Nathan)
   * Fix segv on || or && in -R with less than 2 items on the stack.
-  * Accept invalid dates with 1 digit minutes/seconds or space padded hours.
+  * Accept invalid dates with 1 digit hours/minutes/seconds or space padded hours.
   * Update cppunit tests to cppunit 1.8.0 style.
 
 2002-08-04 v0.21:

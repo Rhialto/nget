@@ -139,6 +139,8 @@ class misc_Test : public CppUnit::TestFixture {
 			CPPUNIT_ASSERT(decode_textdate("Sun, 7 Jul 2002 15:6:5 GMT",1)==1026054365);
 			CPPUNIT_ASSERT(decode_textdate("Tue, 07 Aug 2002  0:21:00 GMT",0)==1028679660);
 			CPPUNIT_ASSERT(decode_textdate("Tue, 07 Aug 2002  0:21:00 GMT",1)==1028679660);
+			CPPUNIT_ASSERT(decode_textdate("Tue, 07 Aug 2002 0:21:00 GMT",0)==1028679660);
+			CPPUNIT_ASSERT(decode_textdate("Tue, 07 Aug 2002 0:21:00 GMT",1)==1028679660);
 			time_t now = time(NULL);
 			CPPUNIT_ASSERT_EQUAL(now, decode_textdate(asctime(localtime(&now)),1));
 			CPPUNIT_ASSERT_EQUAL(now, decode_textdate(asctime(gmtime(&now)),0));
