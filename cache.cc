@@ -198,7 +198,7 @@ c_nntp_files_u* c_nntp_cache::getfiles(const string &path, const string &temppat
 	c_nntp_file::ptr f;
 	for(fi = files.begin();fi!=files.end();++fi){
 		f=(*fi).second;
-		if ((flags&GETFILES_GETINCOMPLETE || f->iscomplete()) && (flags&GETFILES_NODUPEIDCHECK || !(midinfo->check(f->bamid()))) && (*pred)((ubyte*)f.gimmethepointer())){//matches user spec
+		if ((flags&GETFILES_GETINCOMPLETE || f->iscomplete()) && (flags&GETFILES_NODUPEIDCHECK || !(midinfo->check(f->bamid()))) && (*pred)(f.gimmethepointer())){//matches user spec
 			firange=fc->files.equal_range(f->badate());
 			for (;firange.first!=firange.second;++firange.first){
 				if ((*firange.first).second->file->bamid()==f->bamid())

@@ -24,7 +24,7 @@
 #include "strreps.h"
 
 template <class Op>
-struct e_generic : public e_unary_function<ubyte *, bool> {
+struct e_generic : public generic_pred {
 	typedef Op op_type;
 	typedef typename Op::arg1_type arg1_type;
 	typedef typename Op::arg2_type arg2_type;
@@ -43,7 +43,7 @@ struct e_generic : public e_unary_function<ubyte *, bool> {
 template <class Type>
 struct e_generic_type : public e_generic<e_binary_function<Type,Type,bool> > {
 	e_generic_type(const op_type *aO,int aofs,arg2_type v):e_generic<op_type> (aO,aofs,v){};
-	virtual ret_type operator()(const arg_type v) const {return (*O)(*((Type*)(v+ofs)),val2);};
+	virtual ret_type operator()(const arg_type v) const {return (*O)(*((Type*)((ubyte*)v+ofs)),val2);};
 };
 typedef e_generic_type<ulong> e_generic_ulong;
 typedef e_generic_type<int> e_generic_int;
@@ -54,14 +54,13 @@ typedef e_binary_function<string&,c_regex_nosub*,bool> bin_fun_re;
 struct e_generic_re : public e_generic<bin_fun_re> {
 	e_generic_re(const bin_fun_re *aO,int aofs,arg2_type v):e_generic<bin_fun_re>(aO,aofs,v){};
 	virtual ~e_generic_re(){delete val2;}
-	virtual ret_type operator()(const arg_type v) const {return (*O)(*((string*)(v+ofs)),val2);};
+	virtual ret_type operator()(const arg_type v) const {return (*O)(*((string*)((ubyte*)v+ofs)),val2);};
 };
 
 //these cannot use generic_type, since they need to go into pointers and stuff
 struct e_nntp_mid : public e_generic_re {
 	e_nntp_mid(const bin_fun_re *aO,int aofs,arg2_type v):e_generic_re(aO, aofs, v){};
-	virtual ret_type operator()(const arg_type v) const {
-		c_nntp_file*f=(c_nntp_file*)v;
+	virtual ret_type operator()(const arg_type f) const {
 		if (f->parts.empty()) {
 			string foobar("");
 			return (*O)(foobar,val2);
@@ -72,8 +71,7 @@ struct e_nntp_mid : public e_generic_re {
 
 struct e_nntp_date : public e_generic<e_binary_function<time_t,time_t,bool> > {
 	e_nntp_date(const op_type *aO,int aofs,arg2_type v):e_generic<e_binary_function<time_t,time_t,bool> >(aO,aofs,v){};
-	virtual ret_type operator()(const arg_type v) const {
-		c_nntp_file*f=(c_nntp_file*)v;
+	virtual ret_type operator()(const arg_type f) const {
 		if (f->parts.empty()) return (*O)(0,val2);
 		return (*O)((*f->parts.begin()).second->date,val2);
 		//return (*O)(((c_nntp_file*)v)->parts.begin(),val2);
@@ -81,15 +79,13 @@ struct e_nntp_date : public e_generic<e_binary_function<time_t,time_t,bool> > {
 };
 struct e_nntp_lines : public e_generic<e_binary_function<ulong,ulong,bool> > {
 	e_nntp_lines(const op_type *aO,int aofs,arg2_type v):e_generic<e_binary_function<ulong,ulong,bool> >(aO,aofs,v){};
-	virtual ret_type operator()(const arg_type v) const {
-		c_nntp_file*f=(c_nntp_file*)v;
+	virtual ret_type operator()(const arg_type f) const {
 		return (*O)(f->lines(),val2);
 	};
 };
 struct e_nntp_bytes : public e_generic<e_binary_function<ulong,ulong,bool> > {
 	e_nntp_bytes(const op_type *aO,int aofs,arg2_type v):e_generic<e_binary_function<ulong,ulong,bool> >(aO,aofs,v){};
-	virtual ret_type operator()(const arg_type v) const {
-		c_nntp_file*f=(c_nntp_file*)v;
+	virtual ret_type operator()(const arg_type f) const {
 		return (*O)(f->bytes(),val2);
 	};
 };
