@@ -2,6 +2,8 @@ add option for, or ust always force, line buffered output? (useful when redirect
 setvbuf(stdout, (char *)NULL, _IOLBF, 0);
 setvbuf(stderr, (char *)NULL, _IOLBF, 0);
 (or should we specify BUFSIZ? does it matter when buf is NULL?)
+(Seems good, butonly stdout really needs to be set, stderr  is always unbuffered)
+(note: SysV interprents NULL buf as unbuffered.)
 
 should uu_msg(1) (Note) be a decode error?
 This should be handled:
