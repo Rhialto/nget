@@ -113,17 +113,17 @@ aliases.  An example .ngetrc should have been included with nget.
 nget will also check ~/_nget4/ and _ngetrc if needed, to handle OS and filesystems that can't (or won't) handle files starting with a period.
 .P
 Options are specified one per line in the form:
-.br
+.RS
 .B key=value
-.br
-Subsections are specified in the form 
-.br
+.RE
+Subsections are specified in the form:
+.RS
 .B {section_name
-.br
+.RS
 .B data
-.br
+.RE
 .B }
-.br
+.RE
 where data is any number of options.
 .P
 Global options that can be specified are: 
@@ -166,11 +166,11 @@ nntp authentication for user "bob", password "something", and the fullxover
 option enabled. (fullxover retrieves all headers from the server, including
 gaps in the header list, while normally it only retrieves headers more recent
 than the latest.)
-.br
+.RS
 .B {halias
-.br
+.RS
 .B  {host1
-.br
+.RS
 .B   addr=news.host1.com
 .br
 .B   id=3838
@@ -182,10 +182,11 @@ than the latest.)
 .B   fullxover=1
 .br
 .B   linelenience=-1,2
-.br
+.RE
 .B  }
-.br
+.RE
 .B }
+.RE
 .P
 Multiserver priorities are defined in the hpriority section.  Multiple priority
 groups can be made, and different newsgroups can be configured to use their own
@@ -207,11 +208,11 @@ be most likely to be chosen, and badhost least likely.  It also sets the
 default proirity level to 1.01, meaning any hosts not listed in this group will have a
 priority of 1.01.  When using -g without first specifying a host, only those
 with prios 1.2 or above will be selected.
-.br
+.RS
 .B {hpriority
-.br
+.RS
 .B  {default
-.br
+.RS
 .B   _level=1.01
 .br
 .B   _glevel=1.2
@@ -221,18 +222,19 @@ with prios 1.2 or above will be selected.
 .B   goodhost=2.0
 .br
 .B   badhost=0.9
-.br
+.RE
 .B  }
 .br
 .B  {trustsizes
-.br
+.RS
 .B   goodhost=5.0
 .br
 .B   badhost=0.1
-.br
+.RE
 .B  }
-.br
+.RE
 .B }
+.RE
 .P
 Newsgroup aliases are defined in the galias section.  An alias can be a simple
 alias=fullname data item, or  a subsection containing group=, prio=, and usegz= items.
@@ -242,20 +244,21 @@ For example, the following galias section defines an alias of "abpl" for the
 group "alt.binaries.pictures.linux", and "chocobo" for the group "alt.chocobo".
 In addition, the chocobo group is assigned to use the chocoprios priority
 grouping when deciding what server to retrieve from.
-.br
+.RS
 .B {galias
-.br
+.RS
 .B  abpl=alt.binaries.pictures.linux
 .br
 .B  {chocobo
-.br
+.RS
 .B   group=alt.chocobo
 .br
 .B   prio=chocoprios
-.br
+.RE
 .B  }
-.br
+.RE
 .B }
+.RE
 .SH EXIT STATUS
 On exit,  nget will display a summary of the run.  The summary is split into three parts:
 .PP
