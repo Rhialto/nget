@@ -74,7 +74,7 @@ class ExFatal : public baseEx{
 			va_end(ap);\
 			str=cstr;\
 			free(cstr);\
-			PDEBUG(DEBUG_MIN,"%s:%i:Created exception %s with %s(%p)",mfile,mline,getExType(), getExStr(), getExStr());\
+			/*PDEBUG(DEBUG_MIN,"%s:%i:Created exception %s with %s(%p)",mfile,mline,getExType(), getExStr(), getExStr());*/\
 		}\
 		virtual ~name ## Ex ## sub(){\
 /*			printf("Destroying exception %s with %s(%p)\n",getExType(), getExStr(), getExStr());*/\
