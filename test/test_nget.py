@@ -1915,6 +1915,18 @@ class ConfigErrorTestCase(TestCase, DecodeTest_base):
 		output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput('-g test -r .'), 4)
 		self.verifyoutput('0001')
 		self.vfailUnlessEqual(output.count("ERRORS: 2 user"), 1)
+	
+	def test_junk_and_emptylines(self):
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, extratail="foo\n\n\n\nbar\n")
+		output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput('-g test -r .'), 4)
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(output.count("ERRORS: 2 user"), 1)
+	
+	def test_unused(self):
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, extratail="foo=1\n{bar\n}\n")
+		output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput('-g test -r .'), 4)
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(output.count("ERRORS: 2 user"), 1)
 
 
 class XoverTest_base(DecodeTest_base):
