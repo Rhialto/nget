@@ -184,6 +184,7 @@ sock_t make_connection(const char *netaddress,const char *service){
 			PMSG_nnl("Connecting to <getnameinfo error: %s> ...", gai_strerror(error));
 		} else
 			PMSG_nnl("Connecting to [%s]:%s ... ",hbuf,sbuf);
+		fflush(stdout);
 
 		sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		if (!sock_isvalid(sock)) {
