@@ -29,21 +29,6 @@
 #include "strreps.h"
 
 
-int c_file_buffy::resizebuf(int s){
-	cbuf=(char*)realloc(cbuf,s);
-	if (cbuf)cbufsize=s;
-	else cbufsize=0;
-	return cbufsize;
-}
-c_file_buffy::c_file_buffy(c_file*f,int s){
-	fileptr=f;
-	cbuf=NULL;
-	//bsetbuf(2048);
-	resizebuf(s);
-}
-c_file_buffy::~c_file_buffy(){
-	if (cbuf)free(cbuf);
-}
 int c_file_buffy::bfill(uchar *b,int l){
 	return fileptr->read(b,l);
 }
@@ -116,14 +101,13 @@ int c_file::close_noEx(void){
 		return -1;
 	}
 }
-unsigned int c_file::initrbuf(unsigned int s){
-	if (rbuffer)
-		return rbuffer->resizebuf(s);
-	rbuffer=new c_file_buffy(this,s);
+void c_file::initrbuf(void){
+	if (!rbuffer){
+		rbuffer=new c_file_buffy(this);
 #ifdef FILE_DEBUG
-	rbuffer->file_debug=file_debug;
+		rbuffer->file_debug=file_debug;
 #endif
-	return s;
+	}
 };
 ssize_t c_file::bread(size_t len){
 	return -1;//unsupported with c_buffy yet.
@@ -296,8 +280,9 @@ inline char * c_file_stream::dogets(char *data,size_t len){
 
 int c_file_tcp::open(const char *host,const char * port){
 	close();
-	if (rbuffer && rbuffer->getbufsize()>=512){
-		sock=make_connection(SOCK_STREAM,host,port,rbuffer->cbufp(),rbuffer->getbufsize());
+	if (rbuffer){
+		rbuffer->cbuf.reserve(512);//ensure at least 512 bytes
+		sock=make_connection(SOCK_STREAM,host,port,rbuffer->cbuf.data(),rbuffer->cbuf.capacity());
 	}
 	else{
 		char buf[512];

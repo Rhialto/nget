@@ -1191,7 +1191,7 @@ c_prot_nntp::c_prot_nntp(void){
 #ifdef FILE_DEBUG
 	sock.file_debug=new c_debug_file;
 #endif
-	sock.initrbuf(4096);
+	sock.initrbuf();
 	filec=NULL;
 	authed=0;
 	curserverid=0;

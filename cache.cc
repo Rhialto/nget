@@ -455,7 +455,7 @@ c_file *dofileopen(string file, string mode, int gz=-2){
 		f=fd;
 	}
 	if (mode[0]=='r' || mode.find('+')>=0)
-		f->initrbuf(2048);
+		f->initrbuf();
 	return f;
 }
 

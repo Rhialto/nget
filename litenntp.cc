@@ -71,12 +71,13 @@ int c_prot_nntp::doputline(int echo,const char * str,va_list ap){
 }
 
 int c_prot_nntp::getline(int echo){
-	int i=cursock.bgets(cbuf,cbuf_size);
+	int i=cursock.bgets(sockbuf);
 	//int i=sock.bgets();
 	if (i<0){//==0 can be legally achieved since the line terminators are removed
 		doclose();
 		throw TransportExError(Ex_INIT,"nntp_getline:%i %s(%i)",i,strerror(errno),errno);
 	}else {
+		cbuf=sockbuf.c_str();
 //		cbuf=sock.rbuffer->rbufp;
 //		time(&lasttime);
 		if (echo){

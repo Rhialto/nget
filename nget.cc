@@ -721,7 +721,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 								const char *paths[2]={(nghome + "lists/").c_str(),NULL};
 								const char *filename=fsearchpath(loptarg,paths,FSEARCHPATH_ALLOWDIRS);
 								c_file_fd f;
-								f.initrbuf(2048);
+								f.initrbuf();
 								if (filename && !f.open(filename,O_RDONLY)){
 									int totargc=0;
 									int pr;

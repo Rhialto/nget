@@ -48,17 +48,14 @@ DEFINE_EX_CLASSES(File, baseEx);
 class c_file;
 class c_file_buffy : public c_buffy{
 	private:
-		char *cbuf;
-		int cbufsize;
 		c_file *fileptr;
 		virtual int bfill(uchar *b,int l);
 	public:
-		char *cbufp(void){return cbuf;}
-		int bgets(void){return c_buffy::bgets(cbuf,cbufsize);}
-		int resizebuf(int s);
-		int getbufsize(void){return cbufsize;}
-		c_file_buffy(c_file*f,int s);
-		~c_file_buffy();
+		CharBuffer cbuf;
+		char *cbufp(void){return cbuf.c_str();}
+		int bgets(void){return c_buffy::bgets(cbuf);}
+		c_file_buffy(c_file*f):fileptr(f) {}
+		//~c_file_buffy();
 };
 class c_file {
 //	unsigned long size;
@@ -77,13 +74,15 @@ class c_file {
 //	virtual int doopen(const char *name,const char * mode)=0;
 	virtual int doflush(void)=0;
 	virtual int doclose(void)=0;
-
-  public:
+	
+  protected:
 #ifdef FILE_DEBUG
 	c_debug_file *file_debug;
 #endif
 //	c_rbuffer *rbuffer;
 	c_file_buffy *rbuffer;
+
+  public:
 	char * rbufp(void){return rbuffer->cbufp();}
 
 	c_file(void);
@@ -97,7 +96,7 @@ class c_file {
 	ssize_t bread(size_t len);//buffered read, must be used instead of normal read, if you are using bgets
 	//char * bgets(void);//buffered gets, should be faster than normal gets, definatly for tcp or gz. maybe not for stream.
 	int bgets(void){return rbuffer->bgets();}//buffered gets, should be faster than normal gets, definatly for tcp or gz. maybe not for stream.
-	unsigned int initrbuf(unsigned int s);
+	void initrbuf(void);
 //	int open(const char *name,const char * mode);
 	void flush(int local=0);
 	void close(void);

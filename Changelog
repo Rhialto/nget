@@ -1,3 +1,6 @@
+2002-xx-xx v0.xx:
+  * Remove fixed length buffers. (Fix errors with extremely long subjects, etc.)
+
 2002-02-28 v0.17:
   * Handle invalid References starting with a '.'.
   * Fix --without-zlib build.

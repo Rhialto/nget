@@ -31,8 +31,8 @@
 
 class c_prot_nntp {
 	public:
-#define cbuf_size 2048
-		char cbuf[cbuf_size];
+		char *cbuf;
+		CharBuffer sockbuf;
 //		int cursock;
 		sockbuffy cursock;
 		char *curhost;

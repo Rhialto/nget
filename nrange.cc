@@ -161,7 +161,7 @@ int c_nrange::load(string fn,int merge=0){
 	if (!merge){
 		file=fn;
 	}
-	f.initrbuf(256);
+	f.initrbuf();
 	c_lockfile locker(fn,WANT_SH_LOCK);
 	if (!f.open(fn.c_str(),
 #ifdef HAVE_LIBZ

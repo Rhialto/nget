@@ -18,7 +18,6 @@
 */
 #include "datfile.h"
 
-#define df_BUFSIZE 1024
 void c_data_item::set(const char *val){
 	char *err;
 	str=val;
@@ -140,7 +139,7 @@ int c_data_file::read(void){
 //	FILE *f=fopen(filename.c_str(),"r");
 	c_file_fd f;
 	if (!f.open(filename.c_str(),O_RDONLY)){
-		f.initrbuf(df_BUFSIZE);
+		f.initrbuf();
 		data.read_list(&f);
 		changed=0;
 		f.close();

@@ -1,6 +1,6 @@
 /*
     buffy.* - simple buffering for low cpu gets() functionality (ex. for sockets).
-    Copyright (C) 2000  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 2000,2002  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,46 @@
 #endif
 #include <stdlib.h>
 #include <sys/types.h>
+#include "log.h"
+
+class CharBuffer {
+	protected:
+		char *cbuf;
+		int bsize;
+		int reserved;
+	public:
+		void reserve(int s) {
+			if (s>reserved){
+				cbuf=(char*)realloc(cbuf,s);
+				if (!cbuf)
+					throw ApplicationExFatal(Ex_INIT,"CharBuffer::resizebuf(%i) realloc returned NULL",s);
+				reserved=s;
+			}
+		}
+		int capacity(void)const{return reserved;}
+		int size(void)const{return bsize;}
+		bool empty(void)const{return !bsize;}
+		void clear(void){bsize=0;}
+		char *data(void){return cbuf;}
+		char *c_str(void){
+			if (bsize>=reserved)
+				reserve(reserved*2);
+			cbuf[bsize]=0;
+			return cbuf;
+		}
+		void append(char b){
+			if (bsize>=reserved)
+				reserve(reserved*2);
+			cbuf[bsize++]=b;
+		}
+		CharBuffer(int initialreserve=3) : cbuf(NULL),bsize(0),reserved(0) {
+			reserve(initialreserve);
+		}
+		~CharBuffer() {
+			if (cbuf) free(cbuf);
+		}
+};
+
 class c_buffy {
 	protected:
 		int bhead,btail;
@@ -66,8 +106,9 @@ class c_buffy {
 			}
 			return i;
 		}*/
-		int bgets(char *b,int l){
-			int i,count=0,rcount=0;
+		int bgets(CharBuffer &buf){
+			int i,rcount=0;
+			buf.clear();
 			while (1){
 				i=bget();
 				rcount++;
@@ -76,12 +117,9 @@ class c_buffy {
 				else if (i==13){
 					continue;
 				}else if (i==10){
-					b[count>=l?l-1:count]=0;
 					return rcount;//we return the real count of bytes swallowed, even though eol isn't returned.
 				}
-				if (count<l)
-					b[count]=i;
-				count++;
+				buf.append(i);
 			}
 		}
 		c_buffy(){bhead=btail=0;/*buf=NULL;buffy_bufsize=0;*/}
