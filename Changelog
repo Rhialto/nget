@@ -1,3 +1,6 @@
+2003-xx-xx v0.xx:
+  * Add simplest possible example to manpage.
+
 2003-11-20 v0.25:
   * Allow the same server id to be used for multiple hosts to share header cache data. (Useful if you have multiple accounts on the same server.)
   * Don't print extraneous exception information on tcp errors.
