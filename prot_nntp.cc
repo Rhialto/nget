@@ -304,13 +304,11 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 	//gcache=new c_nntp_cache(nghome,group->group + ",cache");
 	gcache=new c_nntp_cache(ngcachehome, group, midinfo);
 	if (getheaders){
+		c_server::ptr s;
+		list<c_server::ptr> doservers;
 		if (force_host){
-			ConnectionHolder holder(&sockpool, &connection, force_host->serverid);
-			nntp_doopen();
-			nntp_dogroup(getheaders);
-		}else{
-			c_server::ptr s;
-			list<c_server::ptr> doservers;
+			doservers.push_front(force_host);
+		} else {
 			t_server_list::iterator sli = nconfig.serv.begin();
 			for (;sli!=nconfig.serv.end();++sli){
 				s=(*sli).second;
@@ -322,47 +320,47 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 						doservers.push_back(s);
 				}
 			}
-			int redone=0, succeeded=0, attempted=doservers.size();
-			while (!doservers.empty() && redone<options.maxretry) {
-				if (redone){
-					printf("nntp_group: trying again. %i\n",redone);
-					if (options.retrydelay)
-						sleep(options.retrydelay);
-				}
-				list<c_server::ptr>::iterator dsi = doservers.begin();
-				list<c_server::ptr>::iterator ds_erase_i;
-				while (dsi != doservers.end()){
-					s=(*dsi);
-					assert(s);
-					PDEBUG(DEBUG_MED,"nntp_group: serv(%lu) %f>=%f",s->serverid,group->priogrouping->getserverpriority(s->serverid),group->priogrouping->defglevel);
-					try {
-						ConnectionHolder holder(&sockpool, &connection, s->serverid);
-						nntp_doopen();
-						nntp_dogroup(getheaders);
-						succeeded++;
-					} catch (baseCommEx &e) {
-						printCaughtEx(e);
-						if (e.isfatal()) {
-							printf("fatal error, won't try %s again\n", s->alias.c_str());
-							//fall through to removing server from list below.
-						}else{
-							//if this is the last retry, don't say that we will try it again.
-							if (redone+1 < options.maxretry)
-								printf("will try %s again\n", s->alias.c_str());
-							++dsi;
-							continue;//don't remove server from list
-						}
-					}
-					ds_erase_i = dsi;
-					++dsi;
-					doservers.erase(ds_erase_i);
-				}
-				redone++;
-			}
-			if (!succeeded)
-				throw TransportExFatal(Ex_INIT,"no servers queried successfully");
-			set_group_warn_status(attempted - succeeded);
 		}
+		int redone=0, succeeded=0, attempted=doservers.size();
+		while (!doservers.empty() && redone<options.maxretry) {
+			if (redone){
+				printf("nntp_group: trying again. %i\n",redone);
+				if (options.retrydelay)
+					sleep(options.retrydelay);
+			}
+			list<c_server::ptr>::iterator dsi = doservers.begin();
+			list<c_server::ptr>::iterator ds_erase_i;
+			while (dsi != doservers.end()){
+				s=(*dsi);
+				assert(s);
+				PDEBUG(DEBUG_MED,"nntp_group: serv(%lu) %f>=%f",s->serverid,group->priogrouping->getserverpriority(s->serverid),group->priogrouping->defglevel);
+				try {
+					ConnectionHolder holder(&sockpool, &connection, s->serverid);
+					nntp_doopen();
+					nntp_dogroup(getheaders);
+					succeeded++;
+				} catch (baseCommEx &e) {
+					printCaughtEx(e);
+					if (e.isfatal()) {
+						printf("fatal error, won't try %s again\n", s->alias.c_str());
+						//fall through to removing server from list below.
+					}else{
+						//if this is the last retry, don't say that we will try it again.
+						if (redone+1 < options.maxretry)
+							printf("will try %s again\n", s->alias.c_str());
+						++dsi;
+						continue;//don't remove server from list
+					}
+				}
+				ds_erase_i = dsi;
+				++dsi;
+				doservers.erase(ds_erase_i);
+			}
+			redone++;
+		}
+		if (!succeeded)
+			throw TransportExFatal(Ex_INIT,"no servers queried successfully");
+		set_group_warn_status(attempted - succeeded);
 		set_group_ok_status();
 	}
 
