@@ -112,8 +112,10 @@ class ConnectionHolder {
 			pool->expire_connections();
 		}
 		~ConnectionHolder() {
-			pool->release(*connection);
-			*connection=NULL;
+			if (*connection) { //*connection can be NULL if pool->connect failed.
+				pool->release(*connection);
+				*connection=NULL;
+			}
 		}
 };
 
