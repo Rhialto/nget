@@ -14,6 +14,8 @@
   * Added an exit error status for article retrieval errors.
   * Added ok and warning counts on exit.
   * Print part number/total parts in retrieval info.
+  * Only mark as successfully recieved if all parts were successufully decoded. (Rather than if any of the parts were decoded ok).
+  * Fixed -k mode printing "not decoding, keeping temp files." rather than "decoded ok, keeping temp files."
 
 2001-08-02 - v0.14:
   * Fix exception if files in current dir contained '{' or '}'. (reported by Brian Keefer)

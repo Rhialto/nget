@@ -916,15 +916,6 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 							case QP_ENCODED:set_qp_ok_status();break;
 							default:set_unknown_ok_status();
 						}
-//						printf("flags %lx",f->flags);
-//						if (!(f->flags&FILEFLAG_READ)){//if the flag is already set, don't force a save
-//							printf("&=%i",FILEFLAG_READ);
-//							f->flags|=FILEFLAG_READ;
-//							grange->insert(f->banum());// should insert numbers for all parts, or not?  If all parts are sequential, it could actually reduce space, however if they aren't it would just waste a bunch of space.  The first num is the only one thats currently checked, so I guess I'll just leave it at that for now.
-						midinfo->insert(f->bamid());
-//							gcache->saveit=1;//make sure the flags get saved, even if the header file hasn't changed otherwise
-//						}
-//						printf("->%lx\n",f->flags);
 					}
 				}
 				UUCleanUp();
@@ -939,17 +930,19 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 				derr=-2;
 			}else if (derr==0){
 				set_total_ok_status();
-				if (optionflags&GETFILES_KEEPTEMP){
+				if (optionflags&GETFILES_NODECODE){
 					if (quiet<2)
 						printf("not decoding, keeping temp files.\n");
 					derr=1;
-				}
-				else if (optionflags&GETFILES_NODECODE){
-					if (quiet<2)
-						printf("decoded ok, keeping temp files.\n");
-					derr=1;
-				}else if (quiet<2)
+				}else  {
+					midinfo->insert(f->bamid());
+					if (optionflags&GETFILES_KEEPTEMP){
+						if (quiet<2)
+							printf("decoded ok, keeping temp files.\n");
+						derr=1;
+					}else if (quiet<2)
 						printf("decoded ok, deleting temp files.\n");
+				}
 			}
 			char *p;
 			for(fncurb = fnbuf.begin();fncurb!=fnbuf.end();++fncurb){
