@@ -158,7 +158,7 @@ dnl )
 dnl checks for socklen_t
 SOCK_CHECK_TYPE(socklen_t, int)
 
-AC_CHECK_TYPES([long long, int_fast64_t, uint_fast64_t, int32_t, uint32_t, int64_t, uint64_t])
+AC_CHECK_TYPES([long long, int_fast64_t, uint_fast64_t, int32_t, uint32_t, int64_t, uint64_t, intptr_t, uintptr_t])
 
 AC_CHECK_SIZEOF(int_fast64_t)
 AC_CHECK_SIZEOF(long)

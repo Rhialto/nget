@@ -82,6 +82,12 @@ using namespace std;
 #  error "my uint64_t isn't 8 bytes."
 # endif
 #endif
+#ifndef HAVE_INTPTR_T
+typedef int intptr_t;
+#endif
+#ifndef HAVE_UINTPTR_T
+typedef unsigned int uintptr_t;
+#endif
 
 
 #define	SWAP16(type)  ((((type) >> 8) & 0x00ff) | \

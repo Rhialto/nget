@@ -142,7 +142,7 @@ class c_buffy {
 				if (i==tok){
 					if (num<max) {
 						buf.append(0);
-						toks[num]=(char*)buf.size();//since buf.append could invalidate pointers into buf.c_str(), store the offset instead
+						toks[num]=(char*)(uintptr_t)buf.size();//since buf.append could invalidate pointers into buf.c_str(), store the offset instead
 					}
 					num++;
 					continue;
@@ -156,7 +156,7 @@ class c_buffy {
 			}
 			char *bstr = buf.c_str();
 			for (i=0;i<num;i++)
-				toks[i] = bstr + (int)toks[i];//now that we are done appending, add the c_str location to the offsets we stored earlier to get the real locations.
+				toks[i] = bstr + (uintptr_t)toks[i];//now that we are done appending, add the c_str location to the offsets we stored earlier to get the real locations.
 			return num;
 		}
 		c_buffy(){bhead=btail=0;/*buf=NULL;buffy_bufsize=0;*/}
