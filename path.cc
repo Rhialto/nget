@@ -123,7 +123,7 @@ char *goodgetcwd(void){
 		if (!(p=(char*)realloc(p,t))){
 			PERROR("goodgetcwd: realloc error %s (size=%i)",strerror(errno), t);exit(128);
 		}
-	}while(!(p=getcwd(p,t)));
+	}while(!getcwd(p,t));
 	PDEBUG(DEBUG_MED,"goodgetcwd %i %s(%p)",t,p,p);
 	return p;
 }
