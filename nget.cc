@@ -1000,11 +1000,11 @@ int main(int argc, const char ** argv){
 		{
 			char *home;
 			home=getenv("NGETHOME");
-			if (home) {
+			if (home && *home) {
 				nghome=path_join(home,"");
 			} else {
 				home=getenv("HOME");
-				if (!home)
+				if (!home || !*home)
 					throw ConfigExFatal(Ex_INIT,"HOME or NGETHOME environment var not set.");
 				nghome = home;
 				if (direxists(path_join(home,".nget5","")))
@@ -1027,7 +1027,7 @@ int main(int argc, const char ** argv){
 				char *cp;
 				cp = getenv("NGETRC");
 				string ngetrcfn;
-				if (cp) {
+				if (cp && *cp) {
 					ngetrcfn = cp;
 					if (!fexists(ngetrcfn))
 						throw ConfigExFatal(Ex_INIT,"NGETRC %s: not found", ngetrcfn.c_str());
@@ -1082,7 +1082,7 @@ int main(int argc, const char ** argv){
 				
 				cfg.get("cachedir",ngcachehome);//.ngetrc setting overrides default
 				cp=getenv("NGETCACHE");//environment var overrides .ngetrc
-				if (cp)
+				if (cp && *cp)
 					ngcachehome=cp;
 				ngcachehome = path_join(ngcachehome, "");
 				if (!direxists(ngcachehome))

@@ -1,6 +1,6 @@
 /*
     lite.* - ngetlite main files
-    Copyright (C) 2000-2002  Matthew Mueller <donut AT dakotacom.net>
+    Copyright (C) 2000-2004  Matthew Mueller <donut AT dakotacom.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ c_prot_nntp nntp;
 
 void showhelp(void){
 	printf("ngetlite v"PACKAGE_VERSION" - 'lite' nntp fetcher for nget\n"
-			"Copyright 2000-2003 Matthew Mueller <donut AT dakotacom.net>\n");
+			"Copyright 2000-2004 Matthew Mueller <donut AT dakotacom.net>\n");
 	printf("USAGE: ngetlite <listfiles ...>\n");
 	printf("listfiles are generated with nget and the -w <listfile> param\n");
 	exit (0);
@@ -177,9 +177,9 @@ dofile_done:
 
 int main (int argc, char ** argv){
 	char *env_str=getenv("NGETLITE_TIMEOUT");
-	if (env_str)
+	if (env_str && *env_str)
 		sock_timeout=atoi(env_str);
-	if ((env_str=getenv("NGETLITE_TRIES")))
+	if ((env_str=getenv("NGETLITE_TRIES")) && *env_str)
 		maxretry=atoi(env_str);
 	
 	try {
