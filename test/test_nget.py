@@ -446,6 +446,14 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -r par.test'))
 		self.verifyoutput({'par01':['01.dat','03.dat','05.dat','a b.par','a b.p01','a b.p02']})
 		
+	def test_autoparhandling_missingfile_nofilematches(self):
+		self.addarticles('par01', 'input')
+		self.rmarticle_fromserver('par01','input','dat2',self.servers.servers[0])
+		self.rmarticle_fromserver('par01','input','dat4',self.servers.servers[0])
+		self.vfailIf(self.nget_run('-g test -r "par.test.*(dat|par)"'))
+		self.vfailIf(self.nget_run('-g test -r par.test'))
+		self.verifyoutput({'par01':['01.dat','03.dat','05.dat','a b.par','a b.p01','a b.p02']})
+		
 	def test_autoparhandling_corruptfile(self):
 		self.addarticles('par01', 'input')
 		self.rmarticle_fromserver('par01','input','dat2',self.servers.servers[0])
@@ -518,6 +526,19 @@ class RetrieveTest_base(DecodeTest_base):
 		self.rmarticle_fromserver('par02','input','dat1',self.servers.servers[0])
 		self.rmarticle_fromserver('par02','input','dat3',self.servers.servers[0])
 		self.rmarticle_fromserver('par02','input','dat5',self.servers.servers[0])
+		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
+		self.verifyoutput({'par01':['01.dat','03.dat','05.dat','a b.par','a b.p01','a b.p02'],
+			'par02':['p2-02.dat','p2-04.dat','p2.par','p2.p01','p2.p02','p2.p03']})
+		
+	def test_autoparhandling_multiparset_missingfile_nofilematches(self):
+		self.addarticles('par01', 'input')
+		self.rmarticle_fromserver('par01','input','dat2',self.servers.servers[0])
+		self.rmarticle_fromserver('par01','input','dat4',self.servers.servers[0])
+		self.addarticles('par02', 'input')
+		self.rmarticle_fromserver('par02','input','dat1',self.servers.servers[0])
+		self.rmarticle_fromserver('par02','input','dat3',self.servers.servers[0])
+		self.rmarticle_fromserver('par02','input','dat5',self.servers.servers[0])
+		self.vfailIf(self.nget_run('-g test -r "par.*test.*(dat|par)"'))
 		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
 		self.verifyoutput({'par01':['01.dat','03.dat','05.dat','a b.par','a b.p01','a b.p02'],
 			'par02':['p2-02.dat','p2-04.dat','p2.par','p2.p01','p2.p02','p2.p03']})

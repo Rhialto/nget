@@ -1186,12 +1186,14 @@ const char *uutypetoa(int uudet) {
 }
 
 void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler, const nget_options &options) {
-	parhandler.get_initial_pars(filec);
+	int optionflags = options.gflags;
+	if (!(optionflags&GETFILES_NOAUTOPAR)) {
+		parhandler.get_initial_pars(filec);
+	}
 	
 	if (filec.files.empty())
 		return;
 
-	int optionflags = options.gflags;
 	t_nntp_files_u::iterator curf;
 	//c_nntp_file *f;
 	c_nntp_file::ptr f;

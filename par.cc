@@ -159,8 +159,14 @@ bool ParHandler::maybe_add_parfile(const string &path, const c_nntp_file::ptr &f
 }
 
 void ParHandler::get_initial_pars(c_nntp_files_u &fc) {
+	set<string> paths_in_fc;
+	for (t_nntp_files_u::iterator dfi = fc.files.begin(); dfi!=fc.files.end(); ++dfi)
+		paths_in_fc.insert(dfi->second->path);
 	for (t_parinfo_map::iterator pi=parinfos.begin(); pi!=parinfos.end(); ++pi) {
-		pi->second->get_initial_pars(fc);
+		if (paths_in_fc.find(pi->first) != paths_in_fc.end())
+			pi->second->get_initial_pars(fc);
+		else
+			pi->second->maybe_get_pxxs(fc);//if the path isn't in the set of files we are retrieving, then try to get any pxxs now, since we won't be called for that path ever otherwise.
 	}
 }
 
