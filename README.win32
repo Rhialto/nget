@@ -2,6 +2,7 @@ nget Copyright 1999-2003 Matthew Mueller <donut AT dakotacom.net>
 
 Readme for nget win32 build.
 
+
 Some env vars must be set:
 
 1) if you don't have a "\tmp" dir:
@@ -13,3 +14,9 @@ set HOME=c:\home (or whatever) and create c:\home\_nget4\_ngetrc
 set NGETHOME=c:\nget (or whatever) and create c:\nget\_ngetrc
 
 (see the included _ngetrc for example config and nget.txt for more info)
+
+
+Notes:
+
+1) The Windows shell doesn't like ' as a quote character, so be sure to use "
+if you need to quote an argument. (Ex: use -r "foo bar", not -r 'foo bar')
