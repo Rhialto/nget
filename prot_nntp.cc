@@ -904,7 +904,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 						// did it decode correctly?
 						if (r == UURET_OK){
 							// if identical, delete the one we just downloaded
-							if (filecompare(old_fnp,nfnp) > 0){
+							if (filecompare(old_fnp,nfnp)){
 								printf("Duplicate File Removed %s\n", nfn);
 								unlink(nfnp);
 								set_dupe_ok_status();

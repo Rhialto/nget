@@ -11,10 +11,10 @@ class misc_Test : public TestCase {
 	public:
 		misc_Test(void):TestCase("misc_Test"){}
 		void testFileCompareSame(void) {
-			CPPUNIT_ASSERT(filecompare("TestRunner.cc", "TestRunner.cc")>0);
+			CPPUNIT_ASSERT(filecompare("TestRunner.cc", "TestRunner.cc"));
 		}
 		void testFileCompareDiff(void) {
-			CPPUNIT_ASSERT(filecompare("TestRunner.cc", "misc_test.h")<0);
+			CPPUNIT_ASSERT(!filecompare("TestRunner.cc", "misc_test.h"));
 		}
 		void testFileCompareNonExistA(void) {
 			int x=0;

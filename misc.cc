@@ -427,8 +427,6 @@ time_t decode_textdate(const char * cbuf){
 #ifdef	USE_FILECOMPARE					// check for duplicate files
 #include "file.h"
 int filecompare(const char *old_fn,const char *nfn){
-	int	same=0;
-	// open both files
 	c_file_fd old_f(old_fn, O_RDONLY);
 	c_file_fd new_f(nfn, O_RDONLY);
 	char	old_buf[4096], new_buf[4096];
@@ -439,21 +437,15 @@ int filecompare(const char *old_fn,const char *nfn){
 		new_len=new_f.read(new_buf, 4096);
 		if (old_len == new_len){
 			if (old_len == 0){
-				same=1;
-				break;
+				return 1;
 			}
 			if (memcmp(old_buf, new_buf, old_len)){
-				same=-1;
-				break;
+				return 0;
 			}
 		} else {
-			same=-1;
-			break;
+			return 0;
 		}
 	}
-	new_f.close();
-	old_f.close();
-	return same;
 }
 #endif
 
