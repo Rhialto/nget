@@ -19,7 +19,7 @@
 
 from __future__ import nested_scopes
 
-import os, sys, unittest, glob, filecmp, re
+import os, sys, unittest, glob, filecmp, re, time
 
 import nntpd, util
 
@@ -394,6 +394,11 @@ class XoverTestCase(unittest.TestCase, DecodeTest_base):
 		self.verifyoutput('0002')
 
 
+class DelayingNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	def cmd_article(self, args):
+		time.sleep(1)
+		nntpd.NNTPRequestHandler.cmd_article(self, args)
+
 class DiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_article(self, args):
 		nntpd.NNTPRequestHandler.cmd_article(self, args)
@@ -405,7 +410,7 @@ class ErrorDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 		self.nwrite("503 You are now disconnected. Have a nice day.")
 		return -1
 
-class ConnectionErrorTestCase(unittest.TestCase, DecodeTest_base):
+class ConnectionTestCase(unittest.TestCase, DecodeTest_base):
 	def tearDown(self):
 		if hasattr(self, 'servers'):
 			self.servers.stop()
@@ -495,6 +500,55 @@ class ConnectionErrorTestCase(unittest.TestCase, DecodeTest_base):
 		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
 		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
 		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.verifyoutput('0002')
+
+	def test_SockPool(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.start()
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.failUnlessEqual(self.servers.servers[0].conns, 1)
+		self.failUnlessEqual(self.servers.servers[1].conns, 1)
+		self.verifyoutput('0002')
+
+	def test_idletimeout(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DelayingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'idletimeout':1})
+		self.servers.start()
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[1])
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.failUnlessEqual(self.servers.servers[0].conns, 1)
+		self.failUnlessEqual(self.servers.servers[1].conns, 2)
+		self.verifyoutput('0002')
+
+	def test_maxconnections(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'maxconnections':1})
+		self.servers.start()
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.failUnlessEqual(self.servers.servers[0].conns, 3)
+		self.failUnlessEqual(self.servers.servers[1].conns, 2)
+		self.verifyoutput('0002')
+
+	def test_maxconnections_2(self):
+		self.servers = nntpd.NNTPD_Master(3)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'maxconnections':2})
+		self.servers.start()
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[2])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0])
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.failUnlessEqual(self.servers.servers[0].conns, 2)
+		self.failUnlessEqual(self.servers.servers[1].conns, 1)
+		self.failUnlessEqual(self.servers.servers[2].conns, 1)
 		self.verifyoutput('0002')
 
 
