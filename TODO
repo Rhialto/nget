@@ -1,3 +1,5 @@
+* Keep some sort of connection pool, so that in multi-server usage we don't have to keep reopening connections when switching back and forth between servers. 
+
 add option for, or ust always force, line buffered output? (useful when redirecting stdout and stderr to the same dest to get them in the right order.)
 setvbuf(stdout, (char *)NULL, _IOLBF, 0);
 setvbuf(stderr, (char *)NULL, _IOLBF, 0);
