@@ -10,6 +10,20 @@ all: TestRunner
 test: all
 	./TestRunner
 
-TestRunner: TestRunner.o ../file.o ../sockstuff.o ../nrange.o ../log.o
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS) `cppunit-config --libs`
+OBJS=TestRunner.o ../file.o ../sockstuff.o ../nrange.o ../log.o ../dupe_file.o ../myregex.o
+TestRunner: .depend $(OBJS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LIBS) `cppunit-config --libs`
 
+dep depend .depend:
+	$(CXX) $(CXXFLAGS) -MM *.cc > .depend
+
+clean:
+	-rm TestRunner *.o
+
+distclean: clean
+	-rm config.status config.h config.cache config.log Makefile stamp-h .depend *~ .*~ *.rej tags .cvsignore .#*
+	-rm -r CVS
+
+.PHONY: all dep depend clean install dist distclean test
+
+include .depend

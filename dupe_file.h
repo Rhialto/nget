@@ -34,7 +34,7 @@ class file_match {
 	public:
 		c_regex_nosub reg;
 		ulong size;
-		file_match(const char *m,int a):reg(m,a){};
+		file_match(const char *m,int a,ulong s):reg(m,a), size(s){};
 };
 typedef multimap<ulong, file_match *> filematchmap;
 
@@ -44,6 +44,7 @@ class dupe_file_checker {
 	public:
 		void addfrompath(const string &path);
 		void addfile(const string &path, const char *filename);
+		void add(const char *filename, ulong size);
 		int checkhavefile(const char *f, const string &messageid, ulong bytes);
 		bool empty (void) const {return flist.empty();}
 		void clear(void);

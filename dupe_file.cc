@@ -7,8 +7,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-void dupe_file_checker::addfile(const string &path, const char *filename) {
-	struct stat stbuf;
+void dupe_file_checker::add(const char *filename, ulong size){
 	file_match *fm;
 	string buf;
 	const char *cp = filename;
@@ -34,12 +33,16 @@ void dupe_file_checker::addfile(const string &path, const char *filename) {
 		buf+='>';//match end of word
 #endif
 	}
-	fm=new file_match(buf.c_str(),REG_EXTENDED|REG_ICASE|REG_NOSUB);
-	if (stat((path+'/'+filename).c_str(), &stbuf)==0)
-		fm->size=stbuf.st_size;
-	else
-		fm->size=0;
+	fm=new file_match(buf.c_str(),REG_EXTENDED|REG_ICASE|REG_NOSUB,size);
 	flist.insert(filematchmap::value_type(fm->size, fm));
+}
+
+void dupe_file_checker::addfile(const string &path, const char *filename) {
+	ulong size=0;
+	struct stat stbuf;
+	if (stat((path+'/'+filename).c_str(), &stbuf)==0)
+		size=stbuf.st_size;
+	add(filename, size);
 }
 
 void dupe_file_checker::addfrompath(const string &path){
