@@ -64,6 +64,7 @@ SET_x_ERROR_STATUS(decode, 1);
 SET_x_ERROR_STATUS(path, 2);
 SET_x_ERROR_STATUS(user, 4);
 SET_x_ERROR_STATUS(retrieve, 8);
+SET_x_ERROR_STATUS(other, 64);
 SET_x_ERROR_STATUS(fatal, 128);
 SET_x_OK_STATUS(total, 1);
 SET_x_OK_STATUS(uu, 2);
@@ -117,6 +118,7 @@ void print_error_status(void){
 		print_x_ERROR_STATUS(path);
 		print_x_ERROR_STATUS(user);
 		print_x_ERROR_STATUS(retrieve);
+		print_x_ERROR_STATUS(other);
 		print_x_ERROR_STATUS(fatal);
 	}
 	if (pf)
@@ -782,7 +784,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				mustredo_on_skip=0;
 				options.qstatus=0;
 			}
-			set_fatal_error_status();
+			set_other_error_status();
 		}catch(ExFatal &e){
 			printCaughtEx_nnl(e);
 			printf(" (fatal, aborting..)\n");
@@ -794,7 +796,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				mustredo_on_skip=0;
 				options.qstatus=0;
 			}
-			set_fatal_error_status();
+			set_other_error_status();
 		}catch(ExError &e){
 		//}catch(baseEx &e){//doesn't work..?
 			printCaughtEx_nnl(e);
@@ -804,7 +806,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				if (options.retrydelay)
 					sleep(options.retrydelay);
 			}else{
-				set_fatal_error_status();//set "fatal" error if non-fatal error didn't succeed even after retrying.
+				set_other_error_status();//set "fatal" error if non-fatal error didn't succeed even after retrying.
 				printf("\n");
 				if (c==-1)
 					return 0;//end of args.

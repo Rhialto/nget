@@ -42,6 +42,7 @@ void set_decode_error_status(int incr=1);
 void set_retrieve_error_status(int incr=1);
 void set_path_error_status(int incr=1);
 void set_user_error_status(int incr=1);
+void set_other_error_status(int incr=1);
 void set_fatal_error_status(int incr=1);
 
 void set_group_warn_status(int incr=1);
