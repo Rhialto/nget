@@ -17,9 +17,7 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 #include "nrange.h"
-#include "strreps.h"
 #include "log.h"
-#include "mylockfile.h"
 
 void c_nrange::insert(ulong n){
 	t_rlist::iterator i=rlist.lower_bound(n),j;
