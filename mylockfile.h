@@ -78,9 +78,11 @@ class c_lockfile{
 //			sleep(10);
 		}
 		~c_lockfile(){
-			flock(fd,LOCK_UN);
-			close(fd);
-			PDEBUG(FLOCK_DEBUG_LEV,"unflocked %i",fd);
+			if (fd>=0) {
+				flock(fd,LOCK_UN);
+				close(fd);
+				PDEBUG(FLOCK_DEBUG_LEV,"unflocked %i",fd);
+			}
 		}
 };
 #else //!HAVE_FLOCK
