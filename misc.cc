@@ -1,6 +1,6 @@
 /*
     misc.* - misc functions
-    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,6 +32,17 @@
 #include "_sstream.h"
 #include <iomanip>
 
+
+const char hexchar[] = "0123456789abcdef";
+string hexstr(const string &s){
+	string ret;
+	for (string::const_iterator i=s.begin(); i!=s.end(); ++i) {
+		uchar c=*i;
+		ret += hexchar[c&15];
+		ret += hexchar[c>>4];
+	}
+	return ret;
+}
 
 string regex2wildmat(const string &repat, bool ignorecase){
 	if (repat.empty())

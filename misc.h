@@ -1,6 +1,6 @@
 /*
     misc.* - misc functions
-    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2003  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,6 +32,8 @@
 
 #define TCONV_DEF_BUF_LEN 60
 size_t tconv(char * timestr, int max, time_t *curtime,const char * formatstr="%Y%m%dT%H%M%S", int local=1);
+
+string hexstr(const string &s);
 
 template <class Type>
 string tostr(const Type &arg){

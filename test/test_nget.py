@@ -163,6 +163,8 @@ class DecodeTest_base:
 				self.failIf(len(g) != 1, "decoded zero file %s matches multiple"%dfnglob)
 				dfn = g[0]
 			else:
+				dfnglob = os.path.join(tmpdir, tail+'.*.*')
+				gfns = glob.glob(dfnglob)
 				dfn = os.path.join(tmpdir, tail)
 			self.failUnless(os.path.exists(dfn), "decoded file %s does not exist"%dfn)
 			self.failUnless(os.path.isfile(dfn), "decoded file %s is not a file"%dfn)
@@ -171,7 +173,15 @@ class DecodeTest_base:
 			elif tail.endswith(".mbox"):
 				self.failUnless(textcmp(fn, dfn, mbox=1), "decoded mbox %s differs from %s"%(dfn, fn))
 			else:
-				self.failUnless(filecmp.cmp(fn, dfn, shallow=0), "decoded file %s differs from %s"%(dfn, fn))
+				if gfns:
+					goodgfn=0
+					for dfn in [dfn]+gfns:
+						if filecmp.cmp(fn, dfn, shallow=0):
+							goodgfn=1
+							break
+					self.failUnless(goodgfn, "no decoded files match %s"%(fn))
+				else:
+					self.failUnless(filecmp.cmp(fn, dfn, shallow=0), "decoded file %s differs from %s"%(dfn, fn))
 			ok.append(os.path.split(dfn)[1])
 
 		extra = [fn for fn in os.listdir(tmpdir) if fn not in ok]
@@ -467,7 +477,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -r par.test'))
 		self.addarticles('par01', 'input')
 		self.vfailIf(self.nget_run('-dF -g test -r par.test'))
-		#self.verifyoutput({'par01':['01.dat','02.dat','_corrupt_output/02.dat','03.dat','04.dat','_corrupt_output/04.dat','05.dat','a b.par']})
+		self.verifyoutput({'par01':['01.dat','02.dat','_corrupt_output/02.dat','03.dat','04.dat','_corrupt_output/04.dat','05.dat','a b.par']})
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 8)
 		
 	def test_autoparhandling_corruptpxx(self):
@@ -510,6 +520,23 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
 		self.verifyoutput({'par02':['p2-01.dat','p2-02.dat','p2-03.dat','_case_output/P2-04.dAt','_case_output/p2-05.DaT','p2.par']})
 		
+	def test_autoparhandling_differingparfilenames(self):
+		self.addarticle_toserver('par02', 'input', 'dat2', self.servers.servers[0])
+		self.addarticle_toserver('par02', 'input', 'par', self.servers.servers[0])
+		self.addarticle_toserver('par02', 'input', 'par2', self.servers.servers[0])
+		self.addarticle_toserver('par02', 'input', 'par4', self.servers.servers[0])
+		self.addarticles('par02', 'a_b_par_input')
+		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
+		self.verifyoutput({'par02':['p2-02.dat','p2.par','p2.p02', 'p2.p04', '_a_b_par_output/a b.p01', '_a_b_par_output/a b.p02', '_a_b_par_output/a b.p03', '_a_b_par_output/a b.par']}) #####maybe shouldn't retrieve "a b.p02"?
+		
+	def test_autoparhandling_differingparfilenames_nopar(self):
+		self.addarticle_toserver('par02', 'input', 'dat2', self.servers.servers[0])
+		self.addarticle_toserver('par02', 'input', 'par2', self.servers.servers[0])
+		self.addarticle_toserver('par02', 'input', 'par4', self.servers.servers[0])
+		self.addarticles('par02', 'a_b_par_input')
+		self.rmarticle_fromserver('par02','a_b_par_input','par',self.servers.servers[0])
+		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
+		self.verifyoutput({'par02':['p2-02.dat','p2.p02', 'p2.p04', '_a_b_par_output/a b.p01', '_a_b_par_output/a b.p02', '_a_b_par_output/a b.p03']}) #####maybe shouldn't retrieve "a b.p02"?
 		
 	def test_autoparhandling_multiparset(self):
 		self.addarticles('par01', 'input')
@@ -517,6 +544,30 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
 		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par'],
 			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','p2.par']})
+		
+	def test_autoparhandling_multiparset_samehash(self):
+		self.addarticles('par01', 'input')
+		self.addarticle_toserver('par02', 'input', 'dat1', self.servers.servers[0])
+		self.addarticle_toserver('par02', 'input', 'dat2', self.servers.servers[0])
+		self.addarticle_toserver('par02', 'input', 'dat3', self.servers.servers[0])
+		self.addarticle_toserver('par02', 'input', 'dat4', self.servers.servers[0])
+		self.addarticle_toserver('par02', 'input', 'dat5', self.servers.servers[0])
+		self.addarticles('par02', 'a_b_par_input')
+		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
+		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par'],
+			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','_a_b_par_output/a b.par']})
+		
+	def test_autoparhandling_multiparset_samehash_missingfile(self):
+		self.addarticles('par01', 'input')
+		self.rmarticle_fromserver('par01','input','dat2',self.servers.servers[0])
+		self.rmarticle_fromserver('par01','input','dat4',self.servers.servers[0])
+		self.addarticle_toserver('par02', 'input', 'dat2', self.servers.servers[0])
+		self.addarticle_toserver('par02', 'input', 'dat4', self.servers.servers[0])
+		self.addarticles('par02', 'a_b_par_input')
+		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
+		self.verifyoutput({'par01':['01.dat','03.dat','05.dat','a b.par','a b.p01','a b.p02']+
+			['a b.p03', 'a b.p04', 'a b.p05', 'a b.p06'],#unfortunatly, these have to be grabbed first before nget will get to try the pars from the second set, since they were posted at a later date.
+			'par02':['p2-02.dat','p2-04.dat','_a_b_par_output/a b.par','_a_b_par_output/a b.p01','_a_b_par_output/a b.p02','_a_b_par_output/a b.p03']})
 		
 	def test_autoparhandling_multiparset_existingpar(self):
 		self.addarticles('par01', 'input')

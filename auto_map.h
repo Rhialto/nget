@@ -22,24 +22,12 @@
 #include "rcount.h"
 #include <map>
 
-template <class K, class T>
-class auto_map : public std::map<K, restricted_ptr<T> > {
+template <class K, class T, template <class BK, class BT> class Base>
+class auto_map_base : public Base<K, restricted_ptr<T> > {
 	private:
-		typedef std::map<K, restricted_ptr<T> > super;
+		typedef Base<K, restricted_ptr<T> > super;
 	public:
 		typedef typename super::iterator iterator;
-
-		/*super::value_type value_type(const K &k, T*p) {
-			return super::value_type(k, restricted_ptr<T>(p));
-		}
-		pair<iterator, bool> insert(const super::value_type &v) {
-			assert(find(v.first)==end());
-			return super::insert(v);
-		}*/
-		pair<iterator, bool> insert_value(const K &k, T* p) { //we can't really use the normal insert funcs, but we don't want to just name it insert since it would be easy to confuse with all the normal map insert funcs
-			assert(find(k)==end());
-			return super::insert(super::value_type(k, restricted_ptr<T>(p)));
-		}
 
 		void clear(void){
 			while (!empty())
@@ -50,8 +38,8 @@ class auto_map : public std::map<K, restricted_ptr<T> > {
 			super::erase(i);
 			delete p;
 		}
-		auto_map(void){}
-		~auto_map() {
+		auto_map_base(void){}
+		~auto_map_base() {
 			clear();
 		}
 	private:
@@ -60,8 +48,37 @@ class auto_map : public std::map<K, restricted_ptr<T> > {
 			for (iterator i=begin(); i!=end(); ++i)
 				delete (*i).gimmethepointer();
 		}
-		auto_map(const auto_map &v); //private copy constructor to disallow copying
-		auto_map& operator= (const auto_map &m); //private operator= to disallow assignment
+		auto_map_base(const auto_map_base &v); //private copy constructor to disallow copying
+		auto_map_base& operator= (const auto_map_base &m); //private operator= to disallow assignment
+};
+
+
+template <class K, class T>
+class auto_map : public auto_map_base<K, T, std::map> {
+	public:
+		typedef typename super::iterator iterator;
+		typedef typename super::value_type value_type;
+		/*super::value_type value_type(const K &k, T*p) {
+			return super::value_type(k, restricted_ptr<T>(p));
+		}
+		pair<iterator, bool> insert(const super::value_type &v) {
+			assert(find(v.first)==end());
+			return super::insert(v);
+		}*/
+		std::pair<iterator, bool> insert_value(const K &k, T* p) { //we can't really use the normal insert funcs, but we don't want to just name it insert since it would be easy to confuse with all the normal map insert funcs
+			assert(find(k)==end());
+			return super::insert(value_type(k, restricted_ptr<T>(p)));
+		}
+};
+
+template <class K, class T>
+class auto_multimap : public auto_map_base<K, T, std::multimap> {
+	public:
+		typedef typename super::iterator iterator;
+		typedef typename super::value_type value_type;
+		iterator insert_value(const K &k, T* p) { //we can't really use the normal insert funcs, but we don't want to just name it insert since it would be easy to confuse with all the normal map insert funcs
+			return super::insert(value_type(k, restricted_ptr<T>(p)));
+		}
 };
 
 #endif

@@ -23,11 +23,13 @@
 #include "config.h"
 #endif
 #include <ctype.h>
+#include <set>
 #include "myregex.h"
 #include "auto_map.h"
 #include "cache.h"
 
 typedef multimap<string, string> t_nocase_map;
+bool parfile_get_sethash(const string &filename, string &sethash);
 bool parfile_ok(const string &filename, uint32_t &vol_number);
 int parfile_check(const string &filename, const string &path, const t_nocase_map &nocase_map);
 
@@ -63,33 +65,32 @@ class ParSetInfo {
 };
 
 
-typedef auto_map<string, c_regex_r> t_subjmatches_map;
+typedef auto_multimap<string, c_regex_r> t_subjmatches_map;
+typedef map<string, set<string> > t_basenames_map;
 typedef map<string, vector<string> > t_basefilenames_map;
 class LocalParFiles {
 	public:
-		auto_map<string, c_regex_r> subjmatches;
-		map<string, vector<string> > basefilenames;
+		t_subjmatches_map subjmatches; // maps sethash -> subject matches for known basenames of that set
+		t_basenames_map basenames; // maps sethash -> known basenames for that set
+		t_basefilenames_map basefilenames; // maps sethash -> all known filenames for that set
 
-		void addsubjmatch(const string &basename){
-			if (subjmatches.find(basename)!=subjmatches.end())
-				return;
+		void addsubjmatch(const string &key, const string &basename){
+			if (basenames[key].find(basename)!=basenames[key].end())
+				return;//only insert one subject match for each basename
+			basenames[key].insert(basename);
+
 			string matchstr;
 			if (isalnum(basename[0]))
 				matchstr+=regex_match_word_beginning();
 			regex_escape_string(basename, matchstr);
 			matchstr+="\\.p(ar|[0-9]{2})";
 			matchstr+=regex_match_word_end();
-			subjmatches.insert_value(basename, new c_regex_r(matchstr.c_str(), REG_EXTENDED|REG_ICASE));
-		}
-		void addfile(string basename, const char *filename){
-			for (string::iterator i=basename.begin(); i!=basename.end(); ++i)
-				*i=tolower(*i);
-			basefilenames[basename].push_back(filename);
-			addsubjmatch(basename);
+			subjmatches.insert_value(key, new c_regex_r(matchstr.c_str(), REG_EXTENDED|REG_ICASE));
 		}
 		void addfrompath(const string &path, t_nocase_map *nocase_map=NULL);
 		void clear(void){
 			basefilenames.clear();
+			basenames.clear();
 			subjmatches.clear();
 		}
 };
@@ -97,6 +98,7 @@ class LocalParFiles {
 
 class ParInfo {
 	protected:
+		t_server_file_list serverpars;
 		t_server_file_list serverpxxs;
 		typedef map<string, ParSetInfo> t_parset_map;
 		t_parset_map parsets;
@@ -111,7 +113,7 @@ class ParInfo {
 		}
 		bool maybe_add_parfile(const c_nntp_file::ptr &f);
 		void get_initial_pars(c_nntp_files_u &fc);
-		void get_pxxs(int num, const string &basename, c_nntp_files_u &fc);
+		void get_pxxs(int num, const string &key, c_nntp_files_u &fc);
 		void maybe_get_pxxs(c_nntp_files_u &fc);
 };
 
