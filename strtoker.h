@@ -19,6 +19,9 @@
 
 #ifndef _STRTOKER_H_incd_
 #define _STRTOKER_H_incd_
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 //goodstrtok:
 //*cur should be set to string to tokenize on first call.

@@ -1,3 +1,5 @@
+2001-09-xx - v0.15:
+  * Fixes for gcc 3.0 compilation.
 2001-08-02 - v0.14:
   * Fix exception if files in current dir contained '{' or '}'. (reported by Brian Keefer)
   * Remove autoconf AC_C_CONST, its only for C progs and breaks g++.

@@ -49,7 +49,7 @@ template <class T>
 class c_refcounted {
 	public:
 		c_refcounted(void):count_(0){}
-		friend c_refpointer<T>;
+		friend class c_refpointer<T>;
 		typedef c_refpointer<T> ptr;
 	protected:
 		unsigned int count_;

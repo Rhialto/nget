@@ -28,3 +28,5 @@
 #else
 #undef SHORT_TEMPNAMES
 #endif*/
+
+using namespace std;
