@@ -8,15 +8,15 @@ LIBS=@LIBS@
 EXEEXT=@EXEEXT@
 srcdir=@srcdir@
 
-NGET=nget$(EXEEXT)
-NGETLITE=ngetlite$(EXEEXT)
+NGET=../nget$(EXEEXT)
+NGETLITE=../ngetlite$(EXEEXT)
 
 all: TestRunner
 
-../$(NGET):
+$(NGET):
 	$(MAKE) -C .. $(NGET)
 
-../$(NGETLITE):
+$(NGETLITE):
 	$(MAKE) -C .. $(NGETLITE)
 
 test: all $(NGET) $(NGETLITE)
