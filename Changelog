@@ -1,4 +1,4 @@
-2002-10-xx v0.22.1:
+2002-10-28 v0.22.1:
   * Fix segv on saving text file if no uulib info was recorded.
   * Fix bug introduced in 0.22 where a textfile would be generated even if there were decode errors.
   * Fix ngetlite handling of servers that do a shutdown on the socket after an error (as opposed to just closing.)
