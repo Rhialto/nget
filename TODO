@@ -1,3 +1,5 @@
+* Should  doarticle_show_multi be an option? (always/auto(default)/never) (longness/shortness optional too?)
+
 * Some sort of hierarchical organization for .ngetrc, so that you could set some options for abunch of hosts or a bunch of groups at once...
 
 * Keep some sort of connection pool, so that in multi-server usage we don't have to keep reopening connections when switching back and forth between servers. 
