@@ -48,33 +48,73 @@ extern "C" {
 #include "myregex.h"
 
 
-#define decode_ERROR 1
-#define path_ERROR 2
-#define user_ERROR 4
-#define retrieve_ERROR 8
-#define fatal_ERROR 128
-static int errflags=0;
-#define SET_x_ERROR_STATUS(type) static int err_ ## type;\
-void set_ ## type ## _error_status(void){\
-	err_ ## type++;\
-	errflags|=type ##_ERROR;\
+static int errorflags=0, warnflags=0, okflags=0;
+
+#define SET_x_x_STATUS(type, low, up, bit) static const int type ## _ ## up = bit; \
+static int low ## _ ## type;\
+void set_ ## type ## _ ## low ## _status(int incr=1){\
+	low ## _ ## type += incr;\
+	if (incr>0)	low ## flags|=type ## _ ## up;\
 }
-SET_x_ERROR_STATUS(decode)
-SET_x_ERROR_STATUS(path)
-SET_x_ERROR_STATUS(user)
-SET_x_ERROR_STATUS(retrieve)
-SET_x_ERROR_STATUS(fatal)
-#define print_x_STATUS(type) if (err_ ## type) printf(" %i " #type, err_ ##type)
+
+#define SET_x_ERROR_STATUS(type,bit) SET_x_x_STATUS(type, error, ERROR, bit)
+#define SET_x_WARN_STATUS(type,bit) SET_x_x_STATUS(type, warn, WARN, bit)
+#define SET_x_OK_STATUS(type,bit) SET_x_x_STATUS(type, ok, OK, bit)
+SET_x_ERROR_STATUS(decode, 1);
+SET_x_ERROR_STATUS(path, 2);
+SET_x_ERROR_STATUS(user, 4);
+SET_x_ERROR_STATUS(retrieve, 8);
+SET_x_ERROR_STATUS(fatal, 128);
+SET_x_OK_STATUS(total, 1);
+SET_x_OK_STATUS(uu, 2);
+SET_x_OK_STATUS(base64, 4);
+SET_x_OK_STATUS(xx, 8);
+SET_x_OK_STATUS(binhex, 16);
+SET_x_OK_STATUS(plaintext, 32);
+SET_x_OK_STATUS(qp, 64);
+SET_x_OK_STATUS(unknown, 512);
+SET_x_OK_STATUS(group, 1024);
+SET_x_WARN_STATUS(retrieve,1);
+SET_x_WARN_STATUS(group,1024);
+#define print_x_x_STATUS(type, low) if (low ## _ ## type) printf("%s %i " #type, cf?",":"", low ## _ ## type)
+#define print_x_ERROR_STATUS(type) print_x_x_STATUS(type, error)
+#define print_x_WARN_STATUS(type) print_x_x_STATUS(type, warn)
+#define print_x_OK_STATUS(type) print_x_x_STATUS(type, ok)
 void print_error_status(void){
-	if (errflags){
-		printf("ERRORS:");
-		print_x_STATUS(decode);
-		print_x_STATUS(path);
-		print_x_STATUS(user);
-		print_x_STATUS(retrieve);
-		print_x_STATUS(fatal);
-		printf("\n");
+	int pf=0;
+	if (okflags){
+		int cf=0;
+		pf++;
+		printf("OK:");
+		print_x_OK_STATUS(total);
+		print_x_OK_STATUS(uu);
+		print_x_OK_STATUS(base64);
+		print_x_OK_STATUS(xx);
+		print_x_OK_STATUS(binhex);
+		print_x_OK_STATUS(plaintext);
+		print_x_OK_STATUS(qp);
+		print_x_OK_STATUS(unknown);
+		print_x_OK_STATUS(group);
 	}
+	if (warnflags){
+		int cf=0;
+		if (pf++) printf(" ");
+		printf("WARNINGS:");
+		print_x_WARN_STATUS(group);
+		print_x_WARN_STATUS(retrieve);
+	}
+	if (errorflags){
+		int cf=0;
+		if (pf++) printf(" ");
+		printf("ERRORS:");
+		print_x_ERROR_STATUS(decode);
+		print_x_ERROR_STATUS(path);
+		print_x_ERROR_STATUS(user);
+		print_x_ERROR_STATUS(retrieve);
+		print_x_ERROR_STATUS(fatal);
+	}
+	if (pf)
+		printf("\n");
 }
 
 
@@ -246,7 +286,7 @@ c_prot_nntp nntp;
 static void term_handler(int s){
 	printf("\nterm_handler: signal %i, shutting down.\n",s);
 	nntp.cleanup();
-	exit(errflags);
+	exit(errorflags);
 }
 
 
@@ -725,7 +765,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 			printCaughtEx_nnl(e);
 			printf(" (fatal application error, exiting..)\n");
 			set_fatal_error_status();
-			exit(errflags);
+			exit(errorflags);
 		}catch(TransportExFatal &e){
 			printCaughtEx_nnl(e);
 			printf(" (fatal, aborting..)\n");
@@ -805,7 +845,7 @@ int main(int argc, char ** argv){
 				if (!home){
 					printf("HOME or NGETHOME environment var not set.");
 					set_fatal_error_status();
-					exit(errflags);
+					exit(errorflags);
 				}
 				nghome=home;
 				nghome.append("/.nget3/");
@@ -890,6 +930,6 @@ int main(int argc, char ** argv){
 		printf("caught unknown exception\n");
 	}
 
-	return errflags;
+	return errorflags;
 }
 

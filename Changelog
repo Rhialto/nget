@@ -12,7 +12,8 @@
   * Errors other than "article not available" on retrieving articles are handled correctly.
   * Added unequal_line_error config option and made default be a warning rather than an error. (since the "unequal line count" error was more of an annoyance than anything.)
   * Added an exit error status for article retrieval errors.
-  
+  * Added ok and warning counts on exit.
+
 2001-08-02 - v0.14:
   * Fix exception if files in current dir contained '{' or '}'. (reported by Brian Keefer)
   * Remove autoconf AC_C_CONST, its only for C progs and breaks g++.

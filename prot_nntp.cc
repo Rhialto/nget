@@ -353,7 +353,7 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 						doservers.push_back(s);
 				}
 			}
-			int redone=0, succeeded=0;
+			int redone=0, succeeded=0, attempted=doservers.size();
 			while (!doservers.empty() && redone<options.maxretry) {
 				if (redone){
 					printf("nntp_group: trying again. %i\n",redone);
@@ -397,7 +397,9 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 			}
 			if (!succeeded)
 				throw TransportExFatal(Ex_INIT,"no servers queried successfully");
+			set_group_warn_status(attempted - succeeded);
 		}
+		set_group_ok_status();
 	}
 }
 
@@ -539,7 +541,6 @@ void c_prot_nntp::nntp_dogetarticle(arinfo*ari,quinfo*toti,list<string> &buf){
 }
 
 int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *fn, const nget_options &options){
-	int redone=0;
 	//c_file_stream f;
 	c_file_fd f;
 	c_nntp_server_article *sa=NULL;
@@ -548,6 +549,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 	t_nntp_server_articles_prioritized::iterator sap_erase_i;
 	t_nntp_server_articles_prioritized::iterator curservsapi=sap.end();
 	nntp_doarticle_prioritize(part,sap,&curservsapi);
+	int redone=0, attempted=sap.size();
 	while (!sap.empty() && redone<options.maxretry) {
 		if (redone){
 			printf("nntp_doarticle: trying again. %i\n",redone);
@@ -620,10 +622,10 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 					}
 				}
 				f.close();
+				set_retrieve_warn_status(attempted - sap.size());
 				return 0; //article successfully retrieved, return.
-			}else
-				throw ApplicationExFatal(Ex_INIT,"unable to open %s: %s",fn,strerror(errno));
-			return 0;
+			}
+			throw ApplicationExFatal(Ex_INIT,"unable to open %s: %s",fn,strerror(errno));
 		}
 		redone++;
 	}
@@ -904,6 +906,15 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 						printf("decode(%s): %s\n",uul->filename,UUstrerror(r));
 						continue;
 					}else{
+						switch (uul->uudet){
+							case UU_ENCODED:set_uu_ok_status();break;
+							case B64ENCODED:set_base64_ok_status();break;
+							case XX_ENCODED:set_xx_ok_status();break;
+							case BH_ENCODED:set_binhex_ok_status();break;
+							case PT_ENCODED:set_plaintext_ok_status();break;
+							case QP_ENCODED:set_qp_ok_status();break;
+							default:set_unknown_ok_status();
+						}
 //						printf("flags %lx",f->flags);
 //						if (!(f->flags&FILEFLAG_READ)){//if the flag is already set, don't force a save
 //							printf("&=%i",FILEFLAG_READ);
@@ -926,6 +937,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 				printf("hm.. nothing decoded.. keeping temp files\n");
 				derr=-2;
 			}else if (derr==0){
+				set_total_ok_status();
 				if (optionflags&GETFILES_KEEPTEMP){
 					if (quiet<2)
 						printf("not decoding, keeping temp files.\n");
