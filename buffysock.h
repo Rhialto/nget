@@ -43,7 +43,7 @@ class sockbuffy :public c_buffy{
 			va_end(ap);
 			return r;
 		}
-		int isopen(void){
+		int isopen(void)const{
 			return sock>=0;
 		}
 		int open(const char *netaddress,const char *service){

@@ -22,6 +22,8 @@ unequal_line_error=0
 test_multiserver=no
 fullxover=0
 maxstreaming=64
+idletimeout=300
+maxconnections=-1
 
 //hostname aliases
 {halias

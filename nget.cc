@@ -319,11 +319,17 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.\n");
 
 
 c_prot_nntp nntp;
+SockPool sockpool;
+
+void nget_cleanup(void) {
+	nntp.cleanup();
+	sockpool.expire_connections(true);
+}
 
 static void term_handler(int s){
 	printf("\nterm_handler: signal %i, shutting down.\n",s);
 	try {
-		nntp.cleanup();
+		nget_cleanup();
 	}catch(baseEx &e){
 		printCaughtEx(e);
 	}catch(exception &e){
@@ -1027,6 +1033,7 @@ int main(int argc, char ** argv){
 	}catch(...){
 		printf("caught unknown exception\n");
 	}
+	nget_cleanup();
 
 	return errorflags;
 }

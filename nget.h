@@ -25,6 +25,8 @@
 //#include "server.h"
 //#include "datfile.h"
 
+void nget_cleanup(void);
+
 //extern c_data_file cfg;
 extern string nghome;
 extern string ngcachehome;

@@ -39,8 +39,9 @@ class c_server {
 		bool fullxover;
 		int maxstreaming;
 		int lineleniencelow,lineleniencehigh;
+		int idletimeout;
 
-		c_server(ulong id, string alia, string shortnam, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea);
+		c_server(ulong id, string alia, string shortnam, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea, int idletimeou);
 };
 typedef map<ulong,c_server*> t_server_list;
 //typedef map<ulong,c_data_section*,less<ulong> > t_server_list;
@@ -106,6 +107,8 @@ class c_nget_config {
 		int unequal_line_error;
 		bool fullxover;
 		int maxstreaming;
+		int idletimeout;
+		int maxconnections;
 
 		c_server* getserver(ulong serverid) const {
 			t_server_list::const_iterator sli=serv.find(serverid);
@@ -157,6 +160,8 @@ class c_nget_config {
 			unequal_line_error=0;
 			fullxover=false;
 			maxstreaming=64;
+			idletimeout=5*60;
+			maxconnections=-1;
 		}
 		~c_nget_config(){
 			t_server_list::iterator i;

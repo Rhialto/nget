@@ -50,7 +50,7 @@ int parse_int_pair(const char *s, int *l, int *h){
 	return 0;
 }
 
-c_server::c_server(ulong id, string alia, string shortnam, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea):alias(alia),shortname(shortnam),addr(add),user(use),pass(pas){
+c_server::c_server(ulong id, string alia, string shortnam, string add, string use,string pas,const char *fullxove,const char *ll,int maxstrea, int idletimeou):alias(alia),shortname(shortnam),addr(add),user(use),pass(pas),idletimeout(idletimeou){
 	serverid=id;
 	if (shortname.empty())
 		shortname=alias[0];
@@ -90,6 +90,8 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 		fullxover=cfg->getitema("fullxover");
 	cfg->getitemi("unequal_line_error",&unequal_line_error);
 	cfg->getitemi("maxstreaming",&maxstreaming);
+	cfg->getitemi("maxconnections",&maxconnections);
+	cfg->getitemi("idletimeout",&idletimeout);
 	//halias
 	assert(hinfo);
 	for (dli=hinfo->data.begin();dli!=hinfo->data.end();++dli){
@@ -116,7 +118,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 			printf("host %s invalid id '%s'\n",ds->key.c_str(),sida);
 			continue;
 		}
-		server=new c_server(tul,ds->key,ds->getitems("shortname"),ds->getitems("addr"),ds->getitems("user"),ds->getitems("pass"),ds->getitema("fullxover"),ds->getitema("linelenience"),ds->geti("maxstreaming",maxstreaming));
+		server=new c_server(tul,ds->key,ds->getitems("shortname"),ds->getitems("addr"),ds->getitems("user"),ds->getitems("pass"),ds->getitema("fullxover"),ds->getitema("linelenience"),ds->geti("maxstreaming",maxstreaming),ds->geti("idletimeout",idletimeout));
 		serv[server->serverid]=server;
 	}
 	//hpriority

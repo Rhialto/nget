@@ -102,7 +102,7 @@ class c_file {
 	void close(void);
 	int close_noEx(void); //same as close, but never throws an exception
 
-	virtual int isopen(void)=0;
+	virtual int isopen(void) const = 0;
 };
 
 #ifndef NDEBUG
@@ -127,7 +127,7 @@ class c_file_testpipe : public c_file {
 	virtual int doflush(void);
 	virtual int doclose(void);
   public:
-	virtual int isopen(void);
+	virtual int isopen(void) const;
 	int open(void);
 	int datasize(void){return data.size();}
 	c_file_testpipe(void){o=0;};
@@ -145,7 +145,7 @@ class c_file_fd : public c_file {
 	virtual int doflush(void);
 	virtual int doclose(void);
   public:
-	virtual int isopen(void);
+	virtual int isopen(void) const;
 	int open(const char *name,int flags,int mode=S_IRWXU|S_IRWXG|S_IRWXO);
 	int open(const char *host,const char * mode);
 	int dup(int dfd);
@@ -163,7 +163,7 @@ class c_file_stream : public c_file {
 	virtual int doflush(void);
 	virtual int doclose(void);
   public:
-	virtual int isopen(void);
+	virtual int isopen(void) const;
 	int open(const char *name,const char * mode);
 	c_file_stream(void){fs=NULL;};
 	~c_file_stream(){close_noEx();};
@@ -179,7 +179,7 @@ class c_file_tcp : public c_file {
 	virtual int doflush(void);
 	virtual int doclose(void);
   public:
-	virtual int isopen(void);
+	virtual int isopen(void) const;
 	int open(const char *name,const char * port);
 	c_file_tcp(void){sock=-1;};
 	~c_file_tcp(){close_noEx();};
@@ -197,7 +197,7 @@ class c_file_gz : public c_file {
 	virtual int doflush(void);
 	virtual int doclose(void);
   public:
-	virtual int isopen(void);
+	virtual int isopen(void) const;
 	int open(const char *host,const char * mode);
 	c_file_gz(void){gzh=NULL;};
 	~c_file_gz(){close_noEx();};
@@ -210,7 +210,7 @@ class c_file_gz : public c_file {
 //	virtual int doflush(void);
 //	virtual int doclose(void);
 //  public:
-//	virtual int isopen(void);
+//	virtual int isopen(void) const;
 //	int open(const char *name,const char * mode,int gz);
 //};
 //#else

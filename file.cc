@@ -125,7 +125,7 @@ int c_file_testpipe::doclose(void){
 	o=0;
 	return 0;
 }
-inline int c_file_testpipe::isopen(void){
+inline int c_file_testpipe::isopen(void)const{
 	return (o);
 }
 inline ssize_t c_file_testpipe::dowrite(const void *dat,size_t len){
@@ -167,7 +167,7 @@ int c_file_gz::doclose(void){
 	gzh=NULL;
 	return i;
 }
-inline int c_file_gz::isopen(void){
+inline int c_file_gz::isopen(void)const{
 	return (gzh!=0);
 }
 inline ssize_t c_file_gz::dowrite(const void *data,size_t len){
@@ -231,7 +231,7 @@ int c_file_fd::doclose(void){
 	fd=-1;
 	return i;
 }
-inline int c_file_fd::isopen(void){
+inline int c_file_fd::isopen(void)const{
 	return (fd>=0);
 }
 inline ssize_t c_file_fd::dowrite(const void *data,size_t len){
@@ -263,7 +263,7 @@ int c_file_stream::doclose(void){
 	fs=NULL;
 	return i;
 }
-inline int c_file_stream::isopen(void){
+inline int c_file_stream::isopen(void)const{
 	return (fs!=0);
 }
 inline ssize_t c_file_stream::dowrite(const void *data,size_t len){
@@ -302,7 +302,7 @@ int c_file_tcp::doclose(void){
 	sock=-1;
 	return i;
 }
-inline int c_file_tcp::isopen(void){
+inline int c_file_tcp::isopen(void)const{
 	return (sock>=0);
 }
 inline ssize_t c_file_tcp::dowrite(const void *data,size_t len){

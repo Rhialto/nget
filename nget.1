@@ -129,7 +129,7 @@ Global options that can be specified are:
 .br
 String: cachedir (Specifies a different location to store cache files.  Could be used to share a single cache dir between a trusted group of users, to reduce HD/bandwidth usage, while still allowing each user to have their own config/midinfo files.)
 .br
-Integral: limit, tries, debug, delay, usegz(-1=default, 0=uncompressed, 1-9=gzip compression level), timeout, maxstreaming
+Integral: limit, tries, debug, delay, usegz(-1=default, 0=uncompressed, 1-9=gzip compression level), timeout, maxstreaming, idletimeout, maxconnections
 .br
 Float: curservmult
 .br
@@ -140,7 +140,7 @@ yes/no/ask: makedirs
 no/short/long: test_multiserver
 .P
 Host configuration is done in the halias section, with a subsection for each
-host containing its address, unique id, and optionally shortname, user, pass, fullxover, maxstreaming, and linelenience
+host containing its address, unique id, and optionally shortname, user, pass, fullxover, maxstreaming, idletimeout, and linelenience
 items.  The "id" field must be unique, and should not be changed after you have
 used it (since it could leave leftovers in your cache files, unless you delete
 them first).  The "id" must be greater than 0 and less than ULONG_MAX. (usually

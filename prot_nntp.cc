@@ -23,7 +23,6 @@
 #include "prot_nntp.h"
 #include <list.h>
 #include <stdio.h>
-#include "sockstuff.h"
 
 #ifndef PROTOTYPES
 #define PROTOTYPES //required for uudeview.h to prototype function args.
@@ -48,10 +47,12 @@
 #include "strtoker.h"
 #include "dupe_file.h"
 
+extern SockPool sockpool;
+
 int c_prot_nntp::putline(int echo,const char * str,...){
 	va_list ap;
 	va_start(ap,str);
-	int i=doputline(echo,str,ap);
+	int i=connection->doputline(echo,str,ap);
 	va_end(ap);
 	return i;
 }
@@ -59,58 +60,15 @@ int c_prot_nntp::stdputline(int echo,const char * str,...){
 	va_list ap;
 	int i;
 	va_start(ap,str);
-	doputline(echo,str,ap);
+	connection->doputline(echo,str,ap);
 	va_end(ap);
 	i=getreply(echo);
 	if (i==450 || i==480) {
 		nntp_auth();
 		va_start(ap,str);
-		doputline(echo,str,ap);
+		connection->doputline(echo,str,ap);
 		va_end(ap);
 		i=getreply(echo);
-	}
-	return i;
-}
-int c_prot_nntp::doputline(int echo,const char * str,va_list ap){
-//	static char fpbuf[255];
-	char *fpbuf;
-	int i;
-//	va_list ap;
-
-//	va_start(ap,str);
-	i=vasprintf(&fpbuf,str,ap);
-//	va_end(ap);
-	if (!(fpbuf=(char*)realloc(fpbuf,i+3))){
-		free(fpbuf);
-		nntp_close();
-		throw TransportExError(Ex_INIT,"nntp_putline:realloc(%p,%i) %s(%i)",fpbuf,i+3,strerror(errno),errno);
-	}
-	if (echo)
-		printf(">%s\n",fpbuf);
-	fpbuf[i]='\r';fpbuf[i+1]='\n';
-//	if (((i=sockprintf(ch,"%s\r\n",fpbuf))<=0)){
-//	if (((i=sock.putf("%s\r\n",fpbuf))<=0)){
-//	if (((i=sock.putf("%s\r\n",fpbuf))<=0)){
-	if (((i=sock.write(fpbuf,i+2))<=0)){
-//		printf("nntp_putline:%i %s(%i)\n",i,strerror(errno),errno);
-		free(fpbuf);
-		nntp_close(1);
-		throw TransportExError(Ex_INIT,"nntp_putline:%i %s(%i)",i,strerror(errno),errno);
-	}
-	free(fpbuf);
-	return i;
-}
-
-int c_prot_nntp::getline(int echo){
-	//int i=sock_gets(ch,cbuf,cbuf_size);
-	int i=sock.bgets();
-	if (i<0){//==0 can be legally achieved since the line terminators are removed
-		nntp_close(1);
-		throw TransportExError(Ex_INIT,"nntp_getline:%i %s(%i)",i,strerror(errno),errno);
-	}else {
-		cbuf=sock.rbufp();
-		if (echo)
-			printf("%s\n",cbuf);
 	}
 	return i;
 }
@@ -120,6 +78,12 @@ int c_prot_nntp::chkreply(int reply){
 	if (reply/100!=2)
 		throw ProtocolExFatal(Ex_INIT,"bad reply %i: %s",reply,cbuf);
 	return reply;
+}
+
+int c_prot_nntp::getline(int echo){
+	int r = connection->getline(echo);
+	cbuf = connection->sock.rbufp();
+	return r;
 }
 
 int c_prot_nntp::getreply(int echo){
@@ -185,7 +149,7 @@ void c_prot_nntp::doxover(c_nrange *r){
 	ulong lowest=r->rlist.begin()->second, highest=r->rlist.rbegin()->first;
 	ulong bytes=0, realnum=0, realtotal=r->get_total(), last;
 	ulong total=realtotal;
-	nntp_doopen();
+	assert(connection);
 	nntp_dogroup(0);
 
 	t_rlist::iterator r_ri;
@@ -197,7 +161,7 @@ void c_prot_nntp::doxover(c_nrange *r){
 		char *p;
 		char *t[10];
 		int i;
-		while (w_ri!=r->rlist.end() && streamed<=host->maxstreaming) { 
+		while (w_ri!=r->rlist.end() && streamed<=connection->server->maxstreaming) { 
 			ulong low=(*w_ri).second, high=(*w_ri).first;
 			if (low==high)
 				putline(debug>=DEBUG_MED,"XOVER %lu",low);//save a few bytes
@@ -249,7 +213,7 @@ void c_prot_nntp::doxover(c_nrange *r){
 				//gcache->additem(c);
 				an=atoul(t[0]);
 				nh.set(t[1],t[2],an,decode_textdate(t[3]),atoul(t[6]),atoul(t[7]),t[4],t[5]);
-				nh.serverid=curserverid;
+				nh.serverid=connection->server->serverid;
 				//gcache->additem(an, decode_textdate(t[3]), atol(t[6]), atol(t[7]),t[1],t[2]);
 				gcache->additem(&nh);
 				//delete nh;
@@ -293,22 +257,23 @@ void c_prot_nntp::nntp_dogroup(int getheaders){
 	if(gcache.isnull() && getheaders){
 		throw UserExFatal(Ex_INIT,"nntp_dogroup: nogroup selected");
 	}
-	nntp_doopen();
-	if (groupselected) return;
-	chkreply(stdputline(quiet<2,"GROUP %s",group->group.c_str()));
-//	stdgetreply(1);
-	groupselected=1;
-	char *p;
-	ulong num,low,high;
-	p=strchr(cbuf,' ')+1;
-	num=atoul(p);
-	p=strchr(p,' ')+1;
-	low=atoul(p);
-	p=strchr(p,' ')+1;
-	high=atoul(p);
-//	printf("%i, %i, %i\n",num,low,high);
+	assert(connection);
+	if (connection->curgroup!=group){	
+		chkreply(stdputline(quiet<2,"GROUP %s",group->group.c_str()));
+		connection->curgroup=group;
+	}
 	if (getheaders){
-		c_nntp_server_info* servinfo=gcache->getserverinfo(curserverid);
+		char *p;
+		ulong num,low,high;
+		p=strchr(cbuf,' ')+1;
+		num=atoul(p);
+		p=strchr(p,' ')+1;
+		low=atoul(p);
+		p=strchr(p,' ')+1;
+		high=atoul(p);
+		//printf("%i, %i, %i\n",num,low,high);
+
+		c_nntp_server_info* servinfo=gcache->getserverinfo(connection->server->serverid);
 		assert(servinfo);
 		if (low>servinfo->low)
 			gcache->flushlow(servinfo,low,midinfo);
@@ -321,7 +286,7 @@ void c_prot_nntp::nntp_dogroup(int getheaders){
 //			else
 //				l=0;
 		}*/
-		if (host->fullxover){
+		if (connection->server->fullxover){
 			c_nrange r;
 			gcache->getxrange(servinfo,low,high,&r);
 			doxover(&r);
@@ -349,13 +314,10 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 	midinfo=new c_mid_info((nghome + group->group + ",midinfo"));
 	//gcache=new c_nntp_cache(nghome,group->group + ",cache");
 	gcache=new c_nntp_cache(ngcachehome, group, midinfo);
-	groupselected=0;
 	if (getheaders){
 		if (force_host){
-			if (host!=force_host){
-				nntp_close();
-				host=force_host;
-			}
+			ConnectionHolder holder(&sockpool, &connection, force_host->serverid);
+			nntp_doopen();
 //			assert(host);
 			nntp_dogroup(getheaders);
 		}else{
@@ -366,7 +328,7 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 				s=(*sli).second;
 				assert(s);
 				if (group->priogrouping->getserverpriority(s->serverid) >= group->priogrouping->defglevel) {
-					if (host && host==s) //put current connected host at start of list
+					if (sockpool.is_connected(s->serverid)) //put current connected hosts at start of list
 						doservers.push_front(s);
 					else
 						doservers.push_back(s);
@@ -385,15 +347,8 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 					s=(*dsi);
 					assert(s);
 					PDEBUG(DEBUG_MED,"nntp_group: serv(%lu) %f>=%f",s->serverid,group->priogrouping->getserverpriority(s->serverid),group->priogrouping->defglevel);
-					if (host!=s) {
-						try {
-							nntp_close();
-						} catch (baseCommEx &e) {//ignore transport errors while closing
-							printCaughtEx_nnl(e);printf(" (ignored)\n");
-						}
-						curserverid=s->serverid;
-						host=s;
-					}
+					ConnectionHolder holder(&sockpool, &connection, s->serverid);
+					nntp_doopen();
 					try {
 						nntp_dogroup(getheaders);
 						succeeded++;
@@ -449,7 +404,7 @@ inline void arinfo::print_retrieving_articles(time_t curtime, quinfo*tot){
 //	fflush(stdout);//@@@@
 //}
 
-int c_prot_nntp::nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_articles_prioritized &sap,t_nntp_server_articles_prioritized::iterator *curservsapi){
+int c_prot_nntp::nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_articles_prioritized &sap,bool docurservmult){
 	t_nntp_server_articles::iterator sai;
 	c_nntp_server_article *sa=NULL;
 	float prio;
@@ -459,23 +414,40 @@ int c_prot_nntp::nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_artic
 		if (force_host && sa->serverid!=force_host->serverid)
 			continue;
 		prio=group->priogrouping->getserverpriority(sa->serverid);
-		if (curservsapi){
-			if (curserverid==sa->serverid)
+		if (docurservmult){
+			if (sockpool.is_connected(sa->serverid))
 				prio*=nconfig.curservmult;
 		}
 		PDEBUG(DEBUG_MED,"prioritizing server %lu article %lu prio %f",sa->serverid,sa->articlenum,prio);
-		if (curservsapi && curserverid==sa->serverid)
-			*curservsapi=sap.insert(t_nntp_server_articles_prioritized::value_type(prio,sa));
-		else
-			sap.insert(t_nntp_server_articles_prioritized::value_type(prio,sa));
-	}
-	if (curservsapi && *curservsapi!=sap.end() && (*(*curservsapi)).first==(*sap.rend()).first && (*(*curservsapi)).second!=(*sap.rend()).second){ //if prio is the same as a prio for a non-curserverid server, the curserver one should be chosen, as we should avoid excessive reconnecting.   (if prio > (*sap.rend()).first, it'll be chosen anyway.  if prio < (*sap.rend()).first, we don't want to choose it, its lower priority.)
-		prio=(**curservsapi).first;
-		sa=(**curservsapi).second;
-		sap.erase(*curservsapi);
-		prio*=1.001;
 		sap.insert(t_nntp_server_articles_prioritized::value_type(prio,sa));
-		PDEBUG(DEBUG_MED,"server %lu article %lu reprioritized %f",sa->serverid,sa->articlenum,prio);
+	}
+
+	if (docurservmult) {
+		int connected=0, nonconnected=0;
+		t_nntp_server_articles_prioritized::iterator i;
+		pair<t_nntp_server_articles_prioritized::iterator,t_nntp_server_articles_prioritized::iterator> firstrange = sap.equal_range(sap.rend()->first);
+		for (i=firstrange.first; i!=firstrange.second; ++i)
+			if (sockpool.is_connected(i->second->serverid))
+				++connected;
+			else
+				++nonconnected;
+
+		if (connected && nonconnected) { //if both connected and nonconnected servers have the (same) highest priority, reprioritize the connected ones a bit higher to avoid excessive reconnecting.
+			t_nntp_server_articles_prioritized::iterator ci;
+			for (i=firstrange.first; i!=firstrange.second;){
+				ci = i;
+				++i;
+				if (sockpool.is_connected(ci->second->serverid)) {
+					prio=(*ci).first;
+					sa=(*ci).second;
+					sap.erase(ci);
+					prio*=1.001;
+					sap.insert(t_nntp_server_articles_prioritized::value_type(prio,sa));
+					PDEBUG(DEBUG_MED,"server %lu article %lu reprioritized %f",sa->serverid,sa->articlenum,prio);
+				}
+			}
+		}
+
 	}
 	return 0;
 }
@@ -488,7 +460,7 @@ int c_prot_nntp::nntp_dowritelite_article(c_file &fw,c_nntp_part *part,char *fn)
 	c_nntp_server_article *sa=NULL;
 	t_nntp_server_articles_prioritized sap;
 	t_nntp_server_articles_prioritized::iterator sapi;
-	nntp_doarticle_prioritize(part,sap,NULL);
+	nntp_doarticle_prioritize(part,sap,false);
 	fw.putf("%i\n",sap.size());
 	for (sapi = sap.begin(); sapi != sap.end(); ++sapi){
 		sa=(*sapi).second;
@@ -553,6 +525,7 @@ void c_prot_nntp::nntp_dogetarticle(arinfo*ari,quinfo*toti,list<string> &buf){
 		sock.file_debug->purge();
 	//		sock.file_debug->save();
 #endif
+	c_server *host = connection->server;
 	if (!(ari->linesdone>=ari->linestot+host->lineleniencelow && ari->linesdone<=ari->linestot+host->lineleniencehigh)){
 		printf("unequal line count %lu should equal %lu",ari->linesdone,ari->linestot);
 		if (host->lineleniencelow||host->lineleniencehigh){
@@ -575,8 +548,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 	t_nntp_server_articles_prioritized sap;
 	t_nntp_server_articles_prioritized::iterator sapi;
 	t_nntp_server_articles_prioritized::iterator sap_erase_i;
-	t_nntp_server_articles_prioritized::iterator curservsapi=sap.end();
-	nntp_doarticle_prioritize(part,sap,&curservsapi);
+	nntp_doarticle_prioritize(part,sap,true);
 	int redone=0, attempted=sap.size();
 	while (!sap.empty() && redone<options.maxretry) {
 		if (redone){
@@ -587,15 +559,8 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 		for (sapi = sap.begin(); sapi != sap.end();){
 			sa=(*sapi).second;
 			assert(sa);
-			if (curserverid!=sa->serverid){
-				try {
-					nntp_close();
-				} catch (baseCommEx &e) {//ignore transport errors while closing
-					printCaughtEx_nnl(e);printf(" (ignored)\n");
-				}
-				curserverid=sa->serverid;
-				host=nconfig.getserver(curserverid);
-			}
+			ConnectionHolder holder(&sockpool, &connection, sa->serverid);
+			nntp_doopen();
 			ari->partnum=part->partnum;
 			ari->anum=sa->articlenum;
 			ari->bytestot=sa->bytes;
@@ -603,13 +568,12 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 			ari->linesdone=0;
 			ari->bytesdone=0;
 			if (toti->doarticle_show_multi==SHOW_MULTI_SHORT)
-				ari->server_name=host->shortname.c_str();
+				ari->server_name=connection->server->shortname.c_str();
 			else if (toti->doarticle_show_multi==SHOW_MULTI_LONG)
-				ari->server_name=host->alias.c_str();
+				ari->server_name=connection->server->alias.c_str();
 			PDEBUG(DEBUG_MED,"trying server %lu article %lu",sa->serverid,sa->articlenum);
 			list<string> buf;//use a list of strings instead of char *.  Easier and it cleans up after itself too.
 			try {
-				nntp_doopen();
 				nntp_dogroup(0);
 				chkreply(stdputline(debug>=DEBUG_MED,"ARTICLE %li",sa->articlenum));
 #ifdef FILE_DEBUG
@@ -626,14 +590,14 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 			} catch (baseCommEx &e) {
 				printCaughtEx(e);
 				if (e.isfatal()) {
-					printf("fatal error, won't try %s again\n",host->addr.c_str());
+					printf("fatal error, won't try %s again\n",connection->server->addr.c_str());
 					sap_erase_i = sapi;
 					++sapi;
 					sap.erase(sap_erase_i);
 				}else{
 					//if this is the last retry, don't say that we will try it again.
 					if (redone+1 < options.maxretry)
-						printf("will try %s again\n",host->addr.c_str());
+						printf("will try %s again\n",connection->server->addr.c_str());
 					++sapi;
 				}
 				continue;
@@ -1097,20 +1061,18 @@ void c_prot_nntp::nntp_auth(void){
 		}
 	}
 	nntp_doauth(user.c_str(),pass.c_str());*/
-	nntp_doauth(host->user.c_str(),host->pass.c_str());
+	nntp_doauth(connection->server->user.c_str(),connection->server->pass.c_str());
 }
 void c_prot_nntp::nntp_doauth(const char *user, const char *pass){
 	int i;
 
 	if(!user){
-		nntp_close();
 		throw UserExFatal(Ex_INIT,"nntp_doauth: no authorization info known");
 	}
 	putline(quiet<2,"AUTHINFO USER %s",user);
 	i=getreply(quiet<2);
 	if (i==350 || i==381){
 		if(!pass){
-			nntp_close();
 			throw UserExFatal(Ex_INIT,"nntp_doauth: no password known");
 		}
 		putline(0,"AUTHINFO PASS %s",pass);
@@ -1119,7 +1081,6 @@ void c_prot_nntp::nntp_doauth(const char *user, const char *pass){
 		i=getreply(quiet<2);
 	}
 	chkreply(i);
-	authed=1;
 }
 
 void c_prot_nntp::nntp_open(c_server *h){
@@ -1127,46 +1088,18 @@ void c_prot_nntp::nntp_open(c_server *h){
 		force_host=h;
 	else
 		force_host=NULL;
-	if (h!=host){
-		nntp_close();
-		host=h;
-	}
 }
 
 void c_prot_nntp::nntp_doopen(void){
-	//if (ch<0){
-	if (!sock.isopen()){
-		//if(host.size()<=0){
-		if(!host){
-			throw UserExFatal(Ex_INIT,"nntp_doopen: no host selected");
-		}
-		int i;
-	//	if((ch=make_connection("nntp",SOCK_STREAM,host.c_str(),NULL,cbuf,cbuf_size))<0){
-		if((i=sock.open(host->addr.c_str(),"nntp"))<0){
-			//throw -1;
-			//throw new c_error(EX_T_FATAL,"make_connection:%i %s(%i)",i,strerror(errno),errno);
-			throw TransportExError(Ex_INIT,"make_connection:%i %s(%i)",i,strerror(errno),errno);
-		}
+	if(!connection){
+		throw TransportExError(Ex_INIT,"make_connection:%s(%i)",strerror(errno),errno);
+	}
+	if (connection->freshconnect){
 		chkreply(getreply(quiet<2));
 		putline(debug>=DEBUG_MED,"MODE READER");
 		getline(debug>=DEBUG_MED);
-		groupselected=0;
-		authed=0;
-		curserverid=host->serverid;
+		connection->freshconnect=false;
 	}
-}
-
-void c_prot_nntp::nntp_close(int fast){
-//	if(ch>=0){
-//		close(ch);ch=-1;
-//	}
-	if (sock.isopen()){
-		if (!fast)
-			putline(quiet<2,"QUIT");
-			//putline(debug,"QUIT");
-		sock.close();
-	}
-	curserverid=0;
 }
 
 void c_prot_nntp::cleanupcache(void){
@@ -1177,13 +1110,6 @@ void c_prot_nntp::cleanupcache(void){
 	if(filec){delete filec;filec=NULL;}
 }
 void c_prot_nntp::cleanup(void){
-//	if (ch>=0){
-	nntp_close();
-//	if (sock.isopen()){
-//		putline(debug,"QUIT");
-//		nntp_close();
-//	}
-//	if (cbuf){delete cbuf;cbuf=NULL;}
 	cleanupcache();
 }
 
@@ -1199,11 +1125,8 @@ c_prot_nntp::c_prot_nntp(void){
 #ifdef FILE_DEBUG
 	sock.file_debug=new c_debug_file;
 #endif
-	sock.initrbuf();
 	filec=NULL;
-	authed=0;
-	curserverid=0;
-	host=NULL;
+	connection=NULL;
 	midinfo=NULL;
 	force_host=NULL;
 }

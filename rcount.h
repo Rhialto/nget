@@ -27,6 +27,8 @@ class c_refpointer {
 //		operator T* () { return p_; }
 		T* gimmethepointer() {return p_;}
 		bool isnull(void){return p_==NULL;}
+		bool operator== (const c_refpointer& p) {return p_==p.p_;}
+		bool operator!= (const c_refpointer& p) {return p_!=p.p_;}
 		T* operator-> () { return p_; }
 		const T* operator-> () const { return p_; }
 		T& operator* ()  { return *p_; }

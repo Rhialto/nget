@@ -30,6 +30,7 @@
 #include "server.h"
 #include "nrange.h"
 #include "nget.h"
+#include "sockpool.h"
 
 #define GETFILES_NODECODE		8
 #define GETFILES_KEEPTEMP		16
@@ -63,13 +64,9 @@ class c_prot_nntp /*: public c_transfer_protocol */{
 //		int ch;
 		char *cbuf;
 //		int cbuf_size;
-		int authed;
-		c_file_tcp sock;
-		c_server *host;
+		Connection *connection;
 		c_server *force_host;
-		ulong curserverid;
 		c_group_info::ptr group;
-		int groupselected;//have we selected the group on the server?
 //		c_nrange *grange;
 		c_mid_info *midinfo;
 		//c_nntp_cache *gcache;
@@ -78,10 +75,10 @@ class c_prot_nntp /*: public c_transfer_protocol */{
 		time_t starttime;
 		int derr;
 
-		int stdputline(int echo,const char * str,...);
+		int stdputline(int echo,const char * str,...)
+			__attribute__ ((format (printf, 3, 4)));
 		int putline(int echo, const char * str,...)
 			__attribute__ ((format (printf, 3, 4)));
-		int doputline(int echo,const char * str,va_list ap);
 		int getline(int echo);
 		int getreply(int echo);
 //		int stdgetreply(int echo);
@@ -93,7 +90,7 @@ class c_prot_nntp /*: public c_transfer_protocol */{
 		void nntp_group(c_group_info::ptr group, int getheaders, const nget_options &options);
 		void nntp_dogroup(int getheaders);
 		//void nntp_doarticle(long num,long ltotal,long btotal,char *fn);
-		int nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_articles_prioritized &sap,t_nntp_server_articles_prioritized::iterator *curservsapi);
+		int nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_articles_prioritized &sap,bool docurservmult);
 		int nntp_dowritelite_article(c_file &fw,c_nntp_part *part,char *fn);
 		int nntp_doarticle(c_nntp_part*part,arinfo*ari,quinfo*toti,char *fn, const nget_options &options);
 		void nntp_dogetarticle(arinfo*ari,quinfo*toti,list<string> &buf);
@@ -102,7 +99,6 @@ class c_prot_nntp /*: public c_transfer_protocol */{
 		//void nntp_open(const char *h,const char *u,const char *p);
 		void nntp_open(c_server *h);
 		void nntp_doopen(void);
-		void nntp_close(int fast=0);
 		void cleanupcache(void);
 		void cleanup(void);
 		void initready(void);
