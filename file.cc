@@ -236,19 +236,12 @@ ssize_t c_file_stream::doread(void *data,size_t len){
 
 
 c_file_tcp::c_file_tcp(const char *host,const char * port):c_file(host){
-	if (m_name.find(':')<0){
+	if (m_name.find(':')<0){//this isn't quite right with ipv6 addrs, but its only for error messages so who cares ;)
 		m_name+=':';
 		m_name+=port;
 	}
 	try {
-		if (rbuffer){
-			rbuffer->cbuf.reserve(512);//ensure at least 512 bytes
-			sock=make_connection(SOCK_STREAM,host,port,rbuffer->cbuf.data(),rbuffer->cbuf.capacity());
-		}
-		else{
-			char buf[512];
-			sock=make_connection(SOCK_STREAM,host,port,buf,512);
-		}
+		sock=make_connection(host,port);
 	} catch (FileEx &e) {
 		throw FileEx(Ex_INIT,"open %s (%s)", name(), e.getExStr());
 	}

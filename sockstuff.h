@@ -21,12 +21,8 @@
 #ifdef HAVE_CONFIG_H 
 #include "config.h"
 #endif
-#include <sys/types.h>
+#include "compat/socketheaders.h"
 #ifdef HAVE_WINSOCK_H
-#define WIN32_LEAN_AND_MEAN
-#undef NOMINMAX
-#define NOMINMAX 1
-#include <winsock.h>
 typedef SOCKET sock_t;
 inline bool sock_isvalid(sock_t s) {return s!=INVALID_SOCKET;}
 #define SOCK_INVALID INVALID_SOCKET
@@ -37,13 +33,6 @@ inline int sock_close(sock_t s) {return closesocket(s);}
 const char* sock_strerror(int e);
 #define sock_hstrerror sock_strerror
 #else /* !HAVE_WINSOCK_H */
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <string.h>
 #include "strreps.h"
 typedef int sock_t;
 inline bool sock_isvalid(sock_t s) {return s>=0;}
@@ -68,12 +57,7 @@ inline int sock_write(sock_t sockfd, const char *buf, size_t count) {
 
 extern int sock_timeout;
 
-void atosockaddr(const char *netaddress, const char *defport, const char *proto,struct sockaddr_in *address, char * buf, int buflen);
-
-int atoport(const char *service,const char *proto,char * buf, int buflen);
-void atoaddr(const char *netaddress,struct in_addr *addr,char *buf, int buflen);
-
-sock_t make_connection(int type,const char *netaddress,const char *service,char * buf, int buflen);
+sock_t make_connection(const char *netaddress,const char *service);
 
 int sock_write_ensured(sock_t sockfd, const char *buf, size_t count);
 int sock_read(sock_t sockfd, void *buf, size_t count);

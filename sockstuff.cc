@@ -30,14 +30,13 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "compat/fake-getaddrinfo.h"
+#include "compat/fake-getnameinfo.h"
+
 #include "log.h"
 #include "strreps.h"
 #include "file.h"
-
-//not all systems have this defined...
-#ifndef INADDR_NONE
-#define INADDR_NONE (-1)
-#endif
+#include "myregex.h"
 
 //comment the next line out if by chance you actually don't have select.
 #define HAVE_SELECT
@@ -127,140 +126,77 @@ const char* sock_strerror(int e) {
 #endif
 
 
-/* Take a service name, and a service type, and return a port number.  If the
-service name is not found, it tries it as a decimal number.  The number
-returned is byte ordered for the network. */
-
-int atoport(const char *service, const char *proto,char * buf, int buflen) {
-	int port;
-	long int lport;
-	struct servent *serv=NULL;
-	char *errpos;
-	/* First try to read it from /etc/services */
-#if HAVE_FUNC_GETSERVBYNAME_R_6
-	struct servent servb;
-	getservbyname_r(service,proto,&servb,buf,buflen,&serv);
-#elif HAVE_FUNC_GETSERVBYNAME_R_5
-	struct servent servb;
-	serv = getservbyname_r(service,proto,&servb,buf,buflen);
-#elif HAVE_FUNC_GETSERVBYNAME_R_4
-	assert(buflen >= sizeof(struct servent_data));
-	struct servent servb;
-	if (getservbyname_r(service,proto,&servb,(struct servent_data *)buf)==0)
-		serv = &servb;
-#else
-	serv = getservbyname(service, proto);
-#endif
-	if (serv != NULL)
-		port = serv->s_port;
-	else { /* Not in services, maybe a number? */
-		lport = strtol(service,&errpos,0);
-		if ( (errpos[0] != 0) || (lport < 1) || (lport > 65535) )
-			throw FileEx(Ex_INIT,"atoport: invalid port number or unknown service %s",service);
-		port = htons(lport);
+static c_regex_r rfc2732host("\\[(.*)\\](:(.*))?"),
+	rawipv6host(".*:.*:.*"),
+	normalhost("(.*)(:(.*)?)");
+void parse_host(string &saddr, string &sservice, const string &host, const string &defservice="") {
+	sservice=defservice;
+	c_regex_subs subs;
+	if (!rfc2732host.match(host,&subs)) {
+		//actually, rfc2732 indicates that inside the []'s is an ipv6 address only, not ipv4 or a hostname.  But that would be harder to implement and not as flexible anyway ;)
+		saddr=subs.subs(1);
+		if (subs.sublen(2)>0)
+			sservice=subs.subs(3);
 	}
-	return port;
+	else if (!rawipv6host.match(host,&subs)) {
+		saddr=host;
+	}
+	else if (!normalhost.match(host,&subs)) {
+		saddr=subs.subs(1);
+		if (subs.sublen(2)>0)
+			sservice=subs.subs(3);
+	} else
+		throw FileEx(Ex_INIT,"parse_host error"); //shouldn't happen.
 }
 
-static int do_gethostbyname(const char *netaddress,struct in_addr *addr,char *buf, int buflen){
-	struct hostent *host=NULL;
-#if HAVE_FUNC_GETHOSTBYNAME_R_6
-	int err;
-	struct hostent hostb;
-	gethostbyname_r(netaddress,&hostb,buf,buflen,&host,&err);
-#elif HAVE_FUNC_GETHOSTBYNAME_R_5
-	int err;
-	struct hostent hostb;
-	host = gethostbyname_r(netaddress,&hostb,buf,buflen,&err);
-#elif HAVE_FUNC_GETHOSTBYNAME_R_3
-	assert(buflen >= sizeof(struct hostent_data));
-	struct hostent hostb;
-	if (gethostbyname_r(netaddress,&hostb,(struct hostent_data *)buf)==0)
-		host = &hostb;
-#else
-	host = gethostbyname(netaddress);
-#endif
-	if (host != NULL) {
-		//			addr=(struct in_addr *)*host->h_addr_list;
-		memcpy(addr,(struct in_addr *)*host->h_addr_list,sizeof(struct in_addr));
-		return 1;
-	}
-	else return 0;
-}
-
-void atoaddr(const char *netaddress,struct in_addr *addr,char *buf, int buflen){
-	if
-#ifdef HAVE_INET_ATON
-		(inet_aton(netaddress,addr))
-#else
-		((addr->s_addr=inet_addr(netaddress))!=INADDR_NONE)
-#endif
-			return;
-	else {
-		int r;
-		if (!(r=do_gethostbyname(netaddress, addr, buf, buflen)) && sock_errno==ERANGE) {
-			buf = NULL;
-			do {
-				buflen *= 2;
-				buf = (char*)realloc(buf, buflen);
-			} while (!(r=do_gethostbyname(netaddress, addr, buf, buflen)) && sock_errno==ERANGE);
-			free(buf);
-		}
-		if (r==0)
-			throw FileEx(Ex_INIT,"gethostbyname: %s",sock_hstrerror(sock_h_errno));
-	}
-}
-
-void atosockaddr(const char *netaddress, const char *defport, const char *proto,struct sockaddr_in *address, char * buf, int buflen){
-	const char *p;
-	string a;
-	address->sin_family = AF_INET;
-	if ((p=strrchr(netaddress,':')))
-			defport=p+1;
-	int port=atoport(defport,proto,buf,buflen);
-	address->sin_port=port;
-	if (p){
-		a.assign(netaddress, p-netaddress);
-		netaddress=a.c_str();
-	}
-	atoaddr(netaddress,&address->sin_addr,buf,buflen);
-}
-
-/* This is a generic function to make a connection to a given server/port.
-service is the port name/number,
-type is either SOCK_STREAM or SOCK_DGRAM, and
+/* This is a generic function to make a stream connection to a given server/port.
+service is the default port name/number (can be overridden in netaddress),
 netaddress is the host name to connect to.
 The function returns the socket, ready for action.*/
-sock_t make_connection(int type,const char *netaddress,const char *service,char * buf, int buflen){
-	PERROR("make_connection(%i,%s,%s,%p,%i)",type, netaddress, service,buf, buflen);
+sock_t make_connection(const char *netaddress,const char *service){
+	PERROR("make_connection(%s,%s)", netaddress, service);
 	sock_t sock;
 	int connected;
-	struct sockaddr_in address;
-	char *prot;
-	if (type == SOCK_STREAM)
-		prot="tcp";
-	else if (type == SOCK_DGRAM)
-		prot="udp";
-	else 
-		throw FileEx(Ex_INIT,"make_connection:  Invalid prot type %i",type);
+	const char *lasterrorfunc="",*lasterror=""; //save the previous error message so we can include something nice in the exception if all connections fail.  Maintains compatibility in the case of hosts that resolve to a single address, and in the case of resolving to multiple, at least it's something. heh.
+	
+	string saddr,sservice;
+	parse_host(saddr, sservice, netaddress, service);
 
-	memset((char *) &address, 0, sizeof(address));
-	atosockaddr(netaddress,service,prot,&address,buf,buflen);
+	struct addrinfo hints, *res, *res0;
+	char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+	int error;
+	
+	/* resolve address/port into sockaddr */
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	error = getaddrinfo(saddr.c_str(), sservice.c_str(), &hints, &res0);
+	if (error)
+		throw FileEx(Ex_INIT, "getaddrinfo: %s", gai_strerror(error));
 
-	unsigned char *i;
-	i=(unsigned char *)&address.sin_addr.s_addr;
-	PMSG("Connecting to %i.%i.%i.%i:%i",i[0],i[1],i[2],i[3],ntohs(address.sin_port));
+	/* try all the sockaddrs until connection goes successful */
+	for (res = res0; res; res = res->ai_next) {
+		error = getnameinfo(res->ai_addr, res->ai_addrlen, hbuf,
+				sizeof(hbuf), sbuf, sizeof(sbuf),
+				NI_NUMERICHOST | NI_NUMERICSERV);
+		if (error) {
+			PMSG_nnl("Connecting to <getnameinfo error: %s> ...", gai_strerror(error));
+		} else
+			PMSG_nnl("Connecting to [%s]:%s ... ",hbuf,sbuf);
 
-	sock = socket(address.sin_family, type, 0);
-	if (!sock_isvalid(sock))
-		throw FileEx(Ex_INIT,"socket: %s",sock_strerror(sock_errno));
+		sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (!sock_isvalid(sock)) {
+			lasterrorfunc="socket";lasterror=sock_strerror(sock_errno);
+			PMSG("%s: %s",lasterrorfunc, lasterror);
+			continue;
+		}
 
-	if (type == SOCK_STREAM) {
 #if defined(HAVE_SELECT) && defined(HAVE_FCNTL)
 		fcntl(sock,F_SETFL,O_NONBLOCK);//we can set the sock to nonblocking, and use select to enforce a timeout.
 #endif
-		connected = connect(sock, (struct sockaddr *) &address,
-				sizeof(address));
+
+		connected = connect(sock, res->ai_addr, res->ai_addrlen);
+
 #if defined(HAVE_SELECT) && defined(HAVE_FCNTL)
 		if (connected<0 && sock_errno==EINPROGRESS){
 			fd_set w;
@@ -274,33 +210,40 @@ sock_t make_connection(int type,const char *netaddress,const char *service,char 
 				int erp;
 				socklen_t erl=sizeof(erp);
 				if (getsockopt(sock,SOL_SOCKET,SO_ERROR,&erp,&erl)){
+					lasterrorfunc="getsockopt";lasterror=sock_strerror(sock_errno);
+					PMSG("%s: %s",lasterrorfunc, lasterror);
 					sock_close(sock);
-					throw FileEx(Ex_INIT,"getsockopt: %s",sock_strerror(sock_errno));
+					continue;
 				}
 				if (erp) {
+					lasterrorfunc="connect";lasterror=sock_strerror(erp);
+					PMSG("%s: %s",lasterrorfunc, lasterror);
 					sock_close(sock);
-					throw FileEx(Ex_INIT,"connect: %s",sock_strerror(erp));
+					continue;
 				}
 			}else{
+				lasterrorfunc="make_connection";lasterror="timeout reached";
+				PMSG("%s: %s",lasterrorfunc, lasterror);
 				sock_close(sock);
-				throw FileEx(Ex_INIT,"make_connection timeout reached (%is)", sock_timeout);
+				continue;
 			}
 			fcntl(sock,F_SETFL,0);//set to blocking again (I hope)
 			connected=0;
 		}
 #endif
 		if (connected < 0) {
+			lasterrorfunc="connect";lasterror=sock_strerror(sock_errno);
+			PMSG("%s: %s",lasterrorfunc, lasterror);
 			sock_close(sock);
-			throw FileEx(Ex_INIT,"connect: %s",sock_strerror(sock_errno));
+			continue;
 		}
+		freeaddrinfo(res);
+		PMSG("connected.");
 		return sock;
 	}
-	/* Otherwise, must be for udp, so bind to address. */
-	if (bind(sock, (struct sockaddr *) &address, sizeof(address)) < 0) {
-		sock_close(sock);
-		throw FileEx(Ex_INIT,"bind: %s",sock_strerror(sock_errno));
-	}
-	return sock;
+
+	freeaddrinfo(res);
+	throw FileEx(Ex_INIT, "%s: %s",lasterrorfunc,lasterror);
 }
 
 
