@@ -93,7 +93,7 @@ OPT can be ignore to save only binaries, "files" to save each text post in a dif
 The name of the mbox file to save in can be specified with mbox:filename, the default is nget.mbox.
 If the filename ends in .gz, it will automatically be gzipped.
 .IP "--save-binary-info yes,no"
-Specifies wether to save text messages for posts that contained only binary data. (If you want to see the headers.)
+Specifies whether to save text messages for posts that contained only binary data. (If you want to see the headers.)
 .IP "--test-multiserver OPT"
 Causes testmode to display which servers have parts of each file.  OPT may be no to disable(default), long for a verbose output, and short for a more condensed form. (In short mode, the shortname of each server is printed with no seperating space, and it is upper-cased if that server does not have all the parts.  If the server has no shortname specified, it defaults to the first char of the server alias.)
 .IP "-M/--mark"
@@ -269,7 +269,7 @@ Makes user/path errors cause an immediate exit rather than continuing if possibl
 If set, downloaded articles whose actual number of lines does not match the expected value will be regarded as an error and ignored.
 If 0, a warning will be generated but the article will be accepted.
 .IP "fullxover (int, default=0)"
-Controls wether nget will check for articles added or removed out of order when updating header cache.
+Controls whether nget will check for articles added or removed out of order when updating header cache.
 fullxover=0 will follow the nntp spec and assume articles are always added and removed in the correct order.
 fullxover=1 will assume articles may be added out of order, but are still removed in order.
 fullxover=2 handles articles being added and removed in any order.
