@@ -28,7 +28,7 @@ Requirements:
 
 TestSuite Requirements:
   Python >= 2.1       http://www.python.org/
-  cppunit             http://cppunit.sourceforge.net/
+  cppunit >= 1.8.0    http://cppunit.sourceforge.net/
   SUBTERFUGUE         http://subterfugue.org/
     (optional, currently only available for x86 linux >=2.4)
 

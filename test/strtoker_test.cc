@@ -1,16 +1,15 @@
 #include "strtoker.h"
 
-#include <cppunit/TestCaller.h>
-#include <cppunit/TestCase.h>
-#include <cppunit/TestSuite.h>
+#include <cppunit/extensions/HelperMacros.h>
 
-using namespace CppUnit;
-
-class strtoker_Test : public TestCase {
+class strtoker_Test : public CppUnit::TestFixture {
+	CPPUNIT_TEST_SUITE(strtoker_Test);
+		CPPUNIT_TEST(testClass);
+		CPPUNIT_TEST(testFunc);
+	CPPUNIT_TEST_SUITE_END();
 	protected:
 		char buf[40];
 	public:
-		strtoker_Test(void):TestCase("strtoker_Test"){}
 		void setUp(void) {
 			strcpy(buf, "a1\tb2\t\tc4");
 		}
@@ -31,14 +30,7 @@ class strtoker_Test : public TestCase {
 			CPPUNIT_ASSERT(strcmp(goodstrtok(&cur,'\t'), "c4") == 0);
 			CPPUNIT_ASSERT(goodstrtok(&cur,'\t') == NULL);
 		}
-		static Test *suite(void) {
-			TestSuite *suite = new TestSuite;
-#define ADDTEST(n) suite->addTest(new TestCaller<strtoker_Test>(#n, &strtoker_Test::n))
-			ADDTEST(testClass);
-			ADDTEST(testFunc);
-#undef ADDTEST
-			return suite;
-		}
 };
 
+CPPUNIT_TEST_SUITE_REGISTRATION( strtoker_Test );
 

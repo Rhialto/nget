@@ -1,16 +1,26 @@
 #include "nrange.h"
 
-#include <cppunit/TestCaller.h>
-#include <cppunit/TestCase.h>
-#include <cppunit/TestSuite.h>
+#include <cppunit/extensions/HelperMacros.h>
 
-using namespace CppUnit;
-
-class nrangeTest : public TestCase {
+class nrangeTest : public CppUnit::TestFixture {
+	CPPUNIT_TEST_SUITE(nrangeTest);
+		CPPUNIT_TEST(testCreate);
+		CPPUNIT_TEST(testInsert);
+		CPPUNIT_TEST(testInsertMiddle);
+		CPPUNIT_TEST(testInsertNothing);
+		CPPUNIT_TEST(testInsertMulti);
+		CPPUNIT_TEST(testRemove);
+		CPPUNIT_TEST(testRemoveBeg);
+		CPPUNIT_TEST(testRemoveEnd);
+		CPPUNIT_TEST(testRemoveNothingBeg);
+		CPPUNIT_TEST(testRemoveNothingEnd);
+		CPPUNIT_TEST(testInvertEmpty);
+		CPPUNIT_TEST(testInvertEnds);
+		CPPUNIT_TEST(testInvertNoEnds);
+	CPPUNIT_TEST_SUITE_END();
 	protected:
 		c_nrange *range;
 	public:
-		nrangeTest(void):TestCase("nrangeTest"){}
 		void setUp(void) {
 			range = new c_nrange();
 		}
@@ -193,32 +203,19 @@ class nrangeTest : public TestCase {
 				CPPUNIT_ASSERT(i.check(j)!=range->check(j));
 			CPPUNIT_ASSERT(i.check(ULONG_MAX));
 		}
-		static Test *suite(void) {
-			TestSuite *suite = new TestSuite;
-#define ADDTEST(n) suite->addTest(new TestCaller<nrangeTest>(#n, &nrangeTest::n))
-			ADDTEST(testCreate);
-			ADDTEST(testInsert);
-			ADDTEST(testInsertMiddle);
-			ADDTEST(testInsertNothing);
-			ADDTEST(testInsertMulti);
-			ADDTEST(testRemove);
-			ADDTEST(testRemoveBeg);
-			ADDTEST(testRemoveEnd);
-			ADDTEST(testRemoveNothingBeg);
-			ADDTEST(testRemoveNothingEnd);
-			ADDTEST(testInvertEmpty);
-			ADDTEST(testInvertEnds);
-			ADDTEST(testInvertNoEnds);
-#undef ADDTEST
-			return suite;
-		}
 };
-class nrangeEqTest : public TestCase {
+
+class nrangeEqTest : public CppUnit::TestFixture {
+	CPPUNIT_TEST_SUITE(nrangeEqTest);
+		CPPUNIT_TEST(testEmpty);
+		CPPUNIT_TEST(testOneEmpty);
+		CPPUNIT_TEST(testUnEqual);
+		CPPUNIT_TEST(testEqual);
+	CPPUNIT_TEST_SUITE_END();
 	protected:
 		c_nrange *range;
 		c_nrange *rangeb;
 	public:
-		nrangeEqTest(void):TestCase("nrangeEqTest"){}
 		void setUp(void) {
 			range = new c_nrange();
 			rangeb = new c_nrange();
@@ -246,15 +243,8 @@ class nrangeEqTest : public TestCase {
 			rangeb->insert(1,2);
 			CPPUNIT_ASSERT(*range == *rangeb);
 		}
-		static Test *suite(void) {
-			TestSuite *suite = new TestSuite;
-#define ADDTEST(n) suite->addTest(new TestCaller<nrangeEqTest>(#n, &nrangeEqTest::n))
-			ADDTEST(testEmpty);
-			ADDTEST(testOneEmpty);
-			ADDTEST(testUnEqual);
-			ADDTEST(testEqual);
-#undef ADDTEST
-			return suite;
-		}
 };
+
+CPPUNIT_TEST_SUITE_REGISTRATION( nrangeTest );
+CPPUNIT_TEST_SUITE_REGISTRATION( nrangeEqTest );
 

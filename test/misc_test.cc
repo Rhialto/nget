@@ -2,15 +2,22 @@
 #include "path.h"
 #include "file.h"
 
-#include <cppunit/TestCaller.h>
-#include <cppunit/TestCase.h>
-#include <cppunit/TestSuite.h>
+#include <cppunit/extensions/HelperMacros.h>
 
-using namespace CppUnit;
-
-class misc_Test : public TestCase {
+class misc_Test : public CppUnit::TestFixture {
+	CPPUNIT_TEST_SUITE(misc_Test);
+		CPPUNIT_TEST(testRegex2Wildmat);
+		CPPUNIT_TEST(testFileCompareSame);
+		CPPUNIT_TEST(testFileCompareDiff);
+		CPPUNIT_TEST(testFileCompareNonExistA);
+		CPPUNIT_TEST(testFileCompareNonExistB);
+		CPPUNIT_TEST(testFileCompareNonExist);
+		CPPUNIT_TEST(testFExists);
+		CPPUNIT_TEST(testDecodeTextMonth);
+		CPPUNIT_TEST(testDecodeTextDate);
+		CPPUNIT_TEST(testDecodeTextAge);
+	CPPUNIT_TEST_SUITE_END();
 	public:
-		misc_Test(void):TestCase("misc_Test"){}
 		void testRegex2Wildmat(void) {
 			CPPUNIT_ASSERT_EQUAL(string("*"), regex2wildmat(""));
 			CPPUNIT_ASSERT_EQUAL(string("*foo*"), regex2wildmat("foo"));
@@ -32,12 +39,12 @@ class misc_Test : public TestCase {
 			CPPUNIT_ASSERT(filecompare("TestRunner.cc", "TestRunner.cc"));
 		}
 		void testFileCompareDiff(void) {
-			CPPUNIT_ASSERT(!filecompare("TestRunner.cc", "misc_test.h"));
+			CPPUNIT_ASSERT(!filecompare("TestRunner.cc", "misc_test.cc"));
 		}
 		void testFileCompareNonExistA(void) {
 			int x=0;
 			try {
-				filecompare("aoeuidhtns", "misc_test.h");
+				filecompare("aoeuidhtns", "misc_test.cc");
 			} catch (FileNOENTEx &e){
 				x=1;
 			}
@@ -46,7 +53,7 @@ class misc_Test : public TestCase {
 		void testFileCompareNonExistB(void) {
 			int x=0;
 			try {
-				filecompare("misc_test.h", "aoeuidhtns");
+				filecompare("misc_test.cc", "aoeuidhtns");
 			} catch (FileNOENTEx &e){
 				x=1;
 			}
@@ -145,24 +152,9 @@ class misc_Test : public TestCase {
 			CPPUNIT_ASSERT_EQUAL(time(NULL)-604800, decode_textage("1w"));
 			CPPUNIT_ASSERT_EQUAL(time(NULL)-(604800+86400*2+3600*3+60*4+5), decode_textage("1 week 2 days 3 hours 4 mins 5 second"));
 		}
-		static Test *suite(void) {
-			TestSuite *suite = new TestSuite;
-#define ADDTEST(n) suite->addTest(new TestCaller<misc_Test>(#n, &misc_Test::n))
-			ADDTEST(testRegex2Wildmat);
-			ADDTEST(testFileCompareSame);
-			ADDTEST(testFileCompareDiff);
-			ADDTEST(testFileCompareNonExistA);
-			ADDTEST(testFileCompareNonExistB);
-			ADDTEST(testFileCompareNonExist);
-			ADDTEST(testFExists);
-			ADDTEST(testDecodeTextMonth);
-			ADDTEST(testDecodeTextDate);
-			ADDTEST(testDecodeTextAge);
-#undef ADDTEST
-			return suite;
-		}
 };
 
 
+CPPUNIT_TEST_SUITE_REGISTRATION( misc_Test );
 
 

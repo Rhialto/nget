@@ -1,16 +1,17 @@
 #include "dupe_file.h"
 
-#include <cppunit/TestCaller.h>
-#include <cppunit/TestCase.h>
-#include <cppunit/TestSuite.h>
+#include <cppunit/extensions/HelperMacros.h>
 
-using namespace CppUnit;
-
-class dupe_file_Test : public TestCase {
+class dupe_file_Test : public CppUnit::TestFixture {
+	CPPUNIT_TEST_SUITE(dupe_file_Test);
+		CPPUNIT_TEST(testCreate);
+		CPPUNIT_TEST(testDupe);
+		CPPUNIT_TEST(testClear);
+		CPPUNIT_TEST(testNonwordBoundry);
+	CPPUNIT_TEST_SUITE_END();
 	protected:
 		dupe_file_checker *dupechecker;
 	public:
-		dupe_file_Test(void):TestCase("dupe_file_Test"){}
 		void setUp(void) {
 			dupechecker = new dupe_file_checker();
 		}
@@ -46,15 +47,7 @@ class dupe_file_Test : public TestCase {
 			CPPUNIT_ASSERT(dupechecker->checkhavefile("boo [bar]test.foo (1/1)", "<foo@bar>", 600));
 			CPPUNIT_ASSERT(dupechecker->checkhavefile("boo \"[bar]test.foo\" (1/1)", "<foo@bar>", 600));
 		}
-		static Test *suite(void) {
-			TestSuite *suite = new TestSuite;
-#define ADDTEST(n) suite->addTest(new TestCaller<dupe_file_Test>(#n, &dupe_file_Test::n))
-			ADDTEST(testCreate);
-			ADDTEST(testDupe);
-			ADDTEST(testClear);
-			ADDTEST(testNonwordBoundry);
-#undef ADDTEST
-			return suite;
-		}
 };
+
+CPPUNIT_TEST_SUITE_REGISTRATION( dupe_file_Test );
 

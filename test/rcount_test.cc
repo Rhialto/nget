@@ -1,12 +1,15 @@
 #include "rcount.h"
 
-#include <cppunit/TestCaller.h>
-#include <cppunit/TestCase.h>
-#include <cppunit/TestSuite.h>
+#include <cppunit/extensions/HelperMacros.h>
 
-using namespace CppUnit;
-
-class rcount_Test : public TestCase {
+class rcount_Test : public CppUnit::TestFixture {
+	CPPUNIT_TEST_SUITE(rcount_Test);
+		CPPUNIT_TEST(testSimple);
+		CPPUNIT_TEST(testTransfer);
+		CPPUNIT_TEST(testScope);
+		CPPUNIT_TEST(testSelfAssignment);
+		CPPUNIT_TEST(testTransient);
+	CPPUNIT_TEST_SUITE_END();
 	protected:
 		int alive;
 		class RCounted : public c_refcounted<RCounted> {
@@ -18,7 +21,6 @@ class rcount_Test : public TestCase {
 				~RCounted(){*aliveptr=0;}
 		};
 	public:
-		rcount_Test(void):TestCase("rcount_Test"){}
 		void setUp(void) {
 			alive = 0;
 		}
@@ -59,18 +61,7 @@ class rcount_Test : public TestCase {
 			CPPUNIT_ASSERT(RCounted::Create(&alive)->foo());
 			CPPUNIT_ASSERT(!alive);
 		}
-		static Test *suite(void) {
-			TestSuite *suite = new TestSuite;
-#define ADDTEST(n) suite->addTest(new TestCaller<rcount_Test>(#n, &rcount_Test::n))
-			ADDTEST(testSimple);
-			ADDTEST(testTransfer);
-			ADDTEST(testScope);
-			ADDTEST(testSelfAssignment);
-			ADDTEST(testTransient);
-#undef ADDTEST
-			return suite;
-		}
 };
 
-
+CPPUNIT_TEST_SUITE_REGISTRATION( rcount_Test );
 
