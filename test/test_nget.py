@@ -2305,8 +2305,8 @@ class DelayAfterArticle2NNTPRequestHandler(nntpd.NNTPRequestHandler):
 
 class TemporarilyUnavailableNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def handle(self):
-		self.nwrite("400 Service temporarily unavailable")
 		self.server.incrcount("_400conns")
+		self.nwrite("400 Service temporarily unavailable")
 
 class ChangingRequestHandlerNNTPTCPServer(nntpd.NNTPTCPServer, CounterMixin):
 	def __init__(self, addr, *handlers):
