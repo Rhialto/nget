@@ -23,7 +23,6 @@
 #include <sys/stat.h>
 #include "path.h"
 #include "log.h"
-#include "md5.h"
 #include "misc.h"
 #include "nget.h"
 #include "par2/par2cmdline.h"
@@ -460,46 +459,15 @@ void ParHandler::maybe_get_pxxs(const string &path, c_nntp_files_u &fc) {
 
 
 void md5_file(c_file *f, uchar *result) {
-#define BLOCKSIZE 8192
-	struct md5_ctx ctx;
-	char buffer[BLOCKSIZE + 72];
-	size_t sum;
-
-	/* Initialize the computation context.  */
-	md5_init_ctx (&ctx);
-
-	/* Iterate over full file contents.  */
-	while (1) {
-
-		size_t n;
-		sum = 0;
-
-		/* Read block.  Take care for partial reads.  */
-		do
-		{
-			n = f->read(buffer + sum, BLOCKSIZE - sum);
-			sum += n;
-		}
-		while (sum < BLOCKSIZE && n != 0);
-		//if (n == 0 && ferror (stream))
-		//	return -1;
-
-		/* If end of file is reached, end the loop.  */
-		if (n == 0)
-			break;
-
-		/* Process buffer with BLOCKSIZE bytes.  Note that
-		   BLOCKSIZE % 64 == 0
-		   */
-		md5_process_block (buffer, BLOCKSIZE, &ctx);
-	}
-
-	/* Add the last bytes if necessary.  */
-	if (sum > 0)
-		md5_process_bytes (buffer, sum, &ctx);
-
-	/* Construct result in desired memory.  */
-	md5_finish_ctx (&ctx, result);
+	const int BLOCKSIZE = 8192;
+	char buffer[BLOCKSIZE];
+	MD5Context context;
+	size_t n;
+	while ((n = f->read(buffer, BLOCKSIZE)))
+		context.Update(buffer, n);
+	MD5Hash hash;
+	context.Final(hash);
+	memcpy(result, hash.hash, 16);
 }
 
 void md5_file(const char *filename, uchar *result) {
