@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-//#include "server.h"
+#include "server.h"
 //#include "datfile.h"
 
 void nget_cleanup(void);
