@@ -27,6 +27,7 @@
 #include "litenntp.h"
 #include "log.h"
 #include "sockstuff.h"
+#include "file.h"
 #include <stdio.h>
 #include <unistd.h>
 #include "strreps.h"
