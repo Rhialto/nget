@@ -25,8 +25,6 @@
 #include <string>
 #include <sys/types.h>
 #include <map>
-#include <stdio.h>
-#include "file.h"
 
 
 typedef map<ulong, ulong> t_rlist;//we are going to use high as the key, and low as the value
@@ -35,7 +33,6 @@ class c_nrange{
 		static const ulong varmin=0;
 		static const ulong varmax=ULONG_MAX;
 		//int changed;
-		string file;
 		t_rlist rlist;
 		ulong get_total(void) const {
 			ulong tot=0;
