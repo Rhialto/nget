@@ -1,15 +1,21 @@
+nget (0.14-2) unstable; urgency=low
+
+  * Fix the problem with apt-get source nget in the last upload.
+
+ -- Matthew Mueller <donut@azstarnet.com>  Thu, 20 Sep 2001 14:25:52 -0700
+
 nget (0.14-1) unstable; urgency=low
 
   * New version.
 
- -- Matthew Mueller <donut@charon.lan>  Thu,  2 Aug 2001 18:25:38 -0700
+ -- Matthew Mueller <donut@azstarnet.com>  Thu,  2 Aug 2001 18:25:38 -0700
 
 nget (0.13.2-1) unstable; urgency=low
 
   * New version.
   * removed unused suidregister thingy from rules.
 
- -- Matthew Mueller <donut@charon.lan>  Thu,  8 Feb 2001 04:54:40 -0700
+ -- Matthew Mueller <donut@azstarnet.com>  Thu,  8 Feb 2001 04:54:40 -0700
 
 nget (0.13.1-1) unstable; urgency=low
 
