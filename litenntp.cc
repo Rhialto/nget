@@ -96,8 +96,13 @@ int c_prot_nntp::getline(int echo){
 	return i;
 }
 
-int c_prot_nntp::chkreply(int reply) const {
+int c_prot_nntp::chkreply(int reply) {
 //	int i=getreply(echo);
+	if (reply==400) {
+		// 400 response is used on connection for "Service temporarily unavailable" or during a session if the server has to terminate the connection for some reason.
+		doclose();
+		throw ProtocolExError(Ex_INIT,"server says byebye: %s", cbuf);
+	}
 	if (reply/100!=2)
 		throw ProtocolExFatal(Ex_INIT,"bad reply %i: %s",reply,cbuf);
 	return reply;

@@ -2264,6 +2264,21 @@ class CmdlineXoverTestCase(TestCase, XoverTest_base):
 		XoverTest_base.tearDown(self)
 
 
+class CounterMixin:
+	def __init__(self):
+		self.__Count = {}
+		self.__Limit = {}
+	def limitReached(self, name):
+		if self.__Count.get(name,0) >= self.__Limit.get(name,0):
+			return 1
+		self.__Count[name] = self.__Count.get(name,0) + 1
+		return 0
+	def setLimit(self, name, val):
+		self.__Limit[name] = val
+	def resetLimit(self, name):
+		self.__Limit[name] = 0
+
+
 class NoDateCmdNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	cmd_date=None
 
@@ -2288,6 +2303,24 @@ class DelayAfterArticle2NNTPRequestHandler(nntpd.NNTPRequestHandler):
 		nntpd.NNTPRequestHandler.cmd_article(self, args)
 		time.sleep(2)
 
+class TemporarilyUnavailableNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	def handle(self):
+		self.nwrite("400 Service temporarily unavailable")
+		self.server.incrcount("_400conns")
+
+class ChangingRequestHandlerNNTPTCPServer(nntpd.NNTPTCPServer, CounterMixin):
+	def __init__(self, addr, *handlers):
+		CounterMixin.__init__(self)
+		nntpd.NNTPTCPServer.__init__(self, addr, handlers[0])
+		self.__handlers = handlers[1:]
+	def finish_request(self, *args):
+		if self.limitReached("handle"):
+			self.RequestHandlerClass = self.__handlers[0]
+			self.__handlers = self.__handlers[1:]
+			if self.__handlers:
+				self.resetLimit("handle")
+		nntpd.NNTPTCPServer.finish_request(self, *args)
+
 class DiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_article(self, args):
 		nntpd.NNTPRequestHandler.cmd_article(self, args)
@@ -2298,6 +2331,9 @@ class ErrorDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 		nntpd.NNTPRequestHandler.cmd_article(self, args)
 		raise nntpd.NNTPDisconnect("503 You are now disconnected. Have a nice day.")
 
+class Article400DiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	def cmd_article(self, args):
+		raise nntpd.NNTPDisconnect("400 BOFH hits you for 137 damage.  You die.")
 class OverArticleQuotaDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_article(self, args):
 		raise nntpd.NNTPDisconnect("502 Over quota.  Goodbye.")
@@ -2533,6 +2569,77 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput([])
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 3)
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
+
+	def test_TemporarilyUnavailableNNTPServer(self):
+		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer(("127.0.0.1",0), TemporarilyUnavailableNNTPRequestHandler, nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':3})
+		self.servers.servers[0].setLimit("handle",2)
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.verifyoutput('0002')
+		self.vfailUnlessEqual(self.servers.servers[0].count("_400conns"), 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+
+	def test_TemporarilyUnavailableNNTPServerPenalty(self):
+		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer(("127.0.0.1",0), TemporarilyUnavailableNNTPRequestHandler, nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':3,'penaltystrikes':2})
+		self.servers.servers[0].setLimit("handle",2)
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		self.vfailUnlessExitstatus(self.nget.run("-g test -r ."), 16)
+		self.verifyoutput('')
+		self.vfailUnlessEqual(self.servers.servers[0].count("_400conns"), 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+
+	def test_lite_TemporarilyUnavailableNNTPServer(self):
+		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler, TemporarilyUnavailableNNTPRequestHandler, nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.servers[0].setLimit("handle",1)
+		self.addarticles('0002','uuencode_multi3')
+		self.servers.start()
+		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
+		self.vfailIf(self.nget.run("-w %s -g test -r ."%litelist))
+		self.vfailIf(self.nget.runlite(litelist))
+		self.vfailIf(self.nget.run("-N -G test -r ."))
+		self.verifyoutput('0002')
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_400conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
+
+	def test_Article400DiscoingNNTPServer(self):
+		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer(("127.0.0.1",0), Article400DiscoingNNTPRequestHandler, nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':3})
+		self.servers.servers[0].setLimit("handle",2)
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		self.vfailIf(self.nget.run("-g test -r ."))
+		self.verifyoutput('0002')
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
+
+	def test_Article400DiscoingNNTPServerPenalty(self):
+		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer(("127.0.0.1",0), Article400DiscoingNNTPRequestHandler, nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':3,'penaltystrikes':2})
+		self.servers.servers[0].setLimit("handle",2)
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		self.vfailUnlessExitstatus(self.nget.run("-g test -r ."), 8)
+		self.verifyoutput('')
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
+
+	def test_lite_Article400DiscoingNNTPServer(self):
+		self.servers = nntpd.NNTPD_Master([ChangingRequestHandlerNNTPTCPServer(("127.0.0.1",0), Article400DiscoingNNTPRequestHandler, nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.servers[0].setLimit("handle",3)
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
+		self.vfailIf(self.nget.run("-w %s -g test -r ."%litelist))
+		self.vfailIf(self.nget.runlite(litelist))
+		self.vfailIf(self.nget.run("-N -G test -r ."))
+		self.verifyoutput('0002')
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 5)
 
 	def test_NoPenalty_g(self):
 		self.servers = nntpd.NNTPD_Master(2)

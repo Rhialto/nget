@@ -81,6 +81,11 @@ int c_prot_nntp::stdputline(int echo,const char * str,...){
 
 int c_prot_nntp::chkreply(int reply) const {
 //	int i=getreply(echo);
+	if (reply==400) {
+		// 400 response is used on connection for "Service temporarily unavailable" or during a session if the server has to terminate the connection for some reason.
+		connection->close(1);
+		throw ProtocolExError(Ex_INIT,"server says byebye: %s", cbuf);
+	}
 	if (reply/100!=2)
 		throw ProtocolExFatal(Ex_INIT,"bad reply %i: %s",reply,cbuf);
 	return reply;
@@ -88,7 +93,7 @@ int c_prot_nntp::chkreply(int reply) const {
 
 int c_prot_nntp::chkreply_setok(int reply){
 	//only set the server_ok flag if the command had a "normal" error status (like group not found, article expired, etc).  If the command sequence completes successfully, then the server_ok will be set before releasing the ConnectionHolder.
-	if (reply/100==4)
+	if (reply/100==4 && reply!=400)
 		connection->server_ok = true;
 	return chkreply(reply);
 }
