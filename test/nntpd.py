@@ -55,7 +55,7 @@ class NNTPAuthError(NNTPError):
 
 class NNTPDisconnect(Exception):
 	def __init__(self, err=None):
-		self.err=None
+		self.err=err
 
 class AuthInfo:
 	def __init__(self, user, password, caps=None):
