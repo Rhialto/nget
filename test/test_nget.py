@@ -1901,8 +1901,20 @@ class FatalUserErrorsTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessExitstatus(self.nget.run('-p badpath -g test'), 4)
 		self.vfailUnlessExitstatus(self.nget.run('-P badpath -g test'), 4)
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_baddupepath(self):
+		self.vfailUnlessExitstatus(self.nget.run('--dupepath badpath -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
 	def test_badhost(self):
 		self.vfailUnlessExitstatus(self.nget.run('-h badhost -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_available_badregex(self):
+		self.vfailUnlessExitstatus(self.nget.run('-A -Tr "*" -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_expavailable_badexp(self):
+		self.vfailUnlessExitstatus(self.nget.run('-A -TR foo -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_expavailable_badregex(self):
+		self.vfailUnlessExitstatus(self.nget.run('-A -TR "group * ==" -g test'), 4)
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
 	def test_xavailable_badregex(self):
 		self.vfailUnlessExitstatus(self.nget.run('-X -Tr "*" -g test'), 4)
@@ -1912,6 +1924,9 @@ class FatalUserErrorsTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
 	def test_retrieve_nogroup(self):
 		self.vfailUnlessExitstatus(self.nget.run('-r . -g test'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	def test_expretrieve_nogroup(self):
+		self.vfailUnlessExitstatus(self.nget.run('-R "subject . ==" -g test'), 4)
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
 	def test_expretrieve_badexp(self):
 		self.vfailUnlessExitstatus(self.nget.run('-Gtest -R foo -g test'), 4)
@@ -1937,6 +1952,9 @@ class FatalUserErrorsTestCase(TestCase, DecodeTest_base):
 	def test_flush_badserver(self):
 		self.vfailUnlessExitstatus(self.nget.run('-g test -F badserv -r .'), 4)
 		self.verifyoutput([])
+	def test_flush_xgroup(self):
+		self.vfailUnlessExitstatus(self.nget.run('-x test -F host0 -r .'), 4)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
 	def test_flush_available_badserver(self):
 		self.vfailUnlessExitstatus(self.nget.run('-A -F badserv -g test'), 4)
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
