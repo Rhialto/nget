@@ -1,4 +1,6 @@
-CXXFLAGS=@CXXFLAGS@ @UUINC@ @DEFS@ -I..
+CXXFLAGS=@CXXFLAGS@ @DEFS@
+CPPFLAGS=@UUINC@ @CPPFLAGS@ -I..
+LDFLAGS=@LDFLAGS@
 
 CXX=@CXX@
 LIBS=@LIBS@
@@ -10,7 +12,10 @@ all: TestRunner
 ../nget:
 	$(MAKE) -C .. nget
 
-test: all ../nget
+../ngetlite:
+	$(MAKE) -C .. ngetlite
+
+test: all ../nget ../ngetlite
 	./test_nget.py
 
 OBJS=TestRunner.o ../file.o ../sockstuff.o ../nrange.o ../log.o ../dupe_file.o ../myregex.o ../strtoker.o ../misc.o
