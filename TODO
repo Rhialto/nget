@@ -11,8 +11,8 @@ This should be handled:
 uu_msg(1):Note: No encoded data found in ec3317e3-71cf792d.011
  1 decoding errors occured, keeping temp files.
 
-* fix the everpresent "Operation now in progress" and make it report the real error 
-This may be the timeout error, actually.
+* fix sometimes showing "Operation now in progress" and make it report the real error 
+Connect (with select), sockstuff uses strerror(erp) but exception thrown uses errno.  Should make sockstuff throw directly?
 
 -p/-P when dir doesn't exist should just ignore all commands until a correct dir is encountered (and set a seperate error code to be exited with)
 

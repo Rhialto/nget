@@ -41,8 +41,12 @@
 #define FILEDEBUGRBUF(a)
 #endif
 
-DEFINE_EX_CLASSES(File, baseEx);
-	
+//DEFINE_EX_CLASSES(File, baseEx);
+DEFINE_EX_SUBCLASS(FileEx, ApplicationExFatal, true);
+DEFINE_EX_SUBCLASS(FileNOENTEx, FileEx, true);
+
+void xxrename(const char *oldpath, const char *newpath);
+
 #include "buffy.h"
 
 class c_file;
@@ -82,16 +86,19 @@ class c_file {
 //	c_rbuffer *rbuffer;
 	c_file_buffy *rbuffer;
 
+	string m_name;
+
   public:
+	const char *name(void){return m_name.c_str();}
 	char * rbufp(void){return rbuffer->cbufp();}
 
-	c_file(void);
+	c_file(const char *fname);
 	virtual ~c_file();
 	ssize_t putf(const char *buf,...)
 		__attribute__ ((format (printf, 2, 3)));
 	char * gets(char *data,size_t len){return dogets(data,len);}
-	ssize_t write(const void *data,size_t len){return dowrite(data,len);}
-	ssize_t read(void *data,size_t len){return doread(data,len);}
+	ssize_t write(const void *data,size_t len);
+	ssize_t read(void *data,size_t len);
 	//buffered funcs: must call initrbuf first.
 	ssize_t bread(size_t len);//buffered read, must be used instead of normal read, if you are using bgets
 	//char * bgets(void);//buffered gets, should be faster than normal gets, definatly for tcp or gz. maybe not for stream.
@@ -130,7 +137,7 @@ class c_file_testpipe : public c_file {
 	virtual int isopen(void) const;
 	int open(void);
 	int datasize(void){return data.size();}
-	c_file_testpipe(void){o=0;};
+	c_file_testpipe(void):c_file("<testpipe>") {o=0;};
 	~c_file_testpipe(){close_noEx();};
 };
 #endif
@@ -146,10 +153,9 @@ class c_file_fd : public c_file {
 	virtual int doclose(void);
   public:
 	virtual int isopen(void) const;
-	int open(const char *name,int flags,int mode=S_IRWXU|S_IRWXG|S_IRWXO);
-	int open(const char *host,const char * mode);
-	int dup(int dfd);
-	c_file_fd(void){fd=-1;};
+	c_file_fd(const char *name,int flags,int mode=S_IRWXU|S_IRWXG|S_IRWXO);
+	c_file_fd(const char *name,const char * mode);
+	c_file_fd(int dfd, const char *name="");
 	~c_file_fd(){close_noEx();};
 };
 #ifdef USE_FILE_STREAM
@@ -164,8 +170,7 @@ class c_file_stream : public c_file {
 	virtual int doclose(void);
   public:
 	virtual int isopen(void) const;
-	int open(const char *name,const char * mode);
-	c_file_stream(void){fs=NULL;};
+	c_file_stream(const char *name,const char * mode);
 	~c_file_stream(){close_noEx();};
 };
 #endif
@@ -181,8 +186,7 @@ class c_file_tcp : public c_file {
   public:
 	bool datawaiting(void) const;
 	virtual int isopen(void) const;
-	int open(const char *name,const char * port);
-	c_file_tcp(void){sock=-1;};
+	c_file_tcp(const char *name,const char * port);
 	~c_file_tcp(){close_noEx();};
 };
 
@@ -199,8 +203,7 @@ class c_file_gz : public c_file {
 	virtual int doclose(void);
   public:
 	virtual int isopen(void) const;
-	int open(const char *host,const char * mode);
-	c_file_gz(void){gzh=NULL;};
+	c_file_gz(const char *host,const char * mode);
 	~c_file_gz(){close_noEx();};
 };
 //class c_file_optgz : public c_file_gz, c_file_stream {

@@ -51,11 +51,13 @@ class baseEx {
 		virtual ~baseEx() { }
 };
 
-#define DEFINE_EX_SUBCLASS(name,sub,fatalv) class name ## Ex ## sub : public name ## Ex {\
+#define DEFINE_EX_SUBCLASS(name,base,fatalv) class name : public base {\
+	protected:\
+		name(void) { } /* to allow subclasses */ \
 	public:\
 		virtual bool isfatal(void)const{return fatalv;}\
-		virtual const char* getExType(void)const{return #name "Ex" #sub;}\
-		name ## Ex ## sub(const char *file, int line, const char * s, ...) {\
+		virtual const char* getExType(void)const{return #name ;}\
+		name(const char *file, int line, const char * s, ...) {\
 			mfile = file; mline = line;\
 			char *cstr;\
 			va_list ap;\
@@ -68,9 +70,11 @@ class baseEx {
 		}\
 };
 
+#define DEFINE_EX_SUBCLASS_SUB(name, sub, fatalv) DEFINE_EX_SUBCLASS(name ## Ex ## sub, name ## Ex, fatalv)
+
 #define DEFINE_EX_CLASSES(name,base) class name ## Ex : public base {};\
-DEFINE_EX_SUBCLASS(name, Fatal, true)\
-DEFINE_EX_SUBCLASS(name, Error, false)
+DEFINE_EX_SUBCLASS_SUB(name, Fatal, true)\
+DEFINE_EX_SUBCLASS_SUB(name, Error, false)
 
 
 class baseCommEx: public baseEx {};
@@ -80,7 +84,8 @@ DEFINE_EX_CLASSES(Protocol, baseCommEx);
 DEFINE_EX_CLASSES(Path, baseEx);
 DEFINE_EX_CLASSES(User, baseEx);
 DEFINE_EX_CLASSES(Config, baseEx);
-DEFINE_EX_CLASSES(Application, baseEx);
+//DEFINE_EX_CLASSES(Application, baseEx);
+DEFINE_EX_SUBCLASS(ApplicationExFatal, baseEx, true);
 
 #define Ex_INIT __FILE__,__LINE__
 

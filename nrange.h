@@ -62,8 +62,8 @@ class c_nrange{
 				changed=1;
 			}
 		}
-		int load(string f,int merge=0);
-		int save(void);
+		void load(string f,int merge=0);
+		void save(void);
 		c_nrange(c_nrange &r):changed(r.changed),rlist(r.rlist){}
 		c_nrange(string f="");
 		~c_nrange();

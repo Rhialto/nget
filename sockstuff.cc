@@ -235,6 +235,10 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 	address.sin_addr.s_addr = addr.s_addr;*/
 
 	sock = socket(address.sin_family, type, 0);
+	if (sock < 0) {
+		PERROR("socket: %s",strerror(errno));
+		return -1;
+	}
 
 
 	//  printf("Connecting to %s on port %d.\n",inet_ntoa(*addr),htons(port));
@@ -420,6 +424,8 @@ int sock_read(int sockfd, void *buf, size_t count){
 		return read(sockfd,buf,count);
 #ifdef HAVE_SELECT
 	}
+	if (i==0)
+		throw TransportExError(Ex_INIT,"sock_read timeout reached (%is)", sock_timeout);
 	return i;
 #endif
 }

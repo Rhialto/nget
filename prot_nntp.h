@@ -73,7 +73,6 @@ class c_prot_nntp {
 		bool gcache_ismultiserver;
 		c_nntp_files_u *filec;
 		time_t starttime;
-		int derr;
 
 		int stdputline(int echo,const char * str,...)
 			__attribute__ ((format (printf, 3, 4)));

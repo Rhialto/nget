@@ -121,7 +121,7 @@ void c_prot_nntp::doarticle(ulong anum,ulong bytes,ulong lines,const char *outfi
 	sprintf(tempfilename,"%s.%i",tempfilename_base,getpid());
 	FILE *f=fopen(tempfilename,"w");
 	if (f==NULL)
-		throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu fopen %s(%i)",anum,strerror(errno),errno);
+		throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu fopen %s: %s", anum, tempfilename, strerror(errno));
 	while(1) {
 		glr=getline(debug>=DEBUG_ALL);
 		if (cbuf[0]=='.'){
@@ -139,7 +139,7 @@ void c_prot_nntp::doarticle(ulong anum,ulong bytes,ulong lines,const char *outfi
 		}
 		if (fprintf(f,"%s\n",lp)<0){
 			fclose(f);
-			throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu fprintf %s(%i)",anum,strerror(errno),errno);
+			throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu fprintf %s: %s", anum, tempfilename, strerror(errno));
 		}
 	}
 	fclose(f);

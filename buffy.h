@@ -111,10 +111,11 @@ class c_buffy {
 			buf.clear();
 			while (1){
 				i=bget();
-				rcount++;
 				if (i<0)
-					return -1;
-				else if (i==13){
+					//return -1;
+					return rcount;//errors are exceptions now, so this can only mean end of file
+				rcount++;
+				if (i==13){
 					continue;
 				}else if (i==10){
 					return rcount;//we return the real count of bytes swallowed, even though eol isn't returned.

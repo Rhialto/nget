@@ -39,20 +39,28 @@ int Connection::doputline(int echo,const char * str,va_list ap){
 	if (echo)
 		printf("%s << %s\n", server->shortname.c_str(), fpbuf);
 	fpbuf[i]='\r';fpbuf[i+1]='\n';
-	if (((i=sock.write(fpbuf,i+2))<=0)){
+	try {
+		i=sock.write(fpbuf,i+2);
+	} catch (FileEx &e) {
 		free(fpbuf);
 		close(1);
-		throw TransportExError(Ex_INIT,"nntp_putline:%i %s(%i)",i,strerror(errno),errno);
+		throw TransportExError(Ex_INIT,"nntp_putline: %s:%i: %s",e.getExFile(), e.getExLine(), e.getExStr());
 	}
 	free(fpbuf);
 	return i;
 }
 
 int Connection::getline(int echo){
-	int i=sock.bgets();
-	if (i<0){//==0 can be legally achieved since the line terminators are removed
+	int i;
+	try {
+		i=sock.bgets();
+	} catch (FileEx &e) {
 		close(1);
-		throw TransportExError(Ex_INIT,"nntp_getline:%i %s(%i)",i,strerror(errno),errno);
+		throw TransportExError(Ex_INIT,"nntp_getline: %s:%i: %s",e.getExFile(), e.getExLine(), e.getExStr());
+	}
+	if (i<=0){
+		close(1);
+		throw TransportExError(Ex_INIT,"nntp_getline: connection closed unexpectedly",i,strerror(errno),errno);
 	}else {
 		if (echo)
 			printf("%s >> %s\n", server->shortname.c_str(), sock.rbufp());
@@ -103,11 +111,11 @@ Connection* SockPool::connect(ulong serverid) {
 		expire_old_connection();
 	
 	//create new connection
-	c = new Connection(nconfig.getserver(serverid));
-	if (c->open()<0){
-		nconfig.penalize(c->server);
-		delete c;
-		throw TransportExError(Ex_INIT,"make_connection:%s(%i)",strerror(errno),errno);
+	try {
+		c = new Connection(nconfig.getserver(serverid));
+	}  catch (FileEx &e) {
+		nconfig.penalize(nconfig.getserver(serverid));
+		throw TransportExError(Ex_INIT,"Connection: %s",e.getExStr());
 	}
 	nconfig.unpenalize(c->server);
 	connections.insert(t_connection_map::value_type(serverid, c));
@@ -134,10 +142,8 @@ void SockPool::expire_old_connection(void) {
 		if (oldest==connections.end() || c->age()>oldest->second->age())
 			oldest = i;
 	}
-	if (oldest!=connections.end()){
-		connection_erase(oldest);
-	}else
-		throw ApplicationExError(Ex_INIT, "no old connections to kill");
+	assert(oldest!=connections.end());//no old connections to kill??
+	connection_erase(oldest);
 }
 
 void SockPool::expire_connections(bool closeall) {

@@ -61,7 +61,7 @@ char *Bfgets(char *buf,int len,FILE*f){
 void dofile(const char *arg){
 	FILE *listf=fopen(arg,"r+");
 	if (listf==NULL){
-		printf("couldn't open %s\n",arg);
+		printf("couldn't open %s: %s\n",arg,strerror(errno));
 		return;
 	}
 	char buf[2048];
@@ -154,7 +154,7 @@ void dofile(const char *arg){
 	goto dofile_done;
 
 dofile_ferror:
-	printf("file error %i: %s\n",errno,strerror(errno));
+	printf("file error %s: %s\n",arg,strerror(errno));
 	goto dofile_error;
 
 dofile_error:

@@ -51,11 +51,6 @@ class Connection {
 		void touch(void) {
 			lastuse=time(NULL);
 		}
-		int open(void) {
-			freshconnect=true;
-			curgroup=NULL;
-			return sock.open(server->addr.c_str(), "nntp");
-		}
 		bool isopen(void) const {
 			return sock.isopen();
 		}
@@ -68,9 +63,10 @@ class Connection {
 				sock.close();
 			}
 		}
-		Connection(c_server::ptr serv):lastuse(0), server(serv){
-			assert(serv);
+		Connection(c_server::ptr serv):lastuse(0), sock(serv->addr.c_str(), "nntp"), server(serv){
 			sock.initrbuf();
+			freshconnect=true;
+			curgroup=NULL;
 		}
 };
 

@@ -44,7 +44,7 @@ class c_lockfile{
 			PDEBUG(FLOCK_DEBUG_LEV,"attempting to lock %s",file.c_str());
 			int ret=lockfile_create(file.c_str(),10,0);
 			if (ret){
-				throw new c_error(EX_A_FATAL,"lockfile_create: %i (%i)",ret,errno);
+				throw ApplicationExFatal(Ex_INIT,"lockfile_create %s: %i (%s)",filename.c_str(),ret,strerror(errno));
 			}
 			PDEBUG(FLOCK_DEBUG_LEV,"locked %s",file.c_str());
 		}
@@ -69,11 +69,11 @@ class c_lockfile{
 //					if (flag&WANT_SH_LOCK)
 					return;
 				} else
-					throw ApplicationExFatal(Ex_INIT,"c_lockfile: open: %i (%i)",fd,errno);
+					throw ApplicationExFatal(Ex_INIT,"c_lockfile: open %s (%s)",filename.c_str(),strerror(errno));
 			}
 			int ret=flock(fd,(flag&WANT_SH_LOCK)?LOCK_SH:LOCK_EX);
 			if (ret)
-				throw ApplicationExFatal(Ex_INIT,"c_lockfile: flock: %i (%i)",ret,errno);
+				throw ApplicationExFatal(Ex_INIT,"c_lockfile: flock %s: %i (%s)",filename.c_str(),ret,strerror(errno));
 			PDEBUG(FLOCK_DEBUG_LEV,"flocked %s (%i)",filename.c_str(),fd);
 //			sleep(10);
 		}

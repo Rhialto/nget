@@ -135,52 +135,44 @@ void c_nrange::remove(ulong l, ulong h){
 	}
 	if (debug)printf("%i(%lu tot:%lu part:%lu (%lu->%lu))\n",tmp,ssize-(ulong)rlist.size(),rtot,rpart,ssize,(ulong)rlist.size());
 }
-int c_nrange::load(string fn,int merge){
+void c_nrange::load(string fn,int merge){
 	if (!merge){
 		clear();
 		changed=0;
 	}
 	if (fn.empty())
-		return 0;
+		return;
 #ifdef HAVE_LIBZ
-	c_file_gz f;
 	if (!merge)//ugh, hack
 		fn.append(".gz");
+	c_lockfile locker(fn,WANT_SH_LOCK);
+	c_file_gz f(fn.c_str(), "r");
 #else
-	c_file_fd f;
+	c_lockfile locker(fn,WANT_SH_LOCK);
+	c_file_fd f(fn.c_str(), O_RDONLY);
 #endif
 	if (!merge){
 		file=fn;
 	}
 	f.initrbuf();
-	c_lockfile locker(fn,WANT_SH_LOCK);
-	if (!f.open(fn.c_str(),
-#ifdef HAVE_LIBZ
-				"r"
-#else
-				O_RDONLY
-#endif
-			)){
-		char *lp,*hp;
-		while (f.bgets()>0){
-			lp=f.rbufp();
-			hp=strchr(lp,'-');
-			if (merge){
-				if (hp)
-					insert(atoul(lp),atoul(hp+1));
-				else
-					insert(atoul(lp));
-			}else{
-				if (hp)//note that we do no validity/overlap/etc checking here.  it is assumed the file was created correctly.
-					rlist[atoul(hp+1)]=atoul(lp);
-				else
-					rlist[atoul(lp)]=atoul(lp);
-			}
+	char *lp,*hp;
+	while (f.bgets()>0){
+		lp=f.rbufp();
+		hp=strchr(lp,'-');
+		if (merge){
+			if (hp)
+				insert(atoul(lp),atoul(hp+1));
+			else
+				insert(atoul(lp));
+		}else{
+			if (hp)//note that we do no validity/overlap/etc checking here.  it is assumed the file was created correctly.
+				rlist[atoul(hp+1)]=atoul(lp);
+			else
+				rlist[atoul(lp)]=atoul(lp);
 		}
-		f.close();
-		return 0;
 	}
-	return -1;
+	f.close();
+	return;
 }
 c_nrange::c_nrange(string fn){
 	changed=0;
@@ -202,11 +194,11 @@ void c_nrange::print(c_file *f) const {
 	}
 	//			printf("\n");
 }
-int c_nrange::save(){
+void c_nrange::save(){
 	if (!changed)
-		return 0;
+		return;
 	if (file.empty())
-		return 0;
+		return;
 	{
 		int changed_save=changed;
 		changed=0;
@@ -216,27 +208,18 @@ int c_nrange::save(){
 		}
 		changed=changed_save;
 	}
-#ifdef HAVE_LIBZ
-	c_file_gz f;
-#else
-	c_file_fd f;
-#endif
 	c_lockfile locker(file,WANT_EX_LOCK);
-	if (!f.open(file.c_str(),
 #ifdef HAVE_LIBZ
-				"w"
+	c_file_gz f(file.c_str(),"w");
 #else
-				O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
+	c_file_fd f(file.c_str(), O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 #endif
-			)){
-		if (debug){printf("saving nrange: %lu contiguous ranges..",(ulong)rlist.size());fflush(stdout);}
-		print(&f);
-		if (debug) printf(" done.\n");
-		f.close();
-		changed=0;
-		return 0;
-	}
-	return -1;
+	if (debug){printf("saving nrange: %lu contiguous ranges..",(ulong)rlist.size());fflush(stdout);}
+	print(&f);
+	if (debug) printf(" done.\n");
+	f.close();
+	changed=0;
+	return;
 }
 c_nrange::~c_nrange(){
 	save();

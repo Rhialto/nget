@@ -533,7 +533,6 @@ void c_prot_nntp::nntp_dogetarticle(arinfo*ari,quinfo*toti,list<string> &buf){
 }
 
 int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *fn, const nget_options &options){
-	c_file_fd f;
 	c_nntp_server_article *sa=NULL;
 	t_nntp_server_articles_prioritized sap;
 	t_nntp_server_articles_prioritized::iterator sapi;
@@ -592,23 +591,21 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 				}
 				continue;
 			}
-			if (!f.open(fn,O_CREAT|O_WRONLY|O_TRUNC,PRIVMODE)){
-				list<string>::iterator curb;
-				try {
-					for(curb = buf.begin();curb!=buf.end();++curb){
-						f.putf("%s\n",(*curb).c_str());
-					}
-					f.close();
-				}catch(FileEx &e){
-					//if the drive is full or other error occurs, then the temp file will be cutoff and useless, so delete it.
-					if (unlink(fn))
-						perror("unlink:");
-					throw ApplicationExFatal(Ex_INIT,"error writing %s: %s",fn,e.getExStr());
+			c_file_fd f(fn, O_CREAT|O_WRONLY|O_TRUNC, PRIVMODE);
+			list<string>::iterator curb;
+			try {
+				for(curb = buf.begin();curb!=buf.end();++curb){
+					f.putf("%s\n",(*curb).c_str());
 				}
-				set_retrieve_warn_status(attempted - sap.size());
-				return 0; //article successfully retrieved, return.
+				f.close();
+			}catch(FileEx &e){
+				//if the drive is full or other error occurs, then the temp file will be cutoff and useless, so delete it.
+				if (unlink(fn))
+					perror("unlink:");
+				throw;
 			}
-			throw ApplicationExFatal(Ex_INIT,"unable to open %s: %s",fn,strerror(errno));
+			set_retrieve_warn_status(attempted - sap.size());
+			return 0; //article successfully retrieved, return.
 		}
 		redone++;
 	}
@@ -621,9 +618,20 @@ int uu_info_callback(void *v,char *i){
 	printf("info:%s",i);
 	return 0;
 };
+struct uu_err_status {
+	int derr;
+	int last_t;
+//	string last_m;
+	uu_err_status(void):derr(0),last_t(-1){}
+};
 void uu_msg_callback(void *v,char *m,int t){
-	if (t!=UUMSG_MESSAGE)//######
-		++(*(int *)v);
+	if (t!=UUMSG_MESSAGE) {//######
+		uu_err_status *es = (uu_err_status *)v;
+		es->derr++;
+		es->last_t = t;
+//		es->last_m = m;
+		//++(*(int *)v);
+	}
 	if (quiet>=2 && (t==UUMSG_MESSAGE || t==UUMSG_NOTE))
 		return;
 	printf("uu_msg(%i):%s\n",t,m);
@@ -789,13 +797,13 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 //			bp=f->parts.begin()->second;
 			list<char *> fnbuf;
 			list<char *>::iterator fncurb;
-			//int derr=0;
-			derr=0;
+//			int derr=0;
+			uu_err_status uustatus;
 			int un=0;
 			for(curp = f->parts.begin();curp!=f->parts.end();++curp){
 				//asprintf(&fn,"%s/%s-%s-%li-%li-%li",nghome.c_str(),host.c_str(),group.c_str(),fgnum,part,num);
 				p=(*curp).second;
-				if (derr){
+				if (uustatus.derr){
 					qtotinfo.bytesleft-=p->bytes();
 					continue;
 				}
@@ -819,14 +827,13 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 //					ainfo.linestot=p->lines;
 //					ainfo.bytestot=p->bytes;
 					if (!options.writelite.empty()){
-						c_file_fd fw;
-						if (fw.open(options.writelite.c_str(),O_WRONLY|O_CREAT|O_APPEND,PRIVMODE)<0)
-							throw ApplicationExFatal(Ex_INIT,"couldn't open %s",options.writelite.c_str());
+						c_file_fd fw(options.writelite.c_str(), O_WRONLY|O_CREAT|O_APPEND, PRIVMODE);
+//							throw ApplicationExFatal(Ex_INIT,"couldn't open %s",options.writelite.c_str());//#######
 						nntp_dowritelite_article(fw,p,fn);
 						fw.close();
 						free(fn);
 						qtotinfo.bytesleft-=p->bytes();
-//						derr=-1;//skip this file..
+//						uustatus.derr=-1;//skip this file..
 						continue;
 					}
 					if ((optionflags & GETFILES_NOCONNECT) || nntp_doarticle(p,&ainfo,&qtotinfo,fn,options)){
@@ -834,7 +841,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 						fn=NULL;
 						if (!(optionflags & GETFILES_GETINCOMPLETE)) {
 							qtotinfo.bytesleft-=p->bytes();
-							derr=-1;//skip this file..
+							uustatus.derr=-1;//skip this file..
 							continue;
 						}
 					}
@@ -848,7 +855,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 				if (fn)
 					fnbuf.push_back(fn);
 			}
-			if (!derr && !(optionflags&GETFILES_NODECODE)){
+			if (!uustatus.derr && !(optionflags&GETFILES_NODECODE)){
 				if ((r=UUInitialize())!=UURET_OK)
 					throw ApplicationExFatal(Ex_INIT,"UUInitialize: %s",UUstrerror(r));
 				UUSetOption(UUOPT_DUMBNESS,1,NULL);//we already put the parts in the correct order, so it doesn't need to.
@@ -856,7 +863,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 				//actually, I guess that won't work, since some messages have multiple files in them anyway.
 				UUSetOption(UUOPT_OVERWRITE,0,NULL);//no thanks.
 				UUSetOption(UUOPT_USETEXT,1,NULL);//######hmmm...
-				UUSetMsgCallback(&derr,uu_msg_callback);
+				UUSetMsgCallback(&uustatus,uu_msg_callback);
 				UUSetBusyCallback(NULL,uu_busy_callback,1000);
 				UUSetFNameFilter(&fr->path,uu_fname_filter);
 				for(fncurb = fnbuf.begin();fncurb!=fnbuf.end();++fncurb){
@@ -868,7 +875,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 					if ((uul=UUGetFileListItem(un))==NULL)break;
 					if (!(uul->state & UUFILE_OK)){
 						printf("%s not ok\n",uul->filename);
-						derr++;
+						uustatus.derr++;
 						continue;
 					}
 					//				printf("\ns:%x d:%x\n",uul->state,uul->uudet);
@@ -880,7 +887,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 						r=UUInfoFile(uul,NULL,uu_info_callback);
 					r=UUDecodeFile(uul,NULL);
 					if (r==UURET_EXISTS){
-						derr--; //HACK since this error will also cause a uu_warning thingy, which will incr derr, but we don't want that.
+						uustatus.derr--; //HACK since this error will also cause a uu_warning thingy, which will incr derr, but we don't want that.
 						//all the following ugliness with fname_filter is due to uulib forgetting that we already filtered the name and giving us the original name instead.
 						char nfn[PATH_MAX];
 						sprintf(nfn+fname_filter(nfn, NULL, uul->filename), ".%lu.%i", f->badate(),rand());
@@ -912,7 +919,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 #endif	/* USE_FILECOMPARE */
 					}
 					if (r!=UURET_OK){
-						derr++;
+						uustatus.derr++;
 						printf("decode(%s): %s\n",uul->filename,UUstrerror(r));
 						continue;
 					}else{
@@ -932,16 +939,15 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 				}
 				UUCleanUp();
 				//handle posts that uulib says "no encoded data" for as text. (seems to be posts with no body)
-				if (un==0 && f->req<=0 && fnbuf.size()==1) {
-						derr--; //HACK since this error will also cause a uu_note "No encoded data found", which will incr derr, but we don't want that.
+				if (uustatus.derr==1 && uustatus.last_t==UUMSG_NOTE && un==0 && f->req<=0 && fnbuf.size()==1) {
+						uustatus.derr--; //HACK since this error will also cause a uu_note "No encoded data found", which will incr derr, but we don't want that.
 						char *fn = *(fnbuf.begin());
 						char *nfn = make_text_file_name(fr,true);
 						while (fexists(nfn))  {
 							free(nfn);
 							nfn = make_text_file_name(fr,true);
 						}
-						if (rename(fn, nfn)!=0)
-							throw ApplicationExFatal(Ex_INIT,"nntp_retrieve:rename %s->%s : %s(%i)",fn,nfn,strerror(errno),errno);
+						xxrename(fn, nfn);
 						free(nfn);
 						free(fn);
 						fnbuf.clear();
@@ -950,7 +956,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 				}
 
 				//check all remaining files against what we just decoded, and remove any dupes.
-				if (!derr && !flist.empty()) {
+				if (!uustatus.derr && !flist.empty()) {
 					t_nntp_files_u::iterator dfi = curf; ++dfi; //skip the current one
 					t_nntp_files_u::iterator del_fi;
 					c_nntp_file_retr::ptr dfr;
@@ -973,27 +979,27 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 					}
 				}
 			}
-			if (derr>0){
+			if (uustatus.derr>0){
 				set_decode_error_status();
-				printf(" %i decoding errors occured, keeping temp files.\n",derr);
-			}else if (derr<0) 
+				printf(" %i decoding errors occured, keeping temp files.\n",uustatus.derr);
+			}else if (uustatus.derr<0) 
 				printf("download error occured, keeping temp files.\n");
 			else if (un==0){
 				set_undecoded_warn_status();
 				printf("hm.. nothing decoded.. keeping temp files\n");
-				derr=-2;
-			}else if (derr==0){
+				uustatus.derr=-2;
+			}else if (uustatus.derr==0){
 				set_total_ok_status();
 				if (optionflags&GETFILES_NODECODE){
 					if (quiet<2)
 						printf("not decoding, keeping temp files.\n");
-					derr=1;
+					uustatus.derr=1;
 				}else  {
 					midinfo->insert(f->bamid());
 					if (optionflags&GETFILES_KEEPTEMP){
 						if (quiet<2)
 							printf("decoded ok, keeping temp files.\n");
-						derr=1;
+						uustatus.derr=1;
 					}else if (quiet<2)
 						printf("decoded ok, deleting temp files.\n");
 				}
@@ -1001,7 +1007,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 			char *p;
 			for(fncurb = fnbuf.begin();fncurb!=fnbuf.end();++fncurb){
 				p=(*fncurb);
-				if (!derr)
+				if (!uustatus.derr)
 					unlink(p);
 				free(p);
 			}
@@ -1053,7 +1059,11 @@ void c_prot_nntp::nntp_doopen(void){
 void c_prot_nntp::cleanupcache(void){
 //	if(gcache){gcache->dec_rcount();/*delete gcache;*/gcache=NULL;}
 	gcache=NULL;//ref counted.
-	if (midinfo){delete midinfo;midinfo=NULL;}
+	if (midinfo){
+		c_mid_info *mi = midinfo; //store midinfo in temp pointer and NULL out real pointer, to prevent a second deletion attempt if the destructor aborts and the atexit calls the cleanup again.
+		midinfo=NULL;
+		delete mi;
+	}
 	if(filec){delete filec;filec=NULL;}
 }
 void c_prot_nntp::cleanup(void){

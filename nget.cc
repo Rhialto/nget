@@ -322,21 +322,21 @@ c_prot_nntp nntp;
 SockPool sockpool;
 
 void nget_cleanup(void) {
-	nntp.cleanup();
-	sockpool.expire_connections(true);
+	try {
+		nntp.cleanup();
+		sockpool.expire_connections(true);
+	}catch(baseEx &e){
+		printCaughtEx(e);
+	}catch(exception &e){
+		printf("nget_cleanup: caught std exception %s\n",e.what());
+	}catch(...){
+		printf("nget_cleanup: caught unknown exception\n");
+	}
 }
 
 static void term_handler(int s){
 	printf("\nterm_handler: signal %i, shutting down.\n",s);
-	try {
-		nget_cleanup();
-	}catch(baseEx &e){
-		printCaughtEx(e);
-	}catch(exception &e){
-		printf("term_handler: caught std exception %s\n",e.what());
-	}catch(...){
-		printf("term_handler: caught unknown exception\n");
-	}
+	nget_cleanup();
 	exit(errorflags);
 }
 
@@ -728,9 +728,9 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 							{
 								const char *paths[2]={(nghome + "lists/").c_str(),NULL};
 								const char *filename=fsearchpath(loptarg,paths,FSEARCHPATH_ALLOWDIRS);
-								c_file_fd f;
-								f.initrbuf();
-								if (filename && !f.open(filename,O_RDONLY)){
+								if (filename) try {
+									c_file_fd f(filename,O_RDONLY);
+									f.initrbuf();
 									int totargc=0;
 									int pr;
 									s_arglist larg;
@@ -774,7 +774,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 											free((*it).argv);
 										free(larg.argv);
 									}
-								}else{
+								}catch (FileNOENTEx &e){
 									printf("error opening %s: %s(%i)\n",filename?:loptarg,strerror(errno),errno);errno=0;
 									set_user_error_status();
 								}
@@ -972,7 +972,7 @@ int main(int argc, char ** argv){
 				hpriority=cfg.data.getsection("hpriority");
 				galias=cfg.data.getsection("galias");
 				if (!halias)
-					throw ConfigExFatal(Ex_INIT,"no halias section (or error reading ngetrc)");
+					throw ConfigExFatal(Ex_INIT,"no halias section");
 				nconfig.setlist(&cfg.data,halias,hpriority,galias);
 				int t;
 				/*			if (!halias || !(options.host=halias->getitema("default")))
@@ -1019,10 +1019,13 @@ int main(int argc, char ** argv){
 		printCaughtEx(e);
 		PERROR("(see man nget for configuration info)");
 	}catch(baseEx &e){
+		set_fatal_error_status();
 		printf("main():");printCaughtEx(e);
 	}catch(exception &e){
+		set_fatal_error_status();
 		printf("caught std exception %s\n",e.what());
 	}catch(...){
+		set_fatal_error_status();
 		printf("caught unknown exception\n");
 	}
 	nget_cleanup();

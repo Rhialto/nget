@@ -63,7 +63,7 @@ void c_data_section::cleanup(void){
 void c_data_section::read_list(c_file *f){
 	char *v,*buf;
 	int slen;
-	while ((slen=f->bgets())>=0){
+	while ((slen=f->bgets())>0){
 		buf=f->rbufp();
 //		slen=strlen(buf);
 /*		while (slen>0 && (buf[slen-1]=='\n' || buf[slen-1]=='\r')){
@@ -137,15 +137,12 @@ int c_data_file::read(void){
 		return -2;
 //	char buf[df_BUFSIZE];
 //	FILE *f=fopen(filename.c_str(),"r");
-	c_file_fd f;
-	if (!f.open(filename.c_str(),O_RDONLY)){
-		f.initrbuf();
-		data.read_list(&f);
-		changed=0;
-		f.close();
-		return 0;
-	}
-	return -1;
+	c_file_fd f(filename.c_str(),O_RDONLY);
+	f.initrbuf();
+	data.read_list(&f);
+	changed=0;
+	f.close();
+	return 0;
 }
 void c_data_file::save(void){
 	if (filename.empty())

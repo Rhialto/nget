@@ -29,11 +29,18 @@
 #include "strreps.h"
 
 
+void xxrename(const char *oldpath, const char *newpath) {
+	if (rename(oldpath, newpath))
+		throw FileEx(Ex_INIT, "rename %s > %s: %s(%i)\n",oldpath,newpath,strerror(errno),errno);
+}
+
+#define THROW_OPEN_ERROR(fmt,args...) {if (errno==ENOENT) throw FileNOENTEx(Ex_INIT, fmt, ## args); else throw FileEx(Ex_INIT, fmt, ## args);}
+
 int c_file_buffy::bfill(uchar *b,int l){
 	return fileptr->read(b,l);
 }
 
-c_file::c_file(void){
+c_file::c_file(const char *fname): m_name(fname){
 //	ftype=-1;
 //	fh=-1;sh=NULL;
 //#ifdef HAVE_LIBZ
@@ -65,11 +72,26 @@ ssize_t c_file::putf(const char *data,...){
 	//		wbuf.empty();
 	//	}
 	//	return len;
-	i=dowrite(fpbuf,l);
-	int e=errno;
+	i=write(fpbuf,l);
 	free(fpbuf);
-	if (i != l) throw FileExFatal(Ex_INIT,"putf %i!=%i (%s)", i, l, strerror(e));
 	return i;
+}
+ssize_t c_file::read(void *data,size_t len){
+	int i=doread(data,len);
+	if (i<0) throw FileEx(Ex_INIT,"read %s (%s)", name(), strerror(errno));
+	return i;
+}
+ssize_t c_file::write(const void *data,size_t len){
+	size_t sent=0;
+	ssize_t i;
+	while (sent < len) {
+		i=dowrite((char*)data+sent, len-sent);
+		if (i <= 0) 
+			throw FileEx(Ex_INIT,"write %s: %i!=%i (%s)", name(), sent, len, strerror(errno));
+		sent += i;
+	}
+	assert(sent == len);
+	return sent;
 }
 
 //int c_file::open(const char *name,const char * mode){
@@ -81,14 +103,14 @@ void c_file::flush(int local){
 //###########3 dowrite(buffers..)
 	if (!local) {
 		int r=doflush();
-		if (r != 0) throw FileExFatal(Ex_INIT,"flush %i (%s)", r, strerror(errno));
+		if (r != 0) throw FileEx(Ex_INIT,"flush %s: %i (%s)", name(), r, strerror(errno));
 	}
 }
 void c_file::close(void){
 	if (isopen()){
 		flush(1);
 		if (doclose() != 0)
-			throw FileExFatal(Ex_INIT,"close (%s)", strerror(errno));
+			throw FileEx(Ex_INIT,"close %s (%s)", name(), strerror(errno));
 	}
 //	resetrbuf();rbufstate=0;
 	if (rbuffer)rbuffer->clearbuf();
@@ -152,9 +174,9 @@ inline char * c_file_testpipe::dogets(char *dat,size_t len){
 #endif
 
 #ifdef HAVE_LIBZ
-int c_file_gz::open(const char *name,const char * mode){
-	close();
-	return (!(gzh=gzopen(name,mode)));
+c_file_gz::c_file_gz(const char *name,const char * mode):c_file(name){
+	if (!(gzh=gzopen(name,mode)))
+		THROW_OPEN_ERROR("gzopen %s (%s)", name, strerror(errno));
 }
 int c_file_gz::doflush(void){
 	if (gzh)
@@ -185,20 +207,17 @@ inline char * c_file_gz::dogets(char *data,size_t len){
 #include <sys/stat.h>
 #include <fcntl.h>
 
-int c_file_fd::dup(int dfd){
-	close();
-//	return (!(fs=fopen(name,mode)));
+c_file_fd::c_file_fd(int dfd, const char *name):c_file(name){
 	fd=::dup(dfd);
-	if (fd<0)return fd;
-	else return 0;
+	if (fd<0)
+		throw FileEx(Ex_INIT,"dup %s(%i) (%s)", name, dfd, strerror(errno));
 }
 
-int c_file_fd::open(const char *host,int flags, int mode){
-	close();
-//	return (!(fs=fopen(name,mode)));
-	fd=::open(host,flags,mode);
-	if (fd<0)return fd;
-	else return 0;
+c_file_fd::c_file_fd(const char *name,int flags, int mode):c_file(name){
+	fd=::open(name,flags,mode);
+	if (fd<0)
+		THROW_OPEN_ERROR("open %s (%s)", name, strerror(errno));
+		//throw FileEx(Ex_INIT,"open %s (%s)", name, strerror(errno));
 }
 int fopen2open(const char *mode){
 	if (strncmp(mode,"r+",2)==0)
@@ -216,9 +235,11 @@ int fopen2open(const char *mode){
 	assert(0);
 	return 0;
 }
-int c_file_fd::open(const char *host,const char *mode){
+c_file_fd::c_file_fd(const char *name,const char *mode):c_file(name){
 	int flags=fopen2open(mode);
-	return open(host,flags);
+	fd=::open(name,flags,S_IRWXU|S_IRWXG|S_IRWXO);
+	if (fd<0)
+		THROW_OPEN_ERROR("open %s (%s)", name, strerror(errno));
 }
 int c_file_fd::doflush(void){
 	if (fd>=0)
@@ -248,9 +269,9 @@ inline char * c_file_fd::dogets(char *data,size_t len){
 }
 
 #ifdef USE_FILE_STREAM
-int c_file_stream::open(const char *name,const char * mode){
-	close();
-	return (!(fs=fopen(name,mode)));
+int c_file_stream::c_file_stream(const char *name,const char * mode):c_file(name){
+	if (!(fs=fopen(name,mode)))
+		THROW_OPEN_ERROR("fopen %s (%s)", name, strerror(errno));
 }
 int c_file_stream::doflush(void){
 	if (fs)
@@ -278,8 +299,7 @@ inline char * c_file_stream::dogets(char *data,size_t len){
 #endif
 
 
-int c_file_tcp::open(const char *host,const char * port){
-	close();
+c_file_tcp::c_file_tcp(const char *host,const char * port):c_file(host){
 	if (rbuffer){
 		rbuffer->cbuf.reserve(512);//ensure at least 512 bytes
 		sock=make_connection(SOCK_STREAM,host,port,rbuffer->cbuf.data(),rbuffer->cbuf.capacity());
@@ -288,8 +308,12 @@ int c_file_tcp::open(const char *host,const char * port){
 		char buf[512];
 		sock=make_connection(SOCK_STREAM,host,port,buf,512);
 	}
-	if (sock<0)return sock;
-	else return 0;
+	if (m_name.find(':')<0){
+		m_name+=':';
+		m_name+=port;
+	}
+	if (sock<0)
+		throw FileEx(Ex_INIT,"open %s (%s)", name(), strerror(errno));
 }
 int c_file_tcp::doflush(void){
 	if (sock>=0)
@@ -306,7 +330,8 @@ inline int c_file_tcp::isopen(void)const{
 	return (sock>=0);
 }
 inline ssize_t c_file_tcp::dowrite(const void *data,size_t len){
-	return sock_write(sock,(char*)data,len);
+	//don't need to use sock_write anymore since c_file::write handles the looping.
+	return ::write(sock,(char*)data, len);
 }
 inline ssize_t c_file_tcp::doread(void *data,size_t len){
 	return sock_read(sock,data,len);
