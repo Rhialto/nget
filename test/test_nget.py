@@ -703,6 +703,21 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		del self.servers
 		self.vfailUnlessEqual(self.nget.run("-G test -r ."), 8, "nget process did not detect connection error")
 	
+	def test_DeadServerPenalization(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		deadservers = nntpd.NNTPD_Master(1)
+		#by setting tries and maxconnections to 1, we can observe how many times nget tried to connect to the dead server by how many times it had to (re)connect to the good server
+		self.nget = util.TestNGet(ngetexe, deadservers.servers+self.servers.servers, priorities=[3, 1], options={'tries':1, 'penaltystrikes':2, 'maxconnections':1})
+		self.servers.start()
+		deadservers.start()
+		self.addarticles('0002', 'uuencode_multi3')
+		self.addarticles('0002', 'uuencode_multi3', deadservers.servers)
+		self.vfailIf(self.nget.run("-g test"))
+		deadservers.stop()
+		self.vfailIf(self.nget.run("-G test -r ."))
+		self.vfailUnlessEqual(self.servers.servers[0].conns, 3)
+		self.verifyoutput('0002')
+	
 	def test_OneLiveServer(self):
 		self.servers = nntpd.NNTPD_Master(1)
 		deadserver = nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)
