@@ -743,6 +743,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				if (options.retrydelay)
 					sleep(options.retrydelay);
 			}else{
+				set_fatal_error_status();//set "fatal" error if non-fatal error didn't succeed even after retrying.
 				printf("\n");
 				if (c==-1)
 					return 0;//end of args.
