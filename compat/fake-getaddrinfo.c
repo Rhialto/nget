@@ -94,6 +94,8 @@ static struct addrinfo *malloc_ai(int port, u_long addr)
 	
 	memset(ai, 0, sizeof(struct addrinfo) + sizeof(struct sockaddr_in));
 	
+	ai->ai_family = PF_INET;
+	ai->ai_socktype = SOCK_STREAM; /* XXX -- nget doesn't use udp */
 	ai->ai_addr = (struct sockaddr *)(ai + 1);
 	/* XXX -- ssh doesn't use sa_len */
 	ai->ai_addrlen = sizeof(struct sockaddr_in);
