@@ -47,7 +47,7 @@ class CharBuffer {
 		char *data(void){return cbuf;}
 		char *c_str(void){
 			if (bsize>=reserved)
-				reserve(reserved+1);//if we are doing a c_str() we are probably done adding stuff, so don't double the reserve just for the null char.
+				reserve(reserved*2);
 			cbuf[bsize]=0;
 			return cbuf;
 		}
