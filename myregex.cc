@@ -30,9 +30,13 @@ static string regex_test_op(const char **ops, const char *pat, const char *match
 	char buf[100];
 	for (; *ops; ops++) {
 		sprintf(buf, pat, *ops);
-		c_regex_nosub rx(buf, REG_EXTENDED);
-		if (match1==rx && match2==rx)
-			return *ops;
+		try {
+			c_regex_nosub rx(buf, REG_EXTENDED);
+			if (match1==rx && match2==rx)
+				return *ops;
+		} catch (RegexEx &e) {
+			//ignore any errors here, since they just would just mean that op didn't work, so go on and try the next one.
+		}
 	}
 	return "";
 }
