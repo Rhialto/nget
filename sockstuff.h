@@ -24,7 +24,8 @@
 #include <sys/types.h>
 #ifdef HAVE_WINSOCK_H
 #define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
+#undef NOMINMAX
+#define NOMINMAX 1
 #include <winsock.h>
 typedef SOCKET sock_t;
 inline bool sock_isvalid(sock_t s) {return s!=INVALID_SOCKET;}
