@@ -316,8 +316,12 @@ bool Par2Info::maybe_add_parfile(const c_nntp_file::ptr &f, bool want_incomplete
 	return false;
 }
 
-int Par2Info::get_extradata(c_nntp_files_u &fc, const Par2Repairer *par2) {
-	for (t_server_file_list::iterator edi=serverextradata.begin(); edi!=serverextradata.end(); ++edi) { 
+int Par2Info::get_extradata(int num, c_nntp_files_u &fc, const Par2Repairer *par2) {
+	int added = 0;
+	t_server_file_list::iterator curi=serverextradata.begin(), edi; 
+	while (added<num && curi!=serverextradata.end()) {
+		edi = curi;
+		++curi;
 		for (vector<Par2RepairerSourceFile*>::const_iterator sf = par2->sourcefiles.begin(); sf != par2->sourcefiles.end(); ++sf) {
 			const Par2RepairerSourceFile *sourcefile = *sf;
 			if (sourcefile && sourcefile->GetCompleteFile() == 0) {
@@ -325,16 +329,18 @@ int Par2Info::get_extradata(c_nntp_files_u &fc, const Par2Repairer *par2) {
 				path_split(head, tail);
 				lowerstr(tail);
 				if (strtolower(edi->second->subject).find(tail) != string::npos) {
-					PMSG("autopar: not enough par2 recovery packets, trying to get some incomplete data");
+					if (!added)
+						PMSG("autopar: not enough par2 recovery packets, trying to get %i blocks of incomplete data", num);
+					added += max(1, (int)(sourcefile->BlockCount() * -edi->first.first));
 					fc.addfile(edi->second, path, temppath, false);
 					serverextradata.erase(edi);
-					return 1;
+					break;
 				}
 			}
 		}
 
 	}
-	return 0;
+	return added;
 }
 		
 int Par2Info::get_recoverypackets(int num, set<uint32_t> &havepackets, const string &key, c_nntp_files_u &fc, const Par2Repairer *par2) {
@@ -370,7 +376,7 @@ int Par2Info::get_recoverypackets(int num, set<uint32_t> &havepackets, const str
 		}
 	}
 	if ((signed)availpackets.size()<num){
-		int r = get_extradata(fc, par2);
+		int r = get_extradata(num - availpackets.size(), fc, par2);
 		if (r) return r;
 	}
 	if (nconfig.autopar_optimistic && (signed)availpackets.size()<num){

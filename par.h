@@ -169,7 +169,7 @@ class Par1Info : public ParXInfoBase {
 
 class Par2Info : public ParXInfoBase {
 	protected:
-		int get_extradata(c_nntp_files_u &fc, const Par2Repairer *par2);
+		int get_extradata(int num, c_nntp_files_u &fc, const Par2Repairer *par2);
 		int get_recoverypackets(int num, set<uint32_t> &havepackets, const string &key, c_nntp_files_u &fc, const Par2Repairer *par2);
 		t_server_file_list serverextradata;
 	public:

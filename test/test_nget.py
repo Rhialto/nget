@@ -89,6 +89,11 @@ class TestCase(unittest.TestCase):
 		print output
 		self.vfailIf(status, msg)
 		return output
+	def vfailUnlessExitstatus_getoutput(self, expr, expectedstatus, msg=None):
+		status,output = expr
+		print output
+		self.vfailUnlessExitstatus(status, expectedstatus, msg)
+		return output
 	def vfailUnlessExitstatus(self, first, second, msg=None):
 		# os.system on windows 95/98 seems to always return 0.. so just skip testing the exit status in that case. blah.
 		if not broken_system_return:
@@ -1049,6 +1054,25 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailUnlessExitstatus(self.nget_run('-g test -r par2.test'),2)
 		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','c d.par2']})
 		
+	def test_autopar2handling_incompletefile_smartness_size(self):
+		self.addarticles('par2-01', 'input', fname='dat[125]')
+		self.addarticles('par2-01', 'input', fname='par')
+		self.addarticles('par2-01', 'input', fname='par4')
+		self.addarticles('par2-01', 'multipart', fname="dat[12345]-1")
+		output = self.vfailUnlessExitstatus_getoutput(self.nget_run_getoutput('-g test -r par2.test'), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 7)
+		self.vfailUnlessEqual(output.count("blocks of incomplete data"), 1)
+
+	def test_autopar2handling_incompletefile_smartness_size2(self):
+		self.addarticles('par2-01', 'input', fname='dat[125]')
+		self.addarticles('par2-01', 'input', fname='par')
+		self.addarticles('par2-01', 'input', fname='par4')
+		self.addarticles('par2-01', 'multipart', fname="dat[1235]-1")
+		self.addarticles('par2-01', 'multipart', fname="dat4-[123]")
+		output = self.vfailUnlessExitstatus_getoutput(self.nget_run_getoutput('-g test -r par2.test'), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 8)
+		self.vfailUnlessEqual(output.count("blocks of incomplete data"), 1)
+
 	def test_autopar2handling_reply(self):
 		self.addarticles('par2-01', 'input')
 		self.addarticles('par2-01', 'reply')
@@ -1139,6 +1163,9 @@ class NoCacheRetrieveTestCase(TestCase, RetrieveTest_base):
 	def nget_run(self, cmd):
 		newcmd = re.sub('-[Gg] ', '-x ', cmd)
 		return self.nget.run(newcmd)
+	def nget_run_getoutput(self, cmd):
+		newcmd = re.sub('-[Gg] ', '-x ', cmd)
+		return self.nget.run_getoutput(newcmd)
 
 class RetrieveTestCase(TestCase, RetrieveTest_base):
 	def setUp(self):
@@ -1148,6 +1175,8 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		RetrieveTest_base.tearDown(self)
 	def nget_run(self, cmd):
 		return self.nget.run(cmd)
+	def nget_run_getoutput(self, cmd):
+		return self.nget.run_getoutput(cmd)
 
 	def test_mid(self):
 		self.vfailIf(self.nget.run('-g test -R "mid .a67ier.6l5.1.bar. =="'))
