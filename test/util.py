@@ -67,16 +67,16 @@ class TestNGet:
 		#print 'begin ngetrc:\n',open(os.path.join(self.rcdir, '_ngetrc'), 'r').read()
 		#print '--end ngetrc'
 	
-	def run(self, args):
+	def run(self, args, pre=""):
 		os.environ['NGETHOME'] = self.rcdir
-		return os.system(self.exe+" -p "+self.tmpdir+" "+args)
+		return os.system(pre + self.exe+" -p "+self.tmpdir+" "+args)
 	
-	def runlite(self, args):
+	def runlite(self, args, pre=""):
 		olddir = os.getcwd()
 		try:
 			ngetliteexe = os.path.abspath(os.path.join(os.path.split(self.exe)[0], 'ngetlite'))
 			os.chdir(self.tmpdir)
-			return os.system(ngetliteexe+" "+args)
+			return os.system(pre + ngetliteexe+" "+args)
 		finally:
 			os.chdir(olddir)
 

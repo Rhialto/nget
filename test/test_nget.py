@@ -19,7 +19,7 @@
 
 from __future__ import nested_scopes
 
-import os, sys, unittest, glob, filecmp, re, time
+import os, sys, unittest, glob, filecmp, re, time, errno
 
 import nntpd, util
 
@@ -28,7 +28,7 @@ ngetexe = os.environ.get('TEST_NGET',os.path.join(os.pardir, 'nget'))
 
 zerofile_fn_re = re.compile(r'(\d+)\.(\d+)\.txt$')
 
-class DecodeTest_base(unittest.TestCase):
+class DecodeTest_base:
 	def addarticle_toserver(self, testnum, dirname, aname, server, **kw):
 		article = nntpd.FileArticle(open(os.path.join("testdata",testnum,dirname,aname), 'r'))
 		server.addarticle(["test"], article, **kw)
@@ -39,12 +39,25 @@ class DecodeTest_base(unittest.TestCase):
 			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
 				continue
 			server.addarticle(["test"], nntpd.FileArticle(open(fn, 'r')))
+
+	def rmarticles_fromserver(self, testnum, dirname, server):
+		for fn in glob.glob(os.path.join("testdata",testnum,dirname,"*")):
+			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
+				continue
+			article = nntpd.FileArticle(open(fn, 'r'))
+			server.rmarticle(article.mid)
 			
 	def addarticles(self, testnum, dirname, servers=None):
 		if not servers:
 			servers = self.servers.servers
 		for server in servers:
 			self.addarticles_toserver(testnum, dirname, server)
+	
+	def rmarticles(self, testnum, dirname, servers=None):
+		if not servers:
+			servers = self.servers.servers
+		for server in servers:
+			self.rmarticles_fromserver(testnum, dirname, server)
 
 	def verifyoutput(self, testnums, nget=None):
 		if nget is None:
@@ -142,6 +155,8 @@ class DecodeTestCase(unittest.TestCase, DecodeTest_base):
 	def test_0002_uuenview_uue_mime_multi(self):
 		self.do_test_auto()
 	def test_0003_newspost_uue_0(self):
+		self.do_test_auto()
+	def test_0004_input(self):
 		self.do_test_auto()
 
 	def test_article_expiry(self):
@@ -622,6 +637,269 @@ class AuthTestCase(unittest.TestCase, DecodeTest_base):
 		self.servers.start()
 		self.addarticles('0002', 'uuencode_multi')
 		self.failUnless(os.WEXITSTATUS(self.nget.run("-g test -r ."))==64, "nget process did not detect auth error")
+
+#if os.system('sf --help'):
+if os.system('sf date'):
+	class SubterfugueTestCase(unittest.TestCase):
+		def test_SUBTERFUGUE_NOT_INSTALLED(self):
+			raise "SUBTERFUGUE does not appear to be installed, some tests skipped"
+else:
+	trickdir=os.path.abspath('tricks')
+	ppath = os.environ.get('PYTHONPATH', '')
+	if ppath.find(trickdir)<0:
+		if ppath:
+			ppath = ppath + ':'
+		os.environ['PYTHONPATH'] = ppath + trickdir
+	
+	class SubterfugueTest_base(DecodeTest_base):
+		def setUp(self):
+			self.servers = nntpd.NNTPD_Master(1)
+			self.addarticles('0001', 'uuencode_single')
+			self.nget = util.TestNGet(ngetexe, self.servers.servers, **getattr(self,'ngetoptions',{}))
+			self.servers.start()
+			self.sfexe = "sf -t ExitStatus"
+			self.outputfn = os.path.join(self.nget.rcdir, "output.log")
+			self.post = " > %s 2>&1"%self.outputfn
+			self._exitstatusre = re.compile(r'### \[.*\] exited (.*) = (.*) ###$')
+			
+		def tearDown(self):
+			self.servers.stop()
+			self.nget.clean_all()
+
+		def readoutput(self):
+			self.output = open(self.outputfn,'r').read()
+			#print 'output was:',`self.output`
+			print self.output
+			x = self._exitstatusre.search(self.output)
+			if not x:
+				return ('unknown', -1)
+			if x.group(1) == 'status':
+				return int(x.group(2))
+			return x.group(1), x.group(2)
+		
+		def check_for_errormsg(self, msg, err=errno.EIO):
+			errmsg = re.escape(os.strerror(err))
+			self.failUnless(re.search(msg+'.*'+errmsg, self.output), "did not find expected error message in output")
+			self.failIf(re.search(msg+'.*'+msg+'.*'+errmsg, self.output), "name duplicated in error message")
+			self.failIf(re.search(msg+'.*'+errmsg+'.*'+msg+'.*'+errmsg, self.output, re.DOTALL), "expected error message duplicated in output")
+
+		def runnget(self, args, trick):
+			self.nget.run(args + self.post, self.sfexe + " -t \""+trick+"\" ")
+			return self.readoutput()
+		def runlite(self, args, trick):
+			self.nget.runlite(args + self.post, self.sfexe + " -t \""+trick+"\" ")
+			return self.readoutput()
+
+
+	class FileTest_base:
+		"Holds all the tests that need to be done with both usegz and without"
+		def test_cache_openread_error(self):
+			self.failUnlessEqual(self.runnget("-G foo", "IOError:f=[('foo,cache','r',-1)]"), 128)
+			self.check_for_errormsg(r'foo,cache')
+
+		def test_cache_read_error(self):
+			self.failIf(self.nget.run("-g test"))
+			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',60)]"), 128)
+			self.check_for_errormsg(r'test,cache')
+			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',20)]"), 128)
+			self.check_for_errormsg(r'test,cache')
+			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',10)]"), 128)
+			self.check_for_errormsg(r'test,cache')
+
+		def test_cache_zerobyte_read_error(self):
+			self.failIf(self.nget.run("-g test"))
+			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r',0)]"), 128, self.UpgradeZLibMessage)
+			self.check_for_errormsg(r'test,cache')
+
+		def test_cache_close_read_error(self):
+			self.failIf(self.nget.run("-g test"))
+			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,cache','r','c')]"), 128)
+			self.check_for_errormsg(r'test,cache')
+			
+		def test_cache_openwrite_error(self):
+			self.failUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w',-1)]"), 128)
+			self.check_for_errormsg(r'test,cache')
+
+		def test_cache_zerobyte_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w',0)]"), 128)
+			self.check_for_errormsg(r'test,cache')
+
+		def test_cache_empty_zerobyte_write_error(self):
+			self.failIf(self.nget.run("-g test -r ."))
+			self.rmarticles('0001', 'uuencode_single')
+			self.failUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w',0)]"), 128)
+			self.check_for_errormsg(r'test,cache')
+
+		def test_cache_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w',20)]"), 128)
+			self.check_for_errormsg(r'test,cache')
+
+		def test_cache_rename_error(self):
+			self.failUnlessEqual(self.runnget("-g test", "IOError:r=[('test,cache.*tmp','test,cache')]"), 128)
+			self.check_for_errormsg(r'test,cache.*tmp.*test,cache')
+
+		def test_cache_close_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test", "IOError:f=[('test,cache','w','c')]"), 128)
+			self.check_for_errormsg(r'test,cache')
+
+		def test_midinfo_open_read_error(self):
+			self.failUnlessEqual(self.runnget("-G foo", "IOError:f=[('foo,midinfo','r',-1)]"), 128)
+			self.check_for_errormsg(r'foo,midinfo')
+
+		def test_midinfo_read_error(self):
+			self.failIf(self.nget.run("-g test -M -r ."))
+			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,midinfo','r',20)]"), 128)
+			self.check_for_errormsg(r'test,midinfo')
+
+		def test_midinfo_close_read_error(self):
+			self.failIf(self.nget.run("-g test -M -r ."))
+			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,midinfo','r','c')]"), 128)
+			self.check_for_errormsg(r'test,midinfo')
+
+		def test_midinfo_zerobyte_read_error(self):
+			self.failIf(self.nget.run("-g test -M -r ."))
+			self.failUnlessEqual(self.runnget("-G test", "IOError:f=[('test,midinfo','r',0)]"), 128, self.UpgradeZLibMessage)
+			self.check_for_errormsg(r'test,midinfo')
+
+		def test_midinfo_zerobyte_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test -M -r .", "IOError:f=[('test,midinfo','w',0)]"), 128)
+			self.check_for_errormsg(r'test,midinfo')
+
+		def test_midinfo_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test -M -r .", "IOError:f=[('test,midinfo','w',20)]"), 128)
+			self.check_for_errormsg(r'test,midinfo')
+
+		def test_midinfo_close_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test -M -r .", "IOError:f=[('test,midinfo','w','c')]"), 128)
+			self.check_for_errormsg(r'test,midinfo')
+
+		def test_midinfo_rename_error(self):
+			self.failUnlessEqual(self.runnget("-g test -M -r .", "IOError:r=[('test,midinfo.*tmp','test,midinfo')]"), 128)
+			self.check_for_errormsg(r'test,midinfo.*tmp.*test,midinfo')
+
+	
+	class GZFileErrorTestCase(FileTest_base, SubterfugueTest_base, unittest.TestCase):
+		UpgradeZLibMessage = "nget did not detect read error on 0-th byte.  *** Upgrade zlib. ***" #update with version number when fixed version gets released
+		ngetoptions={'options':{'usegz':9}}
+
+	
+	UpgradeUULibMessage = "*** Upgrade uulib. ***" #update with version number when fixed version gets released
+		
+	class FileErrorTestCase(FileTest_base, SubterfugueTest_base, unittest.TestCase):
+		UpgradeZLibMessage = None
+		ngetoptions={'options':{'usegz':0}}
+
+		def test_ngetrc_open_error(self):
+			self.failUnlessEqual(self.runnget("-G foo", "IOError:f=[('ngetrc$','r',-1)]"), 128)
+			self.failUnless(self.output.find('man nget')<0, "nget gave config help message for io error")
+			self.check_for_errormsg(r'ngetrc\b')
+
+		def test_ngetrc_read_error(self):
+			self.failUnlessEqual(self.runnget("-G foo", "IOError:f=[('ngetrc$','r',0)]"), 128)
+			self.failUnless(self.output.find('man nget')<0, "nget gave config help message for io error")
+			self.check_for_errormsg(r'ngetrc\b')
+
+		def test_ngetrc_close_error(self):
+			self.failUnlessEqual(self.runnget("-G foo", "IOError:f=[('ngetrc$','r','c')]"), 128)
+			self.failUnless(self.output.find('man nget')<0, "nget gave config help message for io error")
+			self.check_for_errormsg(r'ngetrc\b')
+
+		def test_tempfile_open_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','w',-1)]"), 128)
+			self.check_for_errormsg(r'\.[-0-9][0-9]{2}\b')
+			self.verifyoutput([])
+
+		def test_tempfile_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','w',0)]"), 128)
+			self.check_for_errormsg(r'\.[-0-9][0-9]{2}\b')
+			self.verifyoutput([]) #ensure bad tempfile is deleted
+
+		def test_tempfile_close_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','w','c')]"), 128)
+			self.check_for_errormsg(r'\.[-0-9][0-9]{2}\b')
+			self.verifyoutput([]) #ensure bad tempfile is deleted
+
+		def test_tempfile_open_read_error(self):
+			self.failIf(self.nget.run("-g test -K -r ."))
+			self.failUnlessEqual(self.runnget("-G test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','r',-1)]"), 1)####128?
+			self.check_for_errormsg(r'\.[-0-9][0-9]{2}\b')
+
+		def test_tempfile_zerobyte_read_error(self):
+			self.failIf(self.nget.run("-g test -K -r ."))
+			self.failUnlessEqual(self.runnget("-G test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','r',0)]"), 1, UpgradeUULibMessage)####128?
+			self.check_for_errormsg(r'\.[-0-9][0-9]{2}\b')
+
+		def test_tempfile_read_error(self):
+			self.rmarticles('0001', 'uuencode_single')
+			self.addarticles('0002', 'uuencode_multi')#need a bigger part
+			self.failIf(self.nget.run("-g test -K -r ."))
+			self.failUnlessEqual(self.runnget("-G test -r .", "IOError:f=[('\.001$','r',9900)]"), 1)####128?
+			self.check_for_errormsg(r'\.[-0-9][0-9]{2}\b')
+
+		#def test_tempfile_close_read_error(self):
+		#	self.failIf(self.nget.run("-g test -K -r ."))
+		#	self.failUnlessEqual(self.runnget("-G test -r .", "IOError:f=[('\.[-0-9][0-9]{2}$','r','c')]"), 1)####128?
+		#	self.check_for_errormsg(r'\.[-0-9][0-9]{2}\b')
+		
+		def test_uutempfile_open_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','w',-1)]"), 1)
+			self.check_for_errormsg(r'uu_msg.*/tmp/[^/]*[ :]')
+
+		def test_uutempfile_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','w',0)]"), 1)
+			self.check_for_errormsg(r'uu_msg.*temp file') #uulib doesn't say the filename in this message
+
+		def test_uutempfile_close_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','w','c')]"), 1, UpgradeUULibMessage)
+			self.check_for_errormsg(r'uu_msg.*temp file') #uulib doesn't say the filename in this message
+
+		def test_uutempfile_open_read_error(self):
+			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','r',-1)]"), 1)
+			self.check_for_errormsg(r'uu_msg.*/tmp/[^/]*[ :]')
+
+		def test_uutempfile_read_error(self):
+			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','r',0)]"), 1)
+			self.check_for_errormsg(r'uu_msg.*/tmp/[^/]*[ :]')
+
+		#def test_uutempfile_close_read_error(self):
+		#	self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('^/tmp/[^/]*$','r','c')]"), 1)
+		#	self.check_for_errormsg(r'uu_msg.*/tmp/[^/]*[ :]')
+
+		def test_destfile_open_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('testfile\.txt$','w',-1)]"), 1)
+			self.check_for_errormsg(r'testfile\.txt\b')
+
+		def test_destfile_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('testfile\.txt$','w',0)]"), 1)
+			self.check_for_errormsg(r'testfile\.txt\b')
+
+		def test_destfile_close_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test -r .", "IOError:f=[('testfile\.txt$','w','c')]"), 1, UpgradeUULibMessage)
+			self.check_for_errormsg(r'testfile\.txt\b')
+
+
+	class SockErrorTestCase(SubterfugueTest_base, unittest.TestCase):
+		ngetoptions={'options':{'tries':1}}
+
+		def test_socket_error(self):
+			self.failUnlessEqual(self.runnget("-g test", "IOError:s=[('rw',-2)]"), 64)
+			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+
+		def test_connect_error(self):
+			self.failUnlessEqual(self.runnget("-g test", "IOError:s=[('rw',-1)]"), 64)
+			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+
+		def test_sock_write_error(self):
+			self.failUnlessEqual(self.runnget("-g test", "IOError:s=[('w',0)]"), 64)
+			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+
+		def test_sock_read_error(self):
+			self.failUnlessEqual(self.runnget("-g test", "IOError:s=[('r',0)]"), 64)
+			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+
+		def test_sock_close_error(self):
+			self.failUnlessEqual(self.runnget("-g test", "IOError:s=[('rw','c')]"), 0) #error on sock close doesn't really need an error return, since it can't cause any problems.  (Any problem causing errors would be caught before sock.close() gets called.)
+			self.check_for_errormsg(r'127.0.0.1')#'TransportEx.*127.0.0.1')
 
 
 class CppUnitTestCase(unittest.TestCase):
