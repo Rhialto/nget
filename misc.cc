@@ -62,6 +62,17 @@ time_t timegm (const struct tm *gmtimein) {
 }
 #endif
 
+bool pathexists(const char *p) {
+	bool ret=false;
+	char *oldp;
+	goodgetcwd(&oldp);
+	if (chdir(p)==0)
+		ret=true;
+	if (chdir(oldp))
+		throw ApplicationExFatal(Ex_INIT, "could not return to oldp: %s (%s)",oldp,strerror(errno));
+	free(oldp);
+	return ret;
+}
 int fexists(const char * f){
 	struct stat statbuf;
 	return (!stat(f,&statbuf));

@@ -854,9 +854,9 @@ int main(int argc, const char ** argv){
 				if (!home)
 					throw ConfigExFatal(Ex_INIT,"HOME or NGETHOME environment var not set.");
 				nghome = home;
-				if (fexists(path_join(home,".nget4","").c_str()))
+				if (pathexists(path_join(home,".nget4","").c_str()))
 					nghome=path_join(home,".nget4","");
-				else if (fexists(path_join(home,"_nget4","").c_str()))
+				else if (pathexists(path_join(home,"_nget4","").c_str()))
 					nghome=path_join(home,"_nget4","");
 				else
 					throw ConfigExFatal(Ex_INIT,"neither %s nor %s exist", path_join(home,".nget4","").c_str(), path_join(home,"_nget4","").c_str());
@@ -930,7 +930,7 @@ int main(int argc, const char ** argv){
 				if (cp)
 					ngcachehome=cp;
 				ngcachehome = path_join(ngcachehome, "");
-				if (!fexists(ngcachehome.c_str()))
+				if (!pathexists(ngcachehome.c_str()))
 					throw ConfigExFatal(Ex_INIT,"cache dir %s does not exist", ngcachehome.c_str());
 			}
 			init_term_stuff();
