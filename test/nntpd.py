@@ -97,7 +97,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 					if r==-1:
 						break
 				else:
-					raise NNTPSyntaxError(rcmd)
+					raise NNTPSyntaxError, rcmd
 			except NNTPError, e:
 				self.nwrite(str(e))
 
@@ -117,16 +117,16 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			self.authed = a
 			self.nwrite("281 Authentication accepted")
 		else:
-			raise NNTPSyntaxError(args)
+			raise NNTPSyntaxError, args
 			
 	def cmd_group(self, args):
 		self.group = self.server.groups.get(args)
 		if not self.group:
-			raise NNTPNoSuchGroupError(args)
+			raise NNTPNoSuchGroupError, args
 		self.nwrite("200 %i %i %i group %s selected"%(self.group.high-self.group.low+1, self.group.low, self.group.high, args))
 	def cmd_xover(self, args):
 		if not self.group:
-			raise NNTPNoGroupSelectedError()
+			raise NNTPNoGroupSelectedError
 		rng = args.split('-')
 		if len(rng)>1:
 			low,high = map(long, rng)
@@ -144,14 +144,14 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			try:
 				article = self.server.articles[args]
 			except KeyError:
-				raise NNTPNoSuchArticleMID(args)
+				raise NNTPNoSuchArticleMID, args
 		else:
 			if not self.group:
-				raise NNTPNoGroupSelectedError()
+				raise NNTPNoGroupSelectedError
 			try:
 				article = self.group.articles[long(args)]
 			except KeyError:
-				raise NNTPNoSuchArticleNum(args)
+				raise NNTPNoSuchArticleNum, args
 		self.nwrite("200 Article "+args)
 		self.nwrite(article.text)
 		self.nwrite('.')
@@ -159,7 +159,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 		if args=='reader':
 			self.nwrite("200 MODE READER enabled")
 		else:
-			raise NNTPSyntaxError(args)
+			raise NNTPSyntaxError, args
 	def cmd_quit(self, args):
 		self.nwrite("205 Goodbye")
 		return -1
