@@ -29,6 +29,7 @@ AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h getopt.h hash_map ext/hash_map hash
 dnl SunOS/win32 needs seperate libs for network stuff.
 MY_CHECK_SOCKET
 AC_SEARCH_LIBS(gethostbyname, nsl)
+AC_SEARCH_LIBS(hstrerror, resolv)
 
 dnl All the libraries we check for after this point are not needed by ngetlite, so save its LIBS now.
 LITELIBS="$LIBS"
