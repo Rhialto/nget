@@ -63,7 +63,7 @@ int c_prot_nntp::doputline(int echo,const char * str,va_list ap){
 
 	if ((((i=cursock.vprintf(str,ap))<=0))||(((j=cursock.printf("\r\n"))<=0))){
 		doclose();
-		throw TransportExError(Ex_INIT,"nntp_putline:%i %s(%i)",i>=0?j:i,strerror(errno),errno);
+		throw TransportExError(Ex_INIT,"nntp_putline:%i %s(%i)",i>=0?j:i,sock_strerror(sock_errno),sock_errno);
 	}
 	if (echo){
 		printf(">");
@@ -79,7 +79,7 @@ int c_prot_nntp::getline(int echo){
 	//int i=sock.bgets();
 	if (i<0){//==0 can be legally achieved since the line terminators are removed
 		doclose();
-		throw TransportExError(Ex_INIT,"nntp_getline:%i %s(%i)",i,strerror(errno),errno);
+		throw TransportExError(Ex_INIT,"nntp_getline:%i %s(%i)",i,sock_strerror(sock_errno),sock_errno);
 	}else {
 		cbuf=sockbuf.c_str();
 //		cbuf=sock.rbuffer->rbufp;
@@ -190,7 +190,7 @@ void c_prot_nntp::doopen(const char *host, const char *user, const char *pass){
 	doclose();
 	int i;
 	if ((i=cursock.open(host,"nntp"))<0)
-		throw TransportExError(Ex_INIT,"nntp_doopen:%i %s(%i)",i,strerror(errno),errno);
+		throw TransportExError(Ex_INIT,"nntp_doopen:%i %s(%i)",i,sock_strerror(sock_errno),sock_errno);
 	chkreply(getreply(!quiet));
 	putline(debug>=DEBUG_MED,"MODE READER");
 	getline(debug>=DEBUG_MED);

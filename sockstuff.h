@@ -26,11 +26,18 @@
 #include <winsock.h>
 void sockstuff_init(void);
 inline int sock_close(int s) {return closesocket(s);}
-#else
+#define sock_errno WSAGetLastError()
+const char* sock_strerror(int e);
+#else /* !HAVE_WINSOCK_H */
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include "strreps.h"
 #define sockstuff_init()
 inline int sock_close(int s) {return close(s);}
-#endif
+#define sock_errno errno
+inline const char* sock_strerror(int e) {return strerror(e);}
+#endif /* !HAVE_WINSOCK_H */
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #include <netdb.h>

@@ -78,7 +78,7 @@ ssize_t c_file::putf(const char *data,...){
 }
 ssize_t c_file::read(void *data,size_t len){
 	int i=doread(data,len);
-	if (i<0) throw FileEx(Ex_INIT,"read %s (%s)", name(), strerror(errno));
+	if (i<0) throw FileEx(Ex_INIT,"read %s (%s)", name(), dostrerror());
 	return i;
 }
 ssize_t c_file::write(const void *data,size_t len){
@@ -87,7 +87,7 @@ ssize_t c_file::write(const void *data,size_t len){
 	while (sent < len) {
 		i=dowrite((char*)data+sent, len-sent);
 		if (i <= 0) 
-			throw FileEx(Ex_INIT,"write %s: %i!=%i (%s)", name(), sent, len, strerror(errno));
+			throw FileEx(Ex_INIT,"write %s: %i!=%i (%s)", name(), sent, len, dostrerror());
 		sent += i;
 	}
 	assert(sent == len);
@@ -103,14 +103,14 @@ void c_file::flush(int local){
 //###########3 dowrite(buffers..)
 	if (!local) {
 		int r=doflush();
-		if (r != 0) throw FileEx(Ex_INIT,"flush %s: %i (%s)", name(), r, strerror(errno));
+		if (r != 0) throw FileEx(Ex_INIT,"flush %s: %i (%s)", name(), r, dostrerror());
 	}
 }
 void c_file::close(void){
 	if (isopen()){
 		flush(1);
 		if (doclose() != 0)
-			throw FileEx(Ex_INIT,"close %s (%s)", name(), strerror(errno));
+			throw FileEx(Ex_INIT,"close %s (%s)", name(), dostrerror());
 	}
 //	resetrbuf();rbufstate=0;
 	if (rbuffer)rbuffer->clearbuf();
@@ -175,6 +175,15 @@ c_file_gz::c_file_gz(const char *name,const char * mode):c_file(name){
 	if (!(gzh=gzopen(name,mode)))
 		THROW_OPEN_ERROR("gzopen %s (%s)", name, strerror(errno));
 }
+const char *c_file_gz::dostrerror(void) {
+	if (gzh) {
+		int foo;
+		const char *err = gzerror(gzh, &foo);
+		if (foo!=Z_ERRNO)
+			return err;
+	}
+	return strerror(errno);
+}
 int c_file_gz::doflush(void){
 	if (gzh)
 		return gzflush(gzh,Z_SYNC_FLUSH);
@@ -231,6 +240,9 @@ c_file_fd::c_file_fd(const char *name,const char *mode):c_file(name){
 	if (fd<0)
 		THROW_OPEN_ERROR("open %s (%s)", name, strerror(errno));
 }
+const char *c_file_fd::dostrerror(void) {
+	return strerror(errno);
+}
 int c_file_fd::doflush(void){
 #ifdef HAVE_FSYNC
 	if (fd>=0)
@@ -258,6 +270,9 @@ inline ssize_t c_file_fd::doread(void *data,size_t len){
 int c_file_stream::c_file_stream(const char *name,const char * mode):c_file(name){
 	if (!(fs=fopen(name,mode)))
 		THROW_OPEN_ERROR("fopen %s (%s)", name, strerror(errno));
+}
+const char c_file_stream::*dostrerror(void) {
+	return strerror(errno);
 }
 int c_file_stream::doflush(void){
 	if (fs)
@@ -296,7 +311,10 @@ c_file_tcp::c_file_tcp(const char *host,const char * port):c_file(host){
 		m_name+=port;
 	}
 	if (sock<0)
-		throw FileEx(Ex_INIT,"open %s (%s)", name(), strerror(errno));
+		throw FileEx(Ex_INIT,"open %s (%s)", name(), sock_strerror(sock_errno));
+}
+const char *c_file_tcp::dostrerror(void) {
+	return sock_strerror(sock_errno);
 }
 int c_file_tcp::doflush(void){
 #ifdef HAVE_FSYNC

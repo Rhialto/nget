@@ -78,6 +78,7 @@ class c_file {
 //	virtual int doopen(const char *name,const char * mode)=0;
 	virtual int doflush(void)=0;
 	virtual int doclose(void)=0;
+	virtual const char *dostrerror(void)=0;
 	
   protected:
 #ifdef FILE_DEBUG
@@ -135,6 +136,7 @@ class c_file_testpipe : public c_file {
 	virtual ssize_t doread(void *buf,size_t len);
 	virtual int doflush(void);
 	virtual int doclose(void);
+	virtual const char *dostrerror(void) {return "?";}
   public:
 	virtual int isopen(void) const;
 	int open(void);
@@ -152,6 +154,7 @@ class c_file_fd : public c_file {
 	virtual ssize_t doread(void *buf,size_t len);
 	virtual int doflush(void);
 	virtual int doclose(void);
+	virtual const char *dostrerror(void);
   public:
 	virtual int isopen(void) const;
 	c_file_fd(const char *name,int flags,int mode=S_IRWXU|S_IRWXG|S_IRWXO);
@@ -168,6 +171,7 @@ class c_file_stream : public c_file {
 	virtual ssize_t doread(void *buf,size_t len);
 	virtual int doflush(void);
 	virtual int doclose(void);
+	virtual const char *dostrerror(void);
   public:
 	virtual int isopen(void) const;
 	c_file_stream(const char *name,const char * mode);
@@ -182,6 +186,7 @@ class c_file_tcp : public c_file {
 	virtual ssize_t doread(void *buf,size_t len);
 	virtual int doflush(void);
 	virtual int doclose(void);
+	virtual const char *dostrerror(void);
   public:
 	bool datawaiting(void) const;
 	virtual int isopen(void) const;
@@ -199,6 +204,7 @@ class c_file_gz : public c_file {
 	virtual ssize_t doread(void *buf,size_t len);
 	virtual int doflush(void);
 	virtual int doclose(void);
+	virtual const char *dostrerror(void);
   public:
 	virtual int isopen(void) const;
 	c_file_gz(const char *host,const char * mode);

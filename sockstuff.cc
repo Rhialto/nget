@@ -73,6 +73,63 @@ void sockstuff_init(void){
 
 	atexit(sockstuff_cleanup);
 }
+//why the !*#&$ doesn't winsock have a strerror function???
+const char* sock_strerror(int e) {
+	switch (e) {
+		case WSAEINTR:	return "WSAEINTR";
+		case WSAEBADF:	return "WSAEBADF";
+		case WSAEACCES:	return "WSAEACCES";
+		case WSAEFAULT:	return "WSAEFAULT";
+		case WSAEINVAL:	return "WSAEINVAL";
+		case WSAEMFILE:	return "WSAEMFILE";
+		case WSAEWOULDBLOCK:	return "WSAEWOULDBLOCK";
+		case WSAEINPROGRESS:	return "WSAEINPROGRESS";
+		case WSAEALREADY:	return "WSAEALREADY";
+		case WSAENOTSOCK:	return "WSAENOTSOCK";
+		case WSAEDESTADDRREQ:	return "WSAEDESTADDRREQ";
+		case WSAEMSGSIZE:	return "WSAEMSGSIZE";
+		case WSAEPROTOTYPE:	return "WSAEPROTOTYPE";
+		case WSAENOPROTOOPT:	return "WSAENOPROTOOPT";
+		case WSAEPROTONOSUPPORT:	return "WSAEPROTONOSUPPORT";
+		case WSAESOCKTNOSUPPORT:	return "WSAESOCKTNOSUPPORT";
+		case WSAEOPNOTSUPP:	return "WSAEOPNOTSUPP";
+		case WSAEPFNOSUPPORT:	return "WSAEPFNOSUPPORT";
+		case WSAEAFNOSUPPORT:	return "WSAEAFNOSUPPORT";
+		case WSAEADDRINUSE:	return "WSAEADDRINUSE";
+		case WSAEADDRNOTAVAIL:	return "WSAEADDRNOTAVAIL";
+		case WSAENETDOWN:	return "WSAENETDOWN";
+		case WSAENETUNREACH:	return "WSAENETUNREACH";
+		case WSAENETRESET:	return "WSAENETRESET";
+		case WSAECONNABORTED:	return "WSAECONNABORTED";
+		case WSAECONNRESET:	return "WSAECONNRESET";
+		case WSAENOBUFS:	return "WSAENOBUFS";
+		case WSAEISCONN:	return "WSAEISCONN";
+		case WSAENOTCONN:	return "WSAENOTCONN";
+		case WSAESHUTDOWN:	return "WSAESHUTDOWN";
+		case WSAETOOMANYREFS:	return "WSAETOOMANYREFS";
+		case WSAETIMEDOUT:	return "WSAETIMEDOUT";
+		case WSAECONNREFUSED:	return "WSAECONNREFUSED";
+		case WSAELOOP:	return "WSAELOOP";
+		case WSAENAMETOOLONG:	return "WSAENAMETOOLONG";
+		case WSAEHOSTDOWN:	return "WSAEHOSTDOWN";
+		case WSAEHOSTUNREACH:	return "WSAEHOSTUNREACH";
+		case WSAENOTEMPTY:	return "WSAENOTEMPTY";
+		case WSAEPROCLIM:	return "WSAEPROCLIM";
+		case WSAEUSERS:	return "WSAEUSERS";
+		case WSAEDQUOT:	return "WSAEDQUOT";
+		case WSAESTALE:	return "WSAESTALE";
+		case WSAEREMOTE:	return "WSAEREMOTE";
+		case WSAEDISCON:	return "WSAEDISCON";
+		case WSASYSNOTREADY:	return "WSASYSNOTREADY";
+		case WSAVERNOTSUPPORTED:	return "WSAVERNOTSUPPORTED";
+		case WSANOTINITIALISED:	return "WSANOTINITIALISED";
+		case WSAHOST_NOT_FOUND:	return "WSAHOST_NOT_FOUND";
+		case WSATRY_AGAIN:	return "WSATRY_AGAIN";
+		case WSANO_RECOVERY:	return "WSANO_RECOVERY";
+		case WSANO_DATA:	return "WSANO_DATA";
+		default:	return "unknown winsock error";
+	}
+}
 #endif
 
 
@@ -147,12 +204,12 @@ int atoaddr(const char *netaddress,struct in_addr *addr,char *buf, int buflen){
 			return 1;
 	else {
 		int r;
-		if (!(r=do_gethostbyname(netaddress, addr, buf, buflen)) && errno==ERANGE) {
+		if (!(r=do_gethostbyname(netaddress, addr, buf, buflen)) && sock_errno==ERANGE) {
 			buf = NULL;
 			do {
 				buflen *= 2;
 				buf = (char*)realloc(buf, buflen);
-			} while (!(r=do_gethostbyname(netaddress, addr, buf, buflen)) && errno==ERANGE);
+			} while (!(r=do_gethostbyname(netaddress, addr, buf, buflen)) && sock_errno==ERANGE);
 			free(buf);
 		}
 		return r;
@@ -242,7 +299,7 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 	}*/
 //	if (atoaddr(netaddress,&addr,buf,buflen)==0){
 //	if (addr == NULL) {
-//		PERROR("make_connection:  Invalid network address %s (%i %i)",netaddress,0,errno);
+//		PERROR("make_connection:  Invalid network address %s (%i %i)",netaddress,0,sock_errno);
 		//		if (tmp) *tmp=':';
 //		return -1;
 //	}
@@ -250,7 +307,7 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 
 	memset((char *) &address, 0, sizeof(address));
 	if (atosockaddr(netaddress,service,prot,&address,buf,buflen)<0){
-		PERROR("make_connection:  Invalid network address %s (%s)(%i %s)",netaddress,service,errno,strerror(errno));
+		PERROR("make_connection:  Invalid network address %s (%s)(%i %s)",netaddress,service,sock_errno,sock_strerror(sock_errno));
 		return -1;
 	}
 	unsigned char *i;
@@ -263,7 +320,7 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 
 	sock = socket(address.sin_family, type, 0);
 	if (sock < 0) {
-		PERROR("socket: %s",strerror(errno));
+		PERROR("socket: %s",sock_strerror(sock_errno));
 		return -1;
 	}
 
@@ -277,7 +334,7 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 		connected = connect(sock, (struct sockaddr *) &address,
 				sizeof(address));
 #if defined(HAVE_SELECT) && defined(HAVE_FCNTL)
-		if (connected<0 && errno==EINPROGRESS){
+		if (connected<0 && sock_errno==EINPROGRESS){
 			fd_set w;
 			struct timeval tv;
 			int i;
@@ -289,7 +346,7 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 				int erp;
 				socklen_t erl=sizeof(erp);
 				if (getsockopt(sock,SOL_SOCKET,SO_ERROR,&erp,&erl)){
-					PERROR("getsockopt: %s",strerror(errno));
+					PERROR("getsockopt: %s",sock_strerror(sock_errno));
 					sock_close(sock);
 					return -1;
 				}
@@ -308,7 +365,7 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 		}
 #endif
 		if (connected < 0) {
-			PERROR("connect: %s",strerror(errno));
+			PERROR("connect: %s",sock_strerror(sock_errno));
 			sock_close(sock);
 			return -1;
 		}
@@ -316,7 +373,7 @@ int make_connection(int type,const char *netaddress,const char *service,char * b
 	}
 	/* Otherwise, must be for udp, so bind to address. */
 	if (bind(sock, (struct sockaddr *) &address, sizeof(address)) < 0) {
-		PERROR("bind: %s",strerror(errno));
+		PERROR("bind: %s",sock_strerror(sock_errno));
 		sock_close(sock);
 		return -1;
 	}
@@ -331,7 +388,7 @@ int getsocketaddress(int s, struct sockaddr_in *addr){
 	socklen_t len = sizeof(struct sockaddr_in);
 
 	if (getsockname(s, (struct sockaddr *)addr, &len) < 0) {
-		PERROR("getsockname: %s",strerror(errno));
+		PERROR("getsockname: %s",sock_strerror(sock_errno));
 		return -1;
 	}
 	return 0;
@@ -367,7 +424,7 @@ int get_connection1(int socket_type, u_short port) {
 
 	gc_listening_socket = socket(AF_INET, socket_type, 0);
 	if (gc_listening_socket < 0) {
-		PERROR("socket: %s",strerror(errno));
+		PERROR("socket: %s",sock_strerror(sock_errno));
 		return(-1);
 	}
 
@@ -376,7 +433,7 @@ int get_connection1(int socket_type, u_short port) {
 
 	if (bind(gc_listening_socket, (struct sockaddr *) &gc_address, 
 				sizeof(gc_address)) < 0) {
-		PERROR("bind: %s",strerror(errno));
+		PERROR("bind: %s",sock_strerror(sock_errno));
 		sock_close(gc_listening_socket);
 		return (-2);
 	}
@@ -394,12 +451,12 @@ int get_connection2(int socket_type,int gc_listening_socket)
 			if (connected_socket < 0) {
 				/* Either a real error occured, or blocking was interrupted for
 				   some reason.  Only abort execution if a real error occured. */
-				if (errno != EINTR) {
-					PERROR("accept: %s",strerror(errno));
+				if (sock_errno != EINTR) {
+					PERROR("accept: %s",sock_strerror(sock_errno));
 					sock_close(gc_listening_socket);
 					return (-3);
 				} else {
-					PERROR("accept1: %s",strerror(errno));
+					PERROR("accept1: %s",sock_strerror(sock_errno));
 					continue;    /* don't fork - do the accept again */
 				}
 			}
@@ -426,7 +483,7 @@ int sock_write_ensured(int sockfd, const char *buf, size_t count) {
 	while (bytes_sent < count) {
 		//    do
 		this_write = sock_write(sockfd, buf, count - bytes_sent);
-		//    while ( (this_write < 0) && (errno == EINTR) );
+		//    while ( (this_write < 0) && (sock_errno == EINTR) );
 		if (this_write <= 0)
 			return this_write;
 		bytes_sent += this_write;
