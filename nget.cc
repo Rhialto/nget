@@ -384,7 +384,9 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 #ifdef HAVE_LIBPOPT
 	poptContext optCon;
 #else
+#ifdef HAVE_GETOPT_LONG
 	int opt_idx;
+#endif
 #endif
 	int redo=0,redone=0;
 	const char * loptarg=NULL;
