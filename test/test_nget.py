@@ -298,6 +298,52 @@ class ConnectionErrorTestCase(unittest.TestCase, DecodeTest_base):
 		self.failUnless(os.WEXITSTATUS(self.nget.run("-h host1 -G test -r .")) & 8, "nget process did not detect retrieve error")
 
 
+class AuthTestCase(unittest.TestCase, DecodeTest_base):
+	def tearDown(self):
+		if hasattr(self, 'servers'):
+			self.servers.stop()
+		if hasattr(self, 'nget'):
+			self.nget.clean_all()
+
+	def test_GroupAuth(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.servers.servers[0].adduser('ralph','5') #ralph has full auth
+		self.servers.servers[0].adduser('','',{'group':0}) #default can't do GROUP
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, hostoptions=[{'user':'ralph', 'pass':'5'}])
+		self.servers.start()
+		self.addarticles('0002', 'uuencode_multi')
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.verifyoutput('0002')
+
+	def test_ArticleAuth(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.servers.servers[0].adduser('ralph','5') #ralph has full auth
+		self.servers.servers[0].adduser('','',{'article':0}) #default can't do ARTICLE
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, hostoptions=[{'user':'ralph', 'pass':'5'}])
+		self.servers.start()
+		self.addarticles('0002', 'uuencode_multi')
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.verifyoutput('0002')
+		
+	def test_FailedAuth(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.servers.servers[0].adduser('ralph','5') #ralph has full auth
+		self.servers.servers[0].adduser('','',{'group':0}) #default can't do GROUP
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, hostoptions=[{'user':'ralph', 'pass':'WRONG'}])
+		self.servers.start()
+		self.addarticles('0002', 'uuencode_multi')
+		self.failUnless(os.WEXITSTATUS(self.nget.run("-g test -r ."))==64, "nget process did not detect auth error")
+
+	def test_NoAuth(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.servers.servers[0].adduser('ralph','5') #ralph has full auth
+		self.servers.servers[0].adduser('','',{'group':0}) #default can't do GROUP
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.start()
+		self.addarticles('0002', 'uuencode_multi')
+		self.failUnless(os.WEXITSTATUS(self.nget.run("-g test -r ."))==64, "nget process did not detect auth error")
+
+
 class CppUnitTestCase(unittest.TestCase):
 	def test_TestRunner(self):
 		self.failIf(os.system(os.path.join(os.curdir,'TestRunner')), "CppUnit TestRunner returned an error")

@@ -18,7 +18,7 @@
 import os, random, sys, shutil
 
 class TestNGet:
-	def __init__(self, nget, servers, priorities=None, options=None):
+	def __init__(self, nget, servers, priorities=None, options=None, hostoptions=None):
 		defaultoptions = {
 #			'tries': 1,
 			'tries': 2,
@@ -46,8 +46,12 @@ class TestNGet:
   addr=%s
   shortname=h%i
   id=%i
- }
 """%(i, ':'.join(map(str,servers[i].socket.getsockname())), i, i+1))
+			if hostoptions:
+				opts = hostoptions[i]
+				for k,v in opts.items():
+					rc.write("%s=%s\n"%(k,v))
+			rc.write(" }\n")
 		rc.write("}\n")
 
 		if priorities:

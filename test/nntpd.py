@@ -43,6 +43,31 @@ class NNTPSyntaxError(NNTPError):
 	def __init__(self, s=''):
 		NNTPError.__init__(self, 500, "Syntax error or bad command" + (s and ' (%s)'%s or ''))
 
+class NNTPAuthRequired(NNTPError):
+	def __init__(self):
+		NNTPError.__init__(self, 480, "Authorization required")
+class NNTPAuthPassRequired(NNTPError):
+	def __init__(self):
+		NNTPError.__init__(self, 381, "PASS required")
+class NNTPAuthError(NNTPError):
+	def __init__(self):
+		NNTPError.__init__(self, 502, "Authentication error")
+
+
+class AuthInfo:
+	def __init__(self, user, password, caps=None):
+		self.user=user
+		self.password=password
+		if caps is None:
+			caps = {}
+		self.caps=caps
+	def has_auth(self, cmd):
+		if not self.caps.has_key(cmd):
+			if cmd in ('quit', 'authinfo'): #allow QUIT and AUTHINFO even if default has been set to no auth
+				return 1
+			return self.caps.get('*', 1) #default to full auth
+		return self.caps[cmd]
+
 
 class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 	def nwrite(self, s):
@@ -51,6 +76,8 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 		readline = self.rfile.readline
 		self.nwrite("200 Hello World, %s"%(':'.join(map(str,self.client_address))))
 		self.group = None
+		self._tmpuser = None
+		self.authed = self.server.auth['']
 		while 1:
 			rcmd = readline()
 			if not rcmd: break
@@ -64,6 +91,8 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			func = getattr(self, 'cmd_'+cmd, None)
 			try:
 				if func and callable(func):
+					if not self.authed.has_auth(cmd):
+						raise NNTPAuthRequired
 					r=func(args)
 					if r==-1:
 						break
@@ -72,6 +101,24 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 			except NNTPError, e:
 				self.nwrite(str(e))
 
+	def cmd_authinfo(self, args):
+		cmd,arg = args.split(' ',1)
+		if cmd=='user':
+			self._tmpuser=arg
+			raise NNTPAuthPassRequired
+		elif cmd=='pass':
+			if not self._tmpuser:
+				raise NNTPAuthError
+			a = self.server.auth.get(self._tmpuser)
+			if not a:
+				raise NNTPAuthError
+			if arg != a.password:
+				raise NNTPAuthError
+			self.authed = a
+			self.nwrite("281 Authentication accepted")
+		else:
+			raise NNTPSyntaxError(args)
+			
 	def cmd_group(self, args):
 		self.group = self.server.groups.get(args)
 		if not self.group:
@@ -149,7 +196,12 @@ class NNTPTCPServer(StoppableThreadingTCPServer):
 		StoppableThreadingTCPServer.__init__(self, addr, RequestHandlerClass)
 		self.groups = {}
 		self.midindex = {}
+		self.auth = {}
+		self.adduser('','')
 		
+	def adduser(self, user, password, caps=None):
+		self.auth[user]=AuthInfo(user, password, caps)
+
 	def addarticle(self, groups, article, anum=None):
 		self.midindex[article.mid]=article
 		for g in groups:
