@@ -26,7 +26,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 		readline, writef = self.rfile.readline, self.wfile.write
 		def nwrite(s):
 			writef(s+"\r\n")
-		nwrite("200 Hello World, %s!"%(':'.join(map(str,self.client_address))))
+		nwrite("200 Hello World, %s"%(':'.join(map(str,self.client_address))))
 		serv = self.server
 		group = None
 		while 1:
