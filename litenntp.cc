@@ -142,7 +142,9 @@ void c_prot_nntp::doarticle(ulong anum,ulong bytes,ulong lines,const char *outfi
 			throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu fprintf %s: %s", anum, tempfilename, strerror(errno));
 		}
 	}
-	fclose(f);
+	if (fclose(f)) {
+		throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu fclose %s: %s", anum, tempfilename, strerror(errno));
+	}
 	if (rename(tempfilename,outfile)<0){
 		throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu rename %s(%i)",anum,strerror(errno),errno);
 	}
