@@ -1,4 +1,4 @@
-2002-??-?? v0.??:
+2002-10-18 v0.22:
   * With fullxover=2, don't needlessly retrieve article list if all cached headers are older than all available headers.
   * Fix group/grouplist typo in manpage exit status warnings section.
   * Add "xover" exit warning status.
