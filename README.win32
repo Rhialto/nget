@@ -1,0 +1,15 @@
+nget Copyright 1999-2001 Matthew Mueller <donut@azstarnet.com>
+
+Readme for nget win32 (cygwin) build.
+
+Some env vars must be set:
+
+1) if you don't have a "\tmp" dir:
+set TMPDIR=c:\windows\temp  (or wherever you want)
+
+2) for locating/storing config and cache files:
+set HOME=c:\home (or whatever) and create c:\home\.nget3\.ngetrc
+ -or-
+set NGETHOME=c:\nget (or whatever) and create c:\nget\.ngetrc
+
+(see the included .ngetrc for example config and nget.txt for more info)

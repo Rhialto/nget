@@ -48,6 +48,9 @@ install_ngetlite: ngetlite
 
 install: install_nget install_ngetlite
 
+nget.txt ngetlite.txt: %.txt: %.1
+	man -l $< | sed -e 's/.//g' > $@
+
 
 .autostuff: configure config.h.in config.h Makefile config.status
 
@@ -75,9 +78,9 @@ config.status: configure
 #	-make -C $(UUDIR) distclean
 #	cd ..;tar -czhf nget/distro/nget-`egrep "nget v[0-9.]+ -" nget/nget.cc | sed "s/.*v\([0-9.]\+\).*/\1/"`-withuulib.tar.gz nget/README nget/Changelog nget/COPYING nget/*.cc nget/*.h nget/Makefile nget/nget.1 nget/uulib/
 #	cd ..;tar -czhf nget/distro/nget-`egrep "nget v[0-9.]+ -" nget/nget.cc | sed "s/.*v\([0-9.]\+\).*/\1/"`.tar.gz nget/README nget/Changelog nget/COPYING nget/*.cc nget/*.h nget/Makefile nget/nget.1
-	
+
 clean:
-	-rm nget ngetlite *.o
+	-rm nget ngetlite *.o nget.txt ngetlite.txt
 	-$(MAKE) -C uulib clean
 
 distclean: clean
