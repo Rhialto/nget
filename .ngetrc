@@ -80,6 +80,13 @@
 #  goodhost=5.0
 #  badhost=0.1
 # }
+#The "_grouplist" specifies which groups -a updates automatically. 
+#(if _grouplist section doesn't exist, "default" is used instead)
+# {_grouplist
+#  _glevel=2
+#  goodhost=2
+#  host1=2
+# }
 #Any number of additional hpriority sections may be specified here, and then
 #referenced from prio= settings in the galias section.
 # {chocoboprios
