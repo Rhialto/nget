@@ -121,17 +121,19 @@ void dofile(const char *arg){
 					printCaughtEx_nnl(e);
 					printf(" (fatal application error, exiting..)\n");
 					exit(-1);
-				}catch(ExFatal &e){
-					printCaughtEx_nnl(e);
-					printf(" (skipping)\n");
-					break;
-				}catch(ExError &e){
-				//}catch(baseEx &e){//doesn't work..?
-					printCaughtEx_nnl(e);
-					retry++;
-					printf(" (retrying %i)\n",retry);
-					sleep(1);
-					continue;
+				}catch(baseEx &e){
+					if (e.isfatal()){
+						printCaughtEx_nnl(e);
+						printf(" (skipping)\n");
+						break;
+					}
+					else{
+						printCaughtEx_nnl(e);
+						retry++;
+						printf(" (retrying %i)\n",retry);
+						sleep(1);
+						continue;
+					}
 				}
 			}
 		}

@@ -848,36 +848,37 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				options.qstatus=0;
 			}
 			set_other_error_status();
-		}catch(ExFatal &e){
+		}catch(baseEx &e){
 			printCaughtEx_nnl(e);
-			printf(" (fatal, aborting..)\n");
-			//else if (n==EX_U_FATAL)
-			if (options.host)
-				options.badskip=1;//only set badskip if we are forcing a single host, otherwise we could exclude other hosts that are working
-			if (mustredo_on_skip) {
-				redo=1;
-				mustredo_on_skip=0;
-				options.qstatus=0;
-			}
-			set_other_error_status();
-		}catch(ExError &e){
-		//}catch(baseEx &e){//doesn't work..?
-			printCaughtEx_nnl(e);
-			if(redone<options.maxretry){
-				redo=1;redone++;
-				printf(" (trying again. %i)\n",redone);
-				if (options.retrydelay)
-					sleep(options.retrydelay);
-			}else{
-				set_other_error_status();//set "fatal" error if non-fatal error didn't succeed even after retrying.
-				printf("\n");
-				if (c==-1)
-					return 0;//end of args.
-				redone=0;
+			if (e.isfatal()){
+				printf(" (fatal, aborting..)\n");
+				//else if (n==EX_U_FATAL)
+				if (options.host)
+					options.badskip=1;//only set badskip if we are forcing a single host, otherwise we could exclude other hosts that are working
 				if (mustredo_on_skip) {
 					redo=1;
 					mustredo_on_skip=0;
 					options.qstatus=0;
+				}
+				set_other_error_status();
+			}
+			else{
+				if(redone<options.maxretry){
+					redo=1;redone++;
+					printf(" (trying again. %i)\n",redone);
+					if (options.retrydelay)
+						sleep(options.retrydelay);
+				}else{
+					set_other_error_status();//set "fatal" error if non-fatal error didn't succeed even after retrying.
+					printf("\n");
+					if (c==-1)
+						return 0;//end of args.
+					redone=0;
+					if (mustredo_on_skip) {
+						redo=1;
+						mustredo_on_skip=0;
+						options.qstatus=0;
+					}
 				}
 			}
 		}

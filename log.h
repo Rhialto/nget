@@ -38,33 +38,25 @@ extern int debug;
 extern int quiet;
 
 class baseEx {
+	protected:
+		string str;
+		const char *mfile;
+		int mline;
 	public:
-		virtual bool isfatal(void)const=0;
+		const char* getExFile(void)const{return mfile;}
+		int getExLine(void)const{return mline;}
+		const char* getExStr(void)const{return str.c_str();}
+		virtual bool isfatal(void)const{return false;}
 		virtual const char* getExType(void)const=0;
-		virtual const char* getExStr(void)const=0;
-		virtual const char* getExFile(void)const=0;
-		virtual int getExLine(void)const=0;
+		virtual ~baseEx() { }
 };
 
-class ExError : public baseEx{
-	public:
-		virtual bool isfatal(void)const{return 0;}
-};
-class ExFatal : public baseEx{
-	public:
-		virtual bool isfatal(void)const{return 1;}
-};
-#define DEFINE_EX_SUBCLASS(name, sub) class name ## Ex ## sub : public Ex ## sub, public name ## Ex {\
-		string str;\
-		const char *mfile;\
-		int mline;\
+#define DEFINE_EX_SUBCLASS(name,sub,fatalv) class name ## Ex ## sub : public name ## Ex {\
 	public:\
-		virtual const char* getExFile(void)const{return mfile;}\
-		virtual int getExLine(void)const{return mline;}\
-		virtual const char* getExStr(void)const{return str.c_str();}\
-		virtual bool isfatal(void)const{return Ex ## sub::isfatal();}\
+		virtual bool isfatal(void)const{return fatalv;}\
 		virtual const char* getExType(void)const{return #name "Ex" #sub;}\
-		name ## Ex ## sub(const char *file, int line, const char * s, ...):mfile(file),mline(line){\
+		name ## Ex ## sub(const char *file, int line, const char * s, ...) {\
+			mfile = file; mline = line;\
 			char *cstr;\
 			va_list ap;\
 			va_start(ap,s);\
@@ -74,14 +66,12 @@ class ExFatal : public baseEx{
 			free(cstr);\
 			/*PDEBUG(DEBUG_MIN,"%s:%i:Created exception %s with %s(%p)",mfile,mline,getExType(), getExStr(), getExStr());*/\
 		}\
-		virtual ~name ## Ex ## sub(){\
-/*			printf("Destroying exception %s with %s(%p)\n",getExType(), getExStr(), getExStr());*/\
-		}\
 };
 
-#define DEFINE_EX_CLASSES(name,base) class name ## Ex: public base {};\
-DEFINE_EX_SUBCLASS(name, Fatal)\
-DEFINE_EX_SUBCLASS(name, Error)
+#define DEFINE_EX_CLASSES(name,base) class name ## Ex : public base {};\
+DEFINE_EX_SUBCLASS(name, Fatal, true)\
+DEFINE_EX_SUBCLASS(name, Error, false)
+
 
 class baseCommEx: public baseEx {};
 	
