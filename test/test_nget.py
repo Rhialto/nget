@@ -123,6 +123,8 @@ class DecodeTestCase(unittest.TestCase, DecodeTest_base):
 		self.do_test_auto()
 	def test_0002_uuencode_multi(self):
 		self.do_test_auto()
+	def test_0002_uuencode_multi3(self):
+		self.do_test_auto()
 	def test_0002_uuenview_uue_mime_multi(self):
 		self.do_test_auto()
 	def test_0003_newspost_uue_0(self):
