@@ -1611,6 +1611,30 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
 	
+	def test_MetaGrouping_ismultiserver_no(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+		self.addarticles_toserver('0002', 'uuencode_multi3', self.servers.servers[0], groups=["test"])
+		self.addarticles_toserver('0001', 'uuencode_single', self.servers.servers[0], groups=["test2"])
+		tpath = os.path.join(self.nget.rcdir, 'test.out')
+		self.vfailIf(self.nget.run('-g test,test2 -q -r . > %s'%tpath))
+		print open(tpath).read()
+		self.failUnless(open(tpath).read().find("h0 1 (-1/0): ")<0)
+		self.failUnless(open(tpath).read().find("h0 1 (1/3): ")<0)
+	
+	def test_MetaGrouping_ismultiserver_yes(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+		self.addarticles_toserver('0002', 'uuencode_multi3', self.servers.servers[0], groups=["test"])
+		self.addarticles_toserver('0001', 'uuencode_single', self.servers.servers[1], groups=["test2"])
+		tpath = os.path.join(self.nget.rcdir, 'test.out')
+		self.vfailIf(self.nget.run('-g test,test2 -q -r . > %s'%tpath))
+		print open(tpath).read()
+		self.failUnless(open(tpath).read().find("h1 1 (-1/0): ")>=0)
+		self.failUnless(open(tpath).read().find("h0 1 (1/3): ")>=0)
+	
 	def test_AbruptTimeout(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 

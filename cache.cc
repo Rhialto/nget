@@ -787,7 +787,7 @@ static inline bool ltfp(const c_nntp_file::ptr &f1, const c_nntp_file::ptr &f2) 
 }
 	
 void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, const vector<c_group_info::ptr> &groups, meta_mid_info*midinfo, const t_nntp_getinfo_list &getinfos){
-	*ismultiserver = false;
+	set<ulong> usedservers;
 	auto_vector<c_file> cachefiles;
 	vector<t_nntp_server_info> server_infos;
 	vector<c_nntp_cache_reader> readers;
@@ -814,8 +814,9 @@ void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c
 				if (reader.cache_sortver!=CACHE_SORTVER)
 					throw CacheEx(Ex_INIT, "cache file must be updated with this version of nget before it can be used with metagrouping");
 
-				if (cache_ismultiserver(server_info))
-					*ismultiserver=true; //###### doesn't handle the case where each file only has a single server, but different from the other files.
+				for (t_nntp_server_info::const_iterator sii=server_info.begin(); sii!=server_info.end(); ++sii)
+					if (sii->second.num > 0)
+						usedservers.insert(sii->first);
 				
 				if ((nf=reader.read_file())) {
 					//printf("initial file %i\n", nfiles.size());
@@ -830,6 +831,8 @@ void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c
 			}
 		}
 	}
+
+	*ismultiserver = usedservers.size() > 1;
 
 	vector<c_nntp_file::ptr>::iterator nfi_m;
 
