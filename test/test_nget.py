@@ -545,7 +545,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par'],
 			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','p2.par']})
 		
-	def test_autoparhandling_multiparset_samehash(self):
+	def test_autoparhandling_multiparset_samename(self):
 		self.addarticles('par01', 'input')
 		self.addarticle_toserver('par02', 'input', 'dat1', self.servers.servers[0])
 		self.addarticle_toserver('par02', 'input', 'dat2', self.servers.servers[0])
@@ -557,7 +557,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par'],
 			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','_a_b_par_output/a b.par']})
 		
-	def test_autoparhandling_multiparset_samehash_missingfile(self):
+	def test_autoparhandling_multiparset_samename_missingfile(self):
 		self.addarticles('par01', 'input')
 		self.rmarticle_fromserver('par01','input','dat2',self.servers.servers[0])
 		self.rmarticle_fromserver('par01','input','dat4',self.servers.servers[0])
