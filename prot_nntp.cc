@@ -372,6 +372,8 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 		}
 		set_group_ok_status();
 	}
+
+	gcache_ismultiserver = gcache->ismultiserver();
 }
 
 inline void arinfo::print_retrieving_articles(time_t curtime, quinfo*tot){
@@ -715,7 +717,6 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 	//c_nntp_file *f;
 	c_nntp_file::ptr f;
 	c_nntp_file_retr::ptr fr;
-	bool gcache_ismultiserver = gcache->ismultiserver();
 
 	//hmm, maybe not now. //well, now we need to keep it around again, so we can set the read flag.  At least with the new cache implementation its not quite such a memory hog.
 //	if (gcache){

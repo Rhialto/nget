@@ -71,6 +71,7 @@ class c_prot_nntp {
 		c_mid_info *midinfo;
 		//c_nntp_cache *gcache;
 		c_nntp_cache::ptr gcache;
+		bool gcache_ismultiserver;
 		c_nntp_files_u *filec;
 		time_t starttime;
 		int derr;
