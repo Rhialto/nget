@@ -1,2 +1,2 @@
 Makefile .depend TestRunner
-.py[co]
+*.py[co]
