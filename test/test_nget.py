@@ -1012,6 +1012,15 @@ class OverArticleQuotaDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_article(self, args):
 		raise nntpd.NNTPDisconnect("502 Over quota.  Goodbye.")
 
+class OverArticleQuotaShutdowningNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	def cmd_article(self, args):
+		self.nwrite("502 Over quota. Shutdown.")
+		#If how is 0, further receives are disallowed. If how is 1, further sends are disallowed. If how is 2, further sends and receives are disallowed. 
+		self.connection.shutdown(1)
+		while 1:
+			rcmd = self.rfile.readline()
+			if not rcmd: raise nntpd.NNTPDisconnect
+
 class OverXOverQuotaDiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def cmd_xover(self, args):
 		raise nntpd.NNTPDisconnect("502 Over quota.  Goodbye.")
@@ -1141,6 +1150,19 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 3)
 
+	def test_OverArticleQuotaShutdowningServerPenalization(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaShutdowningNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, priorities=[3,1], options={'tries':1, 'penaltystrikes':2, 'maxconnections':1})
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		self.vfailIf(self.nget.run("-g test"))
+		self.vfailIf(self.nget.run("-G test -r ."))
+		self.verifyoutput('0002')
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 2)
+		self.vfailUnlessEqual(self.servers.servers[1].count("article"), 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 3)
+
 	def test_OverArticleQuotaServerPenalization(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, priorities=[3,1], options={'tries':1, 'penaltystrikes':2})
@@ -1152,6 +1174,75 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[1].count("article"), 3)
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
+
+	def test_lite_OverArticleQuotaDiscoingServerHandling(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaDiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, priorities=[3,1], options={'tries':1, 'penaltystrikes':2, 'maxconnections':1})
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
+		self.vfailIf(self.nget.run("-w %s -g test -r ."%litelist))
+		self.vfailIf(self.nget.runlite(litelist))
+		self.vfailIf(self.nget.run("-N -G test -r ."))
+		self.verifyoutput('0002')
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 3)
+		self.vfailUnlessEqual(self.servers.servers[1].count("article"), 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 4)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 4)
+
+	def test_lite_OverArticleQuotaDiscoingSingleServerHandling(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaDiscoingNNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':1, 'penaltystrikes':2})
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
+		self.vfailIf(self.nget.run("-w %s -g test -r ."%litelist))
+		self.vfailIf(self.nget.runlite(litelist))
+		self.vfailIf(self.nget.run("-N -G test -r ."))
+		self.verifyoutput([])
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 4)
+
+	def test_lite_OverArticleQuotaShutdowningSingleServerHandling(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaShutdowningNNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':1, 'penaltystrikes':2})
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
+		self.vfailIf(self.nget.run("-w %s -g test -r ."%litelist))
+		self.vfailIf(self.nget.runlite(litelist))
+		self.vfailIf(self.nget.run("-N -G test -r ."))
+		self.verifyoutput([])
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 4)
+
+	def test_lite_OverArticleQuotaServerHandling(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, priorities=[3,1], options={'tries':1, 'penaltystrikes':2})
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
+		self.vfailIf(self.nget.run("-w %s -g test -r ."%litelist))
+		self.vfailIf(self.nget.runlite(litelist))
+		self.vfailIf(self.nget.run("-N -G test -r ."))
+		self.verifyoutput('0002')
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 3)
+		self.vfailUnlessEqual(self.servers.servers[1].count("article"), 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 4)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 4)
+
+	def test_lite_OverArticleQuotaSingleServerHandling(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), OverArticleQuotaNNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'tries':1, 'penaltystrikes':2})
+		self.servers.start()
+		self.addarticles('0002','uuencode_multi3')
+		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
+		self.vfailIf(self.nget.run("-w %s -g test -r ."%litelist))
+		self.vfailIf(self.nget.runlite(litelist))
+		self.vfailIf(self.nget.run("-N -G test -r ."))
+		self.verifyoutput([])
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 
 	def test_NoPenalty_g(self):
 		self.servers = nntpd.NNTPD_Master(2)

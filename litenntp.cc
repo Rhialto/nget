@@ -82,6 +82,10 @@ int c_prot_nntp::getline(int echo){
 		doclose();
 		throw TransportExError(Ex_INIT,"nntp_getline: %s:%i: %s",e.getExFile(), e.getExLine(), e.getExStr());
 	}
+	if (i==0) {
+		doclose();
+		throw TransportExError(Ex_INIT,"nntp_getline: connection closed unexpectedly");
+	}
 	cbuf = cursock->rbufp();
 	if (echo){
 		printf("%s\n",cbuf);
