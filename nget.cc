@@ -75,6 +75,7 @@ SET_x_OK_STATUS(qp, 64);
 SET_x_OK_STATUS(unknown, 512);
 SET_x_OK_STATUS(group, 1024);
 SET_x_WARN_STATUS(retrieve,1);
+SET_x_WARN_STATUS(unequal_line_count,8);
 SET_x_WARN_STATUS(group,1024);
 #define print_x_x_STATUS(type, low) if (low ## _ ## type) printf("%s %i " #type, cf?",":"", low ## _ ## type)
 #define print_x_ERROR_STATUS(type) print_x_x_STATUS(type, error)
@@ -102,6 +103,7 @@ void print_error_status(void){
 		printf("WARNINGS:");
 		print_x_WARN_STATUS(group);
 		print_x_WARN_STATUS(retrieve);
+		print_x_WARN_STATUS(unequal_line_count);
 	}
 	if (errorflags){
 		int cf=0;

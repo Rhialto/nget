@@ -537,6 +537,7 @@ void c_prot_nntp::nntp_dogetarticle(arinfo*ari,quinfo*toti,list<string> &buf){
 		printf("\n");
 		if (nconfig.unequal_line_error)
 			throw TransportExFatal(Ex_INIT, "unequal line count and unequal_line_error is true");
+		set_unequal_line_count_warn_status();
 	}
 }
 
