@@ -31,6 +31,7 @@
 #endif
 #include <stdexcept>
 #include <string>
+#include "status.h"
 #include "_sstream.h"
 #include "log.h"
 
