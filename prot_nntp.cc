@@ -1375,10 +1375,19 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 					}
 					//check if dest file exists before attempting decode, avoids having to hack around the uu_error that occurs when the destfile exists and overwriting is disabled.
 					//also rename the file if it is not ok to avoid the impression that you have a correct file.
+					int pre_decode_derr = uustatus.derr;
 					char orig_fnp[PATH_MAX];
 					fname_filter(orig_fnp, fr->path.c_str(), uul->filename);
-					if ((uul->state & UUFILE_OK) && !fexists(orig_fnp)) 
+					if ((uul->state & UUFILE_OK) && !fexists(orig_fnp)) {
 						r=UUDecodeFile(uul,NULL);
+						if ((r!=UURET_OK || uustatus.derr!=pre_decode_derr) && fexists(orig_fnp)) {
+							char nfn[PATH_MAX];
+							do {
+								sprintf(nfn, "%s.%lu.%i", orig_fnp, f->badate(), rand());
+							} while (fexists(nfn));
+							xxrename(orig_fnp, nfn);
+						}
+					}
 					else {
 						//all the following ugliness with fname_filter is due to uulib forgetting that we already filtered the name and giving us the original name instead.
 						// Generate a new filename to use
@@ -1405,6 +1414,11 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 						uustatus.derr++;
 						printf("decode(%s): %s\n",uul->filename,UUstrerror(r));
 						texthandler.adddecodeinfo(string("error decoding ")+uutypetoa(uul->uudet)+" "+uul->filename+": " + UUstrerror(r));
+						continue;
+					}
+					else if (pre_decode_derr!=uustatus.derr){
+						printf("decode(%s): %i derr(s)\n",uul->filename,uustatus.derr-pre_decode_derr);
+						texthandler.adddecodeinfo(string("error decoding ")+uutypetoa(uul->uudet)+" "+uul->filename+": " + tostr(uustatus.derr-pre_decode_derr) + "derr(s)");
 						continue;
 					}else{
 						texthandler.adddecodeinfo(string(uutypetoa(uul->uudet))+" "+uul->filename);

@@ -3,6 +3,7 @@
   * Reenable UUOPT_DUMBNESS, fixes problems with uulib mis-parsing some subject lines.
   * Instead, requires a patched version of uulib that allows us to explicitly tell it what part number each file is. (http://nget.sourceforge.net/patches/uulib-0.5.18-LoadFileWithPartNo.patch)
   * Make -K/--no-decode imply --no-autopar.
+  * Rename files that had decode warnings/errors so they won't cause reposts to be dupeskipped.
 
 2003-09-01 v0.24.1:
   * Fix compile with gcc-3.3.

@@ -239,6 +239,7 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 	def do_test_decodeerror(self):
 		self.vfailUnlessExitstatus(self.nget.run("-g test -r ."), 1, "nget process did not detect decode error")
 		self.vfailUnlessExitstatus(self.nget.run("-dF -G test -r ."), 1, "nget process did not detect decode error on 2nd run (midinfo problem?)")
+		self.vfailUnlessExitstatus(self.nget.run("-G test -r ."), 1, "nget process did not detect decode error on 3rd run (dupecheck problem? corrupt file saved with real name?)")
 	
 	def get_auto_args(self):
 		#use some magic so we don't have to type out everything twice
@@ -348,8 +349,7 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessExitstatus(self.nget.run("--save-binary-info=yes -g test -r ."), 1, "nget process did not detect decode error")
 
 		output = os.listdir(self.nget.tmpdir)
-		if 'testfile.txt' in output:
-			output.remove('testfile.txt')
+		output = filter(lambda s: not s.startswith('testfile.txt'), output)
 		self.failUnless(len(output)==1, "extra output: %s"%output)
 		self.failUnless(output[0].endswith(".-01"), "wrong output: %s"%output)
 
