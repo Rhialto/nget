@@ -50,7 +50,7 @@ class ParSetInfo {
 		int get_initial_pars(c_nntp_files_u &fc, const string &path, const string &temppath) {
 			int count=0;
 			for (t_server_file_list::const_iterator spi=serverpars.begin(); spi!=serverpars.end(); ++spi){
-				fc.addfile(spi->second, path, temppath);
+				fc.addfile(spi->second, path, temppath, false);
 				count++;
 			}
 			if (serverpars.empty() && !serverpxxs.empty()){
@@ -58,7 +58,7 @@ class ParSetInfo {
 				for (++cur; cur!=serverpxxs.end(); ++cur)
 					if (cur->second->bytes() < smallest->second->bytes())
 						smallest = cur;
-				fc.addfile(smallest->second, path, temppath);
+				fc.addfile(smallest->second, path, temppath, false);
 				count++;
 				serverpxxs.erase(smallest);
 			}

@@ -137,7 +137,7 @@ bool Par1Info::maybe_add_parfile(const c_nntp_file::ptr &f) {
 int ParXInfoBase::get_initial_pars(c_nntp_files_u &fc) {
 	int count=0;
 	for (t_server_file_list::const_iterator spi=serverpars.begin(); spi!=serverpars.end(); ++spi){
-		fc.addfile(spi->second, path, temppath);
+		fc.addfile(spi->second, path, temppath, false);
 		count++;
 	}
 	serverpars.clear();
@@ -182,7 +182,7 @@ int Par1Info::get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nn
 				}
 				havevols.insert(vol);//don't try to retrieve multiple of the same volume in one run
 				PDEBUG(DEBUG_MIN, "get_pxxs: %i, %s, adding %s", cur, hexstr(key).c_str(), last_sfi->second->subject.c_str());
-				fc.addfile(last_sfi->second, path, temppath);
+				fc.addfile(last_sfi->second, path, temppath, false);
 				serverpxxs.erase(last_sfi);
 				++cur;
 				break;
@@ -341,7 +341,7 @@ int Par2Info::get_recoverypackets(int num, set<uint32_t> &havepackets, const str
 		assert(cur<num);
 
 		cur += values[*ri];
-		fc.addfile(items[*ri]->second, path, temppath);
+		fc.addfile(items[*ri]->second, path, temppath, false);
 		PDEBUG(DEBUG_MIN, "get_recoverypackets: %i, %s, adding %s", cur, hexstr(key).c_str(), items[*ri]->second->subject.c_str());
 		serverpxxs.erase(items[*ri]);
 #ifndef NDEBUG

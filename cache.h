@@ -191,15 +191,16 @@ class c_nntp_file_retr : public c_refcounted<c_nntp_file_retr>{
 		string path;
 		string temppath;
 		c_nntp_file::ptr file;
-		c_nntp_file_retr(const string &p, const string &tp, const c_nntp_file::ptr &f):path(p),temppath(tp),file(f){}
+		bool dupecheck;
+		c_nntp_file_retr(const string &p, const string &tp, const c_nntp_file::ptr &f, bool dupec):path(p),temppath(tp),file(f),dupecheck(dupec){}
 };
 typedef multimap<time_t,c_nntp_file_retr::ptr> t_nntp_files_u;
 class c_nntp_files_u {
 	public:
 		uint_fast64_t bytes, lines;
 		t_nntp_files_u files;
-		void addfile(c_nntp_file::ptr f, const string &path, const string &temppath) {
-			files.insert(t_nntp_files_u::value_type(f->badate(), new c_nntp_file_retr(path,temppath,f)));
+		void addfile(c_nntp_file::ptr f, const string &path, const string &temppath, bool dupecheck=true) {
+			files.insert(t_nntp_files_u::value_type(f->badate(), new c_nntp_file_retr(path,temppath,f,dupecheck)));
 			lines+=f->lines();
 			bytes+=f->bytes();
 		}

@@ -1436,7 +1436,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 					while(dfi!=filec.files.end()){
 						dfr = (*dfi).second;
 						//only check files that are being downloaded to the same path
-						if (dfr->path == fr->path) {
+						if (dfr->dupecheck && dfr->path == fr->path) {
 							c_nntp_file::ptr df = dfr->file;
 							if (flist.checkhavefile(df->subject.c_str(), df->bamid(), df->bytes())) {
 								set_skipped_ok_status();

@@ -843,7 +843,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.addarticles('par02', 'input', fname='dat*')
 		self.addarticles('par02', 'c_d_par2_input', fname='par')
 		self.addarticles('par02', 'c_d_par2_input', fname='par[12]')
-		self.vfailIf(self.nget_run('-g test -dF -r "par.*test"')) #FIXME shouldn't need -dF
+		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
 		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','c d 05.dat','c d.par2'],
 			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','_c_d_par2_output/c d.par2']}) 
 		
