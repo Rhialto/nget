@@ -81,6 +81,8 @@ class SockPool {
 	protected:
 		//t_connection_map used_connections;
 		t_connection_map connections;
+
+		void connection_erase(t_connection_map::iterator i);
 	public:
 		
 		bool is_connected(ulong serverid) {
@@ -109,9 +111,13 @@ class ConnectionHolder {
 	public:
 		ConnectionHolder(SockPool *sockpool, Connection **conn, int serverid):pool(sockpool), connection(conn) {
 			*connection = pool->connect(serverid);
+			PDEBUG(DEBUG_MED, "aquiring connection to %i (%p)", serverid, *connection);
 			pool->expire_connections();
 		}
 		~ConnectionHolder() {
+			PDEBUG(DEBUG_MED, "releasing connection to (%p)", *connection);
+			assert(pool);
+			assert(connection);
 			if (*connection) { //*connection can be NULL if pool->connect failed.
 				pool->release(*connection);
 				*connection=NULL;

@@ -61,13 +61,21 @@ int Connection::getline(int echo){
 }
 
 
+void SockPool::connection_erase(t_connection_map::iterator i) {
+	delete i->second;
+	connections.erase(i);
+}
 
 Connection* SockPool::connect(ulong serverid) {
 	//use existing connection when possible
 	t_connection_map::iterator i = connections.find(serverid);
 	if (i!=connections.end()){
-		i->second->touch();
-		return i->second;
+		if (i->second->isopen()) {
+			i->second->touch();
+			return i->second;
+		} else {
+			connection_erase(i);
+		}
 	}
 	
 	//if we have to create a new one, don't go over max
@@ -86,7 +94,11 @@ Connection* SockPool::connect(ulong serverid) {
 }
 
 void SockPool::release(Connection *connection) {
-	connection->touch();
+	assert(connection);
+	if (connection->isopen())
+		connection->touch();
+	else
+		connection_erase(connections.find(connection->server->serverid));
 	//####
 }
 
@@ -103,8 +115,7 @@ void SockPool::expire_old_connection(void) {
 	}
 	if (oldest!=connections.end()){
 		oldest->second->close();
-		delete oldest->second;
-		connections.erase(oldest);
+		connection_erase(oldest);
 	}else
 		throw ApplicationExError(Ex_INIT, "no old connections to kill");
 }
@@ -122,8 +133,7 @@ void SockPool::expire_connections(bool closeall) {
 			} catch (baseCommEx &e) {//ignore transport errors while closing
 				printCaughtEx_nnl(e);printf(" (ignored)\n");
 			}
-			delete c;
-			connections.erase(p);
+			connection_erase(p);
 		}
 	}
 }
