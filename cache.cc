@@ -469,7 +469,7 @@ c_nntp_cache_reader::c_nntp_cache_reader(c_file *cf, c_mid_info *mi, t_nntp_serv
 	char *t[5];
 	int i;
 	if (f->beof())
-		throw CacheEx(Ex_INIT, "unexpected EOF on cache file line %i",curline);
+		throw CacheEx(Ex_INIT, "unexpected EOF on cache file line %lu",curline);
 	curline++;
 	//(mode==START_MODE)
 	i = f->btoks('\t',t,2);
@@ -484,7 +484,7 @@ c_nntp_cache_reader::c_nntp_cache_reader(c_file *cf, c_mid_info *mi, t_nntp_serv
 
 	while (1) {
 		if (f->beof())
-			throw CacheEx(Ex_INIT, "unexpected EOF on cache file line %i",curline);
+			throw CacheEx(Ex_INIT, "unexpected EOF on cache file line %lu",curline);
 		curline++;
 		//(mode==SERVERINFO_MODE)
 		if (f->bpeek()=='.') {
@@ -597,7 +597,7 @@ c_nntp_file::ptr c_nntp_cache_reader::read_file(void) {
 		}
 	}
 	if (nf)
-		throw CacheEx(Ex_INIT, "unexpected EOF on cache file line %i",curline);
+		throw CacheEx(Ex_INIT, "unexpected EOF on cache file line %lu",curline);
 	return NULL;
 }
 void c_nntp_cache_reader::check_counts(void) {

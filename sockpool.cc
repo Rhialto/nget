@@ -60,7 +60,7 @@ int Connection::getline(int echo){
 	}
 	if (i<=0){
 		close(1);
-		throw TransportExError(Ex_INIT,"nntp_getline: connection closed unexpectedly",i,strerror(errno),errno);
+		throw TransportExError(Ex_INIT,"nntp_getline: connection closed unexpectedly");
 	}else {
 		if (echo)
 			printf("%s >> %s\n", server->shortname.c_str(), sock.rbufp());
