@@ -1,4 +1,4 @@
-2002-xx-xx v0.x:
+2002-06-17 v0.19.1:
   * Print error message rather than segv on flush without specifying a group first. (Reported by Christian Marillat)
   * Fix configure script not resetting a variable between testing packages causing it to not run some tests and to miss placing some data in the Makefile.
   * Add --with-*-prefix configure args, remove multi-location testing of --with-* since autoconf's caching killed it anyway.
