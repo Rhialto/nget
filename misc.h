@@ -26,8 +26,13 @@
 #include <sys/types.h>
 #include <stdio.h>
 
+#ifdef HAVE_LIMITS
+#include <limits>
+#endif
+#include <stdexcept>
 #include <string>
 #include "_sstream.h"
+#include "log.h"
 
 
 #define TCONV_DEF_BUF_LEN 60
@@ -41,6 +46,63 @@ string tostr(const Type &arg){
     buffer << arg;
     return buffer.str();
 }
+
+class parse_error : public runtime_error {
+    public:
+        explicit parse_error(const string &arg) : runtime_error(arg) {}
+};
+
+// make these seperate functions to cut down how much has to be inlined.
+void parsestr_valcheck(const string &val, bool is_signed);
+void parsestr_isscheck(istringstream &iss);
+
+template <class T>
+void parsestr(const string &val, T &dest) {
+#ifdef HAVE_LIMITS
+    parsestr_valcheck(val, numeric_limits<T>::is_signed);
+#else
+    parsestr_valcheck(val, true);
+#endif
+    istringstream iss(val);
+    T v;
+    iss >> v;
+    parsestr_isscheck(iss);
+    dest = v;
+}
+
+template <class T>
+bool parsestr(const string &val, T &dest, const char *name) {
+    try {
+        parsestr(val, dest);
+        return true;
+    } catch (parse_error &e) {
+        PERROR("%s: %s", name, e.what());
+        set_user_error_status_and_do_fatal_user_error();
+    }
+    return false;
+}
+
+template <class T>
+void parsestr(const string &val, T &dest, T min, T max) {
+    T v;
+    parsestr(val, v);
+    if (v<min || v>max)
+        throw parse_error("not in range "+tostr(min)+".."+tostr(max));
+    dest = v;
+}
+
+template <class T>
+bool parsestr(const string &val, T &dest, T min, T max, const char *name) {
+    try {
+        parsestr(val, dest, min, max);
+        return true;
+    } catch (parse_error &e) {
+        PERROR("%s: %s", name, e.what());
+        set_user_error_status_and_do_fatal_user_error();
+    }
+    return false;
+}
+
 
 string strtolower(const string &s);
 void lowerstr(string &s);

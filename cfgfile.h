@@ -25,12 +25,8 @@
 #endif
 #include <string>
 #include <map>
-#ifdef HAVE_LIMITS
-#include <limits>
-#endif
-#include "_sstream.h"
 #include "file.h"
-#include "misc.h" // for tostr
+#include "misc.h"
 
 class CfgBase {
 	protected:
@@ -52,24 +48,6 @@ class CfgItem : public CfgBase{
 	protected:
 		string val;
 		
-		bool issok(istringstream &iss) const;
-
-		template <class T>
-		bool doparse(T &v) const {
-			istringstream iss(val);
-			iss >> v;
-			return issok(iss);
-		}
-
-		template <class T>
-		bool doget(T &v) const {
-			if (val.empty()) {
-				PERROR("%s: empty val", name().c_str());
-				set_user_error_status();
-				return false;
-			}
-			return doparse(v);
-		}
 	public:
 		
 		CfgItem(string l, string k, string v): CfgBase(l,k), val(v) { }
@@ -80,33 +58,29 @@ class CfgItem : public CfgBase{
 		}
 
 		template <class T>
-		void get(T &dest) const {
+		bool get(T &dest) const {
 			used=true;
-			T v;
-			if (doget(v))
-				dest = v;
+			try {
+				parsestr(val, dest);
+				return true;
+			} catch (parse_error &e) {
+				PERROR("%s: %s", name().c_str(), e.what());
+				set_user_error_status();
+			}
+			return false;
 		}
 
 		template <class T>
 		bool get(T &dest, T min, T max) const {
 			used=true;
-#ifdef HAVE_LIMITS
-			if (!numeric_limits<T>::is_signed && val.find('-')!=string::npos) {
-				PERROR("%s: invalid unsigned value", name().c_str());
+			try {
+				parsestr(val, dest, min, max);
+				return true;
+			} catch (parse_error &e) {
+				PERROR("%s: %s", name().c_str(), e.what());
 				set_user_error_status();
-				return false;
 			}
-#endif
-			T v;
-			if (!doget(v))
-				return false;
-			if (v<min || v>max) {
-				PERROR("%s: not in range %s..%s", name().c_str(), tostr(min).c_str(), tostr(max).c_str());
-				set_user_error_status();
-				return false;
-			}
-			dest = v;
-			return true;
+			return false;
 		}
 };
 
@@ -166,9 +140,9 @@ class CfgSection : public CfgBase{
 		}
 
 		template <class T>
-		void get(const char *name, T &dest) const {
+		bool get(const char *name, T &dest) const {
 			const CfgItem *i = getitem(name);
-			if (!i) return;
+			if (!i) return false;
 			return i->get(dest);
 		}
 		template <class T>

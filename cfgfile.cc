@@ -19,20 +19,6 @@
 #include "cfgfile.h"
 #include "status.h"
 
-bool CfgItem::issok(istringstream &iss) const {
-	if (iss.fail() || iss.bad()) {
-		PERROR("%s: invalid value", name().c_str());
-		set_user_error_status();
-		return false;
-	}
-	if (!iss.eof() && iss.peek()!=EOF) {
-		PERROR("%s: trailing junk", name().c_str());
-		set_user_error_status();
-		return false;
-	}
-	return true;
-}
-
 void CfgSection::load(c_file *f, int &level) {
 	char *v,*buf;
 	int slen;

@@ -337,8 +337,8 @@ void nget_options::parse_dupe_flags(const char *opt){
 			case 'm':gflags|= GETFILES_DUPEFILEMARK;break;
 			case 'M':gflags&= ~GETFILES_DUPEFILEMARK;break;
 			default:
-				//throw new c_error(EX_U_FATAL,"unknown dupe flag %c",*opt);
-				throw UserExFatal(Ex_INIT,"unknown dupe flag %c",*opt);
+				PERROR("unknown dupe flag %c",*opt);
+				set_user_error_status_and_do_fatal_user_error();
 		}
 		opt++;
 	}
@@ -720,36 +720,30 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				quiet++;
 				break;
 			case 's':
-				options.retrydelay=atoi(loptarg);
-				if (options.retrydelay<0)
-					options.retrydelay=1;
-				PMSG("retry delay set to %i",options.retrydelay);
+				if (parsestr(loptarg, options.retrydelay, 0, INT_MAX, "--delay"))
+					PMSG("retry delay set to %i",options.retrydelay);
 				break;
-			case OPT_TIMEOUT:{
-				char *erp;
-				int newtimeout = strtol(loptarg,&erp,10);
-				if (*loptarg=='\0' || *erp!='\0' || newtimeout < 0) {
-					PERROR("invalid timeout value %s",loptarg);
-					set_user_error_status_and_do_fatal_user_error();
-					break;
-				}
-				sock_timeout = newtimeout;
-				PMSG("sock timeout set to %i",sock_timeout);
+			case OPT_TIMEOUT:
+				if (parsestr(loptarg, sock_timeout, 1, INT_MAX, "--timeout"))
+					PMSG("sock timeout set to %i",sock_timeout);
 				break;
-			}
 			case 't':
-				options.maxretry=atoi(loptarg);
-				if (options.maxretry==-1)
-					options.maxretry=INT_MAX-1;
-				PMSG("max retries set to %i",options.maxretry);
+				if (parsestr(loptarg, options.maxretry, -1, INT_MAX, "--tries")) {
+					if (options.maxretry<=0)
+						options.maxretry=INT_MAX-1;
+					PMSG("max retries set to %i",options.maxretry);
+				}
 				break;
 			case 'L':
-				options.maxlinelimit=atoul(loptarg);
+				if (strcmp(loptarg,"-1")==0)
+					options.maxlinelimit=ULONG_MAX;
+				else if (!parsestr(loptarg, options.maxlinelimit, "--maxlines"))
+					break;
 				PMSG("maximum line limit set to %lu",options.maxlinelimit);
 				break;
 			case 'l':
-				options.linelimit=atoul(loptarg);
-				PMSG("minimum line limit set to %lu",options.linelimit);
+				if (parsestr(loptarg, options.linelimit, "--limit"))
+					PMSG("minimum line limit set to %lu",options.linelimit);
 				break;
 			case 'w':
 				options.writelite=loptarg;
@@ -799,7 +793,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				}
 				break;
 			case OPT_FULLXOVER:
-				options.fullxover=atoi(loptarg);
+				parsestr(loptarg, options.fullxover, -1, 2, "--fullxover");
 				break;
 			case 'F':
 				{

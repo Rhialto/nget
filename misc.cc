@@ -44,6 +44,19 @@ string hexstr(const string &s){
 	return ret;
 }
 
+void parsestr_valcheck(const string &val, bool is_signed) {
+	if (val.empty())
+		throw parse_error("empty val");
+	if (!is_signed && val.find('-')!=string::npos)
+		throw parse_error("invalid unsigned value");
+}
+void parsestr_isscheck(istringstream &iss) {
+	if (iss.fail() || iss.bad())
+		throw parse_error("invalid value");
+	if (!iss.eof() && iss.peek()!=EOF)
+		throw parse_error("trailing junk");
+}
+
 string strtolower(const string &s){
 	string sl = s;
 	lowerstr(sl);

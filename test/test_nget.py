@@ -1832,6 +1832,24 @@ class FatalUserErrorsTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
 
 
+class UserErrorTestCase(TestCase, DecodeTest_base):
+	def setUp(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.addarticles('0001', 'uuencode_single')
+		self.servers.start()
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+	
+	def tearDown(self):
+		self.servers.stop()
+		self.nget.clean_all()
+	
+	def test_silly_options(self):
+		args = "-mfoo --test-multiserver=foo --fullxover=-2 --text=foo --save-binary-info=foo --tries=-2 --delay=-1 --timeout=0 --limit=-1 --maxlines=-2 -dz"
+		output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput(args + ' -g test -r .'), 4)
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(output.count("ERRORS: %i user"%(args.count(' ')+1)), 1)
+
+
 class ConfigErrorTestCase(TestCase, DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)
