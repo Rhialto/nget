@@ -1033,7 +1033,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 			if (derr>0){
 				set_decode_error_status();
 				printf(" %i decoding errors occured, keeping temp files.\n",derr);
-			}else if (derr<0 && fnbuf.size())
+			}else if (derr<0) 
 				printf("download error occured, keeping temp files.\n");
 			else if (un==0){
 				set_undecoded_warn_status();
