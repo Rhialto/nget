@@ -68,8 +68,10 @@ bool pathexists(const char *p) {
 	goodgetcwd(&oldp);
 	if (chdir(p)==0)
 		ret=true;
-	if (chdir(oldp))
+	if (chdir(oldp)) {
+		free(oldp);
 		throw ApplicationExFatal(Ex_INIT, "could not return to oldp: %s (%s)",oldp,strerror(errno));
+	}
 	free(oldp);
 	return ret;
 }
