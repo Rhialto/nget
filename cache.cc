@@ -185,7 +185,7 @@ c_nntp_file::~c_nntp_file(){
 	}
 }
 
-static void nntp_cache_getfile(c_nntp_files_u *fc, c_mid_info *midinfo, const t_nntp_getinfo_list &getinfos, c_nntp_file::ptr &f) {
+static void nntp_cache_getfile(c_nntp_files_u *fc, c_mid_info *midinfo, const t_nntp_getinfo_list &getinfos, const c_nntp_file::ptr &f) {
 	pair<t_nntp_files_u::const_iterator,t_nntp_files_u::const_iterator> firange;
 	t_nntp_getinfo_list::const_iterator gii, giibegin=getinfos.begin(), giiend=getinfos.end();
 	c_nntp_getinfo::ptr info;
@@ -211,10 +211,8 @@ static void nntp_cache_getfile(c_nntp_files_u *fc, c_mid_info *midinfo, const t_
 
 void c_nntp_cache::getfiles(c_nntp_files_u *fc, c_mid_info *midinfo, const t_nntp_getinfo_list &getinfos) { 
 	t_nntp_files::const_iterator fi;
-	c_nntp_file::ptr f;
 	for(fi = files.begin();fi!=files.end();++fi){
-		f=(*fi).second;
-		nntp_cache_getfile(fc, midinfo, getinfos, f);
+		nntp_cache_getfile(fc, midinfo, getinfos, (*fi).second);
 	}
 }
 
