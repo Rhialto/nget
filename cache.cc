@@ -107,7 +107,7 @@ void c_nntp_header::set(char * str,const char *a,ulong anum,time_t d,ulong b,ulo
 	setfileid(refstr, refstrlen);
 }
 
-c_nntp_server_article::c_nntp_server_article(ulong _server,ulong _articlenum,ulong _bytes,ulong _lines):serverid(_server),articlenum(_articlenum),bytes(_bytes),lines(_lines){}
+c_nntp_server_article::c_nntp_server_article(ulong _server,const c_group_info::ptr &_group,ulong _articlenum,ulong _bytes,ulong _lines):serverid(_server),group(_group),articlenum(_articlenum),bytes(_bytes),lines(_lines){}
 
 //c_nntp_part::c_nntp_part(c_nntp_header *h):partnum(h->partnum),articlenum(h->articlenum),date(h->date),bytes(h->bytes),lines(h->lines){}
 c_nntp_part::c_nntp_part(c_nntp_header *h):partnum(h->partnum),date(h->date),messageid(h->messageid){
@@ -128,7 +128,7 @@ void c_nntp_part::addserverarticle(c_nntp_header *h){
 	if (h->date!=date)
 		printf("adding server_article with different date, date=%li h->date=%li mid=%s\n",date,h->date,h->messageid.c_str());
 #endif
-	sa=new c_nntp_server_article(h->serverid,h->articlenum,h->bytes,h->lines);
+	sa=new c_nntp_server_article(h->serverid,h->group,h->articlenum,h->bytes,h->lines);
 	articles.insert(t_nntp_server_articles::value_type(h->serverid,sa));
 }
 
@@ -153,6 +153,33 @@ void c_nntp_file::addpart(c_nntp_part *p){
 //	bytes+=p->apxbytes;lines+=p->apxlines;
 }
 
+void c_nntp_file::mergefile(c_nntp_file::ptr &f){
+	t_nntp_file_parts::iterator fpi=f->parts.begin();
+	while (fpi!=f->parts.end()){
+		const c_nntp_part *p = fpi->second;
+		t_nntp_file_parts::iterator nfpi=parts.find(p->partnum);
+		if (nfpi==parts.end()) {
+			addpart(new c_nntp_part(p->partnum, p->date, p->messageid));
+			nfpi=parts.find(p->partnum);
+		}else{
+			if (nfpi->second->messageid!=p->messageid){
+				PDEBUG(DEBUG_MED,"%s was gonna merge, but already have this part(sub=%s part=%i omid=%s)?\n",p->messageid.c_str(),f->subject.c_str(),p->partnum,nfpi->second->messageid.c_str());
+				++fpi;
+				continue;
+			}
+		}
+		for (t_nntp_server_articles::const_iterator fsai=p->articles.begin(); fsai!=p->articles.end(); ++fsai){
+			
+			c_nntp_server_article *nsa = new c_nntp_server_article(*fsai->second);
+			nfpi->second->articles.insert(t_nntp_server_articles::value_type(nsa->serverid,nsa));
+		}
+		t_nntp_file_parts::iterator del_pi = fpi;
+		++fpi;
+		delete del_pi->second;
+		f->parts.erase(del_pi);
+	}
+}
+
 //fill a mapping of how many parts of the file each server has
 void c_nntp_file::get_server_have_map(t_server_have_map &have_map) const{
 	t_nntp_file_parts::const_iterator pi(parts.begin());
@@ -174,10 +201,10 @@ void c_nntp_file::get_server_have_map(t_server_have_map &have_map) const{
 	}
 }
 
-c_nntp_file::c_nntp_file(int r,ulong f,t_id fi,const char *s,const char *a,int po,int to):req(r),have(0),flags(f),fileid(fi),subject(s),author(a),partoff(po),tailoff(to){
+c_nntp_file::c_nntp_file(int r,ulong f,t_id fi,const char *s,const char *a,int po,int to):c_nntp_file_base(fi, r, po, a, s),have(0),flags(f),tailoff(to){
 //	printf("aoeu1.1\n");
 }
-c_nntp_file::c_nntp_file(c_nntp_header *h):req(h->req),have(0),flags(0),fileid(h->fileid),subject(h->subject),author(h->author),partoff(h->partoff),tailoff(h->tailoff),references(h->references){
+c_nntp_file::c_nntp_file(c_nntp_header *h):c_nntp_file_base(*h),have(0),flags(0),tailoff(h->tailoff){
 //	printf("aoeu1\n");
 }
 
@@ -189,7 +216,7 @@ c_nntp_file::~c_nntp_file(){
 	}
 }
 
-static void nntp_cache_getfile(c_nntp_files_u *fc, c_mid_info *midinfo, const t_nntp_getinfo_list &getinfos, const c_nntp_file::ptr &f) {
+static void nntp_cache_getfile(c_nntp_files_u *fc, meta_mid_info *midinfo, const t_nntp_getinfo_list &getinfos, const c_nntp_file::ptr &f) {
 	pair<t_nntp_files_u::const_iterator,t_nntp_files_u::const_iterator> firange;
 	t_nntp_getinfo_list::const_iterator gii, giibegin=getinfos.begin(), giiend=getinfos.end();
 	c_nntp_getinfo::ptr info;
@@ -204,7 +231,7 @@ static void nntp_cache_getfile(c_nntp_files_u *fc, c_mid_info *midinfo, const t_
 
 			if (!(info->flags&GETFILES_NODUPEFILECHECK) && info->flist.checkhavefile(f->subject.c_str(),f->bamid(),f->bytes())){
 				if (info->flags&GETFILES_DUPEFILEMARK)
-					midinfo->insert(f->bamid());
+					midinfo->insert(f);
 				continue;
 			}
 			fc->addfile(f,info->path,info->temppath);
@@ -213,7 +240,7 @@ static void nntp_cache_getfile(c_nntp_files_u *fc, c_mid_info *midinfo, const t_
 	}
 }
 
-void c_nntp_cache::getfiles(c_nntp_files_u *fc, c_mid_info *midinfo, const t_nntp_getinfo_list &getinfos) { 
+void c_nntp_cache::getfiles(c_nntp_files_u *fc, meta_mid_info *midinfo, const t_nntp_getinfo_list &getinfos) { 
 	t_nntp_files::const_iterator fi;
 	for(fi = files.begin();fi!=files.end();++fi){
 		nntp_cache_getfile(fc, midinfo, getinfos, (*fi).second);
@@ -241,7 +268,7 @@ int c_nntp_cache::additem(c_nntp_header *h){
 	assert(h);
 	c_nntp_file::ptr f;
 	t_nntp_files::iterator i;
-	pair<t_nntp_files::iterator, t_nntp_files::iterator> irange = files.equal_range(h->fileid);
+	pair<t_nntp_files::iterator, t_nntp_files::iterator> irange = files.equal_range(h);
 //	t_nntp_files::const_iterator i;
 //	pair<t_nntp_files::const_iterator, t_nntp_files::const_iterator> irange = files.equal_range(h->mid);
 
@@ -257,41 +284,21 @@ int c_nntp_cache::additem(c_nntp_header *h){
 	for (i=irange.first;i!=irange.second;++i){
 		f=(*i).second;
 		assert(!f.isnull());
-		if (f->req==h->req && f->partoff==h->partoff /*-duh, not good-&& f->tailoff==h->tailoff*/){
-			//these two are merely for debugging.. it shouldn't happen (much..? ;)
-			if (!(f->author==h->author)){//older (g++) STL versions seem to have a problem with strings and !=
-				PDEBUG(DEBUG_MED,"%lu->%s was gonna add, but author is different?\n",h->articlenum,f->bamid().c_str());
-				continue;
+		t_nntp_file_parts::iterator op;
+		if ((op=f->parts.find(h->partnum))!=f->parts.end()){
+			c_nntp_part *matchpart=(*op).second;
+			if (matchpart->messageid==h->messageid){
+				matchpart->addserverarticle(h);
+				return 0;
 			}
-			if (!(f->subject==h->subject)){
-				PDEBUG(DEBUG_MED,"%lu->%s was gonna add, but subject is different?\n",h->articlenum,f->bamid().c_str());
-				continue;
-			}
-			if (!(f->references==h->references)){
-				PDEBUG(DEBUG_MED,"%lu->%s was gonna add, but references are different?\n",h->articlenum,f->bamid().c_str());
-				continue;
-			}
-			t_nntp_file_parts::iterator op;
-			if ((op=f->parts.find(h->partnum))!=f->parts.end()){
-				c_nntp_part *matchpart=(*op).second;
-				if (matchpart->messageid==h->messageid){
-//#ifndef NDEBUG//addserverarticle already has this check in it.
-//					t_nntp_server_articles::iterator sai(matchpart->articles.find(h->serverid));
-//					if (sai != matchpart->articles.end())
-//						printf("adding %s for server %lu again?\n",h->messageid.c_str(),(*sai).second->serverid);
-//#endif
-					matchpart->addserverarticle(h);
-					return 0;
-				}
-				PDEBUG(DEBUG_MED,"%s was gonna add, but already have this part(sub=%s part=%i omid=%s)?\n",h->messageid.c_str(),f->subject.c_str(),h->partnum,matchpart->messageid.c_str());
-				continue;
-			}
-//			printf("adding\n");
-			c_nntp_part *p=new c_nntp_part(h);
-			f->addpart(p);
-			totalnum++;
-			return 0;
+			PDEBUG(DEBUG_MED,"%s was gonna add, but already have this part(sub=%s part=%i omid=%s)?\n",h->messageid.c_str(),f->subject.c_str(),h->partnum,matchpart->messageid.c_str());
+			continue;
 		}
+//			printf("adding\n");
+		c_nntp_part *p=new c_nntp_part(h);
+		f->addpart(p);
+		totalnum++;
+		return 0;
 	}
 //	printf("new\n");
 	f=new c_nntp_file(h);
@@ -299,7 +306,7 @@ int c_nntp_cache::additem(c_nntp_header *h){
 	f->addpart(p);
 	totalnum++;
 	//files[f->subject.c_str()]=f;
-	files.insert(t_nntp_files::value_type(f->fileid,f));
+	files.insert(t_nntp_files::value_type(f.gimmethepointer(),f));
 	return 1;
 }
 
@@ -332,7 +339,7 @@ void c_nntp_cache::getxrange(c_nntp_server_info *servinfo, c_nrange *range) cons
 		}
 	}
 }
-ulong c_nntp_cache::flushlow(c_nntp_server_info *servinfo, ulong newlow, c_mid_info *midinfo){
+ulong c_nntp_cache::flushlow(c_nntp_server_info *servinfo, ulong newlow, meta_mid_info *midinfo){
 	assert(newlow>0);
 	c_nrange flushrange;
 	flushrange.insert(0, newlow-1);
@@ -340,7 +347,7 @@ ulong c_nntp_cache::flushlow(c_nntp_server_info *servinfo, ulong newlow, c_mid_i
 	servinfo->low=newlow;
 	return r;
 }
-ulong c_nntp_cache::flush(c_nntp_server_info *servinfo, c_nrange flushrange, c_mid_info *midinfo){
+ulong c_nntp_cache::flush(c_nntp_server_info *servinfo, c_nrange flushrange, meta_mid_info *midinfo){
 	ulong count=0,countp=0,countf=0;
 	t_nntp_files::iterator i,in;
 	c_nntp_file::ptr nf;
@@ -470,16 +477,19 @@ enum {
 class c_nntp_cache_reader {
 	protected:
 		c_file *f;
-		c_mid_info *midinfo;
+		meta_mid_info *midinfo;
+		c_group_info::ptr group;
 	public:
+		int cache_sortver;
 		ulong count,counta,curline,countdeada,totalnum;
-		c_nntp_cache_reader(c_file *cf, c_mid_info*mi, t_nntp_server_info &server_infoi);
+		c_nntp_cache_reader(c_file *cf, meta_mid_info*mi, t_nntp_server_info &server_infoi, const c_group_info::ptr &grou);
 		c_nntp_file::ptr read_file(void);
+		const char *filename(void) const {return f->name();}
 		void check_counts(void);
 };
 
-c_nntp_cache_reader::c_nntp_cache_reader(c_file *cf, c_mid_info *mi, t_nntp_server_info &server_info):f(cf), midinfo(mi) {
-	count=0;counta=0;curline=0;countdeada=0;totalnum=0;
+c_nntp_cache_reader::c_nntp_cache_reader(c_file *cf, meta_mid_info *mi, t_nntp_server_info &server_info, const c_group_info::ptr &grou):f(cf), midinfo(mi), group(grou){
+	count=0;counta=0;curline=0;countdeada=0;totalnum=0;cache_sortver=-1;
 	
 	char *t[5];
 	int i;
@@ -488,8 +498,11 @@ c_nntp_cache_reader::c_nntp_cache_reader(c_file *cf, c_mid_info *mi, t_nntp_serv
 	curline++;
 	//(mode==START_MODE)
 	i = f->btoks('\t',t,2);
-	if (i==2 && (strcmp(t[0],CACHE_VERSION))==0){
+	if (i==2 && (strcmp(t[0],CACHE_VERSION)==0)){
 		totalnum=atoul(t[1]);
+		char *subvercp=strchr(t[1], ' ');
+		if (subvercp)
+			cache_sortver = atoi(subvercp);
 	}else{
 		if (i>0 && strncmp(t[0],"NGET",4)==0)
 			throw CacheEx(Ex_INIT,"cache is from a different version of nget");
@@ -550,7 +563,7 @@ c_nntp_file::ptr c_nntp_cache_reader::read_file(void) {
 				if (i==4){
 					ulong serverid=atoul(t[0]);
 					if (nconfig.getserver(serverid)) {
-						sa=new c_nntp_server_article(serverid,atoul(t[1]),atoul(t[2]),atoul(t[3]));
+						sa=new c_nntp_server_article(serverid,group,atoul(t[1]),atoul(t[2]),atoul(t[3]));
 						//np->addserverarticle(sa);
 						np->articles.insert(t_nntp_server_articles::value_type(sa->serverid,sa));
 						counta++;
@@ -639,7 +652,7 @@ void c_nntp_cache_reader::check_counts(void) {
 c_nntp_cache::c_nntp_cache(void):totalnum(0), saveit(0){
 	fileread=-1;
 }
-c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midinfo):totalnum(0),group(group_){
+c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,meta_mid_info *midinfo):totalnum(0),group(group_){
 	saveit=0;
 	//file=nid;
 	c_file *f;
@@ -653,11 +666,13 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midi
 	}
 	auto_ptr<c_file> fcloser(f);
 	try{
-		c_nntp_cache_reader reader(f, midinfo, server_info);
+		c_nntp_cache_reader reader(f, midinfo, server_info, group_);
 		c_nntp_file::ptr nf;
 		while ((nf=reader.read_file()))
-			files.insert(t_nntp_files::value_type(nf->fileid,nf));
+			files.insert(t_nntp_files::value_type(nf.gimmethepointer(),nf));
 		fileread=1;
+		if (reader.cache_sortver!=CACHE_SORTVER)
+			saveit=1; //if the cache is from a version with different sorting, force saving it with new sorting even if nothing is changed otherwise.
 		PDEBUG(DEBUG_MIN,"read %lu parts (%lu sa) %lu files",reader.count,reader.counta,(ulong)files.size());
 		reader.check_counts();
 		totalnum = reader.totalnum;
@@ -684,7 +699,7 @@ c_nntp_cache::~c_nntp_cache(){
 				t_nntp_server_articles::iterator sai;
 				c_nntp_server_article *sa;
 				c_nntp_part *np;
-				f->putf(CACHE_VERSION"\t%lu\n",totalnum);//START_MODE
+				f->putf(CACHE_VERSION"\t%lu %i\n",totalnum,CACHE_SORTVER);//START_MODE
 				//vv SERVERINFO_MODE
 				for (t_nntp_server_info::const_iterator sii=server_info.begin(); sii!=server_info.end(); ++sii) {
 					const c_nntp_server_info &si = sii->second;
@@ -757,8 +772,111 @@ c_nntp_files_u::~c_nntp_files_u(){
 //	}
 }
 
+static inline bool ltfp(const c_nntp_file::ptr &f1, const c_nntp_file::ptr &f2) {
+	return *f1 < *f2;
+}
+	
+void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, const vector<c_group_info::ptr> &groups, meta_mid_info*midinfo, const t_nntp_getinfo_list &getinfos){
+	*ismultiserver = false;
+	auto_vector<c_file> cachefiles;
+	vector<t_nntp_server_info> server_infos;
+	vector<c_nntp_cache_reader> readers;
+	vector<c_nntp_file::ptr> nfiles;
+	ulong mergedcount=0, numfiles=0, mergedfiles=0, count=0, counta=0;
+	c_nntp_file::ptr nf, mergef;
+	for (vector<c_group_info::ptr>::const_iterator gi=groups.begin(); gi!=groups.end(); ++gi) {
+		const c_group_info::ptr &group = *gi;
+		string file=path_join(path,group->group + ",cache");
+		setfilenamegz(file,group->usegz);
+		c_file *f=NULL;
+		try {
+			f=dofileopen(file.c_str(),"rb",group->usegz);
+		}catch(FileNOENTEx &e){
+			//pass
+		}
+		
+		if (f) {
+			cachefiles.push_back(f);
+			try{
+				t_nntp_server_info server_info;
+				c_nntp_cache_reader reader(f, midinfo, server_info, group);
+				
+				if (reader.cache_sortver!=CACHE_SORTVER)
+					throw CacheEx(Ex_INIT, "cache file must be updated with this version of nget before it can be used with metagrouping");
 
-void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c_group_info::ptr group, c_mid_info*midinfo, const t_nntp_getinfo_list &getinfos){
+				if (cache_ismultiserver(server_info))
+					*ismultiserver=true; //###### doesn't handle the case where each file only has a single server, but different from the other files.
+				
+				if ((nf=reader.read_file())) {
+					//printf("initial file %i\n", nfiles.size());
+					nfiles.push_back(nf);//initialize with first nntp_file.
+					readers.push_back(reader);
+					numfiles++;
+				}
+				
+			} catch (CacheEx &e) {
+				set_cache_warn_status();
+				printf("%s: %s\n", file.c_str(), e.getExStr());
+			}
+		}
+	}
+
+	vector<c_nntp_file::ptr>::iterator nfi_m;
+
+	while (!nfiles.empty()) {
+		nfi_m = min_element(nfiles.begin(), nfiles.end(), ltfp);
+		mergef = *nfi_m;
+		//printf("pre-loop. nfiles.size=%u, merged=%lu, numfiles=%lu\n", nfiles.size(), mergedfiles, numfiles);
+		for (unsigned i = 0; i<nfiles.size();) {
+			//printf("loop start. i=%u nfiles.size=%u, merged=%lu, numfiles=%lu\n",i, nfiles.size(), mergedfiles, numfiles);
+			if (nfiles[i]==mergef || *nfiles[i]==*mergef) {
+				//printf("file %u equals min\n", i);
+				if (nfiles[i]!=mergef){
+					//printf("file %u merging\n", i);
+					mergef->mergefile(nfiles[i]);
+				}
+				if (nfiles[i]==mergef || nfiles[i]->parts.empty()) {
+					try{
+						//printf("reading file %u\n", i);
+						nf=readers[i].read_file();
+					} catch (CacheEx &e) {
+						nf=NULL;
+						set_cache_warn_status();
+						printf("%s: %s\n", readers[i].filename(), e.getExStr());
+					}
+					//printf("file %u = %p\n", i, nf.gimmethepointer());
+					if (nf) {
+						assert(!(nf < nfiles[i]));
+						numfiles++;
+						nfiles[i]=nf;
+					} else {
+						nfiles.erase(nfiles.begin()+i);
+						count+=readers[i].count;
+						counta+=readers[i].counta;
+						readers[i].check_counts();
+						readers.erase(readers.begin()+i);
+						continue;
+					}
+				}
+			}
+			++i;
+		}
+		//printf("post-loop. nfiles.size=%u, merged=%lu, numfiles=%lu\n", nfiles.size(), mergedfiles, numfiles);
+		nntp_cache_getfile(fc, midinfo, getinfos, mergef);
+		mergedfiles++;
+		mergedcount+=mergef->parts.size();
+	}
+	
+	PDEBUG(DEBUG_MIN,"scanned %lu parts %lu files (total: %lu parts (%lu sa) %lu files)",mergedcount,mergedfiles,count,counta,numfiles);
+
+	for (vector<c_nntp_cache_reader>::iterator cri=readers.begin(); cri!=readers.end(); ++cri) 
+		cri->check_counts();
+
+	for (auto_vector<c_file>::iterator cfi=cachefiles.begin(); cfi!=cachefiles.end(); ++cfi)
+		(*cfi)->close();
+}
+
+void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c_group_info::ptr group, meta_mid_info*midinfo, const t_nntp_getinfo_list &getinfos){
 
 	string file=path_join(path,group->group + ",cache");
 	setfilenamegz(file,group->usegz);
@@ -772,7 +890,7 @@ void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c
 	try{
 		t_nntp_server_info server_info;
 		ulong numfiles=0;
-		c_nntp_cache_reader reader(f, midinfo, server_info);
+		c_nntp_cache_reader reader(f, midinfo, server_info, group);
 		*ismultiserver = cache_ismultiserver(server_info);
 		c_nntp_file::ptr nf;
 
@@ -794,7 +912,7 @@ void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c
 
 #define MID_INFO_MIN_KEEP (14*24*60*60)
 #define MID_INFO_MIN_KEEP_DEL (7*24*60*60)
-void c_mid_info::do_delete_fun(c_mid_info &rel_mid){
+void c_mid_info::do_delete_fun(const c_mid_info &rel_mid){
 	t_message_state_list::iterator i=states.begin();
 	c_message_state::ptr s;
 	int deld=0;

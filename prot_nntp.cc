@@ -387,7 +387,7 @@ Other optional fields may follow line count. These fields are specified by
 examining the response to the LIST OVERVIEW.FMT command. Where no data
 exists, a null field must be provided
 */
-void c_prot_nntp::doxover(c_nrange *r){
+void c_prot_nntp::doxover(const c_group_info::ptr &group, c_nrange *r){
 	if (r->empty())
 		return;
 	XoverProgress progress;
@@ -395,7 +395,6 @@ void c_prot_nntp::doxover(c_nrange *r){
 	ulong bytes=0, realnum=0, realtotal=r->get_total(), last;
 	ulong total=realtotal;
 	assert(connection);
-	nntp_dogroup(0);
 
 	t_rlist::iterator r_ri;
 	t_rlist::iterator w_ri=r->rlist.begin();
@@ -422,6 +421,7 @@ void c_prot_nntp::doxover(c_nrange *r){
 		--streamed;
 		unsigned long an=0;
 		c_nntp_header nh;
+		nh.group = group;
 		char * tp;
 		do {
 			bytes+=getline(debug>=DEBUG_ALL);
@@ -502,10 +502,10 @@ void c_prot_nntp::doxover(c_nrange *r){
 		printf("\n");
 	}
 }
-void c_prot_nntp::doxover(ulong low, ulong high){
+void c_prot_nntp::doxover(const c_group_info::ptr &group, ulong low, ulong high){
 	c_nrange r;
 	r.insert(low, high);
-	doxover(&r);
+	doxover(group, &r);
 }
 
 class ListgroupProgress : public Progress {
@@ -545,7 +545,7 @@ void c_prot_nntp::dolistgroup(c_nrange &existing, ulong lowest, ulong highest, u
 	}
 }
 
-void c_prot_nntp::nntp_dogroup(ulong &num, ulong &low, ulong &high) {
+void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, ulong &num, ulong &low, ulong &high) {
 	assert(connection);
 	int reply = stdputline(quiet<2,"GROUP %s",group->group.c_str());
 	if (reply/100==4) // if group doesn't exist, set ok flag.  Otherwise let XOVER/ARTICLE reply set it. (If we always set it here, failure of xover/article would never result in penalization.  But if we only set it after xover/article, then a host could be incorrectly penalized just because it didn't have the group (eg, if maxconnections=1 so it closed connection before any other commands could succeed and setok))
@@ -564,10 +564,10 @@ void c_prot_nntp::nntp_dogroup(ulong &num, ulong &low, ulong &high) {
 	//printf("%i, %i, %i\n",num,low,high);
 }
 
-void c_prot_nntp::nntp_dogroup(int getheaders){
+void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, int getheaders){
 	ulong num,low,high;
 	if (connection->curgroup!=group || getheaders){	
-		nntp_dogroup(num,low,high);
+		nntp_dogroup(group, num,low,high);
 	}
 
 	if (getheaders){
@@ -588,14 +588,14 @@ void c_prot_nntp::nntp_dogroup(int getheaders){
 			c_nrange r(existing);
 			gcache->getxrange(servinfo,&r);//remove the article numbers we already have, leaving only the ones we still need to get.
 
-			doxover(&r);	
+			doxover(group, &r);	
 		}else{
 			if (low>servinfo->low)
 				gcache->flushlow(servinfo,low,midinfo);
 			if (connection->server->fullxover){
 				c_nrange r;
 				gcache->getxrange(servinfo,low,high,&r);
-				doxover(&r);
+				doxover(group, &r);
 			}else{
 				c_nrange r;
 
@@ -607,7 +607,7 @@ void c_prot_nntp::nntp_dogroup(int getheaders){
 					if (servinfo->low>low)
 						r.insert(low, servinfo->low-1);
 				}
-				doxover(&r);
+				doxover(group, &r);
 			}
 		}
 	}
@@ -636,7 +636,6 @@ void c_prot_nntp::doxpat(c_nrange &r, c_xpat::ptr xpat, ulong total, ulong lowes
 	assert(gcache);
 	assert(connection);
 
-	nntp_dogroup(0);
 	chkreply_setok(stdputline(debug>=DEBUG_MED,"XPAT %s %lu-%lu %s", xpat->field.c_str(), lowest, highest, xpat->wildmat.c_str()));
 	
 	ListgroupProgress progress;
@@ -666,7 +665,7 @@ void c_prot_nntp::doxpat(c_nrange &r, c_xpat::ptr xpat, ulong total, ulong lowes
 	}
 }
 
-void c_prot_nntp::nntp_xgroup(c_group_info::ptr group, const t_xpat_list &patinfos, const nget_options &options) {
+void c_prot_nntp::nntp_xgroup(const c_group_info::ptr &group, const t_xpat_list &patinfos, const nget_options &options) {
 	c_server::ptr s;
 	list<c_server::ptr> doservers;
 	nntp_simple_prioritize(group->priogrouping, doservers);
@@ -688,11 +687,11 @@ void c_prot_nntp::nntp_xgroup(c_group_info::ptr group, const t_xpat_list &patinf
 				ConnectionHolder holder(&sockpool, &connection, s->serverid);
 				nntp_doopen();
 				ulong num,low,high;
-				nntp_dogroup(num,low,high);
+				nntp_dogroup(group, num,low,high);
 				c_nrange r;
 				for (t_xpat_list::const_iterator i = patinfos.begin(); i != patinfos.end(); ++i)
 					doxpat(r, *i, num, low, high);
-				doxover(&r);
+				doxover(group, &r);
 				succeeded++;
 				connection->server_ok=true;
 			} catch (baseCommEx &e) {
@@ -725,7 +724,7 @@ void c_prot_nntp::nntp_xgroup(c_group_info::ptr group, const t_xpat_list &patinf
 	gcache_ismultiserver = gcache->ismultiserver();
 }
 
-void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nget_options &options){
+void c_prot_nntp::nntp_group(const c_group_info::ptr &ngroup, int getheaders, const nget_options &options){
 	if (group == ngroup && gcache && !getheaders)
 		return; // group is already selected, don't waste time reloading it
 
@@ -734,7 +733,7 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 //	if (gcache) delete gcache;
 	cleanupcache();
 
-	midinfo=new c_mid_info((nghome + group->group + ",midinfo"));
+	midinfo=new meta_mid_info(nghome, ngroup); 
 	//gcache=new c_nntp_cache(nghome,group->group + ",cache");
 	gcache=new c_nntp_cache(ngcachehome, group, midinfo);
 	if (getheaders){
@@ -758,7 +757,7 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 				try {
 					ConnectionHolder holder(&sockpool, &connection, s->serverid);
 					nntp_doopen();
-					nntp_dogroup(getheaders);
+					nntp_dogroup(ngroup, getheaders);
 					succeeded++;
 					connection->server_ok=true;
 				} catch (baseCommEx &e) {
@@ -826,7 +825,7 @@ int c_prot_nntp::nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_artic
 		assert(sa);
 		if (force_host && sa->serverid!=force_host->serverid)
 			continue;
-		prio=group->priogrouping->getserverpriority(sa->serverid);
+		prio=sa->group->priogrouping->getserverpriority(sa->serverid);
 		if (docurservmult){
 			if (sockpool.is_connected(sa->serverid))
 				prio*=nconfig.curservmult;
@@ -867,7 +866,7 @@ int c_prot_nntp::nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_artic
 
 
 int c_prot_nntp::nntp_dowritelite_article(c_file &fw,c_nntp_part *part,char *fn){
-	fw.putf("0\n%s\n%s\n",group->group.c_str(),fn);
+	fw.putf("0\n%s\n%s\n",group?group->group.c_str():"",fn);
 
 	c_server::ptr whost;
 	c_nntp_server_article *sa=NULL;
@@ -879,7 +878,11 @@ int c_prot_nntp::nntp_dowritelite_article(c_file &fw,c_nntp_part *part,char *fn)
 		sa=(*sapi).second;
 		whost=nconfig.getserver(sa->serverid);
 		fw.putf("%s\t%s\t%s\n",whost->addr.c_str(),whost->user.c_str(),whost->pass.c_str());
-		fw.putf("%lu\n%lu\n%lu\n",sa->articlenum,sa->bytes,sa->lines);
+		if (group)
+			fw.putf("%lu\n",sa->articlenum);
+		else
+			fw.putf("%s\n",part->messageid.c_str());
+		fw.putf("%lu\n%lu\n",sa->bytes,sa->lines);
 	}
 	return 0;
 }
@@ -975,8 +978,11 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 					ari->server_name=connection->server->shortname.c_str();
 				else if (toti->doarticle_show_multi==SHOW_MULTI_LONG)
 					ari->server_name=connection->server->alias.c_str();
-				nntp_dogroup(0);
-				chkreply_setok(stdputline(debug>=DEBUG_MED,"ARTICLE %lu",sa->articlenum));
+				if (group) {
+					nntp_dogroup(group, 0);
+					chkreply_setok(stdputline(debug>=DEBUG_MED,"ARTICLE %lu",sa->articlenum));
+				} else //#### should we just use sa->group and articlenum instead of messageid? ARTICLE messageid may be slower..
+					chkreply_setok(stdputline(debug>=DEBUG_MED,"ARTICLE %s",part->messageid.c_str()));
 				nntp_dogetarticle(ari,toti,buf);
 				connection->server_ok=true;
 			} catch (baseCommEx &e) {
@@ -1106,18 +1112,25 @@ void print_nntp_file_info(c_nntp_file::ptr f, t_show_multiserver show_multi) {
 	printf("\t%lil\t%s\t%s\t%s\t%s\n",f->lines(),tconvbuf,f->subject.c_str(),f->author.c_str(),p->messageid.c_str());
 }
 
-void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_list &getinfos, const t_xpat_list &patinfos, const nget_options &options) {
+void c_prot_nntp::nntp_retrieve(const vector<c_group_info::ptr> &rgroups, const t_nntp_getinfo_list &getinfos, const t_xpat_list &patinfos, const nget_options &options) {
 	c_nntp_files_u filec;
-	if (rgroup != group) {
+	if (rgroups.size()!=1) {
 		cleanupcache();
-		group = rgroup;
-	}
-	if (!midinfo) {
-		midinfo=new c_mid_info((nghome + group->group + ",midinfo"));
+		group = NULL;
+		midinfo=new meta_mid_info(nghome, rgroups);
+	} else {
+		if (rgroups.front() != group) {
+			cleanupcache();
+			group = rgroups.front();
+		}
+		if (!midinfo) {
+			midinfo=new meta_mid_info(nghome, group);
+		}
 	}
 	gcache=new c_nntp_cache();
 
-	nntp_xgroup(group, patinfos, options);
+	for (vector<c_group_info::ptr>::const_iterator gi=rgroups.begin(); gi!=rgroups.end(); gi++)
+		nntp_xgroup(*gi, patinfos, options);
 
 	gcache->getfiles(&filec, midinfo, getinfos);
 
@@ -1126,24 +1139,31 @@ void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_l
 	nntp_doretrieve(filec, options);
 }
 
-void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_list &getinfos, const nget_options &options){
+void c_prot_nntp::nntp_retrieve(const vector<c_group_info::ptr> &rgroups, const t_nntp_getinfo_list &getinfos, const nget_options &options){
 	c_nntp_files_u filec;
-	assert(rgroup);
-	if (gcache) {
-		assert(group == rgroup);
-		gcache->getfiles(&filec, midinfo, getinfos);
-		//attempt to free up some mem since all the data we need is now in filec, we don't need the whole cache.  Unfortunatly due to STL's memory allocators this doesn't really return the memory to the OS, but at least its available for any further STL allocations while retrieving.
-		gcache=NULL;
+	if (rgroups.size()!=1) {
+		cleanupcache();
+		group = NULL;
+		midinfo=new meta_mid_info(nghome, rgroups);
+		nntp_cache_getfiles(&filec, &gcache_ismultiserver, ngcachehome, rgroups, midinfo, getinfos);
 	} else {
-		if (rgroup != group) {
-			cleanupcache();
-			group = rgroup;
+		assert(rgroups.front());
+		if (gcache) {
+			assert(group == rgroups.front());
+			gcache->getfiles(&filec, midinfo, getinfos);
+			//attempt to free up some mem since all the data we need is now in filec, we don't need the whole cache.  Unfortunatly due to STL's memory allocators this doesn't really return the memory to the OS, but at least its available for any further STL allocations while retrieving.
+			gcache=NULL;
+		} else {
+			if (rgroups.front() != group) {
+				cleanupcache();
+				group = rgroups.front();
+			}
+			if (!midinfo) {
+				midinfo=new meta_mid_info(nghome, rgroups);
+			}
+
+			nntp_cache_getfiles(&filec, &gcache_ismultiserver, ngcachehome, group, midinfo, getinfos);
 		}
-		if (!midinfo) {
-			midinfo=new c_mid_info((nghome + group->group + ",midinfo"));
-		}
-		
-		nntp_cache_getfiles(&filec, &gcache_ismultiserver, ngcachehome, group, midinfo, getinfos);
 	}
 	nntp_doretrieve(filec, options);
 }
@@ -1202,18 +1222,9 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 		for(curf = filec.files.begin();curf!=filec.files.end();++curf){
 			fr=(*curf).second;
 			f=fr->file;
-			midinfo->insert(f->bamid());
+			midinfo->insert(f);
 		}
 	} else {
-		t_id group_id;
-# ifdef CHECKSUM
-		group_id=CHECKSUM(0L, Z_NULL, 0);
-		//group_id=CHECKSUM(group_id,host.c_str(),host.size());
-		group_id=CHECKSUM(group_id,(Byte*)group->group.c_str(),group->group.size());
-# else
-		hash<const char*> H;
-		group_id=H(group->group.c_str());
-# endif
 		quinfo qtotinfo;
 		arinfo ainfo;
 		time(&qtotinfo.starttime);
@@ -1255,17 +1266,15 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 					qtotinfo.bytesleft-=p->bytes();
 					continue;
 				}
-				//asprintf(&fn,"./%lx-%lx.%03li-%li",group_id,f->sub_id,(*curp).first,p->anum);
-				//asprintf(&fn,"./%lx-%lx.%03li",group_id,H(f->subject.c_str()),(*curp).first);
 				{
 					const char *usepath;
 					if (!options.writelite.empty())
 						usepath="";
 					else usepath=fr->temppath.c_str();
 					if (optionflags & GETFILES_TEMPSHORTNAMES)
-						asprintf(&fn,"%s%lx.%03i",usepath,group_id+f->fileid,(*curp).first);
+						asprintf(&fn,"%s%lx.%03i",usepath,f->fileid,(*curp).first);
 					else
-						asprintf(&fn,"%s%lx-%lx.%03i",usepath,group_id,f->fileid,(*curp).first);
+						asprintf(&fn,"%sngettemp-%lx.%03i",usepath,f->fileid,(*curp).first);
 				}
 				if (!fexists(fn)){
 					ainfo.partreq = f->req;
@@ -1439,7 +1448,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 						printf("not decoding, keeping temp files.\n");
 					uustatus.derr=1;
 				}else  {
-					midinfo->insert(f->bamid());
+					midinfo->insert(f);
 					if (optionflags&GETFILES_KEEPTEMP){
 						if (quiet<2)
 							printf("decoded ok, keeping temp files.\n");
@@ -1504,7 +1513,7 @@ void c_prot_nntp::cleanupcache(void){
 //	if(gcache){gcache->dec_rcount();/*delete gcache;*/gcache=NULL;}
 	gcache=NULL;//ref counted.
 	if (midinfo){
-		c_mid_info *mi = midinfo; //store midinfo in temp pointer and NULL out real pointer, to prevent a second deletion attempt if the destructor aborts and the atexit calls the cleanup again.
+		meta_mid_info *mi = midinfo; //store midinfo in temp pointer and NULL out real pointer, to prevent a second deletion attempt if the destructor aborts and the atexit calls the cleanup again.
 		midinfo=NULL;
 		delete mi;
 	}

@@ -114,8 +114,8 @@ int c_prot_nntp::getreply(int echo){
 
 #define tempfilename_base "ngetlite"
 
-void c_prot_nntp::doarticle(ulong anum,ulong bytes,ulong lines,const char *outfile){
-	chkreply(stdputline(debug>=DEBUG_MED,"ARTICLE %lu",anum));
+void c_prot_nntp::doarticle(const char *article,ulong bytes,ulong lines,const char *outfile){
+	chkreply(stdputline(debug>=DEBUG_MED,"ARTICLE %s",article));
 	printf(".");fflush(stdout);
 	ulong rbytes=0,rlines=0,hlines=0;
 	time_t starttime,donetime;
@@ -154,7 +154,7 @@ void c_prot_nntp::doarticle(ulong anum,ulong bytes,ulong lines,const char *outfi
 	time(&donetime);
 	if (!quiet){
 		long d=donetime-starttime;
-		printf("got article %lu in %li sec, %li B/s (%lu/%lu lines, %lu/%lu bytes, %s)",anum,d,d?rbytes/(d):0,rlines,lines,rbytes,bytes,outfile);
+		printf("got article %s in %li sec, %li B/s (%lu/%lu lines, %lu/%lu bytes, %s)",article,d,d?rbytes/(d):0,rlines,lines,rbytes,bytes,outfile);
 		if (rlines!=lines)printf(" Warning! lines not equal to expected!");
 		//if (rbytes!=bytes)printf(" bne!");
 		if ((rbytes > bytes + 3) || (rbytes + 3 < bytes)) printf(" bne!");

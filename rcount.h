@@ -34,6 +34,7 @@ class c_refpointer {
 		T* operator-> () { return p_; }
 		const T* operator-> () const { return p_; }
 		T& operator* ()  { return *p_; }
+		const T& operator* () const { return *p_; }
 		c_refpointer(T* p)    : p_(p) { if(p_) ++p_->count_; }  // p must not be NULL
 		~c_refpointer()           { if (p_) {if (--p_->count_ == 0) delete p_;} }
 		c_refpointer(void) : p_(NULL) {}
@@ -59,5 +60,25 @@ class c_refcounted {
 		typedef c_refpointer<T> ptr;
 	protected:
 		unsigned int count_;
+};
+
+#include <vector>
+template <class T>
+class auto_vector : public vector<T*> {
+	public:
+		~auto_vector() {
+			delete_all();
+		}
+		auto_vector(void){}
+		void clear(void){
+			delete_all();
+			vector<T*>::clear();
+		}
+	private:
+		void delete_all(void) {
+			for (iterator i=begin(); i!=end(); ++i)
+				delete *i;
+		}
+		auto_vector(const auto_vector &v); //private copy constructor to disallow copying
 };
 #endif

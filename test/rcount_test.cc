@@ -65,3 +65,45 @@ class rcount_Test : public CppUnit::TestFixture {
 
 CPPUNIT_TEST_SUITE_REGISTRATION( rcount_Test );
 
+
+class auto_vector_Test : public CppUnit::TestFixture {
+	CPPUNIT_TEST_SUITE(auto_vector_Test);
+		CPPUNIT_TEST(testClear);
+		CPPUNIT_TEST(testScope);
+	CPPUNIT_TEST_SUITE_END();
+	protected:
+		int alive;
+		class RCounter{
+			public:
+				int *aliveptr;
+				bool foo(void){return true;}
+				RCounter(int *a):aliveptr(a){++*aliveptr;}
+				~RCounter(){--*aliveptr;}
+		};
+	public:
+		void setUp(void) {
+			alive = 0;
+		}
+		void testClear(void) {
+			auto_vector<RCounter> v;
+			v.push_back(new RCounter(&alive));
+			CPPUNIT_ASSERT_EQUAL(1, alive);
+			v.push_back(new RCounter(&alive));
+			CPPUNIT_ASSERT_EQUAL(2, alive);
+			v.clear();
+			CPPUNIT_ASSERT_EQUAL(0, alive);
+		}
+		void testScope(void) {
+			{
+				auto_vector<RCounter> v;
+				v.push_back(new RCounter(&alive));
+				CPPUNIT_ASSERT_EQUAL(1, alive);
+				v.push_back(new RCounter(&alive));
+				CPPUNIT_ASSERT_EQUAL(2, alive);
+			}
+			CPPUNIT_ASSERT_EQUAL(0, alive);
+		}
+};
+
+CPPUNIT_TEST_SUITE_REGISTRATION( auto_vector_Test );
+

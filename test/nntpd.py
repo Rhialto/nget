@@ -245,7 +245,7 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 	def cmd_article(self, args):
 		if args[0]=='<':
 			try:
-				article = self.server.articles[args]
+				article = self.server.midindex[args]
 			except KeyError:
 				raise NNTPNoSuchArticleMID, args
 			anum=0
@@ -345,6 +345,7 @@ class NNTPTCPServer(StoppableThreadingTCPServer):
 	
 	def rmarticle(self, mid):
 		article = self.midindex[mid]
+		del self.midindex[mid]
 		for g in self.groups.values():
 			g.rmarticle(article)
 

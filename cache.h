@@ -41,26 +41,57 @@
 #include "dupe_file.h"
 
 #define CACHE_VERSION "NGET4"
+#define CACHE_SORTVER (1)
 
 typedef vector<string> t_references;
 
 typedef unsigned long t_id;
-class c_nntp_header {
+
+class c_nntp_file_base {
+	public:
+		t_id fileid;
+		int req;
+		int partoff;
+		string author;
+		string subject;
+		t_references references;
+		c_nntp_file_base(t_id fi, int r, int po, const char *a, const char *s): fileid(fi), req(r), partoff(po), author(a), subject(s) {}
+//		c_nntp_file_base(t_id fi, int r, int po, const string &a, const string &s, const t_references& refs): fileid(fi), req(r), partoff(po), author(a), subject(s), references(refs) {}
+//		c_nntp_file_base(const c_nntp_file_base &fb): fileid(fb.fileid), req(fb.req), partoff(fb.partoff), author(fb.author), subject(fb.subject), references(fb.references) {}
+		c_nntp_file_base() {}
+		bool operator< (const c_nntp_file_base &fb) const {
+			if (fileid<fb.fileid) return true;
+			if (fileid>fb.fileid) return false;
+			if (req<fb.req) return true;
+			if (req>fb.req) return false;
+			if (partoff<fb.partoff) return true;
+			if (partoff>fb.partoff) return false;
+			if (author<fb.author) return true;
+			if (author>fb.author) return false;
+			if (subject<fb.subject) return true;
+			if (subject>fb.subject) return false;
+			if (references<fb.references) return true;
+			//if (references>fb.references) return false;
+			return false;
+		}
+		bool operator== (const c_nntp_file_base &fb) const {
+			return (fileid==fb.fileid && req==fb.req && partoff==fb.partoff && author==fb.author && subject==fb.subject && references==fb.references);
+		}
+};
+
+class c_nntp_header : public c_nntp_file_base {
 	private:
 		int parsepnum(const char *str,const char *soff);
 		void setfileid(char *refstr, unsigned int refstrlen);
 	public:
 		ulong serverid;
-		int partnum, req;
-		int partoff, tailoff;
-		t_id fileid;
-		string subject;
-		string author;
+		c_group_info::ptr group;
+		int partnum;
+		int tailoff;
 		ulong articlenum;
 		time_t date;
 		ulong bytes,lines;
 		string messageid;
-		t_references references;
 		void set(char *s,const char *a,ulong anum,time_t d,ulong b,ulong l,const char *mid,char *refstr);//note: modifies refstr
 //		c_nntp_header(char *s,const char *a,ulong anum,time_t d,ulong b,ulong l);
 };
@@ -69,9 +100,10 @@ class c_nntp_header {
 class c_nntp_server_article {
 	public:
 		ulong serverid;
+		c_group_info::ptr group;
 		ulong articlenum;
 		ulong bytes,lines;
-		c_nntp_server_article(ulong serverid,ulong articlenum,ulong bytes,ulong lines);
+		c_nntp_server_article(ulong serverid,const c_group_info::ptr &group,ulong articlenum,ulong bytes,ulong lines);
 };
 typedef multimap<ulong,c_nntp_server_article*> t_nntp_server_articles;
 typedef multimap<float,c_nntp_server_article*,greater<float> > t_nntp_server_articles_prioritized;
@@ -98,7 +130,7 @@ class c_nntp_part {
 		}
 		ulong bytes(void) const {return get_best_sa()->bytes;}
 		ulong lines(void) const {return get_best_sa()->lines;}
-		c_nntp_part(int pn, time_t d,const char *mid):partnum(pn),date(d),messageid(mid){};
+		c_nntp_part(int pn, time_t d,const string &mid):partnum(pn),date(d),messageid(mid){};
 		c_nntp_part(c_nntp_header *h);
 		~c_nntp_part();
 		void addserverarticle(c_nntp_header *h);
@@ -112,17 +144,15 @@ typedef map<int,c_nntp_part*> t_nntp_file_parts;
 
 typedef map<ulong,int> t_server_have_map;
 
-class c_nntp_file : public c_refcounted<c_nntp_file>{
+class c_nntp_file : public c_nntp_file_base, public c_refcounted<c_nntp_file>{
 	public:
 		t_nntp_file_parts parts;
-		int req,have;
+		int have;
 //		ulong bytes,lines;
 		ulong flags;
-		t_id fileid;
-		string subject,author;
-		int partoff,tailoff;
-		t_references references;
+		int tailoff;
 		void addpart(c_nntp_part *p);
+		void mergefile(c_nntp_file::ptr &f);
 		bool iscomplete(void) const {return (have>=req) || (have<=1 && !references.empty() && lines()<1000);}
 		void get_server_have_map(t_server_have_map &have_map) const;
 //		ulong banum(void){assert(!parts.empty());return (*parts.begin()).second->articlenum;}
@@ -144,13 +174,13 @@ class c_nntp_file : public c_refcounted<c_nntp_file>{
 };
 
 
-//typedef hash_map<const char*, c_nntp_file*, hash<const char*>, eqstr> t_nntp_files;
-#ifdef HAVE_WORKING_HASH_MAP
-typedef hash_multimap<t_id, c_nntp_file::ptr> t_nntp_files;
-#else
-typedef multimap<t_id, c_nntp_file::ptr> t_nntp_files;
-#endif
-//typedef map<ulong,c_nntp_file*,less<ulong> > t_nntp_files_u;
+struct ltfb {
+	bool operator()(const c_nntp_file_base *fb1, const c_nntp_file_base *fb2) const {
+		return *fb1 < *fb2;
+	}
+};
+typedef multimap<c_nntp_file_base*, c_nntp_file::ptr, ltfb> t_nntp_files;
+
 class c_nntp_file_retr : public c_refcounted<c_nntp_file_retr>{
 	public:
 		string path;
@@ -207,22 +237,10 @@ typedef map<const char*, c_message_state::ptr, ltstr> t_message_state_list;
 #define TIME_T_DEAD TIME_T_MAX
 
 class c_mid_info {
-	public:
+	protected:
 		string file;
 		int changed;
 		t_message_state_list states;
-		int check(string mid) const {
-			if (states.find(mid.c_str())!=states.end())
-				return 1;
-			return 0;
-		}
-		void insert(string mid){
-			if (check(mid))return;
-			changed=1;
-			c_message_state::ptr s=new c_message_state(mid,time(NULL),TIME_T_MAX1);
-			states.insert(t_message_state_list::value_type(s->messageid.c_str(),s));
-			return;
-		}
 		void insert_full(string mid, time_t a, time_t d){
 			t_message_state_list::iterator i=states.find(mid.c_str());
 			c_message_state::ptr s;
@@ -236,13 +254,25 @@ class c_mid_info {
 			s=new c_message_state(mid,a,d);
 			states.insert(t_message_state_list::value_type(s->messageid.c_str(),s));
 		}
-		int remove(string mid){
+	public:
+		int check(const string &mid) const {
+			if (states.find(mid.c_str())!=states.end())
+				return 1;
+			return 0;
+		}
+		void insert(const string &mid){
+			if (check(mid))return;
+			changed=1;
+			c_message_state::ptr s=new c_message_state(mid,time(NULL),TIME_T_MAX1);
+			states.insert(t_message_state_list::value_type(s->messageid.c_str(),s));
+			return;
+		}
+		void remove(const string &mid){
 			t_message_state_list::iterator i=states.find(mid.c_str());
 			if (i==states.end())
-				return 0;
+				return;
 			(*i).second->date_removed=TIME_T_DEAD;
 			changed=1;
-			return 1;
 		}
 		void clear(void){
 			if (!states.empty()){
@@ -250,17 +280,63 @@ class c_mid_info {
 				changed=1;
 			}
 		}
-		void set_delete(string mid){
+		void set_delete(const string &mid){
 			t_message_state_list::iterator i=states.find(mid.c_str());
 			if (i!=states.end()){
 				(*i).second->date_removed=time(NULL);
 			}
 		}
-		void do_delete_fun(c_mid_info &rel_mid);
+		void do_delete_fun(const c_mid_info &rel_mid);
 		void load(string path,bool merge=0,bool lock=1);
 		void save(void);
 		c_mid_info(string path);
 		~c_mid_info();
+};
+
+typedef map<string, c_mid_info *> t_mid_info_list;
+class meta_mid_info {
+	protected:
+		t_mid_info_list midinfos;
+		void add_mid_info(const string &path, const c_group_info::ptr &group){
+			midinfos.insert(t_mid_info_list::value_type(group->group, new c_mid_info(path + group->group + ",midinfo")));
+		}
+	public:
+		bool check(const string &mid) const {
+			for (t_mid_info_list::const_iterator mili=midinfos.begin(); mili!=midinfos.end(); ++mili)
+				if ((*mili).second->check(mid))
+					return true;
+			return false;
+		}
+		void insert(const c_nntp_file::ptr &f){
+			const string &mid=f->bamid();
+			c_nntp_part *p = f->parts.begin()->second;
+			for (t_nntp_server_articles::iterator sai=p->articles.begin(); sai!=p->articles.end(); ++sai)
+				midinfos.find(sai->second->group->group)->second->insert(mid);
+		}
+		void remove(const string &mid){
+			for (t_mid_info_list::iterator mili=midinfos.begin(); mili!=midinfos.end(); ++mili)
+				(*mili).second->remove(mid);
+		}
+		void set_delete(const string &mid){
+			for (t_mid_info_list::iterator mili=midinfos.begin(); mili!=midinfos.end(); ++mili)
+				(*mili).second->set_delete(mid);
+		}
+		void do_delete_fun(const c_mid_info &rel_mid){
+			for (t_mid_info_list::iterator mili=midinfos.begin(); mili!=midinfos.end(); ++mili)
+				(*mili).second->do_delete_fun(rel_mid);
+		}
+		
+		meta_mid_info(string path, const vector<c_group_info::ptr> &groups){
+			for (vector<c_group_info::ptr>::const_iterator gi=groups.begin(); gi!=groups.end(); ++gi)
+				add_mid_info(path, *gi);
+		}
+		meta_mid_info(string path, const c_group_info::ptr &group) {
+			add_mid_info(path, group);
+		}
+		~meta_mid_info(){
+			for (t_mid_info_list::iterator mili=midinfos.begin(); mili!=midinfos.end(); ++mili)
+				delete mili->second;
+		}
 };
 
 class c_xpat : public c_refcounted<c_xpat>{
@@ -301,16 +377,17 @@ class c_nntp_cache : public c_refcounted<c_nntp_cache>{
 		bool ismultiserver(void) const;
 		//int additem(ulong an,char *s,const char * a,time_t d, ulong b, ulong l){
 		int additem(c_nntp_header *h);
-		ulong flush(c_nntp_server_info *servinfo, c_nrange flushrange, c_mid_info *midinfo);
-		ulong flushlow(c_nntp_server_info *servinfo, ulong newlow, c_mid_info *midinfo);
+		ulong flush(c_nntp_server_info *servinfo, c_nrange flushrange, meta_mid_info *midinfo);
+		ulong flushlow(c_nntp_server_info *servinfo, ulong newlow, meta_mid_info *midinfo);
 		void getxrange(c_nntp_server_info *servinfo, ulong newlow, ulong newhigh, c_nrange *range) const;
 		void getxrange(c_nntp_server_info *servinfo, c_nrange *range) const;
-		void getfiles(c_nntp_files_u *fc, c_mid_info *midinfo, const t_nntp_getinfo_list &getinfos);
+		void getfiles(c_nntp_files_u *fc, meta_mid_info *midinfo, const t_nntp_getinfo_list &getinfos);
 		c_nntp_cache(void);
-		c_nntp_cache(string path,c_group_info::ptr group,c_mid_info*midinfo);
+		c_nntp_cache(string path,c_group_info::ptr group,meta_mid_info*midinfo);
 		virtual ~c_nntp_cache();
 };
 
-void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c_group_info::ptr group, c_mid_info*midinfo, const t_nntp_getinfo_list &getinfos);
+void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, c_group_info::ptr group, meta_mid_info*midinfo, const t_nntp_getinfo_list &getinfos);
+void nntp_cache_getfiles(c_nntp_files_u *fc, bool *ismultiserver, string path, const vector<c_group_info::ptr> &groups, meta_mid_info*midinfo, const t_nntp_getinfo_list &getinfos);
 
 #endif

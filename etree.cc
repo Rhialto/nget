@@ -190,9 +190,9 @@ inline bool operator != (const t_references &a, const c_regex_nosub &r) {
 nntp_file_pred *nntp_file_comparison_maker(const string &i, const string *x, const string *y, int re_flags) {
 	const char *n = x->c_str();
 	if (strcasecmp(n, "subject")==0)
-		return comparison_re<const c_nntp_file>(i, &c_nntp_file::subject, y->c_str(), re_flags);
+		return comparison_re<const c_nntp_file,string c_nntp_file::*>(i, &c_nntp_file::subject, y->c_str(), re_flags);
 	else if (strcasecmp(n, "author")==0)
-		return comparison_re<const c_nntp_file>(i, &c_nntp_file::author, y->c_str(), re_flags);
+		return comparison_re<const c_nntp_file,string c_nntp_file::*>(i, &c_nntp_file::author, y->c_str(), re_flags);
 	else if (strcasecmp(n, "mid")==0 || strcasecmp(n, "messageid")==0)
 		return comparison_re<const c_nntp_file>(i, &c_nntp_file::bamid, y->c_str(), re_flags);
 	else if (strcasecmp(n, "bytes")==0)
@@ -200,7 +200,7 @@ nntp_file_pred *nntp_file_comparison_maker(const string &i, const string *x, con
 	else if (strcasecmp(n, "lines")==0)
 		return comparison<const c_nntp_file>(i, &c_nntp_file::lines, atoul(y->c_str()));
 	else if (strcasecmp(n, "req")==0)
-		return comparison<const c_nntp_file>(i, &c_nntp_file::req, atoi(y->c_str()));
+		return comparison<const c_nntp_file,int c_nntp_file::*>(i, &c_nntp_file::req, atoi(y->c_str()));
 	else if (strcasecmp(n, "have")==0)
 		return comparison<const c_nntp_file>(i, &c_nntp_file::have, atoi(y->c_str()));
 	else if (strcasecmp(n, "date")==0)
@@ -209,7 +209,7 @@ nntp_file_pred *nntp_file_comparison_maker(const string &i, const string *x, con
 		//rather than taking a relative age and converting each date into a relative age and then comparing, decode_textage returns an absolute date (time_t) which simplifies comparisons, but to get intuitive usage we have to invert <,> operators.
 		return comparison<const c_nntp_file>(invert_op(i), &c_nntp_file::badate, decode_textage(y->c_str()));
 	else if (strcasecmp(n, "references")==0)
-		return comparison_re<const c_nntp_file>(i, &c_nntp_file::references, y->c_str(), re_flags);
+		return comparison_re<const c_nntp_file,t_references c_nntp_file::*>(i, &c_nntp_file::references, y->c_str(), re_flags);
 	else
 		return NULL;
 }

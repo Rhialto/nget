@@ -26,6 +26,7 @@
 #include <time.h>
 #include "datfile.h"
 #include "rcount.h"
+#include "strtoker.h"
 
 int parse_int_pair(const char *s, int *l, int *h);
 
@@ -83,8 +84,9 @@ class c_server_priority_grouping {
 };
 typedef map<const char *,c_server_priority_grouping*, ltstr> t_server_priority_grouping_list;
 
-class c_group_info : public c_refcounted<c_group_info>{
+class c_group_info {//: public c_refcounted<c_group_info>{
 	public:
+		typedef c_group_info* ptr; //since we include c_group_info::ptrs in every server_article now, the refcounting overhead is actually noticable.  And since we never free them until program exit anyway, letting them "leak" doesn't matter.
 		string alias;
 		string group;
 //		string priogrouping;
@@ -178,7 +180,7 @@ class c_nget_config {
 			}
 			assert(priog);
 			c_group_info::ptr group(new c_group_info(alias,name,priog,usegz));
-			if (!group.isnull()){
+			if (group){
 				if (!alias.empty())
 					groups.insert(t_group_info_list::value_type(group->alias.c_str(),group));
 				groups.insert(t_group_info_list::value_type(group->group.c_str(),group));
@@ -190,6 +192,15 @@ class c_nget_config {
 			if (gili!=groups.end())
 				return (*gili).second;
 			return addgroup("",groupname,"");//do we even need to addgroup?  since groups are refcounted, could just return a new one.. nothing really needs it to be in the list..
+		}
+		void getgroups(vector<c_group_info::ptr> &groups, const char *names) {
+			groups.clear();
+			char *foo = new char[strlen(names)+1];
+			char *cur = foo, *name = NULL;
+			strcpy(foo, names);
+			while ((name = goodstrtok(&cur, ',')))
+				groups.push_back(getgroup(name));
+			delete [] foo;
 		}
 		void setlist(c_data_section *cfg,c_data_section *hinfo,c_data_section *pinfo,c_data_section *ginfo);
 		c_nget_config(){

@@ -75,7 +75,8 @@ void dofile(const char *arg){
 	char *cp;
 	int tempi,i,partdone,retry;
 	long flagpos,temppos;
-	ulong anum,lines,bytes;
+	char *article=NULL;
+	ulong lines,bytes;
 #define FCHK(a) {if (a) {if (ferror(listf)) {printf(__FILE__":%i ",__LINE__);} goto dofile_ferror;}}
 #define Lfgets(buf) {FCHK(Bfgets(buf,2048,listf)==NULL);}
 	while (!feof(listf)){
@@ -118,7 +119,7 @@ void dofile(const char *arg){
 				}
 			}
 			Lfgets(buf);
-			anum=atoul(buf);
+			newstrcpy(article,buf);
 			Lfgets(buf);
 			bytes=atoul(buf);
 			Lfgets(buf);
@@ -129,8 +130,9 @@ void dofile(const char *arg){
 			while (retry<maxretry){
 				try {
 					nntp.doopen(host, user, pass);
-					nntp.dogroup(group);
-					nntp.doarticle(anum,bytes,lines,outfile);
+					if (*group)
+						nntp.dogroup(group);
+					nntp.doarticle(article,bytes,lines,outfile);
 					partdone=1;
 					FCHK((temppos=ftell(listf))<0);
 					FCHK(fseek(listf,flagpos,SEEK_SET));

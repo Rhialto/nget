@@ -253,10 +253,10 @@ static void addoptions(void)
 	addoption("available",0,'a',0,"update/load available newsgroups list");
 	addoption("quickavailable",0,'A',0,"load available newsgroups list");
 	addoption("xavailable",0,'X',0,"search available newsgroups list without using cache files");
-	addoption("group",1,'g',"GROUPNAME","newsgroup");
-	addoption("quickgroup",1,'G',"GROUPNAME","use group without checking for new headers");
-	addoption("xgroup",1,'x',"GROUPNAME","use group without using cache files (requires XPAT)");
-	addoption("flushserver",1,'F',"HOSTALIAS","flush server from current group or newsgroup list");
+	addoption("group",1,'g',"GROUP(s)","update and use newsgroups (comma seperated)");
+	addoption("quickgroup",1,'G',"GROUP(s)","use group(s) without checking for new headers");
+	addoption("xgroup",1,'x',"GROUP(s)","use group(s) without using cache files (requires XPAT)");
+	addoption("flushserver",1,'F',"HOSTALIAS","flush server from current group(s) or newsgroup list");
 	addoption("expretrieve",1,'R',"EXPRESSION","retrieve files matching expression(see man page)");
 	addoption("retrieve",1,'r',"REGEX","retrieve files matching regex");
 	addoption("list",1,'@',"LISTFILE","read commands from listfile");
@@ -407,7 +407,7 @@ nget_options::nget_options(void){
 	get_path();
 	get_temppath();
 }
-nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),test_multi(o.test_multi),retr_show_multi(o.retr_show_multi),makedirs(o.makedirs),cmdmode(o.cmdmode),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite),texthandling(o.texthandling),save_text_for_binaries(o.save_text_for_binaries),mboxfname(o.mboxfname){
+nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),test_multi(o.test_multi),retr_show_multi(o.retr_show_multi),makedirs(o.makedirs),cmdmode(o.cmdmode),groups(o.groups),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite),texthandling(o.texthandling),save_text_for_binaries(o.save_text_for_binaries),mboxfname(o.mboxfname){
 	/*	if (o.path){
 			path=new char[strlen(o.path)+1];
 			strcpy(path,o.path);
@@ -694,7 +694,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 						set_user_error_status_and_do_fatal_user_error();
 						break;
 					}
-					if(options.group.isnull()){
+					if(options.groups.empty()){
 						PERROR("no group specified");
 						set_user_error_status_and_do_fatal_user_error();
 					}else{
@@ -737,7 +737,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					break;
 				}
 				if (!options.badskip){
-					if(options.group.isnull()){
+					if(options.groups.empty()){
 						PERROR("no group specified");
 						set_user_error_status_and_do_fatal_user_error();
 					}else{
@@ -889,16 +889,17 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 						nntp.glist->flushserver(server->serverid);
 						break;
 					}
-					if (!options.group){
+					if (options.groups.empty()){
 						PERROR("specify group before -F");
 						set_user_error_status_and_do_fatal_user_error();
 						break;
 					}
-					nntp.nntp_group(options.group,0,options);
-					c_nntp_server_info* servinfo=nntp.gcache->getserverinfo(server->serverid);
-
-					nntp.gcache->flushlow(servinfo,ULONG_MAX,nntp.midinfo);
-					servinfo->reset();
+					for (vector<c_group_info::ptr>::const_iterator gi=options.groups.begin(); gi!=options.groups.end(); gi++) {
+						nntp.nntp_group(*gi, 0, options);
+						c_nntp_server_info* servinfo=nntp.gcache->getserverinfo(server->serverid);
+						nntp.gcache->flushlow(servinfo,ULONG_MAX,nntp.midinfo);
+						servinfo->reset();
+					}
 					break;
 				}
 #ifdef HAVE_LIBPOPT
@@ -934,12 +935,12 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 					patinfos.clear();
 				}
 				if (!patinfos.empty()){
-					nntp.nntp_retrieve(options.group, getinfos, patinfos, options);
+					nntp.nntp_retrieve(options.groups, getinfos, patinfos, options);
 					getinfos.clear();
 					patinfos.clear();
 				}
 				else if (!getinfos.empty()){
-					nntp.nntp_retrieve(options.group, getinfos, options);
+					nntp.nntp_retrieve(options.groups, getinfos, options);
 					getinfos.clear();
 				}
 				switch (c){
@@ -1011,17 +1012,18 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 						//if BAD_HOST, don't try to -g, fall through to -G instead
 						if (!(options.badskip & BAD_HOST)){
 							options.cmdmode=RETRIEVE_MODE;
-							options.group=nconfig.getgroup(loptarg);
-							nntp.nntp_group(options.group,1,options);
+							nconfig.getgroups(options.groups, loptarg);
+							for (vector<c_group_info::ptr>::const_iterator gi=options.groups.begin(); gi!=options.groups.end(); gi++)
+								nntp.nntp_group(*gi, 1, options);
 							break;
 						}
 					case 'G':
 						options.cmdmode=RETRIEVE_MODE;
-						options.group=nconfig.getgroup(loptarg);
+						nconfig.getgroups(options.groups, loptarg);
 						break;
 					case 'x':
 						options.cmdmode=NOCACHE_RETRIEVE_MODE;
-						options.group=nconfig.getgroup(loptarg);
+						nconfig.getgroups(options.groups, loptarg);
 						break;
 					case 'h':{
 							if (*loptarg){
@@ -1103,7 +1105,6 @@ int main(int argc, const char ** argv){
 			options.test_multi=NO_SHOW_MULTI;
 			options.retr_show_multi=SHOW_MULTI_LONG;//always display the multi-server info when retrieving, just because I think thats better
 			options.cmdmode=RETRIEVE_MODE;
-			options.group=NULL;
 			options.host=NULL;
 			options.texthandling=TEXT_FILES;
 			options.save_text_for_binaries=false;

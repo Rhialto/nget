@@ -49,7 +49,7 @@ class c_prot_nntp {
 //		int stdgetreply(int echo);
 		int chkreply(int reply);
 
-		void doarticle(ulong anum,ulong bytes,ulong lines,const char *outfile);
+		void doarticle(const char *article,ulong bytes,ulong lines,const char *outfile);
 
 		void dogroup(const char *group);
 		void doclose(void);

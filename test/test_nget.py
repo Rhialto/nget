@@ -97,16 +97,16 @@ class TestCase(unittest.TestCase):
 
 
 class DecodeTest_base:
-	def addarticle_toserver(self, testnum, dirname, aname, server, **kw):
+	def addarticle_toserver(self, testnum, dirname, aname, server, groups=["test"], **kw):
 		article = nntpd.FileArticle(open(os.path.join("testdata",testnum,dirname,aname), 'rb'))
-		server.addarticle(["test"], article, **kw)
+		server.addarticle(groups, article, **kw)
 		return article
 
-	def addarticles_toserver(self, testnum, dirname, server):
+	def addarticles_toserver(self, testnum, dirname, server, groups=["test"]):
 		for fn in glob.glob(os.path.join("testdata",testnum,dirname,"*")):
 			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
 				continue
-			server.addarticle(["test"], nntpd.FileArticle(open(fn, 'rb')))
+			server.addarticle(groups, nntpd.FileArticle(open(fn, 'rb')))
 
 	def rmarticles_fromserver(self, testnum, dirname, server):
 		for fn in glob.glob(os.path.join("testdata",testnum,dirname,"*")):
@@ -115,11 +115,11 @@ class DecodeTest_base:
 			article = nntpd.FileArticle(open(fn, 'rb'))
 			server.rmarticle(article.mid)
 			
-	def addarticles(self, testnum, dirname, servers=None):
+	def addarticles(self, testnum, dirname, servers=None, **kw):
 		if not servers:
 			servers = self.servers.servers
 		for server in servers:
-			self.addarticles_toserver(testnum, dirname, server)
+			self.addarticles_toserver(testnum, dirname, server, **kw)
 	
 	def rmarticles(self, testnum, dirname, servers=None):
 		if not servers:
@@ -235,6 +235,8 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.addarticles("mbox01", "input")
 		self.vfailIf(self.nget.run("--text=mbox -g test -r ."))
 		self.verifyoutput("mbox01")
+	def test_mergesa01_input(self):
+		self.do_test_auto()
 
 	def test_article_expiry(self):
 		article = self.addarticle_toserver('0001', 'uuencode_single', 'testfile.001', self.servers.servers[0])
@@ -802,6 +804,119 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 		self.vfailIf(self.nget.run("-N -G test -r ."))
 		self.verifyoutput('0002')
+
+
+class MetaGrouping_RetrieveTest_base(DecodeTest_base):
+	def setUp(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+		
+	def tearDown(self):
+		self.servers.stop()
+		self.nget.clean_all()
+
+	def test_r(self):
+		self.addarticles('0002', 'uuencode_multi3', groups=["test"])
+		self.addarticles('0001', 'uuencode_single', groups=["test2"])
+		self.addarticles('0004', 'input', groups=["test3"])
+		self.addarticles('refs01', 'input', groups=["test"])
+		self.addarticles('refs02', 'input', groups=["test2"])
+		self.vfailIf(self.nget_run('-g test,test2,test3 -ir .'))
+		self.verifyoutput(['0002','0001','0004','refs01','refs02'])
+
+	def test_r_dupemerge(self):
+		self.addarticles('0002', 'uuencode_multi3', groups=["test","test2"])
+		self.addarticles('0001', 'uuencode_single', groups=["test2","test3"])
+		self.addarticles('0004', 'input', groups=["test3","test"])
+		self.addarticles('refs01', 'input', groups=["test","test2"])
+		self.addarticles('refs02', 'input', groups=["test2","test3"])
+		self.vfailIf(self.nget_run('-D -g test,test2,test3 -ir .'))
+		self.verifyoutput(['0002','0001','0004','refs01','refs02'])
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 7)
+
+	def test_r_partmerge(self):
+		self.addarticle_toserver('0001', 'yenc_multi', '001', self.servers.servers[0], groups=["test2"])
+		self.addarticle_toserver('0001', 'yenc_multi', '002', self.servers.servers[0], groups=["test3"])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], groups=["test"])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], groups=["test2"])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], groups=["test3"])
+		self.addarticles('0004', 'input', groups=["test3"])
+		self.addarticles('refs01', 'input', groups=["test"])
+		self.addarticles('refs02', 'input', groups=["test2"])
+		self.vfailIf(self.nget_run('-g test,test2,test3 -i -r joy -r testfile'))
+		self.verifyoutput(['0002','0001'])
+	
+	def test_r_dupepartmerge(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], groups=["test","test2"])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], groups=["test2","test3"])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], groups=["test3","test"])
+		self.addarticles('0001', 'uuencode_single', groups=["test2","test3"])
+		self.addarticles('0004', 'input', groups=["test3","test"])
+		self.addarticles('refs01', 'input', groups=["test","test2"])
+		self.addarticles('refs02', 'input', groups=["test2","test3"])
+		self.vfailIf(self.nget_run('-D -g test,test2,test3 -ir joy'))
+		self.verifyoutput(['0002'])
+	
+	def test_r_samerge(self): #note this func is copied in MetaGrouping_LiteRetrieveTestCase
+		self.addarticle_toserver('mergesa01', 'input', '001', self.servers.servers[0], groups=["test"])
+		self.addarticle_toserver('mergesa01', 'input', '002', self.servers.servers[0], groups=["test2"])
+		self.vfailIf(self.nget_run('-g test,test2 -ir .'))
+		self.verifyoutput(['mergesa01'])
+
+	
+class MetaGrouping_NoCacheRetrieveTestCase(TestCase, MetaGrouping_RetrieveTest_base):
+	def setUp(self):
+		MetaGrouping_RetrieveTest_base.setUp(self)
+	def tearDown(self):
+		if self.servers.servers[0].count("group")>0:
+			assert self.servers.servers[0].count("xpat")>0
+		MetaGrouping_RetrieveTest_base.tearDown(self)
+	def nget_run(self, cmd):
+		newcmd = re.sub('-[Gg] ', '-x ', cmd)
+		return self.nget.run(newcmd)
+
+class MetaGrouping_CacheRetrieveTestCase(TestCase, MetaGrouping_RetrieveTest_base):
+	def setUp(self):
+		MetaGrouping_RetrieveTest_base.setUp(self)
+	def tearDown(self):
+		assert self.servers.servers[0].count("xpat")==0
+		MetaGrouping_RetrieveTest_base.tearDown(self)
+	def nget_run(self, cmd):
+		x = re.match("^(.*)-g *([^ ]+) *(.*)$", cmd)
+		if x:
+			groups = x.group(2).split(',')
+			cmd = x.group(1) + '-g ' + ' -g '.join(groups) + ' -G ' + x.group(2) + ' ' + x.group(3)
+		return self.nget.run(cmd)
+
+class MetaGrouping_RetrieveTestCase(TestCase, MetaGrouping_RetrieveTest_base):
+	def setUp(self):
+		MetaGrouping_RetrieveTest_base.setUp(self)
+	def tearDown(self):
+		assert self.servers.servers[0].count("xpat")==0
+		MetaGrouping_RetrieveTest_base.tearDown(self)
+	def nget_run(self, cmd):
+		return self.nget.run(cmd)
+
+class MetaGrouping_LiteRetrieveTestCase(TestCase, MetaGrouping_RetrieveTest_base):
+	def setUp(self):
+		MetaGrouping_RetrieveTest_base.setUp(self)
+	def tearDown(self):
+		assert self.servers.servers[0].count("xpat")==0
+		MetaGrouping_RetrieveTest_base.tearDown(self)
+	def nget_run(self, cmd):
+		litelist = os.path.join(self.nget.rcdir, 'lite.lst')
+		self.vfailIf(self.nget.run('-w %s %s'%(litelist,cmd)))
+		self.vfailIf(self.nget.runlite(litelist))
+		return self.nget.run('-N %s'%cmd)
+
+	def test_r_samerge(self): #note this func is copied from MetaGrouping_RetrieveTest_base
+		self.addarticle_toserver('mergesa01', 'input', '001', self.servers.servers[0], groups=["test"])
+		self.addarticle_toserver('mergesa01', 'input', '002', self.servers.servers[0], groups=["test2"])
+		self.vfailIf(self.nget_run('-g test,test2 -r .'))
+		#Kind of ugly, but we have to run ngetlite again to get the second article, since they both have the same tempname.  Dunno what should/could really be done about that.
+		self.vfailIf(self.nget_run('-G test,test2 -r .'))
+		self.verifyoutput(['mergesa01'])
 
 
 class FatalUserErrorsTestCase(TestCase, DecodeTest_base):
@@ -1452,6 +1567,23 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.failUnless(re.search(r"^h1\t1only$",output, re.M))
 		self.failIf(output.find("h0")>=0)
 		self.failIf(output.find("0only")>=0)
+	
+	def test_MetaGrouping_FlushServer(self):
+		self.servers = nntpd.NNTPD_Master(2)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+		self.addarticle_toserver('0001', 'yenc_multi', '001', self.servers.servers[0], groups=["test2"])
+		self.addarticle_toserver('0001', 'yenc_multi', '002', self.servers.servers[0], groups=["test3"])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[1], groups=["test"])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[1], groups=["test2"])
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[1], groups=["test3"])
+		self.addarticle_toserver('0004', 'input', '001', self.servers.servers[1], groups=["test2"])
+		self.vfailIf(self.nget.run("-g test,test2,test3"))
+		self.vfailIf(self.nget.run("-G test,test2,test3 -F host1"))
+		self.vfailIf(self.nget.run("-G test,test2,test3 -r ."))
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
+		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
 	
 	def test_AbruptTimeout(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler), nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])

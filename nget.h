@@ -22,6 +22,7 @@
 #include "config.h"
 #endif
 
+#include <vector>
 #include "server.h"
 //#include "datfile.h"
 
@@ -93,7 +94,8 @@ struct nget_options {
 	t_show_multiserver retr_show_multi; 
 	int makedirs;
 	t_cmd_mode cmdmode;
-	c_group_info::ptr group;//,*host;
+	//c_group_info::ptr group;//,*host;
+	vector<c_group_info::ptr> groups;
 //	c_data_section *host;
 	c_server::ptr host;
 //	char *user,*pass;//,*path;
