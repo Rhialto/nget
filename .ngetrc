@@ -1,4 +1,4 @@
-//example .ngetrc, copy to your ~/.nget4/ dir, and edit to your liking.
+//example .ngetrc, copy to your ~/.nget5/ dir, and edit to your liking.
 #lines that start with either '#' or '//' are considered comments and ignored.
 #Before running nget you must configure at least one host in the halias section
 #See the "CONFIGURATION" section of the nget manpage for full details.
@@ -20,7 +20,7 @@
 #usegz=-1
 #timeout=180
 #unequal_line_error=0
-#//cachedir=/home/user/.nget4
+#//cachedir=/home/user/.nget5
 #test_multiserver=no
 #fullxover=0
 #maxstreaming=64

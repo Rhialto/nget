@@ -19,7 +19,7 @@ Requirements:
   liblockfile         http://packages.debian.org/liblockfile-dev
     (optional, only needed if your cache dir is on NFS)
     (note: liblockfile uses symlinks, so do not use liblockfile if you will
-     store your .nget4 directory on a fat/vfat/etc filesystem or it will
+     store your .nget5 directory on a fat/vfat/etc filesystem or it will
      just hang trying to lock the file.)
 
 TestSuite Requirements:
@@ -38,9 +38,9 @@ Install:      (./configure --help will show extra options not described here)
 
 Usage:
 1) Before the first use, nget must be configured.
-1.a) Make nget directory:         mkdir $HOME/.nget4
-1.b) Copy example .ngetrc:        cp .ngetrc $HOME/.nget4/
-1.c) Add your newsservers:        vi $HOME/.nget4/.ngetrc
+1.a) Make nget directory:         mkdir $HOME/.nget5
+1.b) Copy example .ngetrc:        cp .ngetrc $HOME/.nget5/
+1.c) Add your newsservers:        vi $HOME/.nget5/.ngetrc
    (Remember to chmod 600 your .ngetrc if you are using password auth.)
 2) See manpage and nget --help output.  The manpage thoroughly describes all
   command line and configuration options, and has an examples section.
