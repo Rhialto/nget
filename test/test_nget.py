@@ -28,6 +28,9 @@ ngetexe = os.path.join(os.pardir, 'nget')
 zerofile_fn_re = re.compile(r'(\d+)\.(\d+)\.txt$')
 
 class DecodeTest_base(unittest.TestCase):
+	def addarticle_toserver(self, testnum, dirname, aname, server, **kw):
+		server.addarticle(["test"], nntpd.FileArticle(open(os.path.join("testdata",testnum,dirname,aname), 'r')), **kw)
+
 	def addarticles_toserver(self, testnum, dirname, server):
 		for fn in glob.glob(os.path.join("testdata",testnum,dirname,"*")):
 			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
@@ -40,7 +43,9 @@ class DecodeTest_base(unittest.TestCase):
 		for server in servers:
 			self.addarticles_toserver(testnum, dirname, server)
 
-	def verifyoutput(self, testnum):
+	def verifyoutput(self, testnum, nget=None):
+		if nget is None:
+			nget = self.nget
 		ok = []
 		for fn in glob.glob(os.path.join("testdata",testnum,"_output","*")):
 			if fn.endswith("~") or not os.path.isfile(fn): #ignore backup files and non-files
@@ -49,21 +54,22 @@ class DecodeTest_base(unittest.TestCase):
 
 			r = zerofile_fn_re.match(tail)
 			if r:
-				dfnglob = os.path.join(self.nget.tmpdir, r.group(1)+'.*.txt')
+				dfnglob = os.path.join(nget.tmpdir, r.group(1)+'.*.txt')
 				g = glob.glob(dfnglob)
 				self.failIf(len(g) == 0, "decoded zero file %s does not exist"%dfnglob)
 				self.failIf(len(g) != 1, "decoded zero file %s matches multiple"%dfnglob)
 				dfn = g[0]
 			else:
-				dfn = os.path.join(self.nget.tmpdir, tail)
+				dfn = os.path.join(nget.tmpdir, tail)
 			self.failUnless(os.path.exists(dfn), "decoded file %s does not exist"%dfn)
 			self.failUnless(os.path.isfile(dfn), "decoded file %s is not a file"%dfn)
 			self.failUnless(filecmp.cmp(fn, dfn, shallow=0), "decoded file %s differs from %s"%(dfn, fn))
 			ok.append(os.path.split(dfn)[1])
 
-		extra = [fn for fn in os.listdir(self.nget.tmpdir) if fn not in ok]
+		extra = [fn for fn in os.listdir(nget.tmpdir) if fn not in ok]
 		self.failIf(extra, "extra files decoded: "+`extra`)
-	
+
+
 class DecodeTestCase(unittest.TestCase, DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)
@@ -129,6 +135,70 @@ class DecodeTestCase(unittest.TestCase, DecodeTest_base):
 		self.do_test_auto()
 	def test_0003_newspost_uue_0(self):
 		self.do_test_auto()
+
+
+class XoverTestCase(unittest.TestCase, DecodeTest_base):
+	def setUp(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':0}) 
+		self.fxnget = util.TestNGet(ngetexe, self.servers.servers, options={'fullxover':1}) 
+		self.servers.start()
+		
+	def tearDown(self):
+		self.servers.stop()
+		self.nget.clean_all()
+		self.fxnget.clean_all()
+
+	def verifynonewfiles(self):
+		nf = os.listdir(self.nget.tmpdir)
+		fxnf = os.listdir(self.fxnget.tmpdir)
+		self.failIf(nf or fxnf, "new files: %s %s"%(nf, fxnf))
+
+	def test_newarticle(self):
+		self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[0])
+
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
+		self.verifynonewfiles()
+		
+		self.addarticle_toserver('0002', 'uuencode_multi', '002', self.servers.servers[0])
+
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
+
+		self.verifyoutput('0002')
+		self.verifyoutput('0002', nget=self.fxnget)
+
+	def test_oldarticle(self):
+		self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[0], anum=2)
+
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
+		self.verifynonewfiles()
+		
+		self.addarticle_toserver('0002', 'uuencode_multi', '002', self.servers.servers[0], anum=1)
+
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
+
+		self.verifyoutput('0002')
+		self.verifyoutput('0002', nget=self.fxnget)
+
+	def test_insertedarticle(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=3)
+
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
+		self.verifynonewfiles()
+		
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=2)
+
+		self.failIf(self.nget.run("-g test -r ."), "nget process returned with an error")
+		self.verifynonewfiles() #fullxover=0 should not be able to find new article
+		self.failIf(self.fxnget.run("-g test -r ."), "nget process returned with an error")
+
+		self.verifyoutput('0002', nget=self.fxnget)
 
 
 class DiscoingNNTPRequestHandler(nntpd.NNTPRequestHandler):

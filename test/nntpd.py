@@ -117,13 +117,13 @@ class NNTPTCPServer(StoppableThreadingTCPServer):
 		self.groups = {}
 		self.midindex = {}
 		
-	def addarticle(self, groups, article):
+	def addarticle(self, groups, article, anum=None):
 		self.midindex[article.mid]=article
 		for g in groups:
 			#if g not in self.groups:
 			if not self.groups.has_key(g):
 				self.groups[g]=Group()
-			self.groups[g].addarticle(article)
+			self.groups[g].addarticle(article, anum)
 
 class NNTPD_Master:
 	def __init__(self, servers_num):
@@ -155,9 +155,16 @@ class Group:
 		self.low = 1
 		self.high = 1
 		self.articles = {}
-	def addarticle(self, article):
-		self.articles[self.high] = article
-		self.high += 1
+	def addarticle(self, article, anum=None):
+		if anum is None:
+			anum = self.high
+		if self.articles.has_key(anum):
+			raise Exception, "already have article %s"%anum
+		self.articles[anum] = article
+		if anum >= self.high:
+			self.high = anum + 1
+		if anum < self.low:
+			self.low = anum
 
 import time
 class FakeArticle:

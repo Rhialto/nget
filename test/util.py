@@ -18,7 +18,15 @@
 import os, random, sys, shutil
 
 class TestNGet:
-	def __init__(self, nget, servers, priorities=None):
+	def __init__(self, nget, servers, priorities=None, options=None):
+		defaultoptions = {
+#			'tries': 1,
+			'tries': 2,
+			'delay': 0,
+#			'debug': 3,
+#			'debug': 2,
+#			'fullxover': 1
+		}
 		self.exe = nget
 		self.rcdir = os.path.join(os.environ.get('TMPDIR') or '/tmp', 'nget_test_'+hex(random.randrange(0,sys.maxint)))
 		os.mkdir(self.rcdir)
@@ -26,11 +34,10 @@ class TestNGet:
 		os.mkdir(self.tmpdir)
 
 		rc = open(os.path.join(self.rcdir, '_ngetrc'), 'w')
-		#rc.write("tries=1\n")
-		rc.write("tries=2\n")
-		rc.write("delay=0\n")
-#		rc.write("debug=3\n")
-#		rc.write("debug=2\n")
+		if options:
+			defaultoptions.update(options)
+		for k,v in defaultoptions.items():
+			rc.write("%s=%s\n"%(k,v))
 
 		rc.write("{halias\n")
 		for i in range(0, len(servers)):
@@ -38,7 +45,6 @@ class TestNGet:
  {host%i
   addr=%s
   shortname=h%i
-  fullxover=1
   id=%i
  }
 """%(i, ':'.join(map(str,servers[i].socket.getsockname())), i, i+1))
