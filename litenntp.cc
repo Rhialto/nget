@@ -27,7 +27,6 @@
 #include "litenntp.h"
 #include "log.h"
 #include "sockstuff.h"
-#include "file.h"
 #include <stdio.h>
 #include <unistd.h>
 #include "strreps.h"
@@ -60,11 +59,12 @@ int c_prot_nntp::stdputline(int echo,const char * str,...){
 	return i;
 }
 int c_prot_nntp::doputline(int echo,const char * str,va_list ap){
-	int i,j=-234533;//initialize j to kill compiler warning
-
-	if ((((i=cursock.vprintf(str,ap))<=0))||(((j=cursock.printf("\r\n"))<=0))){
+	int i;
+	try {
+		i = cursock->vputf(str, ap) + cursock->write("\r\n",2);
+	} catch (FileEx &e) {
 		doclose();
-		throw TransportExError(Ex_INIT,"nntp_putline:%i %s(%i)",i>=0?j:i,sock_strerror(sock_errno),sock_errno);
+		throw TransportExError(Ex_INIT,"nntp_putline: %s:%i: %s",e.getExFile(), e.getExLine(), e.getExStr());
 	}
 	if (echo){
 		printf(">");
@@ -72,23 +72,21 @@ int c_prot_nntp::doputline(int echo,const char * str,va_list ap){
 		printf("\n");
 	}
 //	time(&lasttime);
-	return i+j;
+	return i;
 }
 
 int c_prot_nntp::getline(int echo){
-	int i=cursock.bgets(sockbuf);
-	//int i=sock.bgets();
-	if (i<0){//==0 can be legally achieved since the line terminators are removed
+	int i;
+	try {
+		i=cursock->bgets();
+	} catch (FileEx &e) {
 		doclose();
-		throw TransportExError(Ex_INIT,"nntp_getline:%i %s(%i)",i,sock_strerror(sock_errno),sock_errno);
-	}else {
-		cbuf=sockbuf.c_str();
-//		cbuf=sock.rbuffer->rbufp;
-//		time(&lasttime);
-		if (echo){
-			printf("%s\n",cbuf);
-			fflush(stdout);
-		}
+		throw TransportExError(Ex_INIT,"nntp_getline: %s:%i: %s",e.getExFile(), e.getExLine(), e.getExStr());
+	}
+	cbuf = cursock->rbufp();
+	if (echo){
+		printf("%s\n",cbuf);
+		fflush(stdout);
 	}
 	return i;
 }
@@ -130,9 +128,7 @@ void c_prot_nntp::doarticle(ulong anum,ulong bytes,ulong lines,const char *outfi
 			rand()
 #endif
 			);
-	FILE *f=fopen(tempfilename,"w");
-	if (f==NULL)
-		throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu fopen %s: %s", anum, tempfilename, strerror(errno));
+	c_file_fd f(tempfilename,"w");
 	while(1) {
 		glr=getline(debug>=DEBUG_ALL);
 		if (cbuf[0]=='.'){
@@ -148,17 +144,10 @@ void c_prot_nntp::doarticle(ulong anum,ulong bytes,ulong lines,const char *outfi
 			hlines=rlines;
 			rlines=0;
 		}
-		if (fprintf(f,"%s\n",lp)<0){
-			fclose(f);
-			throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu fprintf %s: %s", anum, tempfilename, strerror(errno));
-		}
+		f.putf("%s\n",lp);
 	}
-	if (fclose(f)) {
-		throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu fclose %s: %s", anum, tempfilename, strerror(errno));
-	}
-	if (rename(tempfilename,outfile)<0){
-		throw ApplicationExFatal(Ex_INIT,"nntp_doarticle:%lu rename %s(%i)",anum,strerror(errno),errno);
-	}
+	f.close();
+	xxrename(tempfilename,outfile);
 	time(&donetime);
 	if (!quiet){
 		long d=donetime-starttime;
@@ -178,19 +167,21 @@ void c_prot_nntp::dogroup(const char *group){
 	newstrcpy(curgroup,group);
 }
 void c_prot_nntp::doclose(void){
-	cursock.close();
+	if (cursock.get())
+		cursock->close();
 	safefree(curhost);
 	safefree(curgroup);
 	safefree(curuser);
 	safefree(curpass);
 }
 void c_prot_nntp::doopen(const char *host, const char *user, const char *pass){
-	if (cursock.isopen() && curhost && strcmp(host,curhost)==0)
+	if (cursock.get() && cursock->isopen() && curhost && strcmp(host,curhost)==0)
 		return;
 
 	doclose();
 	try {
-		cursock.open(host,"nntp");
+		cursock.reset(new c_file_tcp(host,"nntp"));
+		cursock->initrbuf();
 	} catch (FileEx &e) {
 		throw TransportExError(Ex_INIT,"nntp_doopen: %s",e.getExStr());
 	}

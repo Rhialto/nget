@@ -27,6 +27,7 @@
 #include "litenntp.h"
 #include <string.h>
 #include "strreps.h"
+#include "sockstuff.h"
 
 char *newstrcpy(char *&dest, const char *src){
 	int l;

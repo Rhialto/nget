@@ -36,6 +36,8 @@
 DEFINE_EX_SUBCLASS(FileEx, ApplicationExFatal, true);
 DEFINE_EX_SUBCLASS(FileNOENTEx, FileEx, true);
 
+#define THROW_OPEN_ERROR(fmt,args...) {if (errno==ENOENT) throw FileNOENTEx(Ex_INIT, fmt, ## args); else throw FileEx(Ex_INIT, fmt, ## args);}
+
 void xxrename(const char *oldpath, const char *newpath);
 
 #include "buffy.h"
@@ -77,6 +79,7 @@ class c_file {
 	virtual ~c_file();
 	ssize_t putf(const char *buf,...)
 		__attribute__ ((format (printf, 2, 3)));
+	ssize_t vputf(const char *buf, va_list ap);
 	ssize_t write(const void *data,size_t len);
 	ssize_t read(void *data,size_t len);
 	//buffered funcs: must call initrbuf first.

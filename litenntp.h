@@ -26,15 +26,14 @@
 
 #include <sys/types.h>
 #include <stdarg.h>
+#include <memory>
 
-#include "buffysock.h"
+#include "file.h"
 
 class c_prot_nntp {
 	public:
 		char *cbuf;
-		CharBuffer sockbuf;
-//		int cursock;
-		sockbuffy cursock;
+		auto_ptr<c_file_tcp> cursock;
 		char *curhost;
 		char *curgroup;
 		char *curuser;
