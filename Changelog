@@ -6,6 +6,7 @@
   * Switch to using "GROUP g\nARTICLE n" in multi-group mode, rather than using ARTICLE <message-id>, since that is extremely slow on some news servers.
   * Fix exception with dupe file checking if a local filename starts with ?, due to forgetting to escape them in regex_escape_string. (Carsten Clasohm)
   * Update subterfugue tests to work when subterfugue is using python >=2.2.
+  * Document the messageid/mid keywords in the expretrieve expressions section of the manpage.
 
 2002-12-24 v0.23:
   * Add --decode arg so -k and -K can be negated.
