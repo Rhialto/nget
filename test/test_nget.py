@@ -201,6 +201,15 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessExitstatus(self.nget.run("-G test -r ."), 8, "nget process did not detect retrieve error")
 		self.verifyoutput('0002') #should have gotten the articles the server still has.
 
+	def test_article_expiry_incomplete_status(self):
+		#test that -g flushing remembers to update the incomplete status of the file
+		article = self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0002', 'uuencode_multi', '002', self.servers.servers[0], anum=2)
+		self.vfailIf(self.nget.run("-g test"))
+		self.servers.servers[0].rmarticle(article.mid)
+		self.vfailIf(self.nget.run('-g test -r .'))#should notice the article expired and not try to get anything
+		self.vfailUnlessEqual(self.servers.servers[0].retrs, 0)
+
 
 class RetrieveTestCase(TestCase, DecodeTest_base):
 	def setUp(self):

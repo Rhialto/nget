@@ -149,7 +149,7 @@ void c_nntp_file::addpart(c_nntp_part *p){
 	assert(nfpi==parts.end());
 #endif
 	parts.insert(t_nntp_file_parts::value_type(p->partnum,p));
-	if (p->partnum>0 && p->partnum<=req) have++;
+	if (p->partnum>0 && p->partnum<=req) have++;//be sure this if test is kept synced with the have-- test when flushing
 //	bytes+=p->apxbytes;lines+=p->apxlines;
 }
 
@@ -362,6 +362,7 @@ ulong c_nntp_cache::flushlow(c_nntp_server_info *servinfo, ulong newlow, c_mid_i
 					delete sa;
 					np->articles.erase(sai);
 					if (np->articles.empty()){
+						if (np->partnum>0 && np->partnum<=nf->req) nf->have--;//be sure this if test is kept synced with the have++ test in addpart
 						midinfo->set_delete(np->messageid);
 						delete np;
 						np=NULL;
