@@ -18,6 +18,9 @@
 */
 #include "server.h"
 #include "strreps.h"
+#include "nget.h"
+#include <sys/types.h>
+#include <dirent.h>
 
 bool c_nget_config::penalize(c_server::ptr server) const {
 	if (penaltystrikes<=0)
@@ -253,16 +256,35 @@ c_group_info::ptr c_nget_config::addgroup(const string &alias, const string &nam
 	return group;
 }
 
+void c_nget_config::dogetallcachedgroups(vector<c_group_info::ptr> &groups) {
+	DIR *dir=opendir(nghome.c_str());
+	struct dirent *de;
+	if (!dir)
+		throw PathExFatal(Ex_INIT,"opendir: %s(%i)",strerror(errno),errno);
+	while ((de=readdir(dir))) {
+		char *endp;
+		if ((endp=strstr(de->d_name,",cache"))){
+			string groupname(de->d_name, endp - de->d_name);
+			groups.push_back(getgroup(groupname.c_str()));
+		}
+	}
+	closedir(dir);
+}
+
 void c_nget_config::dogetgroups(vector<c_group_info::ptr> &groups, const char *names) {
 	char *foo = new char[strlen(names)+1];
 	char *cur = foo, *name = NULL;
 	strcpy(foo, names);
 	while ((name = goodstrtok(&cur, ','))) {
-		t_metagroup_list::const_iterator mgi=metagroups.find(name);
-		if (mgi!=metagroups.end())
-			dogetgroups(groups, mgi->second.c_str());
-		else
-			groups.push_back(getgroup(name));
+		if (strcmp(name,"*")==0)
+			dogetallcachedgroups(groups);
+		else {
+			t_metagroup_list::const_iterator mgi=metagroups.find(name);
+			if (mgi!=metagroups.end())
+				dogetgroups(groups, mgi->second.c_str());
+			else
+				groups.push_back(getgroup(name));
+		}
 	}
 	delete [] foo;
 }

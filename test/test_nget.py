@@ -888,6 +888,16 @@ class MetaGrouping_CacheRetrieveTestCase(TestCase, MetaGrouping_RetrieveTest_bas
 			groups = x.group(2).split(',')
 			cmd = x.group(1) + '-g ' + ' -g '.join(groups) + ' -G ' + x.group(2) + ' ' + x.group(3)
 		return self.nget.run(cmd)
+	
+	def test_r_allcached(self):
+		self.addarticles('0002', 'uuencode_multi3', groups=["test"])
+		self.addarticles('0001', 'uuencode_single', groups=["test2"])
+		self.addarticles('0004', 'input', groups=["test3"])
+		self.addarticles('refs01', 'input', groups=["test"])
+		self.addarticles('refs02', 'input', groups=["test2"])
+		self.vfailIf(self.nget.run('-g test,test2,test3'))
+		self.vfailIf(self.nget.run('-G "*" -ir .'))
+		self.verifyoutput(['0002','0001','0004','refs01','refs02'])
 
 class MetaGrouping_RetrieveTestCase(TestCase, MetaGrouping_RetrieveTest_base):
 	def setUp(self):

@@ -164,6 +164,7 @@ class c_nget_config {
 			return addgroup("",groupname,"");//do we even need to addgroup?  since groups are refcounted, could just return a new one.. nothing really needs it to be in the list..
 		}
 		void getgroups(vector<c_group_info::ptr> &groups, const char *names);
+		void dogetallcachedgroups(vector<c_group_info::ptr> &groups);
 		void setlist(c_data_section *cfg,c_data_section *hinfo,c_data_section *pinfo,c_data_section *ginfo);
 		c_nget_config(){
 			curservmult=2.0;
