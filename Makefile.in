@@ -118,11 +118,13 @@ clean:
 	-$(MAKE) -C uulib clean
 	-$(MAKE) -C test clean
 	-$(MAKE) -C par2 clean
+	-$(MAKE) -C compat clean
 
 distclean: clean
 	-$(MAKE) -C uulib distclean
 	-$(MAKE) -C test distclean
 	-$(MAKE) -C par2 distclean
+	-$(MAKE) -C compat distclean
 	-rm config.status config.h config.cache config.log Makefile stamp-h nget.spec
 	-rm -r autom4te.cache
 	-find . \( -name 'CVS' -o -name '.cvsignore' -o -name '*~' -o -name '.*~' -o -name '.#*' -o -name '.*.sw[po]' -o -name '*.rej' -o -name '*.orig' -o -name 'tags' \) -print0 | xargs -0 rm -r
