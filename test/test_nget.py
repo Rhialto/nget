@@ -1750,6 +1750,18 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.failUnless(output.find("test")>=0)
 		self.failIf(output.find("WARNINGS")>=0)
 	
+	def test_available_tabsindesc(self):
+		self.servers.servers[0].addgroup("group.one", "aa.desc\tfoo\tbaz")
+		self.servers.servers[0].addgroup("group.two", "\tbb.desc\t\tbar\tbork\t")
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-a -T -r .'))
+		for s in ("group.one", "aa.desc\tfoo\tbaz", "group.two", "\tbb.desc\t\tbar\tbork\t"):
+			self.failUnless(output.find(s)>=0, repr(s)+' not found in output')
+		self.failIf(output.find("WARNINGS")>=0)
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-A -T -r .'))
+		for s in ("group.one", "aa.desc\tfoo\tbaz", "group.two", "\tbb.desc\t\tbar\tbork\t"):
+			self.failUnless(output.find(s)>=0, repr(s)+' not found in output')
+		self.failIf(output.find("WARNINGS")>=0)
+
 	def test_available_r(self):
 		self.servers.servers[0].addgroup("aa.group")
 		self.servers.servers[0].addgroup("bb.group")

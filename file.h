@@ -54,7 +54,7 @@ class c_file_buffy : public c_buffy{
 		bool beof(void){return c_buffy::beof();}
 		int bpeek(void){return c_buffy::bpeek();}
 		int bgets(void){return c_buffy::bgets(cbuf);}
-		int btoks(char tok, char **toks, int max){return c_buffy::btoks(cbuf,tok,toks,max);}
+		int btoks(char tok, char **toks, int max, bool tokfinal=true){return c_buffy::btoks(cbuf,tok,toks,max,tokfinal);}
 		c_file_buffy(c_file*f):fileptr(f) {}
 		//~c_file_buffy();
 };
@@ -99,7 +99,7 @@ class c_file {
 	//buffered funcs: must call initrbuf first.
 	int bgets(void){return rbuffer->bgets();}//buffered gets, should be faster than normal gets, definatly for tcp or gz. maybe not for stream.
 	char *bgetsp(void){rbuffer->bgets(); return rbuffer->cbufp();}
-	int btoks(char tok, char **toks, int max){return rbuffer->btoks(tok,toks,max);}
+	int btoks(char tok, char **toks, int max, bool tokfinal=true){return rbuffer->btoks(tok,toks,max,tokfinal);}
 	int bpeek(void){return rbuffer->bpeek();}
 	bool beof(void){return rbuffer->beof();}
 	void initrbuf(void);

@@ -130,7 +130,7 @@ class c_buffy {
 			}
 		}
 		//Read a line and tokenize it at the same time.  returns number of tokens found (which may be more or less than max)
-		int btoks(CharBuffer &buf, char tok, char **toks, int max){
+		int btoks(CharBuffer &buf, char tok, char **toks, int max, bool tokfinal=true){
 			int i;
 			int num = 1;
 			buf.clear();
@@ -143,9 +143,14 @@ class c_buffy {
 					if (num<max) {
 						buf.append(0);
 						toks[num]=(char*)(uintptr_t)buf.size();//since buf.append could invalidate pointers into buf.c_str(), store the offset instead
+						num++;
+						continue;
 					}
-					num++;
-					continue;
+					else if (tokfinal) {
+						num++;
+						continue;
+					}
+					//else fall through
 				}else if (i==13){
 					continue;
 				}else if (i==10){
@@ -155,7 +160,7 @@ class c_buffy {
 					buf.append(i);
 			}
 			char *bstr = buf.c_str();
-			for (i=0;i<num;i++)
+			for (i=0;i<num && i<max;i++)
 				toks[i] = bstr + (uintptr_t)toks[i];//now that we are done appending, add the c_str location to the offsets we stored earlier to get the real locations.
 			return num;
 		}

@@ -239,7 +239,7 @@ c_group_availability::ptr c_nntp_grouplist_reader::read_group(void) {
 					}
 					break;
 				}
-				i = f->btoks('\t',t,2);
+				i = f->btoks('\t',t,2, false);
 				if (i==2){
 					char * cp;
 					buf = t[0];

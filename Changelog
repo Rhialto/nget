@@ -6,6 +6,7 @@
   * Support tab as the field separator in XPAT results, for Newsplex server support.  (Requested by Mark Blain)
   * -a no longer gives an error if the server doesn't support LIST NEWSGROUPS(which retrieves newsgroup descriptions.)
   * Fix printing a warning when loading newsgroups list which contains descriptions of groups which no server actually carries. (Reported by Frederick Bruckman)
+  * Fix problems loading group descriptions from newsgroups list which contain tabs. (Reported by Frederick Bruckman)
 
 2004-06-17 v0.27:
   * Cache file format change, so switch default NGETHOME to ~/.nget5.
