@@ -17,6 +17,9 @@
 #ifndef S_IROTH
 #define S_IROTH 0
 #endif
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 
 #define PRIVMODE (S_IRUSR | S_IWUSR)
 #define PUBMODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)

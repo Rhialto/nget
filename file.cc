@@ -155,20 +155,15 @@ c_file_fd::c_file_fd(const char *name,int flags, int mode):c_file(name){
 		//throw FileEx(Ex_INIT,"open %s (%s)", name, strerror(errno));
 }
 int fopen2open(const char *mode){
-	if (strncmp(mode,"r+",2)==0)
-		return O_RDWR;
-	if (mode[0]=='r')
-		return O_RDONLY;
-	if (strncmp(mode,"w+",2)==0)
-		return O_RDWR | O_CREAT | O_TRUNC;
-	if (mode[0]=='w')
-		return O_WRONLY | O_CREAT | O_TRUNC;
-	if (strncmp(mode,"a+",2)==0)
-		return O_RDWR | O_CREAT | O_APPEND;
-	if (mode[0]=='a')
-		return O_WRONLY | O_CREAT | O_APPEND;
-	assert(0);
-	return 0;
+	int m = 0;
+	switch(mode[0]) {
+		case 'r': m = strchr(mode,'+')?O_RDWR:O_RDONLY; break;
+		case 'w': m = (strchr(mode,'+')?O_RDWR:O_WRONLY) | O_CREAT | O_TRUNC; break;
+		case 'a': m = (strchr(mode,'+')?O_RDWR:O_WRONLY) | O_CREAT | O_APPEND; break;
+		default:assert(0);
+	}
+	if (strchr(mode,'b')) m |= O_BINARY;
+	return m;
 }
 c_file_fd::c_file_fd(const char *name,const char *mode):c_file(name){
 	int flags=fopen2open(mode);

@@ -361,8 +361,8 @@ time_t decode_textage(const char *cbuf) {
 }
 
 int filecompare(const char *old_fn,const char *nfn){
-	c_file_fd old_f(old_fn, O_RDONLY);
-	c_file_fd new_f(nfn, O_RDONLY);
+	c_file_fd old_f(old_fn, O_RDONLY|O_BINARY);
+	c_file_fd new_f(nfn, O_RDONLY|O_BINARY);
 	char	old_buf[4096], new_buf[4096];
 	int	old_len, new_len;
 	// read and compare the files
