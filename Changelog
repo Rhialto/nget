@@ -1,4 +1,4 @@
-2002-xx-xx v0.xx:
+2002-08-04 v0.21:
   * Remove configure check for gcc<=2.7 since it can't really build nget anymore and the test was incorrectly detecting some gcc versions.
   * Add a configure check to remove -fomit-frame-pointer from compile flags on x86, as it breaks exception handling. (reported by Jose Antonio Becerra Permuy)
   * Remember to update the incomplete status when flushing parts of a file and doing a -r without reloading the cache first.
