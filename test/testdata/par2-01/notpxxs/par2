@@ -1,0 +1,12 @@
+From: donut@charon
+Sender: donut@charon
+User-Agent: ypost/0.46 (http://www.yencode.org/)
+Date: Sat, 27 Sep 2003 09:33:18 GMT
+Newsgroups: test
+Subject: [par2 test] "c d.vol01+02.par2" 4 yEnc bytes
+Lines: 3
+Message-ID: <2.1064655198.69@dumbnntpd>
+
+=ybegin line=128 size=4 name=c d.vol01+02.par2
+’“X4
+=yend size=4 crc32=7302106D

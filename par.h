@@ -82,6 +82,8 @@ class LocalParFiles {
 		t_subjmatches_map subjmatches; // maps sethash -> subject matches for known basenames of that set
 		t_basenames_map basenames; // maps sethash -> known basenames for that set
 		t_basefilenames_map basefilenames; // maps sethash -> all known filenames for that set
+		set<string> badbasenames; // set of all basenames for which corrupt/non-par files were found
+		
 
 		void addsubjmatch_par1(const string &key, const string &basename){
 			if (basenames[key].find(basename)!=basenames[key].end())
@@ -111,10 +113,12 @@ class LocalParFiles {
 		}
 		void addfrompath_par1(const string &path, t_nocase_map *nocase_map=NULL);
 		void addfrompath_par2(const string &path, t_nocase_map *nocase_map=NULL);
+		void check_badbasenames(void);
 		void clear(void){
 			basefilenames.clear();
 			basenames.clear();
 			subjmatches.clear();
+			badbasenames.clear();
 		}
 };
 

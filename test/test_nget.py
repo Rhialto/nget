@@ -611,6 +611,39 @@ class RetrieveTest_base(DecodeTest_base):
 		self.vfailIf(self.nget_run('-g test -r par.test'))
 		self.verifyoutput({'par01':['01.dat','03.dat','05.dat','a b.par','_corrupt_pxxs_output/a b.p01','_corrupt_pxxs_output/a b.p03','a b.p02','a b.p04']})
 	
+	def test_autoparhandling_corruptpxxonly(self):
+		self.addarticles('par01', 'input',fname='dat1')
+		self.addarticles('par01', 'corrupt_pxxs')
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par.test'), 2)
+		self.verifyoutput({'par01':['01.dat','_corrupt_pxxs_output/a b.p01','_corrupt_pxxs_output/a b.p03']})
+	
+	def test_autoparhandling_notpxx_long(self):
+		self.addarticles('par01', 'input',fname='dat1')
+		self.addarticles('par01', 'notpxxs',fname='par1')
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par.test'), 2)
+		self.verifyoutput({'par01':['01.dat','_notpxxs_output/a b.p01']})
+	
+	def test_autoparhandling_notpxx_short(self):
+		self.addarticles('par01', 'input',fname='dat1')
+		self.addarticles('par01', 'notpxxs',fname='par2')
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par.test'), 2)
+		self.verifyoutput({'par01':['01.dat','_notpxxs_output/a b.p02']})
+	
+	def test_autoparhandling_notpxxandrealpar_short(self):
+		self.addarticles('par01', 'notpxxs',fname='par2')
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par.test'), 2)
+		self.addarticles('par01', 'input')
+		self.vfailIf(self.nget_run('-g test -r par.test'))
+		self.verifyoutput({'par01':['01.dat', '02.dat', '03.dat', '04.dat', '05.dat', 'a b.par', '_notpxxs_output/a b.p02']})
+	
+	def test_autoparhandling_notpxxanddifferingpar_short(self):
+		self.addarticles('par01', 'notpxxs',fname='par2')
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r "par.*test"'), 2)
+		self.addarticles('par02', 'input')
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r "par.*test"'), 2)
+		self.verifyoutput({'par01':['_notpxxs_output/a b.p02'],
+			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','p2.par']})
+	
 	def test_autoparhandling_reply(self):
 		self.addarticles('par01', 'input')
 		self.addarticles('par01', 'reply')
@@ -833,6 +866,40 @@ class RetrieveTest_base(DecodeTest_base):
 		self.addarticles('par2-01', 'corrupt_pxxs')
 		self.vfailIf(self.nget_run('-g test -r par2.test'))
 		self.verifyoutput({'par2-01':['c d 01.dat','c d 04.dat','c d 05.dat','c d.par2','_corrupt_pxxs_output/c d.vol01+02.par2','_corrupt_pxxs_output/c d.vol03+04.par2','c d.vol07+08.par2']})
+		
+	def test_autopar2handling_corruptpxxonly(self):
+		self.addarticles('par2-01', 'input',fname='dat1')
+		self.addarticles('par2-01', 'corrupt_pxxs')
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par2.test'), 2)
+		self.verifyoutput({'par2-01':['c d 01.dat','_corrupt_pxxs_output/c d.vol01+02.par2','_corrupt_pxxs_output/c d.vol03+04.par2']})
+		
+	def test_autopar2handling_notpxx_long(self):
+		self.addarticles('par2-01', 'input',fname='dat1')
+		self.addarticles('par2-01', 'notpxxs',fname='par1')
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par2.test'), 2)
+		self.verifyoutput({'par2-01':['c d 01.dat','_notpxxs_output/c d.vol00+01.par2']})
+	
+	def test_autopar2handling_notpxx_short(self):
+		self.addarticles('par2-01', 'input',fname='dat1')
+		self.addarticles('par2-01', 'notpxxs',fname='par2')
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par2.test'), 2)
+		self.verifyoutput({'par2-01':['c d 01.dat','_notpxxs_output/c d.vol01+02.par2']})
+		
+	def test_autopar2handling_notpxxandrealpar_short(self):
+		self.addarticles('par2-01', 'notpxxs',fname='par2')
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r par2.test'), 2)
+		self.addarticles('par2-01', 'input')
+		self.vfailIf(self.nget_run('-g test -r par2.test'))
+		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','c d 05.dat','c d.par2','_notpxxs_output/c d.vol01+02.par2']})
+		
+	def test_autopar2handling_notpxxanddifferingpar_short(self):
+		self.addarticles('par2-01', 'notpxxs',fname='par2')
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r "par.*test"'), 2)
+		self.addarticles('par02', 'input',fname='dat*')
+		self.addarticles('par02', 'par2_input')
+		self.vfailUnlessExitstatus(self.nget_run('-g test -r "par.*test"'), 2)
+		self.verifyoutput({'par2-01':['_notpxxs_output/c d.vol01+02.par2'],
+			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','_par2_output/p2.par2']})
 		
 	def test_autopar2handling_corruptpxx_correctdupe(self):
 		self.addarticle_toserver('par2-01', 'input', 'par', self.servers.servers[0])

@@ -47,13 +47,15 @@ void LocalParFiles::addfrompath_par1(const string &path, t_nocase_map *nocase_ma
 		if (!parfile_re.match(de->d_name, &rsubs)) {
 			string sethash;
 			string fullname = path_join(path, de->d_name);
+			string basename = rsubs.sub(1);
+			for (string::iterator i=basename.begin(); i!=basename.end(); ++i)
+				*i=tolower(*i);
 			if (parfile_get_sethash(fullname, sethash)) {
-				string basename = rsubs.sub(1);
-				for (string::iterator i=basename.begin(); i!=basename.end(); ++i)
-					*i=tolower(*i);
 				basefilenames[sethash].push_back(de->d_name);
 				addsubjmatch_par1(sethash, basename);
 			}
+			else
+				badbasenames.insert(basename);
 		}
 		if (nocase_map) {
 			if (strcmp(de->d_name,"..")!=0 && strcmp(de->d_name,".")!=0){
@@ -79,15 +81,17 @@ void LocalParFiles::addfrompath_par2(const string &path, t_nocase_map *nocase_ma
 		if (!parfile_re.match(de->d_name, &rsubs)) {
 			string sethash;
 			string fullname = path_join(path, de->d_name);
+			string basename = rsubs.sub(1);
+			if (!par2pxxre.match(basename.c_str(), &rsubs))
+				basename = rsubs.sub(1);
+			for (string::iterator i=basename.begin(); i!=basename.end(); ++i)
+				*i=tolower(*i);
 			if (par2file_get_sethash(fullname, sethash)) {
-				string basename = rsubs.sub(1);
-				if (!par2pxxre.match(basename.c_str(), &rsubs))
-					basename = rsubs.sub(1);
-				for (string::iterator i=basename.begin(); i!=basename.end(); ++i)
-					*i=tolower(*i);
 				basefilenames[sethash].push_back(de->d_name);
 				addsubjmatch_par2(sethash, basename);
 			}
+			else
+				badbasenames.insert(basename);
 		}
 		if (nocase_map) {
 			if (strcmp(de->d_name,"..")!=0 && strcmp(de->d_name,".")!=0){
@@ -98,6 +102,19 @@ void LocalParFiles::addfrompath_par2(const string &path, t_nocase_map *nocase_ma
 		}
 	}
 	closedir(dir);
+}
+
+void LocalParFiles::check_badbasenames(void) {
+	for (t_basenames_map::const_iterator bni=basenames.begin(); bni!=basenames.end(); ++bni) {
+		for (set<string>::const_iterator sbni=bni->second.begin(); sbni!=bni->second.end(); ++sbni) {
+			badbasenames.erase(*sbni);
+		}
+	}
+	for (set<string>::const_iterator i=badbasenames.begin(); i!=badbasenames.end(); ++i){
+		PDEBUG(DEBUG_MIN, "no parsable par files with basename %s", (*i).c_str());
+		set_autopar_error_status();
+	}
+	
 }
 
 
@@ -253,6 +270,9 @@ int Par1Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 			finished_okcount++;
 		}
 	}
+
+	if (total_added==0)
+		localpars.check_badbasenames();
 
 	return total_added;
 	
@@ -421,6 +441,10 @@ int Par2Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 			finished_okcount++;
 		}
 	}
+
+	if (total_added==0)
+		localpars.check_badbasenames();
+
 	return total_added;
 }
 
