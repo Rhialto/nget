@@ -1948,6 +1948,12 @@ class ConfigErrorTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput('0001')
 		self.vfailUnlessEqual(output.count("ERRORS: %i user"%(len(options)+len(hostoptions))), 1)
 	
+	def test_empty_and_invalid_values(self):
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'debug':'foo','tries':''})
+		output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput('-g test -r .'), 4)
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(output.count("ERRORS: 2 user"), 1)
+	
 	def test_unbalanced_section(self):
 		self.nget = util.TestNGet(ngetexe, self.servers.servers, extratail="}\n")
 		output = self.vfailUnlessExitstatus_getoutput(self.nget.run_getoutput('-g test -r .'), 4)
