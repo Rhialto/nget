@@ -141,6 +141,16 @@ class ConnectionErrorTestCase(unittest.TestCase, DecodeTest_base):
 		servers[0].server_close()
 		self.failUnless(os.WEXITSTATUS(self.nget.run("-g test -r .")) & 64, "nget process did not detect connection error")
 	
+	def test_DeadServerRetr(self):
+		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), nntpd.NNTPRequestHandler)])
+		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
+		self.servers.start()
+		self.addarticles('0002', 'uuencode_multi')
+		self.failIf(self.nget.run("-g test"), "nget process returned with an error")
+		self.servers.stop()
+		del self.servers
+		self.failUnless(os.WEXITSTATUS(self.nget.run("-G test -r .")) & 64, "nget process did not detect connection error")
+	
 	def test_DiscoServer(self):
 		self.servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",0), DiscoingNNTPRequestHandler)])
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
