@@ -59,22 +59,27 @@ class NNTPRequestHandler(nntpd.NNTPRequestHandler):
 						mid = genmid(myn)
 						print "generated mid %s for post %s"%(mid, myn)
 						f.write('Message-ID: %s\n'%mid)
-				elif l.startswith('Message-ID: '):
+				elif l.lower().startswith('message-id: '):
 					hasmid = 1
-				elif l.startswith('Date: '):
+				elif l.lower().startswith('date: '):
 					hasdate = 1
 			if l=='.':
 				f.close()
+				self.server.addarticle(["test"], nntpd.FileArticle(open(f.name)))
 				self.nwrite("240 article posted ok")
 				return
 			f.write(l+'\n')
 
 def main():
-	import sys
+	import sys,getopt
 	port = 119
-	if len(sys.argv)>1:
-		port = int(sys.argv[1])
+	opts, args = getopt.getopt(sys.argv[1:], "p:")
+	for o,a in opts:
+		if o=='-p':
+			port = int(a)
 	servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",port), NNTPRequestHandler)])
+	for a in args:
+		servers.servers[0].addarticle(["test"], nntpd.FileArticle(open(a)))
 	servers.start()
 
 	print 'press enter to stop'
