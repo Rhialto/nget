@@ -1018,9 +1018,9 @@ int main(int argc, const char ** argv){
 			options.mboxfname="nget.mbox";
 			{
 				string ngetrcfn = nghome + ".ngetrc";
-				if (!fexists(ngetrcfn.c_str())) {
+				if (!fexists(ngetrcfn)) {
 					ngetrcfn = nghome + "_ngetrc";
-					if (!fexists(ngetrcfn.c_str()))
+					if (!fexists(ngetrcfn))
 							throw ConfigExFatal(Ex_INIT,"neither %s nor %s exist", (nghome + ".ngetrc").c_str(), ngetrcfn.c_str());
 				}
 				CfgSection cfg(ngetrcfn);

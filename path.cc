@@ -92,7 +92,7 @@ int fsize(const char * f, off_t *size){
 string fcheckpath(const char *fn, string path){
 	if (!is_abspath(fn)) {
 		string pfn = path_join(path,fn);
-		if (fexists(pfn.c_str()))
+		if (fexists(pfn))
 			return pfn;
 	}
 	return fn;

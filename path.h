@@ -44,6 +44,7 @@ void path_split(string &head, string &tail);
 
 bool direxists(const string &p);
 int fexists(const char * f);
+inline int fexists(const string &s) {return fexists(s.c_str());}
 int fsize(const char * f, off_t *size);
 string fcheckpath(const char *fn,string path);
 int testmkdir(const char * dir,int mode);
