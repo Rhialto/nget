@@ -62,6 +62,11 @@ int Connection::getline(int echo){
 
 
 void SockPool::connection_erase(t_connection_map::iterator i) {
+	try {
+		i->second->close();
+	} catch (baseCommEx &e) {//ignore transport errors while closing
+		printCaughtEx_nnl(e);printf(" (ignored)\n");
+	}
 	delete i->second;
 	connections.erase(i);
 }
@@ -113,7 +118,6 @@ void SockPool::expire_old_connection(void) {
 			oldest = i;
 	}
 	if (oldest!=connections.end()){
-		oldest->second->close();
 		connection_erase(oldest);
 	}else
 		throw ApplicationExError(Ex_INIT, "no old connections to kill");
@@ -127,11 +131,6 @@ void SockPool::expire_connections(bool closeall) {
 		p=i;
 		++i;
 		if (closeall || !c->isopen() || (c->age() >= c->server->idletimeout)) {
-			try {
-				c->close();
-			} catch (baseCommEx &e) {//ignore transport errors while closing
-				printCaughtEx_nnl(e);printf(" (ignored)\n");
-			}
 			connection_erase(p);
 		}
 	}
