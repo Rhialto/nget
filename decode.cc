@@ -105,10 +105,15 @@ const char *uutypetoa(int uudet) {
 	}
 }
 
-string make_dupe_name(const string &fn, c_nntp_file::ptr f) {
-	ostringstream ss;
-	ss << fn << '.' << f->badate() << '.' << rand();
-	return ss.str();
+string make_dupe_name(const string &path, const string &fn, c_nntp_file::ptr f) {
+	string s;
+	while (1) {
+		ostringstream ss;
+		ss << fn << '.' << f->badate() << '.' << rand();
+		s = ss.str();
+		if (!fexists(is_abspath(s.c_str())?s:path_join(path,s)))
+			return s;
+	}
 }
 
 
@@ -168,16 +173,14 @@ int Decoder::decode(const nget_options &options, const c_nntp_file_retr::ptr &fr
 			r=UUDecodeFile(uul,NULL);
 			if ((r!=UURET_OK || uustatus.derr!=pre_decode_derr) && fexists(orig_fnp)) {
 				string nfnp;
-				do {
-					nfnp = make_dupe_name(orig_fnp, f);
-				} while (fexists(nfnp));
+				nfnp = make_dupe_name(fr->path.c_str(), orig_fnp, f);
 				xxrename(orig_fnp.c_str(), nfnp.c_str());
 			}
 		}
 		else {
 			//all the following ugliness with fname_filter is due to uulib forgetting that we already filtered the name and giving us the original name instead.
 			// Generate a new filename to use
-			string nfn(make_dupe_name(fname_filter(NULL,uul->filename), f));
+			string nfn(make_dupe_name(fr->path.c_str(), fname_filter(NULL,uul->filename), f));
 			UURenameFile(uul,const_cast<char*>(nfn.c_str())); //uulib isn't const-ified
 			r=UUDecodeFile(uul,NULL);
 			// did it decode correctly?
