@@ -169,7 +169,9 @@ class Par1Info : public ParXInfoBase {
 
 class Par2Info : public ParXInfoBase {
 	protected:
+		int get_extradata(c_nntp_files_u &fc);
 		int get_recoverypackets(int num, set<uint32_t> &havepackets, const string &key, c_nntp_files_u &fc);
+		t_server_file_list serverextradata;
 	public:
 		Par2Info(const string &p,const string &t):ParXInfoBase(p,t){
 			localpars.addfrompath_par2(path);

@@ -5,6 +5,7 @@
   * Properly handle par2 files with the first packet(s) damaged.
   * Give incomplete par/par2 files less weight when choosing which to get.
   * Consider incomplete par2 files even if -i isn't specified.
+  * If there aren't enough par2 files available, try getting some incomplete data files even if -i wasn't specified.
 
 2003-10-04 v0.24.2:
   * Use gcc's automatic dependancy generation rather than a seperate depend rule.

@@ -315,7 +315,22 @@ bool Par2Info::maybe_add_parfile(const c_nntp_file::ptr &f, bool want_incomplete
 		return true;
 	}
 
+	if (!want_incomplete && !f->iscomplete()) {
+		serverextradata.insert(server_file_list_value(f));
+		return true;
+	}
+
 	return false;
+}
+
+int Par2Info::get_extradata(c_nntp_files_u &fc) {
+	if (!serverextradata.empty()) {
+		PMSG("autopar: not enough par2 recovery packets, trying to get some incomplete data");
+		//####TODO: should be smart and get only posts that pertain to files that are missing or damaged.
+		fc.addfile(serverextradata.begin()->second, path, temppath, false);
+		return 1;
+	}
+	return 0;
 }
 		
 int Par2Info::get_recoverypackets(int num, set<uint32_t> &havepackets, const string &key, c_nntp_files_u &fc) {
@@ -349,6 +364,10 @@ int Par2Info::get_recoverypackets(int num, set<uint32_t> &havepackets, const str
 				else PDEBUG(DEBUG_MIN, "get_recoverypackets: %s, already have or getting packets %u+%u, skipping %s", hexstr(key).c_str(), beginpacket, endpacket - beginpacket, sfi->second->subject.c_str());
 			}
 		}
+	}
+	if ((signed)availpackets.size()<num){
+		int r = get_extradata(fc);
+		if (r) return r;
 	}
 	if (nconfig.autopar_optimistic && (signed)availpackets.size()<num){
 		PERROR("par2set %s: Only %i/%i needed packets available, giving up", hexstr(key).c_str(), (int)availpackets.size(), num);
