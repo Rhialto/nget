@@ -117,13 +117,17 @@ char *goodgetcwd(void){
 		}
 	}*/
 	int t=32;
-	char *p=NULL;//ack, that extension seems to like segfaulting when you free() its return.. blah.
+	char *p=NULL,*r;//ack, that extension seems to like segfaulting when you free() its return.. blah.
 	do {
 		t*=2;
 		if (!(p=(char*)realloc(p,t))){
 			PERROR("goodgetcwd: realloc error %s (size=%i)",strerror(errno), t);exit(128);
 		}
-	}while(!getcwd(p,t));
+	}while(!(r=getcwd(p,t)) && errno==ERANGE);
+	if (!r){
+		free(p);
+		throw ApplicationExFatal(Ex_INIT, "getcwd: %s",strerror(errno));
+	}
 	PDEBUG(DEBUG_MED,"goodgetcwd %i %s(%p)",t,p,p);
 	return p;
 }

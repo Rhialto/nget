@@ -4,6 +4,7 @@
   * Fix bug in knapsack algorithm that in some cases could cause a sub-optimal set of par2 files to be retrieved(or an assertion error on debug builds.)
   * Patched uulib to fix problem with long headers causing duplicate output in text files. (Patch also at http://nget.sf.net/patches/uulib-0.5.19-uuinfofile-long-headers.patch)
   * Fix memleak in goodgetcwd with long paths.
+  * Fix goodgetcwd error handling.
 
 2003-11-20 v0.25:
   * Allow the same server id to be used for multiple hosts to share header cache data. (Useful if you have multiple accounts on the same server.)
