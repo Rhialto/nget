@@ -38,8 +38,8 @@ string hexstr(const string &s){
 	string ret;
 	for (string::const_iterator i=s.begin(); i!=s.end(); ++i) {
 		uchar c=*i;
-		ret += hexchar[c&15];
 		ret += hexchar[c>>4];
+		ret += hexchar[c&15];
 	}
 	return ret;
 }
