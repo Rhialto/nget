@@ -373,7 +373,7 @@ nget_options::nget_options(void){
 	get_path();
 	get_temppath();
 }
-nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),qstatus(o.qstatus),test_multi(o.test_multi),retr_show_multi(o.retr_show_multi),makedirs(o.makedirs),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
+nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),test_multi(o.test_multi),retr_show_multi(o.retr_show_multi),makedirs(o.makedirs),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
 	/*	if (o.path){
 			path=new char[strlen(o.path)+1];
 			strcpy(path,o.path);
@@ -497,6 +497,7 @@ struct s_arglist {
 static int do_args(int argc, char **argv,nget_options options,int sub){
 	int c=0;
 	const char * loptarg=NULL;
+	t_nntp_getinfo_list getinfos;
 
 #ifdef HAVE_LIBPOPT
 	c_poptContext optCon(NULL, argc, argv, optionsTable, sub?POPT_CONTEXT_KEEP_FIRST:0);
@@ -548,9 +549,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 					}else{
 						generic_pred *p=make_pred(loptarg);
 						if (p){
-							nntp.filec=nntp.gcache->getfiles(options.path,options.temppath,nntp.filec,nntp.midinfo,p,options.gflags);
-							delete p;
-							options.qstatus=1;
+							getinfos.push_back(new c_nntp_getinfo(options.path, options.temppath, p, options.gflags));
 						}
 					}
 				}
@@ -591,9 +590,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 							s << " lines " << options.maxlinelimit << " <= &&" ;
 						generic_pred *p=make_pred(s.str().c_str());
 						if (p){
-							nntp.filec=nntp.gcache->getfiles(options.path,options.temppath,nntp.filec,nntp.midinfo,p,options.gflags);
-							delete p;
-							options.qstatus=1;
+							getinfos.push_back(new c_nntp_getinfo(options.path, options.temppath, p, options.gflags));
 						}
 					}
 				}
@@ -711,9 +708,9 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				print_help();
 				return 1;
 			default:
-				if (options.qstatus){
-					options.qstatus=0;
-					nntp.nntp_retrieve(options);
+				if (!getinfos.empty()){
+					nntp.nntp_retrieve(getinfos, options);
+					getinfos.clear();
 				}
 				switch (c){
 					case '@':
@@ -880,7 +877,6 @@ int main(int argc, char ** argv){
 			options.gflags=0;
 			options.test_multi=NO_SHOW_MULTI;
 			options.retr_show_multi=SHOW_MULTI_LONG;//always display the multi-server info when retrieving, just because I think thats better
-			options.qstatus=0;
 			options.group=NULL;
 			options.host=NULL;
 			{

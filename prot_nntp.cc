@@ -710,8 +710,10 @@ char * make_text_file_name(c_nntp_file_retr::ptr fr, bool usepath=0) {
 	return nfn;
 }
 
-void c_prot_nntp::nntp_retrieve(const nget_options &options){
-	if (!(filec) || filec->files.empty())
+void c_prot_nntp::nntp_retrieve(const t_nntp_getinfo_list &getinfos, const nget_options &options){
+	c_nntp_files_u filec;
+	gcache->getfiles(&filec, midinfo, getinfos);
+	if (filec.files.empty())
 		return;
 
 	int optionflags = options.gflags;
@@ -729,7 +731,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 	if (optionflags & GETFILES_UNMARK) {
 		ulong nbytes=0;
 		uint nfiles=0;
-		for(curf = filec->files.begin();curf!=filec->files.end();++curf){
+		for(curf = filec.files.begin();curf!=filec.files.end();++curf){
 			fr=(*curf).second;
 			f=fr->file;
 			if (optionflags & GETFILES_TESTMODE) {
@@ -744,15 +746,15 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 		if (optionflags & GETFILES_TESTMODE)
 			printf("Would unmark %lu bytes in %u files\n",nbytes,nfiles);
 	} else if (optionflags & GETFILES_TESTMODE){
-		for(curf = filec->files.begin();curf!=filec->files.end();++curf){
+		for(curf = filec.files.begin();curf!=filec.files.end();++curf){
 			fr=(*curf).second;
 			print_nntp_file_info(fr->file,options.test_multi);
 		}
 		if (optionflags & GETFILES_MARK)
 			printf("Would mark ");
-		printf("%"PRIuFAST64" bytes in %lu files\n",filec->bytes,(ulong)filec->files.size());
+		printf("%"PRIuFAST64" bytes in %lu files\n",filec.bytes,(ulong)filec.files.size());
 	} else if (optionflags & GETFILES_MARK) {
-		for(curf = filec->files.begin();curf!=filec->files.end();++curf){
+		for(curf = filec.files.begin();curf!=filec.files.end();++curf){
 			fr=(*curf).second;
 			f=fr->file;
 			midinfo->insert(f->bamid());
@@ -771,24 +773,24 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 		arinfo ainfo;
 		time(&qtotinfo.starttime);
 		qtotinfo.filesdone=0;
-//		qtotinfo.linestot=filec->lines;
-		qtotinfo.filestot=filec->files.size();
-		qtotinfo.bytesleft=filec->bytes;
+//		qtotinfo.linestot=filec.lines;
+		qtotinfo.filestot=filec.files.size();
+		qtotinfo.bytesleft=filec.bytes;
 		qtotinfo.doarticle_show_multi=gcache_ismultiserver?SHOW_MULTI_SHORT:NO_SHOW_MULTI;
 		c_nntp_part *p;
 //		s_part_u *bp;
 		t_nntp_file_parts::iterator curp;
-		t_nntp_files_u::iterator lastf=filec->files.end();
+		t_nntp_files_u::iterator lastf=filec.files.end();
 		char *fn;
 		if (!options.writelite.empty())
 			optionflags |= GETFILES_NODECODE;
-		for(curf = filec->files.begin();curf!=filec->files.end();++curf){
+		for(curf = filec.files.begin();curf!=filec.files.end();++curf){
 			int r;
-			if (lastf!=filec->files.end()){
+			if (lastf!=filec.files.end()){
 //				delete (*lastf).second;//new cache implementation uses pointers to the same data
-				filec->files.erase(lastf);
+				filec.files.erase(lastf);
 				qtotinfo.filesdone++;
-				filec->bytes=qtotinfo.bytesleft;//update bytes in case we have an exception and need to restart.
+				filec.bytes=qtotinfo.bytesleft;//update bytes in case we have an exception and need to restart.
 			}
 			lastf=curf;
 			fr=(*curf).second;
@@ -961,7 +963,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 					t_nntp_files_u::iterator dfi = curf; ++dfi; //skip the current one
 					t_nntp_files_u::iterator del_fi;
 					c_nntp_file_retr::ptr dfr;
-					while(dfi!=filec->files.end()){
+					while(dfi!=filec.files.end()){
 						dfr = (*dfi).second;
 						//only check files that are being downloaded to the same path
 						if (dfr->path == fr->path) {
@@ -970,7 +972,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 								set_skipped_ok_status();
 								del_fi=dfi;
 								++dfi;
-								filec->files.erase(del_fi);
+								filec.files.erase(del_fi);
 								qtotinfo.filestot--;
 								qtotinfo.bytesleft-=df->bytes();
 								continue;
@@ -1065,7 +1067,6 @@ void c_prot_nntp::cleanupcache(void){
 		midinfo=NULL;
 		delete mi;
 	}
-	if(filec){delete filec;filec=NULL;}
 }
 void c_prot_nntp::cleanup(void){
 	cleanupcache();
@@ -1082,7 +1083,6 @@ c_prot_nntp::c_prot_nntp(void){
 #ifdef FILE_DEBUG
 	sock.file_debug=new c_debug_file;
 #endif
-	filec=NULL;
 	connection=NULL;
 	midinfo=NULL;
 	force_host=NULL;

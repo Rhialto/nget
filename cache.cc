@@ -25,7 +25,6 @@
 #include "nget.h"
 #include "mylockfile.h"
 #include "strtoker.h"
-#include "dupe_file.h"
 
 int c_nntp_header::parsepnum(const char *str,const char *soff){
 	const char *p;
@@ -186,40 +185,42 @@ c_nntp_file::~c_nntp_file(){
 	}
 }
 
-c_nntp_files_u* c_nntp_cache::getfiles(const string &path, const string &temppath, c_nntp_files_u * fc,c_mid_info *midinfo,generic_pred *pred,int flags){
-	if (fc==NULL) fc=new c_nntp_files_u;
-
-	dupe_file_checker flist;
-	if (!(flags&GETFILES_NODUPEFILECHECK))
-		flist.addfrompath(path);
+void c_nntp_cache::getfiles(c_nntp_files_u *fc, c_mid_info *midinfo, const t_nntp_getinfo_list &getinfos) { 
+	t_nntp_getinfo_list::const_iterator gii, giibegin=getinfos.begin(), giiend=getinfos.end();
+	c_nntp_getinfo::ptr info;
+	for (gii=giibegin; gii!=giiend; ++gii) {
+		info = *gii;
+		if (!(info->flags&GETFILES_NODUPEFILECHECK)) {
+			info->flist.addfrompath(info->path);
+		}
+	}
 
 	t_nntp_files::const_iterator fi;
 	pair<t_nntp_files_u::const_iterator,t_nntp_files_u::const_iterator> firange;
 	c_nntp_file::ptr f;
 	for(fi = files.begin();fi!=files.end();++fi){
 		f=(*fi).second;
-		if ((flags&GETFILES_GETINCOMPLETE || f->iscomplete()) && (flags&GETFILES_NODUPEIDCHECK || !(midinfo->check(f->bamid()))) && (*pred)(f.gimmethepointer())){//matches user spec
-			firange=fc->files.equal_range(f->badate());
-			for (;firange.first!=firange.second;++firange.first){
-				if ((*firange.first).second->file->bamid()==f->bamid())
-//					continue;
-					goto file_match_loop_end;//can't continue out of multiple loops
-			}
+		for (gii=giibegin; gii!=giiend; ++gii) {
+			info = *gii;
+			if ((info->flags&GETFILES_GETINCOMPLETE || f->iscomplete()) && (info->flags&GETFILES_NODUPEIDCHECK || !(midinfo->check(f->bamid()))) && (*info->pred)(f.gimmethepointer())){//matches user spec
+				firange=fc->files.equal_range(f->badate());
+				for (;firange.first!=firange.second;++firange.first){
+					if ((*firange.first).second->file->bamid()==f->bamid())
+	//					continue;
+						goto file_match_loop_end;//can't continue out of multiple loops
+				}
 
-			if (!(flags&GETFILES_NODUPEFILECHECK) && flist.checkhavefile(f->subject.c_str(),f->bamid(),f->bytes())){
-				if (flags&GETFILES_DUPEFILEMARK)
-					midinfo->insert(f->bamid());
-				continue;
+				if (!(info->flags&GETFILES_NODUPEFILECHECK) && info->flist.checkhavefile(f->subject.c_str(),f->bamid(),f->bytes())){
+					if (info->flags&GETFILES_DUPEFILEMARK)
+						midinfo->insert(f->bamid());
+					continue;
+				}
+				fc->addfile(f,info->path,info->temppath);
+				goto file_match_loop_end;//can't continue out of multiple loops
 			}
-			fc->addfile(f,path,temppath);
 		}
 file_match_loop_end: ;
 	}
-//	if (!nm){
-//		delete fc;fc=NULL;
-//	}
-
-	return fc;
 }
 
 bool c_nntp_cache::ismultiserver(void) const {

@@ -227,6 +227,24 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 	def test_r(self):
 		self.vfailIf(self.nget.run('-g test -r joystick'))
 		self.verifyoutput('0002')
+	
+	def test_multi_r_samepath(self):
+		self.vfailIf(self.nget.run('-g test -r joystick -r foo'))
+		self.verifyoutput(['0001','0002'])
+
+	def test_multi_r_trysame(self):
+		d1, d2 = os.path.join(self.nget.tmpdir,'d1'), os.path.join(self.nget.tmpdir,'d2')
+		map(os.mkdir, (d1, d2))
+		self.vfailIf(self.nget.run('-p %s -g test -r joystick -r foo -p %s -r "joystick|foo"'%(d1, d2)))
+		self.verifyoutput(['0001','0002'], d1)
+		self.verifyoutput([], d2)
+
+	def test_multi_r_trydiff(self):
+		d1, d2 = os.path.join(self.nget.tmpdir,'d1'), os.path.join(self.nget.tmpdir,'d2')
+		map(os.mkdir, (d1, d2))
+		self.vfailIf(self.nget.run('-p %s -g test -r joystick -p %s -r "joystick|foo"'%(d1, d2)))
+		self.verifyoutput(['0002'], d1)
+		self.verifyoutput(['0001'], d2)
 
 	def test_subject(self):
 		self.vfailIf(self.nget.run('-g test -R "subject joystick =="'))

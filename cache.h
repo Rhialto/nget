@@ -38,6 +38,7 @@
 #include "server.h"
 
 #include "nrange.h"
+#include "dupe_file.h"
 
 #define CACHE_VERSION "NGET4"
 
@@ -304,6 +305,18 @@ class c_mid_info {
 		~c_mid_info();
 };
 
+class c_nntp_getinfo : public c_refcounted<c_nntp_getinfo>{
+	public:
+		string path;
+		string temppath;
+		generic_pred *pred;
+		int flags;
+		dupe_file_checker flist;
+		c_nntp_getinfo(const string &pat, const string &temppat,generic_pred *pre,int flag):path(pat), temppath(temppat), pred(pre), flags(flag) {}
+		~c_nntp_getinfo() { delete pred; }
+};
+typedef list<c_nntp_getinfo::ptr> t_nntp_getinfo_list;
+
 class c_nntp_cache : public c_refcounted<c_nntp_cache>{
 	public:
 		string file;
@@ -320,7 +333,7 @@ class c_nntp_cache : public c_refcounted<c_nntp_cache>{
 		int additem(c_nntp_header *h);
 		ulong flushlow(c_nntp_server_info *servinfo, ulong newlow, c_mid_info *midinfo);
 		void getxrange(c_nntp_server_info *servinfo, ulong newlow, ulong newhigh, c_nrange *range) const;
-		c_nntp_files_u* getfiles(const string &path, const string &temppath, c_nntp_files_u * fc,c_mid_info *midinfo,generic_pred *pred,int flags);
+		void getfiles(c_nntp_files_u *fc, c_mid_info *midinfo, const t_nntp_getinfo_list &getinfos);
 		c_nntp_cache(string path,c_group_info::ptr group,c_mid_info*midinfo);
 		virtual ~c_nntp_cache();
 };

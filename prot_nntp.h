@@ -71,7 +71,6 @@ class c_prot_nntp {
 		//c_nntp_cache *gcache;
 		c_nntp_cache::ptr gcache;
 		bool gcache_ismultiserver;
-		c_nntp_files_u *filec;
 		time_t starttime;
 
 		int stdputline(int echo,const char * str,...)
@@ -84,7 +83,7 @@ class c_prot_nntp {
 		int chkreply(int reply);
 		void doxover(ulong low, ulong high);
 		void doxover(c_nrange *r);
-		void nntp_retrieve(const nget_options &options);
+		void nntp_retrieve(const t_nntp_getinfo_list &getinfos, const nget_options &options);
 		void nntp_group(c_group_info::ptr group, int getheaders, const nget_options &options);
 		void nntp_dogroup(int getheaders);
 		int nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_articles_prioritized &sap,bool docurservmult);
