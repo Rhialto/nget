@@ -58,19 +58,21 @@ int c_prot_nntp::stdputline(int echo,const char * str,...){
 	return i;
 }
 int c_prot_nntp::doputline(int echo,const char * str,va_list ap){
-	int i;
+	int i,l;
+	char *fpbuf;
+	l=vasprintf(&fpbuf,str,ap);
 	try {
-		i = cursock->vputf(str, ap) + cursock->write("\r\n",2);
+		i = cursock->write(fpbuf, l) + cursock->write("\r\n",2);
 	} catch (FileEx &e) {
+		free(fpbuf);
 		doclose();
 		throw TransportExError(Ex_INIT,"nntp_putline: %s:%i: %s",e.getExFile(), e.getExLine(), e.getExStr());
 	}
 	if (echo){
-		printf(">");
-		vprintf(str,ap);
-		printf("\n");
+		printf(">%s\n",fpbuf);
 	}
 //	time(&lasttime);
+	free(fpbuf);
 	return i;
 }
 
