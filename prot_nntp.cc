@@ -888,13 +888,16 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 							if (filecompare(old_fnp,nfnp) > 0){
 								printf("Duplicate File Removed %s\n", nfn);
 								unlink(nfnp);
-							}
+								set_dupe_ok_status();
+							}else
+								set_dupe_warn_status();
 						}
 						// cleanup
 						free(nfnp);
 #else	/* USE_FILECOMPARE */				// the orginal code
 						UURenameFile(uul,nfn);
 						r=UUDecodeFile(uul,NULL);
+						set_dupe_warn_status();
 #endif	/* USE_FILECOMPARE */
 					}
 					if (r!=UURET_OK){

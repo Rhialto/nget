@@ -72,12 +72,14 @@ SET_x_OK_STATUS(xx, 8);
 SET_x_OK_STATUS(binhex, 16);
 SET_x_OK_STATUS(plaintext, 32);
 SET_x_OK_STATUS(qp, 64);
+SET_x_OK_STATUS(dupe, 256);
 SET_x_OK_STATUS(unknown, 512);
 SET_x_OK_STATUS(group, 1024);
 SET_x_WARN_STATUS(retrieve,1);
 SET_x_WARN_STATUS(unequal_line_count,8);
+SET_x_WARN_STATUS(dupe, 256);
 SET_x_WARN_STATUS(group,1024);
-#define print_x_x_STATUS(type, low) if (low ## _ ## type) printf("%s %i " #type, cf?",":"", low ## _ ## type)
+#define print_x_x_STATUS(type, low) if (low ## _ ## type) printf("%s %i " #type, cf++?",":"", low ## _ ## type)
 #define print_x_ERROR_STATUS(type) print_x_x_STATUS(type, error)
 #define print_x_WARN_STATUS(type) print_x_x_STATUS(type, warn)
 #define print_x_OK_STATUS(type) print_x_x_STATUS(type, ok)
@@ -96,6 +98,7 @@ void print_error_status(void){
 		print_x_OK_STATUS(qp);
 		print_x_OK_STATUS(unknown);
 		print_x_OK_STATUS(group);
+		print_x_OK_STATUS(dupe);
 	}
 	if (warnflags){
 		int cf=0;
@@ -104,6 +107,7 @@ void print_error_status(void){
 		print_x_WARN_STATUS(group);
 		print_x_WARN_STATUS(retrieve);
 		print_x_WARN_STATUS(unequal_line_count);
+		print_x_WARN_STATUS(dupe);
 	}
 	if (errorflags){
 		int cf=0;

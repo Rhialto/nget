@@ -47,6 +47,7 @@ void set_fatal_error_status(int incr=1);
 void set_group_warn_status(int incr=1);
 void set_retrieve_warn_status(int incr=1);
 void set_unequal_line_count_warn_status(int incr=1);
+void set_dupe_warn_status(int incr=1);
 
 void set_total_ok_status(int incr=1);
 void set_uu_ok_status(int incr=1);
@@ -57,6 +58,7 @@ void set_plaintext_ok_status(int incr=1);
 void set_qp_ok_status(int incr=1);
 void set_unknown_ok_status(int incr=1);
 void set_group_ok_status(int incr=1);
+void set_dupe_ok_status(int incr=1);
 
 struct nget_options {
 	int maxretry,retrydelay;
