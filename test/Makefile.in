@@ -24,8 +24,7 @@ clean:
 	-rm TestRunner *.o *.py[co]
 
 distclean: clean
-	-rm config.status config.h config.cache config.log Makefile stamp-h .depend *~ .*~ *.rej tags .cvsignore .#*
-	-rm -r CVS
+	-rm config.status config.h config.cache config.log Makefile stamp-h .depend *.rej .cvsignore
 
 .PHONY: all dep depend clean install dist distclean test
 

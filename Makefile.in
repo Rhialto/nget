@@ -91,8 +91,8 @@ clean:
 	-$(MAKE) -C test clean
 
 distclean: clean
-	-rm config.status config.h config.cache config.log Makefile stamp-h .depend *~ .*~ *.rej tags .cvsignore .#*
-	-rm -r CVS
+	-rm config.status config.h config.cache config.log Makefile stamp-h .depend *.rej .cvsignore
+	-rm -r tags `find . -regex '.*~\|.*/\.#.*' -o -name CVS`
 	-$(MAKE) -C uulib distclean
 #	-cp .depend.dist .depend
 	-$(MAKE) -C test distclean
