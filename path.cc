@@ -18,7 +18,7 @@ bool is_abspath(const char *p) {
 string& path_append(string &a, string b) {
 	char c=a[a.size()-1];
 	if (!is_pathsep(c))
-		a.push_back(PATHSEP);
+		a += PATHSEP;
 	return a.append(b);
 }
 
