@@ -245,6 +245,8 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.do_test_auto()
 	def test_0004_input(self):
 		self.do_test_auto()
+	def test_0005_input(self):
+		self.do_test_auto()
 	def test_mbox01(self):
 		self.addarticles("mbox01", "input")
 		self.vfailIf(self.nget.run("--text=mbox -g test -r ."))
@@ -288,7 +290,7 @@ class RetrieveTest_base(DecodeTest_base):
 	def setUp(self):
 		self.servers = nntpd.NNTPD_Master(1)
 		self.nget = util.TestNGet(ngetexe, self.servers.servers) 
-		self.addarticles('0003', 'newspost_uue_0')
+		self.addarticles('0005', 'input')
 		self.addarticles('0002', 'uuencode_multi3')
 		self.addarticles('0001', 'uuencode_single')
 		self.servers.start()
@@ -350,7 +352,7 @@ class RetrieveTest_base(DecodeTest_base):
 
 	def test_r_l_L(self):
 		self.vfailIf(self.nget_run('-g test -l 20 -L 200 -r .'))
-		self.verifyoutput('0003')
+		self.verifyoutput('0005')
 	
 	def test_dupef(self):
 		self.vfailIf(self.nget_run('-g test -r foo'))
@@ -369,19 +371,19 @@ class RetrieveTest_base(DecodeTest_base):
 
 	def test_dupei(self):
 		self.vfailIf(self.nget_run('-g test -r .'))
-		self.verifyoutput(['0002','0001','0003'])
+		self.verifyoutput(['0002','0001','0005'])
 		self.nget.clean_tmp()
 		self.vfailIf(self.nget_run('-g test -r .'))
 		self.verifyoutput([])
-		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 6)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 5)
 
 	def test_dupei_D(self):
 		self.vfailIf(self.nget_run('-g test -r .'))
-		self.verifyoutput(['0002','0001','0003'])
+		self.verifyoutput(['0002','0001','0005'])
 		self.nget.clean_tmp()
 		self.vfailIf(self.nget_run('-g test -D -r .'))
-		self.verifyoutput(['0002','0001','0003'])
-		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 12)
+		self.verifyoutput(['0002','0001','0005'])
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 10)
 	
 	def test_available_overrides_group(self):
 		self.vfailIf(self.nget_run('-g test -A -T -r .'))
@@ -402,7 +404,7 @@ class RetrieveTest_base(DecodeTest_base):
 		tmp2dir = os.path.join(self.nget.rcdir, 'tmp2')
 		os.mkdir(tmp2dir)
 		self.vfailIf(self.nget_run('-dI -G test -p %s --dupepath %s -r .'%(tmp2dir,self.nget.tmpdir)))
-		self.verifyoutput(['0001','0003'],tmpdir=tmp2dir)
+		self.verifyoutput(['0001','0005'],tmpdir=tmp2dir)
 		
 	def test_path_clears_dupepaths(self):
 		self.vfailIf(self.nget_run('-g test -r joy'))
@@ -410,7 +412,7 @@ class RetrieveTest_base(DecodeTest_base):
 		tmp2dir = os.path.join(self.nget.rcdir, 'tmp2')
 		os.mkdir(tmp2dir)
 		self.vfailIf(self.nget_run('-dI -G test --dupepath %s -p %s -r .'%(self.nget.tmpdir, tmp2dir)))
-		self.verifyoutput(['0001','0002','0003'],tmpdir=tmp2dir)
+		self.verifyoutput(['0001','0002','0005'],tmpdir=tmp2dir)
 	
 	def test_noautoparhandling(self):
 		self.addarticles('par01', 'input')
@@ -477,6 +479,13 @@ class RetrieveTest_base(DecodeTest_base):
 		self.verifyoutput({'par01':['01.dat','02.dat','03.dat','04.dat','05.dat','a b.par','_reply_output/1041725934.0.txt']})
 		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 7)
 
+	def test_autoparhandling_0file(self):
+		self.addarticles('par02', 'input')
+		self.addarticles('par02', '0file')
+		self.vfailIf(self.nget_run('-g test -r "par.*test"'))
+		self.verifyoutput({'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','p2.par','_0file_output/1041648329.0.txt']})
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 7)
+		
 	def test_autoparhandling_multiparset(self):
 		self.addarticles('par01', 'input')
 		self.addarticles('par02', 'input')
@@ -539,7 +548,7 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.verifyoutput('0002')
 
 	def test_not_mid(self):
-		self.vfailIf(self.nget.run('-g test -R "mid .1.foo. !="'))
+		self.vfailIf(self.nget.run('-g test -R "mid 1.1041808207.48.dumbnntpd !="'))
 		self.verifyoutput(['0002','0001'])
 
 	def test_mid_or_mid(self):
@@ -596,7 +605,7 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 
 	def test_lines_and_lines(self):
 		self.vfailIf(self.nget.run('-g test -R "lines 20 > lines 200 < &&"'))
-		self.verifyoutput('0003')
+		self.verifyoutput('0005')
 
 	def test_bytes(self):
 		self.vfailIf(self.nget.run('-g test -R "bytes 2000 >"'))
@@ -622,7 +631,7 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.vfailIf(self.nget.run('-g test -R "age 3w2h5m1s <"'))
 		self.verifyoutput([])
 		self.vfailIf(self.nget.run('-g test -R "age 3w2h5m1s >"'))
-		self.verifyoutput(['0002','0001','0003'])
+		self.verifyoutput(['0002','0001','0005'])
 	
 	def test_references(self):
 		self.addarticles('refs01', 'input')
@@ -632,15 +641,15 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 	
 	def test_R_extra_whitespace(self):
 		self.vfailIf(self.nget.run('-g test -R "  \tlines  \t 20 \t  > \t  lines \t  200\t  <\t  &&\t  \t"'))
-		self.verifyoutput('0003')
+		self.verifyoutput('0005')
 		
 	def test_R_stack(self):
 		self.vfailIf(self.nget.run('-g test -R "lines 20 > lines 200 < && bytes 2000 > bytes 90000 < && ||"'))
-		self.verifyoutput(['0003','0002'])
+		self.verifyoutput(['0005','0002'])
 	
 	def test_R_stack4(self):
 		self.vfailIf(self.nget.run('-g test -R "lines 2 > lines 200 < bytes 1000 > bytes 90000 < && && &&"'))
-		self.verifyoutput(['0003'])
+		self.verifyoutput(['0005'])
 
 	def test_p_mkdir(self):
 		path = os.path.join(self.nget.tmpdir,'aaa','bbb','ccc')
@@ -702,7 +711,7 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		f.write('-g test -r .')
 		f.close()
 		self.vfailIf(self.nget.run('-@ list.foo'))
-		self.verifyoutput(['0002','0001','0003'])
+		self.verifyoutput(['0002','0001','0005'])
 
 	def test_list_abspath(self):
 		lpath = os.path.join(self.nget.rcdir, 'list.foo')
@@ -710,7 +719,7 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		f.write('-g test -r .')
 		f.close()
 		self.vfailIf(self.nget.run('-@ %s'%lpath))
-		self.verifyoutput(['0002','0001','0003'])
+		self.verifyoutput(['0002','0001','0005'])
 
 	def test_list_multiline(self):
 		lpath = os.path.join(self.nget.rcdir, 'list.foo')
@@ -718,7 +727,7 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		f.write('-g\ntest\n-r\n.')
 		f.close()
 		self.vfailIf(self.nget.run('-@ %s'%lpath))
-		self.verifyoutput(['0002','0001','0003'])
+		self.verifyoutput(['0002','0001','0005'])
 
 	def test_list_list(self):
 		lpath = os.path.join(self.nget.rcdir, 'list.foo')
@@ -1552,11 +1561,11 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.servers.start()
 		self.addarticles('0001', 'uuencode_single')
 		self.addarticles('0002', 'uuencode_multi3')
-		self.addarticles('0003', 'newspost_uue_0')
+		self.addarticles('0004', 'input')
 		self.vfailIf(self.nget.run("-g test"))
 		self.rmarticles('0001', 'uuencode_single')
 		self.rmarticles('0002', 'uuencode_multi3')
-		self.rmarticles('0003', 'newspost_uue_0')
+		self.rmarticles('0004', 'input')
 		self.vfailUnlessExitstatus(self.nget.run("-G test -r ."), 8)
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 3)

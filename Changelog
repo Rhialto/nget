@@ -1,5 +1,6 @@
 2003-??-?? v0.24:
   * Add automatic handling of parfiles.  nget will automatically download only as many .Pxx files as needed. (You still need an external program such as parchive to restore them)
+  * Change 0-file handling to show the 0 part as a seperate post than the binary it was posted with. (Avoids missing 0-files when they are posted with a binary that gets dropped due to dupefile checking or autopar handling)
 
 2002-12-24 v0.23:
   * Add --decode arg so -k and -K can be negated.

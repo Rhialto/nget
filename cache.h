@@ -155,8 +155,10 @@ class c_nntp_file : public c_nntp_file_base, public c_refcounted<c_nntp_file>{
 		void addpart(c_nntp_part *p);
 		void mergefile(c_nntp_file::ptr &f);
 		bool is_a_reply(void) const {return (!references.empty()) || (subject.size()>=4 && tolower(subject[0])=='r' && tolower(subject[1])=='e' && subject[2]==':' && subject[3]==' ');}
-		bool maybe_a_textpost(void) const {return (have<=1 && is_a_reply() && lines()<1000);}
-		bool iscomplete(void) const {return (have>=req) || maybe_a_textpost();}
+		bool maybe_a_textreply(void) const {return (have<=1 && is_a_reply() && lines()<1000);}
+		bool maybe_a_zerofile(void) const {return (req==0) && (partoff>=0) && (have==1);}
+		bool maybe_a_textpost(void) const {return maybe_a_zerofile() || maybe_a_textreply();}
+		bool iscomplete(void) const {return (have>=req) || maybe_a_textreply();}
 		void get_server_have_map(t_server_have_map &have_map) const;
 //		ulong banum(void){assert(!parts.empty());return (*parts.begin()).second->articlenum;}
 		string bamid(void) const {assert(!parts.empty());return (*parts.begin()).second->messageid;}

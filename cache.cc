@@ -30,6 +30,13 @@
 #include "path.h"
 #include "par.h"
 
+static inline bool count_partnum(int partnum, int req) {
+	if (req>0)
+		return (partnum>0 && partnum<=req);
+	else
+		return (partnum == req);
+}
+
 int c_nntp_header::parsepnum(const char *str,const char *soff){
 	const char *p;
 	assert(str);
@@ -49,8 +56,8 @@ int c_nntp_header::parsepnum(const char *str,const char *soff){
 				int req=strtol(soff+1,&erp,10);
 				if (*erp!=m2 || erp==soff+1) return -1;
 				if (partnum>req) return -1;
-				//                                      if (partnum==0)
-				//                                              partnum=-1;
+				if (partnum==0)
+					req=0;//handle 0-files seperatly from the binary they accompany
 				return req;
 			}
 	}
@@ -94,10 +101,14 @@ void c_nntp_header::set(char * str,const char *a,ulong anum,time_t d,ulong b,ulo
 	for (;s>str;s--) {
 		if (*s=='/')
 			if ((req=parsepnum(str,s))>=0){
-				subject="";
-				subject.append(str,partoff);
-				subject.append("*");
-				subject.append(s);
+				if (req==0) {
+					subject=str;
+				} else {
+					subject="";
+					subject.append(str,partoff);
+					subject.append("*");
+					subject.append(s);
+				}
 				setfileid(refstr, refstrlen);
 				return;
 			}
@@ -151,7 +162,7 @@ void c_nntp_file::addpart(c_nntp_part *p){
 	assert(nfpi==parts.end());
 #endif
 	parts.insert(t_nntp_file_parts::value_type(p->partnum,p));
-	if (p->partnum>0 && p->partnum<=req) have++;//be sure this if test is kept synced with the have-- test when flushing
+	if (count_partnum(p->partnum, req)) have++;
 //	bytes+=p->apxbytes;lines+=p->apxlines;
 }
 
@@ -196,7 +207,7 @@ void c_nntp_file::get_server_have_map(t_server_have_map &have_map) const{
 			//don't increment count twice if a server has multiple server_articles for a single part
 			if (servers_already_found.insert(serverid).second){
 				t_server_have_map::iterator hmi(have_map.insert(t_server_have_map::value_type(serverid, 0)).first);
-				if (partnum>0 && partnum<=req)
+				if (count_partnum(partnum, req))
 					++hmi->second;
 			}
 		}
@@ -399,7 +410,7 @@ ulong c_nntp_cache::flush(c_nntp_server_info *servinfo, c_nrange flushrange, met
 					delete sa;
 					np->articles.erase(sai);
 					if (np->articles.empty()){
-						if (np->partnum>0 && np->partnum<=nf->req) nf->have--;//be sure this if test is kept synced with the have++ test in addpart
+						if (count_partnum(np->partnum,nf->req)) nf->have--;
 						midinfo->set_delete(np->messageid);
 						delete np;
 						np=NULL;
