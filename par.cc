@@ -125,7 +125,7 @@ bool Par1Info::maybe_add_parfile(const c_nntp_file::ptr &f) {
 	c_regex_subs rsubs;
 	for (t_subjmatches_map::iterator smi=localpars.subjmatches.begin(); smi!=localpars.subjmatches.end(); ++smi) {
 		if (!smi->second->match(f->subject.c_str(), &rsubs)) {
-			PDEBUG(DEBUG_MIN, "file %s matches localpars (%s)",f->subject.c_str(),hexstr(smi->first).c_str());
+			PMSG("autopar: %s matches local parset %s",f->subject.c_str(),hexstr(smi->first).c_str());
 			if (isalpha(rsubs.subs(1)[0]))
 				serverpars.insert(t_server_file_list::value_type(f->badate(), f));
 			else
@@ -139,7 +139,7 @@ bool Par1Info::maybe_add_parfile(const c_nntp_file::ptr &f) {
 		string basename(rsubs.sub(1));
 		if (!basename.empty() && basename[0]=='"')
 			basename.erase(basename.begin());
-		PDEBUG(DEBUG_MIN, "file %s seems like a par (%s)",f->subject.c_str(),basename.c_str());
+		PMSG("autopar: %s seems like a par (%s)",f->subject.c_str(),basename.c_str());
 		if (isalpha(rsubs.subs(2)[0]))
 			parset(basename)->addserverpar(f);
 		else
@@ -179,7 +179,7 @@ int Par1Info::get_pxxs(int num, set<uint32_t> &havevols, const string &key, c_nn
 			}
 		}
 		if ((signed)availvols.size()<num){
-			PERROR("get_pxxs: Only %i/%i needed volumes available for parset %s, giving up", (int)availvols.size(), num, hexstr(key).c_str());
+			PERROR("parset %s: Only %i/%i needed volumes available, giving up", hexstr(key).c_str(), (int)availvols.size(), num);
 			return 0;
 		}
 	}
@@ -238,12 +238,12 @@ int Par1Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 		for (vector<string>::const_iterator fni=bfni->second.begin(); fni!=bfni->second.end(); ++fni) {
 			string fn = path_join(path, *fni);
 			if (parfile_ok(fn, volnumber)) {
-				PDEBUG(DEBUG_MIN, "parfile %s: good (vol %i set %s)",fn.c_str(), volnumber, hexstr(bfni->first).c_str());
+				PMSG("parfile %s: good (vol %i parset %s)",fn.c_str(), volnumber, hexstr(bfni->first).c_str());
 				goodpar=fn;
 				if (volnumber>0)
 					goodvols.insert(volnumber);
 			}else {
-				PDEBUG(DEBUG_MIN, "parfile %s: bad",fn.c_str());
+				PMSG("parfile %s: bad",fn.c_str());
 				badcount++;
 			}
 
@@ -251,11 +251,11 @@ int Par1Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 		int needed=0;
 		if (goodpar.empty()) {
 			needed=1;
-			PDEBUG(DEBUG_MIN, "parset %s in %s no goodpar found, trying to get one", hexstr(bfni->first).c_str(), path.c_str());
+			PMSG("parset %s in %s: no goodpar found, trying to get one", hexstr(bfni->first).c_str(), path.c_str());
 		} else {
 			int bad = parfile_check(goodpar, path, nocase_map);
 			needed = max(0, bad - (signed)goodvols.size());
-			PDEBUG(DEBUG_MIN, "parset %s in %s: %i goodpxxs, %i badp??s, %i bad/missing files, trying to get %i more", hexstr(bfni->first).c_str(), path.c_str(), (int)goodvols.size(), badcount, bad, needed);
+			PMSG("parset %s in %s: %i goodpxxs, %i badp??s, %i bad/missing files, trying to get %i more", hexstr(bfni->first).c_str(), path.c_str(), (int)goodvols.size(), badcount, bad, needed);
 		}
 		if (needed) {
 			int parset_added = get_pxxs(needed, goodvols, bfni->first, fc);//modifies goodvols, but we don't care.
@@ -286,7 +286,7 @@ bool Par2Info::maybe_add_parfile(const c_nntp_file::ptr &f) {
 	c_regex_subs rsubs;
 	for (t_subjmatches_map::iterator smi=localpars.subjmatches.begin(); smi!=localpars.subjmatches.end(); ++smi) {
 		if (!smi->second->match(f->subject.c_str(), &rsubs)) {
-			PDEBUG(DEBUG_MIN, "file %s matches localpar2s (%s) (%i)",f->subject.c_str(),hexstr(smi->first).c_str(),rsubs.sublen(1)!=0);
+			PMSG("autopar: %s matches local par2set (%s)",f->subject.c_str(),hexstr(smi->first).c_str());
 			if (rsubs.sublen(1) == 0)
 				serverpars.insert(t_server_file_list::value_type(f->badate(), f));
 			else
@@ -304,7 +304,7 @@ bool Par2Info::maybe_add_parfile(const c_nntp_file::ptr &f) {
 			basename = rsubs.sub(1);
 		if (!basename.empty() && basename[0]=='"')
 			basename.erase(basename.begin());
-		PDEBUG(DEBUG_MIN, "file %s seems like a par2 (%s) (%i)",f->subject.c_str(),basename.c_str(), ispxx);
+		PMSG("autopar: %s seems like a par2 (%s)",f->subject.c_str(),basename.c_str());
 		if (!ispxx)
 			parset(basename)->addserverpar(f);
 		else
@@ -346,7 +346,7 @@ int Par2Info::get_recoverypackets(int num, set<uint32_t> &havepackets, const str
 		}
 	}
 	if (nconfig.autopar_optimistic && (signed)availpackets.size()<num){
-		PERROR("get_recoverypackets: Only %i/%i needed packets available for par2set %s, giving up", (int)availpackets.size(), num, hexstr(key).c_str());
+		PERROR("par2set %s: Only %i/%i needed packets available, giving up", hexstr(key).c_str(), (int)availpackets.size(), num);
 		return 0;
 	}
 #ifndef NDEBUG
@@ -418,14 +418,14 @@ int Par2Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 				
 				if (r == eRepairNotPossible)
 					needed_packets = par2.missingblockcount - par2.recoverypacketmap.size();
-				PDEBUG(DEBUG_MIN, "par2set %s in %s: %i recovery packets, %i bad/missing source blocks, trying to get %i more", hexstr(bfni->first).c_str(), path.c_str(), (int)goodpackets.size(), par2.missingblockcount, needed_packets);
+				PMSG("par2set %s in %s: %i recovery packets, %i bad/missing source blocks, trying to get %i more", hexstr(bfni->first).c_str(), path.c_str(), (int)goodpackets.size(), par2.missingblockcount, needed_packets);
 				break;
 			}
 		}
 
 		if (!goodparfound) {
 			needed_packets = 1;
-			PDEBUG(DEBUG_MIN, "par2set %s in %s no goodpar found, trying to get one", hexstr(bfni->first).c_str(), path.c_str());
+			PMSG("par2set %s in %s: no goodpar found, trying to get one", hexstr(bfni->first).c_str(), path.c_str());
 		}
 
 		if (needed_packets) {

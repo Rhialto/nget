@@ -190,7 +190,7 @@ class ParInfo {
 			total_added += par1info.maybe_get_pxxs(fc);
 			total_added += par2info.maybe_get_pxxs(fc);
 			if (!total_added) {
-				PDEBUG(DEBUG_MIN, "par checking in %s done (%i/%i parsets ok)", path.c_str(),
+				PMSG("autopar in %s done (%i/%i parsets ok)", path.c_str(),
 						par1info.getNumFinishedOk()+par2info.getNumFinishedOk(),
 						par1info.getNumFinished()+par2info.getNumFinished());
 			}

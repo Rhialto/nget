@@ -6,6 +6,7 @@
   * Rename files that had decode warnings/errors so they won't cause reposts to be dupeskipped.
   * Fix death by SIGPIPE on broken connection on some platforms.
   * Better handling of completely damaged par files. (If none of a set can be parsed, set the autopar error, rather than ignoring them completely.)
+  * Show most of the autopar status messages without needing to set debug=1.
 
 2003-09-01 v0.24.1:
   * Fix compile with gcc-3.3.

@@ -379,7 +379,7 @@ bool Par2Repairer::LoadPacketsFromFile(string filename)
   // Did we actually find any interesting packets
   if (packets > 0)
   {
-    PDEBUG(DEBUG_MIN, "par2file %s: %i packets (%i recovery)",filename.c_str(), (int)packets, (int)recoverypackets);
+    PMSG("par2file %s: %i packets (%i recovery)",filename.c_str(), (int)packets, (int)recoverypackets);
     /*cout << "Loaded " << packets << " new packets";
     if (recoverypackets > 0) cout << " including " << recoverypackets << " recovery blocks";
     cout << endl;*/
@@ -390,7 +390,7 @@ bool Par2Repairer::LoadPacketsFromFile(string filename)
   }
   else
   {
-    PDEBUG(DEBUG_MIN, "par2file %s: no new packets",filename.c_str());
+    PMSG("par2file %s: no new packets",filename.c_str());
     //cout << "No new packets found" << endl;
     delete diskfile;
   }
