@@ -76,7 +76,7 @@ ssize_t c_file::putf(const char *data,...){
 //	close();
 //	return doopen(name,mode);
 //}
-void c_file::flush(int local=0){
+void c_file::flush(int local){
 //	int i=0;
 //###########3 dowrite(buffers..)
 	if (!local) {

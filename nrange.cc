@@ -135,7 +135,7 @@ void c_nrange::remove(ulong l, ulong h){
 	}
 	if (debug)printf("%i(%lu tot:%lu part:%lu (%lu->%lu))\n",tmp,ssize-(ulong)rlist.size(),rtot,rpart,ssize,(ulong)rlist.size());
 }
-int c_nrange::load(string fn,int merge=0){
+int c_nrange::load(string fn,int merge){
 	if (!merge){
 		clear();
 		changed=0;

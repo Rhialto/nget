@@ -59,7 +59,7 @@ void fatal_exit(void) {
 
 #define SET_x_x_STATUS(type, low, up, bit) static const int type ## _ ## up = bit; \
 static int low ## _ ## type;\
-void set_ ## type ## _ ## low ## _status(int incr=1){\
+void set_ ## type ## _ ## low ## _status(int incr){\
 	low ## _ ## type += incr;\
 	if (incr>0)	low ## flags|=type ## _ ## up;\
 }
