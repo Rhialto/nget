@@ -99,8 +99,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 			printf("invalid curservmult: %s\n",cp);
 	}
 	cfg->getitemi("usegz",&usegz);
-	if (cfg->getitema("fullxover"))
-		fullxover=cfg->getitema("fullxover");
+	fullxover=cfg->geti("fullxover", fullxover);
 	cfg->getitemi("unequal_line_error",&unequal_line_error);
 	cfg->getitemi("maxstreaming",&maxstreaming);
 	cfg->getitemi("maxconnections",&maxconnections);
