@@ -30,7 +30,7 @@ MY_CHECK_EXCEPTIONS
 dnl Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h getopt.h sstream regex.h term.h inttypes.h winsock.h sys/socket.h process.h windows.h)
+AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h sstream regex.h term.h inttypes.h winsock.h sys/socket.h process.h windows.h)
 AC_CHECK_HEADERS(stdio.h endian.h)
 
 MY_CHECK_HASH_MAP
@@ -54,7 +54,7 @@ AC_donut_CHECK_PACKAGE_DEF(lockfile, lockfile_create, lockfile, lockfile.h)
 AC_donut_CHECK_PACKAGE_DEF(zlib, gzopen, z, zlib.h)
 AC_donut_CHECK_PACKAGE(pcre, pcre_compile, pcre, pcreposix.h, AC_CHECK_LIB(pcreposix,main))
 AC_donut_CHECK_PACKAGE_DEF(popt, poptGetContext, popt, popt.h, MY_CHECK_POPT_CONST,
-	AC_SEARCH_LIBS(getopt_long, gnugetopt) dnl only check for -lgnugetopt if not using popt
+	[AC_donut_SEARCH_PACKAGE_DEF(gnugetopt, getopt_long, gnugetopt, getopt.h)]
 )
 
 dnl check for uulib.  We need a bit of special handling to support the
