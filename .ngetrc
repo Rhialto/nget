@@ -16,6 +16,7 @@ curservmult=2.0
 makedirs=no
 usegz=-1
 timeout=180
+unequal_line_error=0
 
 //hostname aliases
 {halias

@@ -119,6 +119,7 @@ class c_nget_config {
 		t_group_info_list groups;
 		float curservmult;
 		int usegz;
+		int unequal_line_error;
 
 		c_server* getserver(string name){
 			serv_match_by_name name_matcher;
@@ -161,6 +162,7 @@ class c_nget_config {
 		c_nget_config(){
 			curservmult=2.0;
 			usegz=-1;
+			unequal_line_error=0;
 		}
 		~c_nget_config(){
 			t_server_list::iterator i;

@@ -61,6 +61,7 @@ void c_nget_config::setlist(c_data_section *cfg,c_data_section *hinfo,c_data_sec
 	//cfg
 	assert(cfg);
 	cfg->getitemi("usegz",&usegz);
+	cfg->getitemi("unequal_line_error",&unequal_line_error);
 	//halias
 	assert(hinfo);
 	for (dli=hinfo->data.begin();dli!=hinfo->data.end();++dli){

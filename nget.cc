@@ -604,7 +604,7 @@ static int do_args(int argc, char **argv,nget_options options,int sub){
 				default:
 					if (options.qstatus){
 						mustredo_on_skip = 1;
-						if (!options.badskip) nntp.nntp_retrieve(options.gflags,options.writelite);
+						if (!options.badskip) nntp.nntp_retrieve(options);
 						options.qstatus=0;
 						mustredo_on_skip = 0;
 					}
