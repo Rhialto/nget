@@ -6,6 +6,7 @@
   * Fix memleak in goodgetcwd with long paths.
   * Fix goodgetcwd error handling.
   * Rewrite of config file code, all config values are error checked now, and unknown entries (typos) are warned about.
+  * Some code cleanups and restructuring.
 
 2003-11-20 v0.25:
   * Allow the same server id to be used for multiple hosts to share header cache data. (Useful if you have multiple accounts on the same server.)
