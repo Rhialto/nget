@@ -37,6 +37,14 @@
 /* Do we have a working term.h, tputs, and clr_bol? */
 #undef HAVE_WORKING_TERMSTUFF
 
+/* Which, if any, do we have have? */
+#undef HAVE_FUNC_GETHOSTBYNAME_R_6
+#undef HAVE_FUNC_GETHOSTBYNAME_R_5
+#undef HAVE_FUNC_GETHOSTBYNAME_R_3
+#undef HAVE_FUNC_GETSERVBYNAME_R_6
+#undef HAVE_FUNC_GETSERVBYNAME_R_5
+#undef HAVE_FUNC_GETSERVBYNAME_R_4
+
 @BOTTOM@
 
 /* tests for some features that depend on other features */

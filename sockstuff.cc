@@ -56,12 +56,20 @@ returned is byte ordered for the network. */
 int atoport(const char *service, const char *proto,char * buf, int buflen) {
 	int port;
 	long int lport;
-	struct servent *serv;
+	struct servent *serv=NULL;
 	char *errpos;
 	/* First try to read it from /etc/services */
-#ifdef HAVE_GETSERVBYNAME_R
+#if HAVE_FUNC_GETSERVBYNAME_R_6
 	struct servent servb;
 	getservbyname_r(service,proto,&servb,buf,buflen,&serv);
+#elif HAVE_FUNC_GETSERVBYNAME_R_5
+	struct servent servb;
+	serv = getservbyname_r(service,proto,&servb,buf,buflen);
+#elif HAVE_FUNC_GETSERVBYNAME_R_4
+	assert(buflen >= sizeof(struct servent_data));
+	struct servent servb;
+	if (getservbyname_r(service,proto,&servb,(struct servent_data *)buf)==0)
+		serv = &servb;
 #else
 	serv = getservbyname(service, proto);
 #endif
@@ -85,11 +93,20 @@ int atoaddr(const char *netaddress,struct in_addr *addr,char *buf, int buflen){
 #endif
 			return 1;
 	else {
-		struct hostent *host;
-#ifdef HAVE_GETHOSTBYNAME_R
+		struct hostent *host=NULL;
+#if HAVE_FUNC_GETHOSTBYNAME_R_6
 		int err;
 		struct hostent hostb;
 		gethostbyname_r(netaddress,&hostb,buf,buflen,&host,&err);
+#elif HAVE_FUNC_GETHOSTBYNAME_R_5
+		int err;
+		struct hostent hostb;
+		host = gethostbyname_r(netaddress,&hostb,buf,buflen,&err);
+#elif HAVE_FUNC_GETHOSTBYNAME_R_3
+		assert(buflen >= sizeof(struct hostent_data));
+		struct hostent hostb;
+		if (gethostbyname_r(netaddress,&hostb,(struct hostent_data *)buf)==0)
+			host = &hostb;
 #else
 		host = gethostbyname(netaddress);
 #endif
