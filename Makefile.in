@@ -38,7 +38,7 @@ LITEOBJS=lite.o litenntp.o log.o sockstuff.o strreps.o file.o path.o
 $(NGETLITE): $(LITEOBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LITEOBJS) -o $@ $(LITELIBS)
 
-par2/par2.a: par2/*.cpp par2/*.h
+par2/par2.a: par2/*.cpp par2/*.h config.h _subconf.h
 	$(MAKE) -C par2 par2.a
 
 @NOUU@@UULIB@: @UUDIR@/*.c @UUDIR@/*.h
