@@ -72,7 +72,7 @@ int Connection::getline(int echo){
 void SockPool::connection_erase(t_connection_map::iterator i) {
 	try {
 		i->second->close();
-	} catch (baseCommEx &e) {//ignore transport errors while closing
+	} catch (FileEx &e) {//ignore transport errors while closing
 		printCaughtEx_nnl(e);printf(" (ignored)\n");
 	}
 	if (i->second->server_ok)
