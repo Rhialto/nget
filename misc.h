@@ -28,8 +28,6 @@
 
 #include <string>
 
-void init_my_timezone(void);//must be called before decode_(mdtm|textdate)
-
 int doopen(int &handle,const char * name,int access,int mode=0);
 int dofopen(FILE * &f,const char * name,const char * mode,int domiscquiet=0);
 

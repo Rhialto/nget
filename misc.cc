@@ -36,39 +36,29 @@
 #include <iomanip>
 
 #ifndef HAVE_TIMEGM
-long my_timezone=0;
-#if (defined(TIMEZONE_IS_VAR) || defined(_TIMEZONE_IS_VAR))
-void init_my_timezone(void){
-	tzset();
-#ifdef TIMEZONE_IS_VAR
-	my_timezone=-timezone; //timezone var is seconds west of UTC, not east... weird.
-#else
-	my_timezone=-_timezone;
-#endif
-//	printf("my_timezone1=%li\n",my_timezone);
-}
-#else
-void init_my_timezone(void){
-	time_t t;
-	time(&t);
-	struct tm *lt = localtime(&t);
-	my_timezone=lt->tm_gmtoff;
-//	printf("my_timezone2=%li\n",my_timezone);
-}
-#endif
-
-time_t timegm (struct tm *tm) {
+time_t timegm (const struct tm *gmtimein) {
 	/* The timegm manpage suggests a strategy of setting the TZ env var to ""
 	 * and then running tzset(), mktime() and then resetting the TZ var to its
 	 * previous value, but unfortunatly it doesn't seem to work on all arches.
-	 * So rather than try to figure out when it does we'll just use the old,
-	 * possibly 1-hour-off during daylight savings time version.
+	 * So rather than try to figure out when it does we'll use this routine
+	 * by Yitzchak Scott-Thoennes that should work on all arches.
+	 * (found at http://ais.gmd.de/~veit/os2/mailinglist3/0863.html)
 	 */
-	return mktime(tm)+my_timezone;
+	struct tm tm;
+	time_t t, t2;
+
+	tm = *gmtimein; /* make a local copy to fiddle with */
+	tm.tm_isdst = 0; /* treat it as standard time */
+
+	t2 = t = mktime(&tm); /* calculate the time as a local time */
+
+	tm = *gmtime(&t2); /* now calculate the difference between */
+	tm.tm_isdst = 0; /* gm and local time */
+	t2 = mktime(&tm);
+
+	t += t - t2; /* and adjust our answer by that difference */
+	return t; 	
 }
-#else
-//if we have a real timegm(), then we don't need to do anything special.
-void init_my_timezone(void) {}
 #endif
 
 int doopen(int &handle,const char * name,int access,int mode) {

@@ -27,25 +27,6 @@ if test $ac_cv_popt_const_argv = yes; then
 fi
 ])
 
-AC_DEFUN(MY_DECL__TIMEZONE,
-[AC_CACHE_CHECK([for _timezone declaration in time.h],
-  ac_cv_decl__timezone,
-[AC_TRY_COMPILE([#include <time.h>], [long l = 1l-_timezone;],
-  ac_cv_decl__timezone=yes, ac_cv_decl__timezone=no)])
-if test $ac_cv_decl__timezone = yes; then
-  AC_DEFINE(_TIMEZONE_IS_VAR,1,[define if `timezone' is an integer var defined in time.h])
-fi
-])
-AC_DEFUN(MY_DECL_TIMEZONE,
-[AC_CACHE_CHECK([for timezone declaration in time.h],
-  ac_cv_decl_timezone,
-[AC_TRY_COMPILE([#include <time.h>], [long l = 1l-timezone;],
-  ac_cv_decl_timezone=yes, ac_cv_decl_timezone=no)])
-if test $ac_cv_decl_timezone = yes; then
-  AC_DEFINE(TIMEZONE_IS_VAR,1,[define if `_timezone' is an integer var defined in time.h])
-fi
-])
-
 
 dnl AC_TRY_COMPILE(INCLUDES, FUNCTION-BODY,
 dnl             [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])

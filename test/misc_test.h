@@ -74,7 +74,6 @@ class misc_Test : public TestCase {
 			CPPUNIT_ASSERT(decode_textmonth("foo")==-1);
 		}
 		void testDecodeTextDate(void) {
-			init_my_timezone();
 			//extern int debug; debug=3;
 			CPPUNIT_ASSERT(decode_textdate("Sun, 17 Feb 2002 22:52:46 GMT",0)==1013986366);
 			CPPUNIT_ASSERT(decode_textdate("Sun, 17 Feb 2002 22:52:46 GMT",1)==1013986366);

@@ -839,7 +839,6 @@ int main(int argc, char ** argv){
 	atexit(print_error_status);
 	try {
 		//	atexit(cache_dbginfo);
-		init_my_timezone();
 		addoptions();
 		signal(SIGTERM,term_handler);
 		signal(SIGHUP,term_handler);
