@@ -220,7 +220,7 @@ c_group_availability::ptr c_nntp_grouplist_reader::read_group(void) {
 			char * cp;
 			buf = t[0];
 			gd = new c_group_availability(t[1]);
-			while ((cp = goodstrtok(&buf, ','))) {
+			while ((cp = goodstrtok(&buf, ',')) && *cp) {
 				ulong serverid=atoul(cp);
 				if (nconfig.hasserver(serverid)) {
 					gd->serverids.insert(serverid);

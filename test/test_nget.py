@@ -1737,6 +1737,19 @@ class RetrieveTestCase(TestCase, RetrieveTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("list_"), 1)
 		self.vfailUnlessEqual(self.servers.servers[0].count("date"), 0)
 
+	def test_available_extraneous_list_newsgroups(self):
+		self.servers.servers[0].RequestHandlerClass = ExtraneousListNewsgroupsNNTPRequestHandler
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-a -Tr .'))
+		self.failUnless(output.find("foo.bar.desc")>=0)
+		self.failUnless(output.find("foo.bar.group")>=0)
+		self.failUnless(output.find("test")>=0)
+		self.failIf(output.find("WARNINGS")>=0)
+		output = self.vfailIf_getoutput(self.nget.run_getoutput('-A -Tr .'))
+		self.failUnless(output.find("foo.bar.desc")>=0)
+		self.failUnless(output.find("foo.bar.group")>=0)
+		self.failUnless(output.find("test")>=0)
+		self.failIf(output.find("WARNINGS")>=0)
+	
 	def test_available_r(self):
 		self.servers.servers[0].addgroup("aa.group")
 		self.servers.servers[0].addgroup("bb.group")
@@ -2473,6 +2486,12 @@ class NoDateCmdNNTPRequestHandler(nntpd.NNTPRequestHandler):
 
 class NoListNewsgroupsCmdNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	cmd_list_newsgroups=None
+
+class ExtraneousListNewsgroupsNNTPRequestHandler(nntpd.NNTPRequestHandler):
+	def cmd_list_newsgroups(self, args):
+		self.nwrite("215 information follows")
+		self.nwrite("%s %s"%("foo.bar.group", "this is the foo.bar.desc. Whee"))
+		self.nwrite(".")
 
 class DelayBeforeWriteNNTPRequestHandler(nntpd.NNTPRequestHandler):
 	def nwrite(self, s):
