@@ -137,6 +137,7 @@ class XoverProgress {
 	public:
 		time_t lasttime, starttime, curt;
 		void print_retrieving_headers(ulong low,ulong high,ulong done,ulong realtotal,ulong total,ulong bytes,int doneranges,int streamed,int totalranges){
+			time(&lasttime);
 			time_t dtime=lasttime-starttime;
 			long Bps=(dtime>0)?bytes/dtime:0;
 			long Bph=(done>0)?bytes/done:3;//if no headers have been retrieved yet, set the bytes per header to 3 just to get some sort of timeleft display.  (3=strlen(".\r\n"))
@@ -145,7 +146,6 @@ class XoverProgress {
 			if (totalranges>1)
 				printf(" (%i/%i/%i)",doneranges,doneranges+streamed,totalranges);
 			fflush(stdout);//@@@@
-			time(&lasttime);
 		};
 		bool needupdate(void) {
 			time(&curt);
