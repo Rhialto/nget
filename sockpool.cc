@@ -102,6 +102,7 @@ void SockPool::expire_old_connection(void) {
 			oldest = i;
 	}
 	if (oldest!=connections.end()){
+		oldest->second->close();
 		delete oldest->second;
 		connections.erase(oldest);
 	}else
