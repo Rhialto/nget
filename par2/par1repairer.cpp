@@ -94,7 +94,7 @@ Result Par1Repairer::Process(const CommandLine &commandline, bool dorepair)
   if (!LoadExtraRecoveryFiles(extrafiles))
     return eLogicError;
 
-  cout << endl << "Verifying source files:" << endl << endl;
+  //cout << endl << "Verifying source files:" << endl << endl;
 
   // Check for the existence of and verify each of the source files
   if (!VerifySourceFiles())
@@ -102,7 +102,7 @@ Result Par1Repairer::Process(const CommandLine &commandline, bool dorepair)
 
   if (completefilecount<sourcefiles.size())
   {
-    cout << endl << "Scanning extra files:" << endl << endl;
+    //cout << endl << "Scanning extra files:" << endl << endl;
 
     // Check any other files specified on the command line to see if they are
     // actually copies of the source files that have the wrong filename
@@ -113,7 +113,7 @@ Result Par1Repairer::Process(const CommandLine &commandline, bool dorepair)
   // Find out how much data we have found
   UpdateVerificationResults();
 
-  cout << endl;
+  //cout << endl;
 
   // Check the verification results and report the details
   if (!CheckVerificationResults())
@@ -159,7 +159,7 @@ bool Par1Repairer::LoadRecoveryFile(string filename)
     string path;
     string name;
     DiskFile::SplitFilename(filename, path, name);
-    cout << "Loading \"" << name << "\"." << endl;
+    //cout << "Loading \"" << name << "\"." << endl;
   }
 
   bool havevolume = false;
@@ -378,11 +378,11 @@ bool Par1Repairer::LoadRecoveryFile(string filename)
 
   if (havevolume)
   {
-    cout << "Loaded recovery volume " << volumenumber << endl;
+    //cout << "Loaded recovery volume " << volumenumber << endl;
   }
   else
   {
-    cout << "No new recovery volumes found" << endl;
+    //cout << "No new recovery volumes found" << endl;
   }
 
   // Remember that the file was processed
@@ -525,7 +525,7 @@ bool Par1Repairer::VerifySourceFiles(void)
       string name;
       DiskFile::SplitFilename(filename, path, name);
 
-      cout << "Target: \"" << name << "\" - missing." << endl;
+      //cout << "Target: \"" << name << "\" - missing." << endl;
     }
 
     ++sourceiterator;
@@ -662,17 +662,17 @@ bool Par1Repairer::VerifyDataFile(DiskFile *diskfile, Par1RepairerSourceFile *so
       // Compute the MD5 hash of the whole file
       if (filesize > 16384)
       {
-        u64 progress = 0;
+        //u64 progress = 0;
         u64 offset = 16384;
         while (offset < filesize)
         {
           // Update a progress indicator
-          u32 oldfraction = (u32)(1000 * (progress) / filesize);
+          /*u32 oldfraction = (u32)(1000 * (progress) / filesize);
           u32 newfraction = (u32)(1000 * (progress=offset) / filesize);
           if (oldfraction != newfraction)
           {
             cout << "Scanning: \"" << name << "\": " << newfraction/10 << '.' << newfraction%10 << "%\r" << flush;
-          }
+          }*/
 
           want = (size_t)min((u64)buffersize, filesize-offset);
 
@@ -743,7 +743,7 @@ bool Par1Repairer::VerifyDataFile(DiskFile *diskfile, Par1RepairerSourceFile *so
     // Was the match the file we were originally looking for
     if (match == sourcefile)
     {
-      cout << "Target: \"" << name << "\" - found." << endl;
+      //cout << "Target: \"" << name << "\" - found." << endl;
     }
     // Were we looking for a specific file
     else if (sourcefile != 0)
@@ -751,32 +751,32 @@ bool Par1Repairer::VerifyDataFile(DiskFile *diskfile, Par1RepairerSourceFile *so
       string targetname;
       DiskFile::SplitFilename(sourcefile->FileName(), path, targetname);
 
-      cout << "Target: \"" 
+      /*cout << "Target: \"" 
             << name 
             << "\" - is a match for \"" 
             << targetname 
             << "\"." 
-            << endl;
+            << endl;*/
     }
     else
     {
       string targetname;
       DiskFile::SplitFilename(match->FileName(), path, targetname);
 
-      cout << "File: \"" 
+      /*cout << "File: \"" 
             << name 
             << "\" - is a match for \"" 
             << targetname 
             << "\"." 
-            << endl;
+            << endl;*/
     }
   }
   else
   {
-    cout << "File: \"" 
+    /*cout << "File: \"" 
           << name 
           << "\" - no data found." 
-          << endl;
+          << endl;*/
   }
 
   return true;
@@ -834,42 +834,42 @@ bool Par1Repairer::CheckVerificationResults(void)
       damagedfilecount > 0 ||
       missingfilecount > 0)
   {
-    cout << "Repair is required." << endl;
+    /*cout << "Repair is required." << endl;
     if (renamedfilecount > 0) cout << renamedfilecount << " file(s) have the wrong name." << endl;
     if (missingfilecount > 0) cout << missingfilecount << " file(s) are missing." << endl;
     if (damagedfilecount > 0) cout << damagedfilecount << " file(s) exist but are damaged." << endl;
-    if (completefilecount > 0) cout << completefilecount << " file(s) are ok." << endl;
+    if (completefilecount > 0) cout << completefilecount << " file(s) are ok." << endl;*/
 
     // Is repair possible
     if (recoveryblocks.size() >= damagedfilecount+missingfilecount)
     {
-      cout << "Repair is possible." << endl;
+      //cout << "Repair is possible." << endl;
 
-      if (recoveryblocks.size() > damagedfilecount+missingfilecount)
+      /*if (recoveryblocks.size() > damagedfilecount+missingfilecount)
         cout << "You have an excess of " 
              << (u32)recoveryblocks.size() - (damagedfilecount+missingfilecount)
-             << " recovery files." << endl;
+             << " recovery files." << endl;*/
 
-      if (damagedfilecount+missingfilecount > 0)
+      /*if (damagedfilecount+missingfilecount > 0)
         cout << damagedfilecount+missingfilecount
              << " recovery files will be used to repair." << endl;
       else if (recoveryblocks.size())
-        cout << "None of the recovery files will be used for the repair." << endl;
+        cout << "None of the recovery files will be used for the repair." << endl;*/
 
       return true;
     }
     else
     {
-      cout << "Repair is not possible." << endl;
+      /*cout << "Repair is not possible." << endl;
       cout << "You need " << damagedfilecount+missingfilecount - recoveryblocks.size()
-           << " more recovery files to be able to repair." << endl;
+           << " more recovery files to be able to repair." << endl;*/
 
       return false;
     }
   }
   else
   {
-    cout << "All files are correct, repair is not required." << endl;
+    //cout << "All files are correct, repair is not required." << endl;
 
     return true;
   }

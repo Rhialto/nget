@@ -18,6 +18,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "par2cmdline.h"
+#include "log.h"
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -92,7 +93,7 @@ Result Par2Repairer::Process(const CommandLine &commandline, bool dorepair)
   if (!LoadPacketsFromExtraFiles(extrafiles))
     return eLogicError;
 
-  cout << endl;
+  //cout << endl;
 
   // Check that the packets are consistent and discard any that are not
   if (!CheckPacketConsistency())
@@ -118,7 +119,7 @@ Result Par2Repairer::Process(const CommandLine &commandline, bool dorepair)
   if (!ComputeWindowTable())
     return eLogicError;
 
-  cout << endl << "Verifying source files:" << endl << endl;
+  //cout << endl << "Verifying source files:" << endl << endl;
 
   // Attempt to verify all of the source files
   if (!VerifySourceFiles())
@@ -126,7 +127,7 @@ Result Par2Repairer::Process(const CommandLine &commandline, bool dorepair)
 
   if (completefilecount<mainpacket->RecoverableFileCount())
   {
-    cout << endl << "Scanning extra files:" << endl << endl;
+    //cout << endl << "Scanning extra files:" << endl << endl;
 
     // Scan any extra files specified on the command line
     if (!VerifyExtraFiles(extrafiles))
@@ -136,7 +137,7 @@ Result Par2Repairer::Process(const CommandLine &commandline, bool dorepair)
   // Find out how much data we have found
   UpdateVerificationResults();
 
-  cout << endl;
+  //cout << endl;
 
   // Check the verification results and report the results
   if (!CheckVerificationResults())
@@ -183,7 +184,7 @@ bool Par2Repairer::LoadPacketsFromFile(string filename)
     string path;
     string name;
     DiskFile::SplitFilename(filename, path, name);
-    cout << "Loading \"" << name << "\"." << endl;
+    //cout << "Loading \"" << name << "\"." << endl;
   }
 
   // How many useable packets have we found
@@ -204,7 +205,7 @@ bool Par2Repairer::LoadPacketsFromFile(string filename)
     u8 *buffer = new u8[buffersize];
 
     // Progress indicator
-    u64 progress = 0;
+    //u64 progress = 0;
 
     // Start at the beginning of the file
     u64 offset = 0;
@@ -213,13 +214,13 @@ bool Par2Repairer::LoadPacketsFromFile(string filename)
     while (offset + sizeof(PACKET_HEADER) <= filesize)
     {
       // Update a progress indicator
-      u32 oldfraction = (u32)(1000 * progress / filesize);
+      /*u32 oldfraction = (u32)(1000 * progress / filesize);
       u32 newfraction = (u32)(1000 * offset / filesize);
       if (oldfraction != newfraction)
       {
         cout << "Loading: " << newfraction/10 << '.' << newfraction%10 << "%\r" << flush;
         progress = offset;
-      }
+      }*/
 
       // Attempt to read the next packet header
       PACKET_HEADER header;
@@ -378,9 +379,10 @@ bool Par2Repairer::LoadPacketsFromFile(string filename)
   // Did we actually find any interesting packets
   if (packets > 0)
   {
-    cout << "Loaded " << packets << " new packets";
+    PDEBUG(DEBUG_MIN, "par2file %s: %i packets (%i recovery)",filename.c_str(), packets, recoverypackets);
+    /*cout << "Loaded " << packets << " new packets";
     if (recoverypackets > 0) cout << " including " << recoverypackets << " recovery blocks";
-    cout << endl;
+    cout << endl;*/
 
     // Remember that the file was processed
     bool success = diskFileMap.Insert(diskfile);
@@ -388,7 +390,8 @@ bool Par2Repairer::LoadPacketsFromFile(string filename)
   }
   else
   {
-    cout << "No new packets found" << endl;
+    PDEBUG(DEBUG_MIN, "par2file %s: no new packets",filename.c_str());
+    //cout << "No new packets found" << endl;
     delete diskfile;
   }
   
@@ -689,7 +692,7 @@ bool Par2Repairer::CheckPacketConsistency(void)
     // If we don't have a main packet, then there is nothing more that we can do.
     // We cannot verify or repair any files.
 
-    cerr << "Main packet not found." << endl;
+    //cerr << "Main packet not found." << endl;
     return false;
   }
 
@@ -708,7 +711,7 @@ bool Par2Repairer::CheckPacketConsistency(void)
       }
       else
       {
-        cerr << "Incorrect sized recovery block for exponent " << rp->second->Exponent() << " discarded" << endl;
+        //cerr << "Incorrect sized recovery block for exponent " << rp->second->Exponent() << " discarded" << endl;
 
         delete rp->second;
         map<u32,RecoveryPacket*>::iterator x = rp++;
@@ -760,7 +763,7 @@ bool Par2Repairer::CheckPacketConsistency(void)
       {
         // The block counts are different!
 
-        cerr << "Incorrectly sized verification packet for \"" << descriptionpacket->FileName() << "\" discarded" << endl;
+        //cerr << "Incorrectly sized verification packet for \"" << descriptionpacket->FileName() << "\" discarded" << endl;
 
         // Discard the source file
 
@@ -778,7 +781,7 @@ bool Par2Repairer::CheckPacketConsistency(void)
     }
   }
 
-  cout << "There are " 
+  /*cout << "There are " 
        << mainpacket->RecoverableFileCount()
        << " recoverable files and "
        << mainpacket->TotalFileCount() - mainpacket->RecoverableFileCount()
@@ -788,7 +791,7 @@ bool Par2Repairer::CheckPacketConsistency(void)
   cout << "The block size used was "
        << blocksize
        << " bytes."
-       << endl;
+       << endl;*/
 
   return true;
 }
@@ -889,7 +892,7 @@ bool Par2Repairer::AllocateSourceBlocks(void)
 
     blocksallocated = true;
 
-    cout << "There are a total of "
+    /*cout << "There are a total of "
          << sourceblockcount
          << " data blocks."
          << endl;
@@ -897,7 +900,7 @@ bool Par2Repairer::AllocateSourceBlocks(void)
     cout << "The total size of the data files is "
          << totalsize
          << " bytes."
-         << endl;
+         << endl;*/
   }
 
   return true;
@@ -986,14 +989,14 @@ bool Par2Repairer::VerifySourceFiles(void)
       // Was this one of the recoverable files
       if (filenumber < mainpacket->RecoverableFileCount())
       {
-        cerr << "No details available for recoverable file number " << filenumber+1 << ". Recovery will not be possible." << endl;
+        //cerr << "No details available for recoverable file number " << filenumber+1 << ". Recovery will not be possible." << endl;
 
         // Set error but let verification of other files continue
         finalresult = false;
       }
       else
       {
-        cerr << "No details available for non-recoverable file number " << filenumber - mainpacket->RecoverableFileCount() + 1 << endl;
+        //cerr << "No details available for non-recoverable file number " << filenumber - mainpacket->RecoverableFileCount() + 1 << endl;
       }
     }
 
@@ -1055,7 +1058,7 @@ bool Par2Repairer::VerifySourceFiles(void)
       string name;
       DiskFile::SplitFilename(filename, path, name);
 
-      cout << "Target: \"" << name << "\" - missing." << endl;
+      //cout << "Target: \"" << name << "\" - missing." << endl;
     }
 
     ++sf;
@@ -1241,7 +1244,7 @@ bool Par2Repairer::VerifyDataFile(DiskFile *diskfile, Par2RepairerSourceFile *so
           hash16k == sourcefile->GetDescriptionPacket()->Hash16k() &&
           hashfull == sourcefile->GetDescriptionPacket()->HashFull())
       {
-        cout << diskfile->FileName() << " is a perfect match for " << sourcefile->GetDescriptionPacket()->FileName() << endl;
+        //cout << diskfile->FileName() << " is a perfect match for " << sourcefile->GetDescriptionPacket()->FileName() << endl;
 
         // Record that we have a perfect match for this source file
         sourcefile->SetCompleteFile(diskfile);
@@ -1326,18 +1329,18 @@ bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
   // Which block do we expect to find first
   const VerificationHashEntry *nextentry = 0;
 
-  u64 progress = 0;
+  //u64 progress = 0;
 
   // Whilst we have not reached the end of the file
   while (filechecksummer.Offset() < diskfile->FileSize())
   {
     // Update a progress indicator
-    u32 oldfraction = (u32)(1000 * progress / diskfile->FileSize());
+    /*u32 oldfraction = (u32)(1000 * progress / diskfile->FileSize());
     u32 newfraction = (u32)(1000 * (progress = filechecksummer.Offset()) / diskfile->FileSize());
     if (oldfraction != newfraction)
     {
       cout << "Scanning: \"" << name << "\": " << newfraction/10 << '.' << newfraction%10 << "%\r" << flush;
-    }
+    }*/
 
     // If we fail to find a match, it might be because it was a duplicate of a block
     // that we have already found.
@@ -1447,21 +1450,21 @@ bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
         // Were we scanning the target file or an extra file
         if (originalsourcefile != 0)
         {
-          cout << "Target: \"" 
+          /*cout << "Target: \"" 
                << name 
                << "\" - damaged, found " 
                << count 
                << " data blocks from several target files." 
-               << endl;
+               << endl;*/
         }
         else
         {
-          cout << "File: \"" 
+          /*cout << "File: \"" 
                << name 
                << "\" - found " 
                << count 
                << " data blocks from several target files." 
-               << endl;
+               << endl;*/
         }
       }
       else
@@ -1469,14 +1472,14 @@ bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
         // Did we find data blocks that belong to the target file
         if (originalsourcefile == sourcefile)
         {
-          cout << "Target: \"" 
+          /*cout << "Target: \"" 
                << name 
                << "\" - damaged. Found " 
                << count 
                << " of " 
                << sourcefile->GetVerificationPacket()->BlockCount() 
                << " data blocks." 
-               << endl;
+               << endl;*/
         }
         // Were we scanning the target file or an extra file
         else if (originalsourcefile != 0)
@@ -1484,7 +1487,7 @@ bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
           string targetname;
           DiskFile::SplitFilename(sourcefile->TargetFileName(), path, targetname);
 
-          cout << "Target: \"" 
+          /*cout << "Target: \"" 
                << name 
                << "\" - damaged. Found " 
                << count 
@@ -1493,14 +1496,14 @@ bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
                << " data blocks from \"" 
                << targetname 
                << "\"."
-               << endl;
+               << endl;*/
         }
         else
         {
           string targetname;
           DiskFile::SplitFilename(sourcefile->TargetFileName(), path, targetname);
 
-          cout << "File: \"" 
+          /*cout << "File: \"" 
                << name 
                << "\" - found " 
                << count 
@@ -1509,7 +1512,7 @@ bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
                << " data blocks from \"" 
                << targetname 
                << "\"."
-               << endl;
+               << endl;*/
         }
       }
     }
@@ -1518,7 +1521,7 @@ bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
       // Did we match the target file
       if (originalsourcefile == sourcefile)
       {
-        cout << "Target: \"" << name << "\" - found." << endl;
+        //cout << "Target: \"" << name << "\" - found." << endl;
       }
       // Were we scanning the target file or an extra file
       else if (originalsourcefile != 0)
@@ -1526,24 +1529,24 @@ bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
         string targetname;
         DiskFile::SplitFilename(sourcefile->TargetFileName(), path, targetname);
 
-        cout << "Target: \"" 
+        /*cout << "Target: \"" 
              << name 
              << "\" - is a match for \"" 
              << targetname 
              << "\"." 
-             << endl;
+             << endl;*/
       }
       else
       {
         string targetname;
         DiskFile::SplitFilename(sourcefile->TargetFileName(), path, targetname);
 
-        cout << "File: \"" 
+       /* cout << "File: \"" 
              << name 
              << "\" - is a match for \"" 
              << targetname 
              << "\"." 
-             << endl;
+             << endl;*/
       }
     }
   }
@@ -1555,19 +1558,19 @@ bool Par2Repairer::ScanDataFile(DiskFile                *diskfile,    // [in]
     // had already found in other files.
     if (duplicatecount > 0)
     {
-      cout << "File: \""
+      /*cout << "File: \""
            << name
            << "\" - found " 
            << duplicatecount
            << " duplicate data blocks."
-           << endl;
+           << endl;*/
     }
     else
     {
-      cout << "File: \"" 
+      /*cout << "File: \"" 
            << name 
            << "\" - no data found." 
-           << endl;
+           << endl;*/
     }
   }
 
@@ -1647,23 +1650,23 @@ bool Par2Repairer::CheckVerificationResults(void)
       damagedfilecount > 0 ||
       missingfilecount > 0)
   {
-    cout << "Repair is required." << endl;
+    /*cout << "Repair is required." << endl;
     if (renamedfilecount > 0) cout << renamedfilecount << " file(s) have the wrong name." << endl;
     if (missingfilecount > 0) cout << missingfilecount << " file(s) are missing." << endl;
     if (damagedfilecount > 0) cout << damagedfilecount << " file(s) exist but are damaged." << endl;
-    if (completefilecount > 0) cout << completefilecount << " file(s) are ok." << endl;
+    if (completefilecount > 0) cout << completefilecount << " file(s) are ok." << endl;*/
 
-    cout << "You have " << availableblockcount 
+    /*cout << "You have " << availableblockcount 
          << " out of " << sourceblockcount 
          << " data blocks available." << endl;
     if (recoverypacketmap.size() > 0)
       cout << "You have " << (u32)recoverypacketmap.size() 
-           << " recovery blocks available." << endl;
+           << " recovery blocks available." << endl;*/
 
     // Is repair possible
     if (recoverypacketmap.size() >= missingblockcount)
     {
-      cout << "Repair is possible." << endl;
+      /*cout << "Repair is possible." << endl;
 
       if (recoverypacketmap.size() > missingblockcount)
         cout << "You have an excess of " 
@@ -1674,22 +1677,22 @@ bool Par2Repairer::CheckVerificationResults(void)
         cout << missingblockcount
              << " recovery blocks will be used to repair." << endl;
       else if (recoverypacketmap.size())
-        cout << "None of the recovery blocks will be used for the repair." << endl;
+        cout << "None of the recovery blocks will be used for the repair." << endl;*/
 
       return true;
     }
     else
     {
-      cout << "Repair is not possible." << endl;
+      /*cout << "Repair is not possible." << endl;
       cout << "You need " << missingblockcount - recoverypacketmap.size()
-           << " more recovery blocks to be able to repair." << endl;
+           << " more recovery blocks to be able to repair." << endl;*/
 
       return false;
     }
   }
   else
   {
-    cout << "All files are correct, repair is not required." << endl;
+    //cout << "All files are correct, repair is not required." << endl;
 
     return true;
   }
