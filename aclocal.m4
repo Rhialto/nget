@@ -302,6 +302,17 @@ dnl @author Caolan McNamara <caolan@skynet.ie> with fixes from Alexandre Duret-L
 dnl
 AC_DEFUN([AC_donut_CHECK_PACKAGE_sub],
 [
+AC_ARG_WITH($1-prefix,
+[AC_HELP_STRING([--with-$1-prefix=DIR],[use $1 and look in DIR/{include,lib}/])],
+if test "$withval" != no; then
+	with_$1=yes
+	if test "$withval" != yes; then
+		$1_include="${withval}/include"
+		$1_libdir="${withval}/lib"
+	fi
+fi
+)
+
 AC_ARG_WITH($1-include,
 [AC_HELP_STRING([--with-$1-include=DIR],[specify exact include dir for $1 headers])],
 $1_include="$withval")
@@ -330,25 +341,8 @@ if test "${with_$1}" != no ; then
         fi
 
 	no_good=no
-        AC_CHECK_LIB($3,$2,,[
-		if test -z "${$1_libdir}" -a "${with_$1}" != yes ; then
-			LDFLAGS="$OLD_LDFLAGS -L${with_$1}/lib"
-			AC_CHECK_LIB($3,$2,,no_good=yes)
-		else
-			no_good=yes
-		fi
-		]
-	)
-        AC_CHECK_HEADER($4,,[
-		if test -z "${$1_includedir}" -a "${with_$1}" != yes ; then
-			CPPFLAGS="$OLD_CPPFLAGS -I${with_$1}/include"
-			CFLAGS="$OLD_CFLAGS -I${with_$1}/include"
-			AC_CHECK_HEADER($4,,no_good=yes)
-		else
-			no_good=yes
-		fi
-		]
-	)
+        AC_CHECK_LIB($3,$2,,no_good=yes)
+        AC_CHECK_HEADER($4,,no_good=yes)
         if test "$no_good" = yes; then
 dnl     broken
                 ifelse([$6], , , [$6])
