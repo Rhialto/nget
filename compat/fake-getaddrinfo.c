@@ -47,6 +47,13 @@
  */
 
 #include "fake-getaddrinfo.h"
+#include <stdlib.h>
+#ifndef HAVE_INET_ATON
+#ifndef INADDR_NONE
+#define INADDR_NONE (-1)
+#endif
+#define inet_aton(cp,inp) (((inp)->s_addr=inet_addr(cp))!=INADDR_NONE)
+#endif
 
 //RCSID("$Id: fake-getaddrinfo.c,v 1.5 2003/03/24 02:35:59 djm Exp $");
 

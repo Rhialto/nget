@@ -37,6 +37,10 @@ int getaddrinfo(const char *hostname, const char *servname,
 #endif /* !HAVE_GETADDRINFO */
 
 #ifndef HAVE_GAI_STRERROR
+/* This undef works around some wierdness in mingw32 where gai_strerror is 
+ * prototyped but doesn't actually exist in libws2_32.  Without this, you get
+ * a conflicting types error. */
+#undef gai_strerror
 char *gai_strerror(int ecode);
 #endif /* !HAVE_GAI_STRERROR */
 

@@ -47,6 +47,8 @@
  */
 
 #include "fake-getnameinfo.h"
+#include "fake-getaddrinfo.h"
+#include <stdio.h>
 
 //RCSID("$Id: fake-getnameinfo.c,v 1.2 2001/02/09 01:55:36 djm Exp $");
 

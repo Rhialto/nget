@@ -30,9 +30,10 @@
 #include <fcntl.h>
 #include <errno.h>
 
+extern "C" {
 #include "compat/fake-getaddrinfo.h"
 #include "compat/fake-getnameinfo.h"
-
+}
 #include "log.h"
 #include "strreps.h"
 #include "file.h"

@@ -155,10 +155,35 @@ AC_DEFUN([MY_CHECK_SOCKET],[MY_SEARCH_LIBS(socket,
 #include <sys/socket.h>
 #endif],
 [socket(AF_INET, SOCK_STREAM, 0);],
-[socket wsock32],
+[socket ws2_32 wsock32],
 [library containing socket])
 ])
 
+# MY_CHECK_FUNC(FUNCTION, [ARGS], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND], [HEADERS])
+# -----------------------------------------------------------------
+AC_DEFUN([MY_CHECK_FUNC],
+[AS_VAR_PUSHDEF([ac_var], [ac_cv_func_$1])dnl
+AC_CACHE_CHECK([for $1], ac_var,
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([$5],[$1($2)])],
+		[AS_VAR_SET(ac_var, yes)],
+		[AS_VAR_SET(ac_var, no)])])
+AS_IF([test AS_VAR_GET(ac_var) = yes], [$3], [$4])dnl
+AS_VAR_POPDEF([ac_var])dnl
+])# MY_CHECK_FUNC
+
+# MY_CHECK_FUNCS(FUNCTION..., [ARGS], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND], [HEADERS])
+# ---------------------------------------------------------------------
+AC_DEFUN([MY_CHECK_FUNCS],
+[AC_FOREACH([AC_Func], [$1],
+  [AH_TEMPLATE(AS_TR_CPP(HAVE_[]AC_Func),
+	       [Define to 1 if you have the `]AC_Func[' function.])])dnl
+for ac_func in $1
+do
+MY_CHECK_FUNC($ac_func,[$2],
+	      [AC_DEFINE_UNQUOTED([AS_TR_CPP([HAVE_$ac_func])]) $3],
+	      [$4],[$5])dnl
+done
+])
 
 
 

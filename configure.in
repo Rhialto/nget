@@ -179,7 +179,17 @@ dnl AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(stricmp strcasecmp)
 AC_CHECK_FUNCS(strchr memcpy)
 
-AC_CHECK_FUNCS(mktime regcomp hstrerror strerror atoul asprintf vasprintf timegm gmtime_r localtime_r inet_aton gethostbyname gethostbyaddr gai_strerror getaddrinfo freeaddrinfo getnameinfo getopt_long flock setlinebuf fcntl fsync getpid)
+dnl again, due to windows' linking methods, you need the correct prototype to find some funcs..
+AC_DEFUN([MY_CHECK_SOCKFUNCS],[MY_CHECK_FUNCS([$1],[$2],,,[#include "compat/socketheaders.h"])])
+MY_CHECK_SOCKFUNCS([hstrerror gai_strerror],[0])
+MY_CHECK_SOCKFUNCS([inet_aton],[NULL,NULL])
+MY_CHECK_SOCKFUNCS([gethostbyname],[NULL])
+MY_CHECK_SOCKFUNCS([gethostbyaddr],[NULL,0,0])
+MY_CHECK_SOCKFUNCS([getaddrinfo],[NULL,NULL,NULL,NULL])
+MY_CHECK_SOCKFUNCS([freeaddrinfo],[NULL])
+MY_CHECK_SOCKFUNCS([getnameinfo],[NULL,0,NULL,0,NULL,0,0])
+
+AC_CHECK_FUNCS(mktime regcomp strerror atoul asprintf vasprintf timegm gmtime_r localtime_r getopt_long flock setlinebuf fcntl fsync getpid)
 
 AC_PROTOTYPE_RECV
 AC_FUNC_MKDIR
