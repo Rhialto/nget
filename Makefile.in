@@ -26,7 +26,7 @@ NGETLITE=ngetlite$(EXEEXT)
 all: .autostuff $(NGET) $(NGETLITE)
 
 INSTALLDIRS=$(bindir) $(mandir)/man1
-W32DISTFILES=COPYING Changelog FAQ README.win32 nget.txt ngetlite.txt $(NGET) $(NGETLITE)
+W32DISTFILES=COPYING Changelog FAQ README.win32 nget.txt ngetlite.txt _ngetrc $(NGET) $(NGETLITE)
 
 OBJS=nget.o prot_nntp.o sockpool.o sockstuff.o cache.o dupe_file.o file.o file_gz.o termstuff.o path.o misc.o strtoker.o strreps.o myregex.o datfile.o argparser.o etree.o nrange.o log.o server.o @UULIB@
 $(NGET): $(OBJS) .depend 
@@ -61,6 +61,8 @@ install: install_nget install_ngetlite
 
 nget.txt ngetlite.txt: %.txt: %.1
 	man -l $< | sed -e 's/.//g' > $@
+_ngetrc: .ngetrc
+	cat $< > $@
 
 win32dist: $(W32DISTFILES)
 	$(STRIP) $(NGET) $(NGETLITE)
@@ -108,7 +110,7 @@ config.status: configure
 #	cd ..;tar -czhf nget/distro/nget-`egrep "nget v[0-9.]+ -" nget/nget.cc | sed "s/.*v\([0-9.]\+\).*/\1/"`.tar.gz nget/README nget/Changelog nget/COPYING nget/*.cc nget/*.h nget/Makefile nget/nget.1
 
 clean:
-	-rm $(NGET) $(NGETLITE) *.o nget.txt ngetlite.txt
+	-rm $(NGET) $(NGETLITE) *.o nget.txt ngetlite.txt _ngetrc
 	-$(MAKE) -C uulib clean
 	-$(MAKE) -C test clean
 

@@ -12,4 +12,4 @@ set HOME=c:\home (or whatever) and create c:\home\_nget4\_ngetrc
  -or-
 set NGETHOME=c:\nget (or whatever) and create c:\nget\_ngetrc
 
-(see the included .ngetrc for example config and nget.txt for more info)
+(see the included _ngetrc for example config and nget.txt for more info)
