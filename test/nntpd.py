@@ -69,9 +69,17 @@ class NNTPRequestHandler(SocketServer.StreamRequestHandler):
 		self.nwrite('.')
 	def cmd_article(self, args):
 		if args[0]=='<':
-			article = self.server.articles[args]
+			try:
+				article = self.server.articles[args]
+			except KeyError:
+				self.nwrite("430 No article found with message-id %s"%args)
+				return
 		else:
-			article = self.group.articles[long(args)]
+			try:
+				article = self.group.articles[long(args)]
+			except KeyError:
+				self.nwrite("423 No such article %s in this newsgroup"%args)
+				return
 		self.nwrite("200 Article "+args)
 		self.nwrite(article.text)
 		self.nwrite('.')
