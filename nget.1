@@ -79,6 +79,11 @@ Valid responses to the prompt are y[es], n[o], and a max number of directory lev
 (This means that if you get in the habit of answering "1" rather than "y", and one day typo the first portion of a path you won't accidentally create a bunch of dirs in the wrong place.)
 .IP "-T/--testmode"
 Causes --retrieve to merely print out all matching files.
+.IP "--text ignore,files,mbox"
+Specifies how to handle text posts.  The default is files. 
+OPT can be ignore to save only binaries, "files" to save each text post in a different file, and "mbox" to save each text post as a message in a mbox format mailbox.
+.IP "--save-binary-info yes,no"
+Specifies wether to save text messages for posts that contained only binary data. (If you want to see the headers.)
 .IP "--test-multiserver OPT"
 Causes testmode to display which servers have parts of each file.  OPT may be no to disable(default), long for a verbose output, and short for a more condensed form. (In short mode, the shortname of each server is printed with no seperating space, and it is upper-cased if that server does not have all the parts.  If the server has no shortname specified, it defaults to the first char of the server alias.)
 .IP "-M/--mark"
@@ -262,6 +267,10 @@ fullxover=2 handles articles being added and removed in any order.
 Create non-existant directories specified by -p/-P? (yes/no/ask/#)
 .IP "test_multiserver (special, default=no)"
 Display multiserver file complition info in testmode output? (no=no, short=show shortname of each server that has parts of the file, lowercase when complete and uppercase when that server only has some parts, long=show fullname of each server along with a count of how many parts it has if it does not have them all.)
+.IP "text (special, default=files)"
+Default for the --text option (possible values are ignore,files,mbox).
+.IP "save_binary_info (boolean, default=0)"
+Default for the --save-binary-info option.
 .IP "cachedir (string)"
 Specifies a different location to store cache files.  Could be used to share a single cache dir between a trusted group of users, to reduce HD/bandwidth usage, while still allowing each user to have their own config/midinfo files.)
 .SS "Host Configuration"

@@ -20,7 +20,7 @@
 from __future__ import nested_scopes
 
 import os, sys, unittest, glob, filecmp, re, time, errno
-
+import StringIO
 import nntpd, util
 
 #allow nget executable to be tested to be overriden with TEST_NGET env var.
@@ -32,8 +32,45 @@ zerofile_fn_re = re.compile(r'(\d+)\.(\d+)\.txt$')
 
 broken_system_return = os.system("NTDOEUNTBKFOOOBAR")==0
 
-def textcmp(a, b):
-	return open(a,'rb').read().splitlines()==open(b,'rb').read().splitlines()
+def textcmp(expected, decoded, mbox=0):
+	if not hasattr(expected, "read"):
+		expected=open(expected,'rb')
+	if not hasattr(decoded, "read"):
+		decoded=open(decoded,'rb')
+	el=expected.read().splitlines()
+	dl=decoded.read().splitlines()
+	if len(el)!=len(dl):
+		print "textcmp: length mismatch",len(el),len(dl)
+		return 0
+	for e,d in zip(el,dl):
+		x = re.match(r'^\[(\w+) (.+?)(\.\d+\.\d+)?\]$',d)
+		if x:
+			#text files can have info about what decoded files were in them, and that info can change if the file is a dupe..
+			if e != '['+x.group(1)+' '+x.group(2)+']':
+				print "textcmp: decode mismatch",e,d
+				return 0
+		elif mbox and e.startswith("From nget"):
+			if not re.match("^From nget-[0-9.]+ \w\w\w \w\w\w [ 0-9][0-9] [0-9:]{8} [0-9]{4}$", d):
+				print "textcmp: From mismatch",e,d
+				return 0
+		else:
+			if e != d:
+				print "textcmp: normal mismatch",e,d
+				return 0
+	return 1
+
+class TestTextcmp(unittest.TestCase):
+	def test_eq(self):
+		self.failUnless(textcmp(StringIO.StringIO("foo\nbar"), StringIO.StringIO("foo\r\nbar")))
+	def test_eq_decodeinfo(self):
+		self.failUnless(textcmp(StringIO.StringIO("foo\n[UUdata foo.txt]\n"), StringIO.StringIO("foo\r\n[UUdata foo.txt.19873.987634]\n")))
+	def test_eq_mbox_From(self):
+		self.failUnless(textcmp(StringIO.StringIO("From nget-foo bar"), StringIO.StringIO("From nget-0.21 Sun Sep  8 20:19:53 2002"), mbox=1))
+	def test_ne(self):
+		self.failIf(textcmp(StringIO.StringIO("b"), StringIO.StringIO("a")))
+	def test_ne_diff_len(self):
+		self.failIf(textcmp(StringIO.StringIO("a\nb"), StringIO.StringIO("a")))
+
 
 class TestCase(unittest.TestCase):
 	def vfailIf(self, expr, msg=None):
@@ -117,6 +154,8 @@ class DecodeTest_base:
 			self.failUnless(os.path.isfile(dfn), "decoded file %s is not a file"%dfn)
 			if r:
 				self.failUnless(textcmp(fn, dfn), "decoded file %s differs from %s"%(dfn, fn))
+			elif tail.endswith(".mbox"):
+				self.failUnless(textcmp(fn, dfn, mbox=1), "decoded mbox %s differs from %s"%(dfn, fn))
 			else:
 				self.failUnless(filecmp.cmp(fn, dfn, shallow=0), "decoded file %s differs from %s"%(dfn, fn))
 			ok.append(os.path.split(dfn)[1])
@@ -192,6 +231,10 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.do_test_auto()
 	def test_0004_input(self):
 		self.do_test_auto()
+	def test_mbox01(self):
+		self.addarticles("mbox01", "input")
+		self.vfailIf(self.nget.run("--text=mbox -g test -r ."))
+		self.verifyoutput("mbox01")
 
 	def test_article_expiry(self):
 		article = self.addarticle_toserver('0001', 'uuencode_single', 'testfile.001', self.servers.servers[0])

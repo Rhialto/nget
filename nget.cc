@@ -164,7 +164,7 @@ void set_user_error_status_and_do_fatal_user_error(int incr=1) {
 		throw FatalUserException();
 }
 
-#define NUM_OPTIONS 34
+#define NUM_OPTIONS 36
 #ifndef HAVE_LIBPOPT
 
 #ifndef HAVE_GETOPT_LONG
@@ -211,6 +211,8 @@ static int olongestlen=0;
 
 enum {
 	OPT_TEST_MULTI=2,
+	OPT_TEXT_HANDLING,
+	OPT_SAVE_TEXT_FOR_BINARIES,
 	OPT_MIN_SHORTNAME
 };
 
@@ -261,6 +263,8 @@ static void addoptions(void)
 //	addoption("testretrieve",1,'R',"REGEX","test what would have been retrieved");
 	addoption("testmode",0,'T',0,"test what would have been retrieved");
 	addoption("test-multiserver",1,OPT_TEST_MULTI,"OPT","make testmode display per-server completion info (no(default)/long/short)");
+	addoption("text",1,OPT_TEXT_HANDLING,"OPT","how to handle text posts (files(default)/mbox/ignore)");
+	addoption("save-binary-info",1,OPT_SAVE_TEXT_FOR_BINARIES,"OPT","save text files for posts that contained only binaries (yes/no(default))");
 	addoption("tries",1,'t',"INT","set max retries (-1 unlimits, default 20)");
 	addoption("delay",1,'s',"INT","seconds to wait between retry attempts(default 1)");
 	addoption("limit",1,'l',"INT","min # of lines a 'file' must have(default 0)");
@@ -398,7 +402,7 @@ nget_options::nget_options(void){
 	get_path();
 	get_temppath();
 }
-nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),test_multi(o.test_multi),retr_show_multi(o.retr_show_multi),makedirs(o.makedirs),cmdmode(o.cmdmode),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite){
+nget_options::nget_options(nget_options &o):maxretry(o.maxretry),retrydelay(o.retrydelay),linelimit(o.linelimit),maxlinelimit(o.maxlinelimit),gflags(o.gflags),badskip(o.badskip),test_multi(o.test_multi),retr_show_multi(o.retr_show_multi),makedirs(o.makedirs),cmdmode(o.cmdmode),group(o.group),host(o.host)/*,user(o.user),pass(o.pass)*/,path(o.path),startpath(o.path),temppath(o.temppath),writelite(o.writelite),texthandling(o.texthandling),save_text_for_binaries(o.save_text_for_binaries),mboxfname(o.mboxfname){
 	/*	if (o.path){
 			path=new char[strlen(o.path)+1];
 			strcpy(path,o.path);
@@ -429,6 +433,36 @@ void nget_options::parse_dupe_flags(const char *opt){
 		}
 		opt++;
 	}
+}
+int nget_options::set_save_text_for_binaries(const char *s){
+	if (!s) {
+		return 0;
+	}
+	if (strcasecmp(s,"yes")==0)
+		save_text_for_binaries=true;
+	else if (strcasecmp(s,"no")==0)
+		save_text_for_binaries=false;
+	else{
+		printf("set_save_text_for_binaries invalid option %s\n",s);
+		return 0;
+	}
+	return 1;
+}
+int nget_options::set_text_handling(const char *s){
+	if (!s) {
+		return 0;
+	}
+	if (strcasecmp(s,"files")==0)
+		texthandling=TEXT_FILES;
+	else if (strcasecmp(s,"mbox")==0)
+		texthandling=TEXT_MBOX;
+	else if (strcasecmp(s,"ignore")==0)
+		texthandling=TEXT_IGNORE;
+	else{
+		printf("set_text_handling invalid option %s\n",s);
+		return 0;
+	}
+	return 1;
 }
 int nget_options::set_test_multi(const char *s){
 	if (!s) {
@@ -610,6 +644,12 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 				break;
 			case OPT_TEST_MULTI:
 				options.set_test_multi(loptarg);
+				break;
+			case OPT_TEXT_HANDLING:
+				options.set_text_handling(loptarg);
+				break;
+			case OPT_SAVE_TEXT_FOR_BINARIES:
+				options.set_save_text_for_binaries(loptarg);
 				break;
 			case 'M':
 				options.gflags|= GETFILES_MARK;
@@ -1027,6 +1067,9 @@ int main(int argc, const char ** argv){
 			options.cmdmode=RETRIEVE_MODE;
 			options.group=NULL;
 			options.host=NULL;
+			options.texthandling=TEXT_FILES;
+			options.save_text_for_binaries=false;
+			options.mboxfname="nget.mbox";
 			{
 				c_data_file cfg;
 				c_data_section *galias,*halias,*hpriority;
@@ -1068,7 +1111,10 @@ int main(int argc, const char ** argv){
 					options.gflags|= GETFILES_DUPEFILEMARK;
 				if (!cfg.data.getitemi("tempshortnames",&t) && t==1)
 					options.gflags|= GETFILES_TEMPSHORTNAMES;
+				if (!cfg.data.getitemi("save_binary_info",&t) && t==1)
+					options.save_text_for_binaries=true;
 				options.set_test_multi(cfg.data.getitema("test_multiserver"));
+				options.set_text_handling(cfg.data.getitema("text"));
 				options.set_makedirs(cfg.data.getitema("makedirs"));
 				
 				cfg.data.getitems("cachedir",&ngcachehome);//.ngetrc setting overrides default

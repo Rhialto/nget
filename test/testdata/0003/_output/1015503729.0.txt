@@ -15,3 +15,4 @@ forth line.
 
 seventh line.
 End of zero file test.
+[UUdata testfile.txt]

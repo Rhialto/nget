@@ -79,6 +79,11 @@ enum t_cmd_mode {
 	GROUPLIST_MODE,
 	NOCACHE_RETRIEVE_MODE,
 };
+enum t_text_handling {
+	TEXT_FILES,
+	TEXT_MBOX,
+	TEXT_IGNORE
+};
 struct nget_options {
 	int maxretry,retrydelay;
 	ulong linelimit,maxlinelimit;
@@ -95,6 +100,9 @@ struct nget_options {
 	string startpath;
 	string temppath;
 	string writelite;
+	t_text_handling texthandling;
+	bool save_text_for_binaries;
+	string mboxfname;
 
 	void do_get_path(string &s);
 	nget_options(void);
@@ -102,6 +110,8 @@ struct nget_options {
 	void get_path(void);
 	void get_temppath(void);
 	void parse_dupe_flags(const char *opt);
+	int set_text_handling(const char *s);
+	int set_save_text_for_binaries(const char *s);
 	int set_test_multi(const char *s);
 	int set_makedirs(const char *s);
 };

@@ -49,6 +49,8 @@
 #include "nget.h"
 #include "strtoker.h"
 #include "dupe_file.h"
+#include "myregex.h"
+#include "texthandler.h"
 
 extern SockPool sockpool;
 
@@ -936,20 +938,25 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 }
 
 int uu_info_callback(void *v,char *i){
-	printf("info:%s",i);
+	TextHandler *th = static_cast<TextHandler*>(v);
+	th->addinfo(i);
 	return 0;
 };
 struct uu_err_status {
 	int derr;
 	int last_t;
+	TextHandler *th;
 //	string last_m;
-	uu_err_status(void):derr(0),last_t(-1){}
+	uu_err_status(void):derr(0),last_t(-1),th(NULL){}
 };
 void uu_msg_callback(void *v,char *m,int t){
 	if (t!=UUMSG_MESSAGE) {//######
 		uu_err_status *es = (uu_err_status *)v;
 		es->derr++;
 		es->last_t = t;
+		if (es->th && t!=UUMSG_NOTE) {
+			es->th->adddecodeinfo(m);
+		}
 //		es->last_m = m;
 		//++(*(int *)v);
 	}
@@ -1019,17 +1026,6 @@ void print_nntp_file_info(c_nntp_file::ptr f, t_show_multiserver show_multi) {
 	printf("\t%lil\t%s\t%s\t%s\t%s\n",f->lines(),tconvbuf,f->subject.c_str(),f->author.c_str(),p->messageid.c_str());
 }
 
-char * make_text_file_name(c_nntp_file_retr::ptr fr, bool usepath=0) {
-	char *nfn;
-	//asprintf(&nfn,"%lu.txt",f->banum());//give it a (somewhat) more sensible name
-	//give it a (somewhat) more sensible name //TODO: make it better (rand? blah.. message id or something but it might contain bad chars)
-	if (usepath)
-		asprintf(&nfn,"%s/%lu.%i.txt",fr->path.c_str(),fr->file->badate(),rand());
-	else
-		asprintf(&nfn,"%lu.%i.txt",fr->file->badate(),rand());
-	return nfn;
-}
-
 void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_list &getinfos, const t_xpat_list &patinfos, const nget_options &options) {
 	c_nntp_files_u filec;
 	if (rgroup != group) {
@@ -1072,6 +1068,20 @@ void c_prot_nntp::nntp_retrieve(c_group_info::ptr rgroup, const t_nntp_getinfo_l
 	nntp_doretrieve(filec, options);
 }
 
+
+const char *uutypetoa(int uudet) {
+	switch (uudet){
+		case YENC_ENCODED:return "yEnc";
+		case UU_ENCODED:return "UUdata";
+		case B64ENCODED:return "Base64";
+		case XX_ENCODED:return "XXdata";
+		case BH_ENCODED:return "BinHex";
+		case PT_ENCODED:return "plaintext";
+		case QP_ENCODED:return "qptext";
+		default:return "unknown";
+	}
+}
+
 void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &options) {
 	if (filec.files.empty())
 		return;
@@ -1081,6 +1091,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 	//c_nntp_file *f;
 	c_nntp_file::ptr f;
 	c_nntp_file_retr::ptr fr;
+	c_regex_nosub uulib_textfn_re("^[0-9][0-9][0-9][0-9]+\\.txt$",REG_EXTENDED);
 
 	if (optionflags & GETFILES_UNMARK) {
 		ulong nbytes=0;
@@ -1212,6 +1223,8 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 					fnbuf.push_back(fn);
 			}
 			if (!uustatus.derr && !(optionflags&GETFILES_NODECODE)){
+				TextHandler texthandler(options.texthandling, options.save_text_for_binaries, options.mboxfname, fr, fnbuf.front());
+				uustatus.th = &texthandler;
 				if ((r=UUInitialize())!=UURET_OK)
 					throw ApplicationExFatal(Ex_INIT,"UUInitialize: %s",UUstrerror(r));
 				UUSetOption(UUOPT_DUMBNESS,1,NULL);//we already put the parts in the correct order, so it doesn't need to.
@@ -1231,16 +1244,15 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 					if ((uul=UUGetFileListItem(un))==NULL)break;
 					if (!(uul->state & UUFILE_OK)){
 						printf("%s not ok\n",uul->filename);
+						texthandler.adddecodeinfo(string(uul->filename) + " not ok");
 						uustatus.derr++;
 						continue;
 					}
 					//				printf("\ns:%x d:%x\n",uul->state,uul->uudet);
-					if (/*uul->uudet==PT_ENCODED &&*/ strcmp(uul->filename,"0001.txt")==0){
-						char *nfn = make_text_file_name(fr);
-						UURenameFile(uul,nfn);
-						free(nfn);
-					}else
-						r=UUInfoFile(uul,NULL,uu_info_callback);
+					r=UUInfoFile(uul,&texthandler,uu_info_callback);
+					if ((uul->uudet==PT_ENCODED || uul->uudet==QP_ENCODED) && uul->filename==uulib_textfn_re){
+						continue; //ignore, as this should be handled by the UUInfoFile already..
+					}
 					//check if dest file exists before attempting decode, avoids having to hack around the uu_error that occurs when the destfile exists and overwriting is disabled.
 					char orig_fnp[PATH_MAX];
 					fname_filter(orig_fnp, fr->path.c_str(), uul->filename);
@@ -1271,8 +1283,10 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 					if (r!=UURET_OK){
 						uustatus.derr++;
 						printf("decode(%s): %s\n",uul->filename,UUstrerror(r));
+						texthandler.adddecodeinfo(string("error decoding ")+uutypetoa(uul->uudet)+" "+uul->filename+": " + UUstrerror(r));
 						continue;
 					}else{
+						texthandler.adddecodeinfo(string(uutypetoa(uul->uudet))+" "+uul->filename);
 						if (!(optionflags&GETFILES_NODUPEFILECHECK))
 							flist.addfile(fr->path, uul->filename); //#### is this the right place? what about dupes saved as different names??
 						switch (uul->uudet){
@@ -1291,16 +1305,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 				//handle posts that uulib says "no encoded data" for as text. (seems to be posts with no body)
 				if (uustatus.derr==1 && uustatus.last_t==UUMSG_NOTE && un==0 && f->req<=0 && fnbuf.size()==1) {
 						uustatus.derr--; //HACK since this error will also cause a uu_note "No encoded data found", which will incr derr, but we don't want that.
-						char *fn = *(fnbuf.begin());
-						char *nfn = make_text_file_name(fr,true);
-						while (fexists(nfn))  {
-							free(nfn);
-							nfn = make_text_file_name(fr,true);
-						}
-						xxrename(fn, nfn);
-						free(nfn);
-						free(fn);
-						fnbuf.clear();
+						//don't need to do anything special here, since the TextHandler already includes the headers from the tempfile, and the post has no body :)
 						set_plaintext_ok_status();
 						un++;
 				}
@@ -1329,6 +1334,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 					}
 				}
 			}
+			uustatus.th = NULL;
 			if (uustatus.derr>0){
 				set_decode_error_status();
 				printf(" %i decoding errors occured, keeping temp files.\n",uustatus.derr);

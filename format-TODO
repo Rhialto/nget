@@ -3,12 +3,7 @@ wishlist of things to add to nget:
 - less verbose reporting modes:
     all standard information, but no percentage counters (to include statistics)
     ability to put logging/statistics information to stdout or stderr, and percentage counters to the other
-- ability to save all header and associated textual information with decoded files, at least in the same directory
-    as specified by -p path, either in separate files or as a specified filename to append to (in which case files
-    without binaries would also be appended to the file).  Can be absolute also.  For decoded files, also store
-    uudecode output in the message body (replacing the old uuencoded information).
-    To make the file mutt readable, allow an option to add a "From blah@foo.net Mon Jun 21 21:01:34 2000" line to the top
-    of each header section (of course, containing relevant information from the article).
+- make --text=mbox filename configurable (relative(to -p) and absolute)
 
 - verbosity levels: (<- superceded below)
     * 0: print nothing
