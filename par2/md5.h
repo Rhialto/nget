@@ -35,6 +35,15 @@
 
 // MD5 Hash value
 
+#ifdef WIN32
+#pragma pack(push, 1)
+#ifndef PACKED
+#define PACKED
+#endif
+#else
+#define PACKED __attribute__ ((packed))
+#endif
+
 class MD5Hash
 {
 public:
@@ -60,7 +69,13 @@ public:
 
 public:
   u8 hash[16]; // 16 byte MD5 Hash value
-};
+} PACKED;
+
+#ifdef WIN32
+#pragma pack(pop)
+#endif
+#undef PACKED
+
 
 // Intermediate computation state
 
