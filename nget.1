@@ -1,4 +1,4 @@
-.TH nget 1 "04 Jan 2003"
+.TH nget 1 "08 Feb 2003"
 .SH NAME
 nget \- retrieve files from NNTP (usenet news) hosts
 .SH SYNOPSIS
@@ -9,6 +9,9 @@ retrieves messages matching a regular expression, and decodes any files
 contained within.  Multipart messages are automatically pieced together.
 Parts from multiple servers will be combined if needed.
 .SH OPTIONS
+.PP
+The order options are specified is significant.
+In general, an option will only affect options that come after it on the command line.
 .PP
 .IP "-q/--quiet"
 When specified once, will disable printing of auto-updating text to allow the output to be 
@@ -163,7 +166,8 @@ and/or binaries saved with another newsreader.)
 Don't check either of the --dupecheck methods, retrieve any messages that
 match.
 .IP "-N/--noconnect"
-Do not connect to any server.  Useful for trying to decode as much as you have.
+Do not connect to any server for retrieving articles.
+Useful for trying to decode as much as you have.
 (if you got stuff with -K or ngetlite.)
 .IP "-w/--writelite LITEFILE"
 Write a list of parts to retrieve with ngetlite.
