@@ -2,7 +2,7 @@
   * Remove fixed length buffers. (Fix errors with extremely long subjects, etc.)
   * If a group has articles from multiple servers show the shortname of the server each part is being retrieved from.
   * Don't force the connection to close on unequal line count.
-  * Further additions test suite.
+  * Further additions to test suite.
   * Documented make test in README.
 
 2002-02-28 v0.17:
