@@ -44,5 +44,7 @@ const char * strerror(int err);
 
 #endif //HAVE_CONFIG_H
 
+#include <stdio.h>
+
 
 #endif

@@ -19,6 +19,8 @@
 #ifndef RCOUNT_H_INCD
 #define RCOUNT_H_INCD
 
+#include <stdlib.h>
+
 template <class T>
 class c_refpointer {
 	public:
