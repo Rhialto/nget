@@ -580,12 +580,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 			try {
 				nntp_doopen();
 				nntp_dogroup(0);
-				if (stdputline(debug>=DEBUG_MED,"ARTICLE %li",sa->articlenum)/100!=2){//if error retrieving from one server, try another that has it
-					printf("error retrieving article %li: %s\n",sa->articlenum,cbuf);
-					//return -1;
-					++sapi;
-					continue;
-				}
+				chkreply(stdputline(debug>=DEBUG_MED,"ARTICLE %li",sa->articlenum));
 #ifdef FILE_DEBUG
 				{
 					char *sav;
