@@ -91,7 +91,7 @@ Connection* SockPool::connect(ulong serverid) {
 	Connection *c = new Connection(nconfig.getserver(serverid));
 	if (c->open()<0){
 		delete c;
-		return NULL;
+		throw TransportExError(Ex_INIT,"make_connection:%s(%i)",strerror(errno),errno);
 	}
 	connections.insert(t_connection_map::value_type(serverid, c));
 	c->touch();

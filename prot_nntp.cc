@@ -1048,9 +1048,7 @@ void c_prot_nntp::nntp_open(c_server *h){
 }
 
 void c_prot_nntp::nntp_doopen(void){
-	if(!connection){
-		throw TransportExError(Ex_INIT,"make_connection:%s(%i)",strerror(errno),errno);
-	}
+	assert(connection);
 	if (connection->freshconnect){
 		chkreply(getreply(quiet<2));
 		putline(debug>=DEBUG_MED,"MODE READER");

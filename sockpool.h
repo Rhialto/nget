@@ -110,8 +110,9 @@ class ConnectionHolder {
 		Connection ** connection;
 	public:
 		ConnectionHolder(SockPool *sockpool, Connection **conn, int serverid):pool(sockpool), connection(conn) {
+			PDEBUG(DEBUG_MED, "aquiring connection to %i", serverid);
 			*connection = pool->connect(serverid);
-			PDEBUG(DEBUG_MED, "aquiring connection to %i (%p)", serverid, *connection);
+			PDEBUG(DEBUG_MED, "aquired connection to %i (%p)", serverid, *connection);
 			pool->expire_connections();
 		}
 		~ConnectionHolder() {
