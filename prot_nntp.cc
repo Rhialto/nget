@@ -785,6 +785,8 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 			lastf=curf;
 			fr=(*curf).second;
 			f=fr->file;
+			printf("Retrieving: ");
+			print_nntp_file_info(f);
 //			bp=f->parts.begin()->second;
 			list<char *> fnbuf;
 			list<char *>::iterator fncurb;
