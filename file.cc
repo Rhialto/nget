@@ -38,7 +38,7 @@ int c_file_buffy::resizebuf(int s){
 c_file_buffy::c_file_buffy(c_file*f,int s){
 	fileptr=f;
 	cbuf=NULL;
-	bsetbuf(2048);
+	//bsetbuf(2048);
 	resizebuf(s);
 }
 c_file_buffy::~c_file_buffy(){

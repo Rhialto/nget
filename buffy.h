@@ -25,14 +25,17 @@
 #include <sys/types.h>
 class c_buffy {
 	protected:
-		uchar *buf;
 		int bhead,btail;
-		int bufsize;
+#define buffy_bufsize 2048 //must be a multiple of 2 so that we can use &=bufmask which is much faster than %=bufsize
+		uchar buf[buffy_bufsize];
+#define buffy_bufmask 2047
 
 		int buftailfree(void){
-			if (btail>=bhead)return bufsize-btail-(bhead==0?1:0);
+			if (btail>=bhead)return buffy_bufsize-btail-(bhead==0?1:0);
 			else return bhead-btail-1;
 		}
+		void inchead(int i){bhead+=i;bhead&=buffy_bufmask;}
+		void inctail(int i){btail+=i;btail&=buffy_bufmask;}
 		virtual int bfill(uchar *b,int l)=0;
 		int dofill(void){
 			int i=bfill(buf+btail,buftailfree());
@@ -40,8 +43,6 @@ class c_buffy {
 			inctail(i);
 			return i;
 		}
-		void inchead(int i){bhead+=i;bhead%=bufsize;}
-		void inctail(int i){btail+=i;btail%=bufsize;}
 	public:
 		void clearbuf(void){bhead=btail=0;}
 		int bpeek(void){
@@ -83,15 +84,7 @@ class c_buffy {
 				count++;
 			}
 		}
-		int bsetbuf(int l){
-			if (bhead!=btail)return -1;
-			bhead=btail=0;
-			buf=(uchar*)realloc(buf,l);
-			if (buf)bufsize=l;
-			else bufsize=0;
-			return 0;
-		}
-		c_buffy(){bhead=btail=0;buf=NULL;bufsize=0;}
-		virtual ~c_buffy(){if (buf) free(buf);}
+		c_buffy(){bhead=btail=0;/*buf=NULL;buffy_bufsize=0;*/}
+		virtual ~c_buffy(){/*if (buf) free(buf);*/}
 };
 #endif

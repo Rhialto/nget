@@ -47,7 +47,7 @@ class sockbuffy :public c_buffy{
 			return sock>=0;
 		}
 		int open(const char *netaddress,const char *service){
-			sock=make_connection(SOCK_STREAM,netaddress,service,(char*)buf,bufsize);
+			sock=make_connection(SOCK_STREAM,netaddress,service,(char*)buf,buffy_bufsize);
 			clearbuf();
 			if (isopen())return 0;
 			else return -1;
@@ -60,7 +60,7 @@ class sockbuffy :public c_buffy{
 			}else
 				return 0;
 		}
-		sockbuffy():sock(-1){bsetbuf(2048);};
+		sockbuffy():sock(-1){/*bsetbuf(2048);*/};
 		~sockbuffy(){close();}
 };
 
