@@ -487,6 +487,11 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput(['0001'])
 		self.vfailUnlessEqual(self.servers.servers[0].retrs, 1)
 
+	def test_cache_reloading_after_host(self):
+		self.vfailIf(self.nget.run('-g test -r foo -h host0 -D -r foo'))
+		self.verifyoutput(['0001'])
+		self.vfailUnlessEqual(self.servers.servers[0].retrs, 2)
+
 
 class XoverTestCase(TestCase, DecodeTest_base):
 	def setUp(self):
