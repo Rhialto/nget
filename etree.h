@@ -36,6 +36,7 @@ struct e_unary_function {
 	typedef Ret ret_type;
 
 	virtual Ret operator()(const Arg) const=0;
+	virtual ~e_unary_function(){}
 };
 template <class Arg1, class Arg2, class Ret>
 struct e_binary_function {
