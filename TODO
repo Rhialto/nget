@@ -48,16 +48,6 @@ might do eventually:
  * allow searching based upon date/author/lines etc.  ideally, something like:
    nget -r (date > 03/04/1999 && (author = bob && subject = file\.) || (subject
    = blah)).. DONE, but uses postfix method.. might be nice to add infix type.
- * check for existance of files, don't d/l what we have already (overridable?)
-	use substring match to select filename? (ie: -r "heres the
-	files:.*(snarf\.r..) ").
-	or try some sort of parsing?  prolly really hard to get right for all
-	(even most) cases possibly could do a glob, then search through the
-	headers with the file names.. come at the problem from reverse - done
-	the reverse way.. seems pretty successful, though it doesn't stop from
-	d/l'ing multiples of the same file.. could be adapted to such though,
-	by adding files to a similar list after they are d/l'd and we know
-	their names.
  * threaded (background) decoding
 
 only considering:

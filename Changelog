@@ -2,6 +2,7 @@
   * Fix -df with filenames that begin or end in "non-word" chars since the \< and \> will not match because there is no word boundry in such a case. (reported by Bernhard Josef Rieder)
   * Added LDFLAGS arg in Makefile to facilitate building on MacOSX. (Thomas Kotzian)
   * Support systems that don't have sstream, but do have the older strstream.
+  * Added dupe checking between successive downloads.  Avoids grabbing the same file twice in the same run.
 
 2001-11-07 - v0.15.1:
   * Fix linking when there is no libtermcap but there is curses or ncurses. (Reported by Erik-Jan Vlieger)

@@ -45,6 +45,7 @@ class dupe_file_checker {
 		void addfrompath(const string &path);
 		void addfile(const string &path, const char *filename);
 		int checkhavefile(const char *f, const string &messageid, ulong bytes);
+		bool empty (void) const {return flist.empty();}
 		void clear(void);
 		~dupe_file_checker() {clear();}
 };

@@ -46,6 +46,7 @@
 #include "file.h"
 #include "nget.h"
 #include "strtoker.h"
+#include "dupe_file.h"
 
 int c_prot_nntp::putline(int echo,const char * str,...){
 	va_list ap;
@@ -853,6 +854,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 					UULoadFile((*fncurb),NULL,0);
 				}
 				uulist * uul;
+				dupe_file_checker flist;
 				for (un=0;;un++){
 					if ((uul=UUGetFileListItem(un))==NULL)break;
 					if (!(uul->state & UUFILE_OK)){
@@ -907,6 +909,8 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 						printf("decode(%s): %s\n",uul->filename,UUstrerror(r));
 						continue;
 					}else{
+						if (!(optionflags&GETFILES_NODUPEFILECHECK))
+							flist.addfile(fr->path, uul->filename); //#### is this the right place? what about dupes saved as different names??
 						switch (uul->uudet){
 							case UU_ENCODED:set_uu_ok_status();break;
 							case B64ENCODED:set_base64_ok_status();break;
@@ -919,6 +923,29 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 					}
 				}
 				UUCleanUp();
+
+				//check all remaining files against what we just decoded, and remove any dupes.
+				if (!derr && !flist.empty()) {
+					t_nntp_files_u::iterator dfi = curf; ++dfi; //skip the current one
+					t_nntp_files_u::iterator del_fi;
+					c_nntp_file_retr::ptr dfr;
+					while(dfi!=filec->files.end()){
+						dfr = (*dfi).second;
+						//only check files that are being downloaded to the same path
+						if (dfr->path == fr->path) {
+							c_nntp_file::ptr df = dfr->file;
+							if (flist.checkhavefile(df->subject.c_str(), df->bamid(), df->bytes())) {
+								del_fi=dfi;
+								++dfi;
+								filec->files.erase(del_fi);
+								qtotinfo.filestot--;
+								qtotinfo.bytesleft-=df->bytes();
+								continue;
+							}
+						}
+						++dfi;
+					}
+				}
 			}
 			if (derr>0){
 				set_decode_error_status();
