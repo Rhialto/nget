@@ -29,7 +29,9 @@ zerofile_fn_re = re.compile(r'(\d+)\.(\d+)\.txt$')
 
 class DecodeTest_base(unittest.TestCase):
 	def addarticle_toserver(self, testnum, dirname, aname, server, **kw):
-		server.addarticle(["test"], nntpd.FileArticle(open(os.path.join("testdata",testnum,dirname,aname), 'r')), **kw)
+		article = nntpd.FileArticle(open(os.path.join("testdata",testnum,dirname,aname), 'r'))
+		server.addarticle(["test"], article, **kw)
+		return article
 
 	def addarticles_toserver(self, testnum, dirname, server):
 		for fn in glob.glob(os.path.join("testdata",testnum,dirname,"*")):
@@ -136,6 +138,13 @@ class DecodeTestCase(unittest.TestCase, DecodeTest_base):
 	def test_0003_newspost_uue_0(self):
 		self.do_test_auto()
 
+	def test_article_expiry(self):
+		article = self.addarticle_toserver('0001', 'uuencode_single', 'testfile.001', self.servers.servers[0])
+		self.addarticles('0002', 'uuencode_multi')
+		self.failIf(self.nget.run("-g test"), "nget process returned with an error")
+		self.servers.servers[0].rmarticle(article.mid)
+		self.failUnless(os.WEXITSTATUS(self.nget.run("-G test -r ."))==8, "nget process did not detect retrieve error")
+		self.verifyoutput('0002') #should have gotten the articles the server still has.
 
 class XoverTestCase(unittest.TestCase, DecodeTest_base):
 	def setUp(self):

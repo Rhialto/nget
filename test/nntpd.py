@@ -132,6 +132,11 @@ class NNTPTCPServer(StoppableThreadingTCPServer):
 			if not self.groups.has_key(g):
 				self.groups[g]=Group()
 			self.groups[g].addarticle(article, anum)
+	
+	def rmarticle(self, mid):
+		article = self.midindex[mid]
+		for g in self.groups.values():
+			g.rmarticle(article)
 
 class NNTPD_Master:
 	def __init__(self, servers_num):
@@ -173,6 +178,12 @@ class Group:
 			self.high = anum
 		if anum < self.low:
 			self.low = anum
+	def rmarticle(self, article):
+		for k,v in self.articles.items():
+			if v==article:
+				del self.articles[k]
+				#should change self.low/high here if article was first/last in list... but it doesn't matter to any of the tests we do (yet?)
+				return
 
 import time
 class FakeArticle:
