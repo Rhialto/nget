@@ -282,13 +282,10 @@ time_t decode_textdate(const char * cbuf, bool local){
 		tblock.tm_mday=atoi(rsubs.subs(2));
 		if (rsubs.subs(3)[2]==':'){
 			struct tm lt;
-#ifdef CURTIME
-			localtime_r(&CURTIME,&lt);
-#else
 			time_t curtime;
 			time(&curtime);
 			localtime_r(&curtime,&lt);
-#endif
+
 			tblock.tm_hour=atoi(rsubs.subs(3));
 			tblock.tm_min=atoi(rsubs.subs(3)+3);
 
@@ -357,14 +354,10 @@ time_t decode_textdate(const char * cbuf){
 			tblock.tm_mday=atoi(cbuf+4);
 		if (cbuf[9]==':'){
 			struct tm lt;
-
-#ifdef CURTIME
-			localtime_r(&CURTIME,&lt);
-#else
 			time_t curtime;
 			time(&curtime);
 			localtime_r(&curtime,&lt);
-#endif
+
 			tblock.tm_hour=atoi(cbuf+7);
 			tblock.tm_min=atoi(cbuf+10);
 
