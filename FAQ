@@ -48,13 +48,5 @@ if the line count is different.
 
 4. Yenc support?
 
-For now, you can handle them with nget's -K option, and an external decoder
-(see http://users.pandora.be/stef/ or http://www.winews.net/yenc/index.htm or
-http://sourceforge.net/projects/yenc/).  Due to the extra info yenc includes in
-each part, you can safely run "ydec *" and everything should be decoded
-correctly.
-
-In the future, nget will support yenc directly.  nget utilizes uulib for its
-decoding, so nget will support yenc automatically when uulib is upgraded to
-support it.
-
+See:
+http://sourceforge.net/tracker/?func=detail&atid=353121&aid=518808&group_id=3121
