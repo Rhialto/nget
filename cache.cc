@@ -433,12 +433,12 @@ c_file *dofileopen(string file, string mode, int gz=-2){
 			sprintf(blah,"%i",gz);
 			mode.append(blah);
 		}
-		c_file_gz *gz=new c_file_gz();
-		if (gz->open(file.c_str(),mode.c_str())){
-			delete gz;
+		c_file_gz *gzf=new c_file_gz();
+		if (gzf->open(file.c_str(),mode.c_str())){
+			delete gzf;
 			return NULL;
 		}
-		f=gz;
+		f=gzf;
 	}
 #endif
 	if (!gz){
