@@ -110,6 +110,9 @@ class misc_Test : public TestCase {
 			CPPUNIT_ASSERT(decode_textdate("2002-02-17T15:52:46-0700",1)==1013986366);
 			CPPUNIT_ASSERT(decode_textdate("2002-02-17 15:52-0700",0)==1013986320);
 			CPPUNIT_ASSERT(decode_textdate("2002-02-17 15:52-0700",1)==1013986320);
+			time_t now = time(NULL);
+			CPPUNIT_ASSERT_EQUAL(now, decode_textdate(asctime(localtime(&now)),1));
+			CPPUNIT_ASSERT_EQUAL(now, decode_textdate(asctime(gmtime(&now)),0));
 		}
 		static Test *suite(void) {
 			TestSuite *suite = new TestSuite;

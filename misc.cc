@@ -330,6 +330,7 @@ time_t decode_textdate(const char * cbuf, bool local){
 	}else
 		PDEBUG(DEBUG_ALL,"decode_textdate: %s %i %i %i %i %i %i %i",tdt,tblock.tm_year,tblock.tm_mon,tblock.tm_mday,tblock.tm_hour,tblock.tm_min,tblock.tm_sec,td_tz);
 	if (local && td_tz==0x7FFFFFFF){//if local=1 and time string didn't contain a timezone, just use mktime directly.
+		tblock.tm_isdst = -1;
 		return mktime(&tblock);
 	}else
 		return timegm(&tblock)-td_tz;
