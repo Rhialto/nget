@@ -1,4 +1,4 @@
-2002-xx-xx v0.xx:
+2002-02-28 v0.17:
   * Handle invalid References starting with a '.'.
   * Fix --without-zlib build.
   * Optimized cache file loading and dupe file checking speed.

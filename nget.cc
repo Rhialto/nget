@@ -239,7 +239,7 @@ static void addoptions(void)
 	addoption(NULL,0,0,NULL,NULL);
 };
 static void print_help(void){
-	printf("nget v0.16 - nntp command line fetcher\n");
+	printf("nget v0.17 - nntp command line fetcher\n");
 	printf("Copyright 1999-2002 Matthew Mueller <donut@azstarnet.com>\n");
 	printf("\n\
 This program is free software; you can redistribute it and/or modify\n\
