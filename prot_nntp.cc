@@ -1382,10 +1382,10 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, const nget_options &opt
 					}
 				}
 				UUCleanUp();
-				//handle posts that uulib says "no encoded data" for as text. (seems to be posts with no body)
+				//handle posts that uulib says "no encoded data" for as text. (usually is posts with no body)
 				if (uustatus.derr==1 && uustatus.last_t==UUMSG_NOTE && un==0 && f->req<=0 && fnbuf.size()==1) {
 						uustatus.derr--; //HACK since this error will also cause a uu_note "No encoded data found", which will incr derr, but we don't want that.
-						//don't need to do anything special here, since the TextHandler already includes the headers from the tempfile, and the post has no body :)
+						texthandler.set_save_whole_tempfile(true);//sometimes uulib will get confused and think a text post is an incomplete binary and will say "no encoded data" for it, so tell the texthandler to save the body of the message, if there is one.
 						set_plaintext_ok_status();
 						un++;
 				}

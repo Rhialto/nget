@@ -53,7 +53,7 @@ void TextHandler::writeinfo(c_file *f, bool escape_From=false) {
 	bool dupeheaders=true;
 	c_file_fd headerf(firsttempfn.c_str(), O_RDONLY);
 	headerf.initrbuf();
-	while (headerf.bgets()>=0) {
+	while (headerf.bgets()>0) {
 		string hs = string(headerf.rbufp())+"\n";
 		if (dupeheaders && hs == *ii) {
 			++ii;
@@ -70,12 +70,18 @@ void TextHandler::writeinfo(c_file *f, bool escape_From=false) {
 		if (headerf.rbufp()[0]=='\0')
 			break;
 	}
+	if (save_whole_tempfile) {
+		while (headerf.bgets()>0) {
+			string bs = string(headerf.rbufp())+"\n";
+			writeline(f, bs.c_str(), escape_From);
+		}
+	}
 	for (; ii!=info.end(); ++ii) {
 		writeline(f, ii->c_str(), escape_From);
 	}
 }
 
-TextHandler::TextHandler(t_text_handling texthandlin, bool save_text_for_binarie, const string &mboxnam, c_nntp_file_retr::ptr frp, const char *firsttempf): texthandling(texthandlin), save_text_for_binaries(save_text_for_binarie), mboxname(mboxnam), fr(frp), firsttempfn(firsttempf), infocount(0), decodeinfocount(0) {
+TextHandler::TextHandler(t_text_handling texthandlin, bool save_text_for_binarie, const string &mboxnam, c_nntp_file_retr::ptr frp, const char *firsttempf): texthandling(texthandlin), save_text_for_binaries(save_text_for_binarie), mboxname(mboxnam), fr(frp), firsttempfn(firsttempf), infocount(0), decodeinfocount(0), save_whole_tempfile(false) {
 }
 
 c_file * maybegzopen(const char *fn, const char *mode) {
