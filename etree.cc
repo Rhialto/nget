@@ -128,7 +128,6 @@ pred<ClassType> *comparison_re(const string &opstr, getterT get, const char *pat
 nntp_file_pred * make_pred(const char *optarg, int gflags){
 	list<string> e_parts;
 	string curpart;
-	//const char /**curstart=NULL,*/*cur;
 	const char *cur;
 	char quote=0;
 	bool esc=0;
@@ -147,13 +146,12 @@ nntp_file_pred * make_pred(const char *optarg, int gflags){
 		}
 		if (isspace(*cur))
 			if(!quote){
-				e_parts.push_back(curpart);
-				//e_parts.push_back(string(curstart,cur-curstart));
-				curpart="";
-				//				curstart=NULL;
+				if (!curpart.empty()){
+					e_parts.push_back(curpart);
+					curpart="";
+				}
 				continue;
 			}
-		//		if (curstart==NULL)curstart=cur;
 		switch(*cur){
 			case '\\':esc=1;continue;
 			case '"':case '\'':
