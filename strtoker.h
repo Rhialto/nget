@@ -23,7 +23,7 @@
 #include "config.h"
 #endif
 
-//goodstrtok:
+//goodstrtok: (NOTE: modifies cur!)
 //*cur should be set to string to tokenize on first call.
 //returns token, or NULL if finished.
 //thread safe.
