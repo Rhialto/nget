@@ -198,8 +198,8 @@ class ParHandler {
 		typedef auto_map<string, ParInfo> t_parinfo_map;
 		t_parinfo_map parinfos;
 
-		t_parinfo_map::data_type parinfo(const string &path, const string &temppath);
-		t_parinfo_map::data_type parinfo(const string &path);
+		t_parinfo_map::mapped_type parinfo(const string &path, const string &temppath);
+		t_parinfo_map::mapped_type parinfo(const string &path);
 	public:
 		bool maybe_add_parfile(const c_nntp_file::ptr &f, const string &path, const string &temppath);
 		void get_initial_pars(c_nntp_files_u &fc);

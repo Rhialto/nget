@@ -425,13 +425,13 @@ int Par2Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 }
 
 		
-ParHandler::t_parinfo_map::data_type ParHandler::parinfo(const string &path, const string &temppath) {
+ParHandler::t_parinfo_map::mapped_type ParHandler::parinfo(const string &path, const string &temppath) {
 	t_parinfo_map::iterator i = parinfos.find(path);
 	if (i != parinfos.end())
 		return (*i).second;
 	return (*parinfos.insert_value(path, new ParInfo(path, temppath)).first).second;
 }
-ParHandler::t_parinfo_map::data_type ParHandler::parinfo(const string &path) {
+ParHandler::t_parinfo_map::mapped_type ParHandler::parinfo(const string &path) {
 	t_parinfo_map::iterator i = parinfos.find(path);
 	assert(i != parinfos.end());
 	return (*i).second;
