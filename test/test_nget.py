@@ -341,6 +341,14 @@ class RetrieveTestCase(TestCase, DecodeTest_base):
 	def test_R_extra_whitespace(self):
 		self.vfailIf(self.nget.run('-g test -R "  \tlines  \t 20 \t  > \t  lines \t  200\t  <\t  &&\t  \t"'))
 		self.verifyoutput('0003')
+		
+	def test_R_stack(self):
+		self.vfailIf(self.nget.run('-g test -R "lines 20 > lines 200 < && bytes 2000 > bytes 90000 < && ||"'))
+		self.verifyoutput(['0003','0002'])
+	
+	def test_R_stack4(self):
+		self.vfailIf(self.nget.run('-g test -R "lines 2 > lines 200 < bytes 1000 > bytes 90000 < && && &&"'))
+		self.verifyoutput(['0003'])
 	
 	def test_dupef(self):
 		self.vfailIf(self.nget.run('-g test -r joy'))

@@ -3,6 +3,7 @@
   * Replace the old kludge that was used when timegm wasn't available with a routine by Yitzchak Scott-Thoennes that should work on all systems, even in daylight savings time.
   * Complete rewrite of expression tree code (what handles the -R and -r args) to make the code more flexible, remove ugly pointer math, and fix gcc 3.1 warnings.  Also make the and/or operators use short circuit evaluation.
   * Update parser to allow extra whitespace in -R expressions.
+  * Update -R parser to allow a stack larger than 2 elements. (Now you can do "A B && X Y && &&" or "A B X Y && && &&", previously you would need to do "A B && X && Y &&")
 
 2002-06-17 v0.19.1:
   * Print error message rather than segv on flush without specifying a group first. (Reported by Christian Marillat)

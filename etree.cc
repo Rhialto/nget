@@ -23,6 +23,7 @@
 #include "misc.h"
 #include "strreps.h"
 #include "getter.h"
+#include <stack>
 
 #define MAKE_BINARY_OP(name,op) template <class T,class T2=T>			\
 struct Op_ ## name {			\
@@ -165,22 +166,24 @@ nntp_file_pred * make_pred(const char *optarg, int gflags){
 	if (esc || quote){printf("bad. %i %i\n",esc,quote);return NULL;}
 	if (!curpart.empty())
 		e_parts.push_back(curpart);
+
 	string *x=NULL,*y=NULL;
 	list<string>::iterator i=e_parts.begin();
 	int re_flags = REG_EXTENDED | ((gflags&GETFILES_CASESENSITIVE)?0:REG_ICASE);
-	nntp_file_pred * p=NULL,*px=NULL,*py=NULL;
+	nntp_file_pred * p=NULL;
+	stack<nntp_file_pred *> pstack;
 	for (;i!=e_parts.end();++i){
 		if (!x){
 			PDEBUG(DEBUG_MIN,"x %s",(*i).c_str());
 			x=&(*i);
-			if (px && py){
+			if (*x=="&&" || *x=="and" || *x=="||" || *x=="or"){
+				nntp_file_pred *py=pstack.top(); pstack.pop();
+				nntp_file_pred *px=pstack.top(); pstack.pop();
 				if (x->compare("&&")==0 || x->compare("and")==0)
-					px = new predAnd<const c_nntp_file>(px, py);
-				else if (x->compare("||")==0 || x->compare("or")==0)
-					px = new predOr<const c_nntp_file>(px, py);
+					p = new predAnd<const c_nntp_file>(px, py);
 				else
-					throw UserExFatal(Ex_INIT, "bad op %s", x->c_str());
-				py=NULL;
+					p = new predOr<const c_nntp_file>(px, py);
+				pstack.push(p);
 				x=NULL;
 			}
 		}else if (!y){
@@ -208,16 +211,14 @@ nntp_file_pred * make_pred(const char *optarg, int gflags){
 			else
 				throw UserExFatal(Ex_INIT, "no match type %s", n);
 
-			if (px)
-				py=p;
-			else
-				px=p;
-
+			pstack.push(p);
 			x=y=NULL;
 		}
 	}
-	if (py || x || y){
+	if (pstack.size()>1 || x || y){
 		throw UserExFatal(Ex_INIT, "unfinished expression");
 	}
-	return px;
+	if (pstack.empty())
+		throw UserExFatal(Ex_INIT, "empty expression");
+	return pstack.top();
 }
