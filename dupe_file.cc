@@ -1,7 +1,6 @@
 #include "dupe_file.h"
 #include "log.h"
 
-#include <glob.h>
 #include <dirent.h>
 #include <ctype.h>
 #include <sys/stat.h>
