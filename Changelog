@@ -2,7 +2,7 @@
   * Add automatic handling of parfiles.  nget will automatically download only as many .Pxx files as needed. (You still need an external program such as parchive to restore them)
   * Add autopar exitstatus, changed path error code to be 4. (Same as user error code, since its basically a user error and there weren't any free bits.)
   * Change 0-file handling to show the 0 part as a seperate post than the binary it was posted with. (Avoids missing 0-files when they are posted with a binary that gets dropped due to dupefile checking or autopar handling)
-  * Patched uulib (in nget+uulib) to avoid detecting some text posts as UUdata. (patch also available at http://nget.sf.net/patches/uulib-0.5.18-detect_text_as_uudata_fix.patch)
+  * Patched uulib (in nget+uulib) to avoid detecting some text posts as UUdata. (patch also available at http://nget.sf.net/patches/uulib-0.5.18-detect_text_as_uudata_fix.patch-v2)
 
 2002-12-24 v0.23:
   * Add --decode arg so -k and -K can be negated.
