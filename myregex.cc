@@ -133,9 +133,6 @@ void c_regex_subs::freesub(void){
 }
 
 int c_regex_r::match(const char *str,c_regex_subs*subs){
-#ifdef _REENTRANT
-	c_mutex_locker lock(mutex);//I dunno wether regexec is reentrant, so lets be safe.
-#endif
 	subs->setnregmatch(nregmatch);
 	return subs->doregex(&regex,str);
 }

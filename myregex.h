@@ -42,9 +42,6 @@
 #include <string>
 #include <stdio.h>
 
-#ifdef _REENTRANT
-#include "mythread.h"
-#endif
 #include "log.h"
 DEFINE_EX_SUBCLASS(RegexEx, ApplicationExFatal, true);
 
@@ -104,9 +101,6 @@ class c_regex_subs {
 };
 class c_regex_r : public c_regex_base{
 	protected:
-#ifdef _REENTRANT
-		c_mutex mutex;
-#endif
 		int nregmatch;
 	public:
 		int match(const char *str,c_regex_subs* subs);
