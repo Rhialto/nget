@@ -273,7 +273,10 @@ class Group:
 		for k,v in self.articles.items():
 			if v==article:
 				del self.articles[k]
-				#should change self.low/high here if article was first/last in list... but it doesn't matter to any of the tests we do (yet?)
+				if self.articles:
+					self.low = min(self.articles.keys())
+				else:
+					self.low = self.high + 1
 				return
 
 import time
