@@ -328,7 +328,7 @@ class c_nntp_cache : public c_refcounted<c_nntp_cache>{
 		//c_nntp_files_u* getfiles(c_nntp_files_u * fc,c_nrange *grange,const char *match, unsigned long linelimit,int flags);
 		//c_nntp_files_u* getfiles(c_nntp_files_u * fc,c_nrange *grange,nntp_pred *pred,int flags);
 		c_nntp_files_u* getfiles(const string &path, const string &temppath, c_nntp_files_u * fc,c_mid_info *midinfo,generic_pred *pred,int flags);
-		c_nntp_cache(string path,c_group_info::ptr group);
+		c_nntp_cache(string path,c_group_info::ptr group,c_mid_info*midinfo);
 		virtual ~c_nntp_cache();
 };
 

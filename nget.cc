@@ -89,6 +89,7 @@ SET_x_WARN_STATUS(undecoded,2);
 SET_x_WARN_STATUS(unequal_line_count,8);
 SET_x_WARN_STATUS(dupe, 256);
 SET_x_WARN_STATUS(group,1024);
+SET_x_WARN_STATUS(cache,2048);
 #define print_x_x_STATUS(type, low) if (low ## _ ## type) printf("%s %i " #type, cf++?",":"", low ## _ ## type)
 #define print_x_ERROR_STATUS(type) print_x_x_STATUS(type, error)
 #define print_x_WARN_STATUS(type) print_x_x_STATUS(type, warn)
@@ -120,6 +121,7 @@ void print_error_status(void){
 		print_x_WARN_STATUS(undecoded);
 		print_x_WARN_STATUS(unequal_line_count);
 		print_x_WARN_STATUS(dupe);
+		print_x_WARN_STATUS(cache);
 	}
 	if (errorflags){
 		int cf=0;

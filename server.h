@@ -127,6 +127,12 @@ class c_nget_config {
 		int usegz;
 		int unequal_line_error;
 
+		c_server* getserver(ulong serverid){
+			t_server_list::iterator sli=serv.find(serverid);
+			if (sli!=serv.end())
+				return (*sli).second;
+			return NULL;
+		}
 		c_server* getserver(string name){
 			serv_match_by_name name_matcher;
 			name_matcher.mname=name.c_str();

@@ -52,6 +52,7 @@ void set_retrieve_warn_status(int incr=1);
 void set_undecoded_warn_status(int incr=1);
 void set_unequal_line_count_warn_status(int incr=1);
 void set_dupe_warn_status(int incr=1);
+void set_cache_warn_status(int incr=1);
 
 void set_total_ok_status(int incr=1);
 void set_uu_ok_status(int incr=1);

@@ -6,6 +6,7 @@
   * Added --test-multiserver to make -T show which servers have each file.
   * Don't show doarticle linecount warning for servers that report # of bytes counted with LF endings, then send with CRLF.
   * Some portability fixes. (Now builds on SunOS.)
+  * Handle server_articles left in the cache that have no server with a matching serverid in .ngetrc.
 
 2002-01-23 v0.16:
   * Print info line about each file before beginning retrieval.

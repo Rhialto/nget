@@ -468,7 +468,7 @@ enum {
 	REFERENCES_MODE=5,
 };
 
-c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),group(group_){
+c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,c_mid_info *midinfo):totalnum(0),group(group_){
 	c_file *f=NULL;
 	saveit=0;
 	//file=nid;
@@ -486,7 +486,7 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),gro
 		char *t[8];
 		int i;
 		fileread=1;
-		ulong count=0,counta=0,curline=0;
+		ulong count=0,counta=0,curline=0,countdeada=0;
 		while (f->bgets()>0){
 			buf=f->rbufp();
 			curline++;
@@ -518,8 +518,14 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),gro
 							i=-1;break;
 						}
 					if (i>=4){
-						si=new c_nntp_server_info(atoul(t[0]),atoul(t[1]),atoul(t[2]),atoul(t[3]));
-						server_info[si->serverid]=si;
+						ulong serverid=atoul(t[0]);
+						if (nconfig.getserver(serverid)) {
+							si=new c_nntp_server_info(serverid,atoul(t[1]),atoul(t[2]),atoul(t[3]));
+							server_info[si->serverid]=si;
+						}else{
+							printf("warning: serverid %lu not found in server list\n",serverid);
+							set_cache_warn_status();
+						}
 					}else
 						printf("invalid line %lu mode %i\n",curline,mode);
 				}
@@ -536,17 +542,38 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),gro
 						}
 					if (i>=4){
 						assert(i==4);
-						sa=new c_nntp_server_article(atoul(t[0]),atoul(t[1]),atoul(t[2]),atoul(t[3]));
-						//np->addserverarticle(sa);
-						np->articles.insert(t_nntp_server_articles::value_type(sa->serverid,sa));
-						counta++;
+						ulong serverid=atoul(t[0]);
+						if (nconfig.getserver(serverid)) {
+							sa=new c_nntp_server_article(serverid,atoul(t[1]),atoul(t[2]),atoul(t[3]));
+							//np->addserverarticle(sa);
+							np->articles.insert(t_nntp_server_articles::value_type(sa->serverid,sa));
+							counta++;
+						}else
+							countdeada++;
 					}else
 						printf("invalid line %lu mode %i\n",curline,mode);
 				}
 			}
 			else if (mode==PART_MODE && nf){//new part mode
+				if (np && np->articles.empty()) {
+					midinfo->set_delete(np->messageid);
+					nf->parts.erase(np->partnum);
+					delete np;
+					np=NULL;
+					count--;
+				}
 				if (buf[0]=='.'){
 					assert(buf[1]==0);
+					if (nf->parts.empty()){
+						pair<t_nntp_files::iterator,t_nntp_files::iterator> firange;
+						firange=files.equal_range(nf->fileid);
+						for (t_nntp_files::iterator fi=firange.first; fi!=firange.second; ++fi){
+							if (fi->second.gimmethepointer()==nf){
+								files.erase(fi);
+								break;
+							}
+						}
+					}
 					mode=FILE_MODE;//go back to new file mode
 			//		nf->addpart(np);//added here so that addpart will have apxlines/apxbytes to work with (set in mode 3)
 					np=NULL;
@@ -594,8 +621,14 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_):totalnum(0),gro
 			}
 		}
 		PDEBUG(DEBUG_MIN,"read %lu parts (%lu sa) %i files",count,counta,files.size());
+		if (countdeada){
+			printf("warning: read (and ignored) %lu articles with bad serverids\n",countdeada);
+			set_cache_warn_status();
+		}
 		if (count!=totalnum){
 			printf("warning: read %lu parts from cache, expecting %lu\n",count,totalnum);
+			totalnum=count;
+			set_cache_warn_status();
 		}
 	}
 }

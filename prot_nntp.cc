@@ -348,7 +348,7 @@ void c_prot_nntp::nntp_group(c_group_info::ptr ngroup, int getheaders, const nge
 
 	midinfo=new c_mid_info((nghome + group->group + ",midinfo"));
 	//gcache=new c_nntp_cache(nghome,group->group + ",cache");
-	gcache=new c_nntp_cache(ngcachehome, group);
+	gcache=new c_nntp_cache(ngcachehome, group, midinfo);
 	groupselected=0;
 	if (getheaders){
 		if (force_host){
@@ -489,7 +489,7 @@ int c_prot_nntp::nntp_dowritelite_article(c_file &fw,c_nntp_part *part,char *fn)
 	fw.putf("%i\n",sap.size());
 	for (sapi = sap.begin(); sapi != sap.end(); ++sapi){
 		sa=(*sapi).second;
-		whost=nconfig.serv[sa->serverid];
+		whost=nconfig.getserver(sa->serverid);
 		fw.putf("%s\n%lu\n%lu\n%lu\n",whost->addr.c_str(),sa->articlenum,sa->bytes,sa->lines);
 	}
 	return 0;
@@ -592,7 +592,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 					printCaughtEx_nnl(e);printf(" (ignored)\n");
 				}
 				curserverid=sa->serverid;
-				host=nconfig.serv[curserverid];
+				host=nconfig.getserver(curserverid);
 				force_host=NULL;
 			}
 			ari->partnum=part->partnum;
@@ -734,7 +734,7 @@ void print_nntp_file_info(c_nntp_file::ptr f, t_show_multiserver show_multi) {
 			printf(" ");
 		
 		for (t_server_have_map::iterator i=have_map.begin(); i!=have_map.end(); ++i){
-			c_server *s=nconfig.serv[i->first];
+			c_server *s=nconfig.getserver(i->first);
 			if (show_multi==SHOW_MULTI_LONG){
 				printf(" %s", s->alias.c_str());
 				if (i->second<f->have)
