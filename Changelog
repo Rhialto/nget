@@ -1,6 +1,6 @@
 2002-04-xx v0.xx:
   * Fix compile on 64bit arches (based on patch from Chris Lawrence.)
-  * Fix fresh newsgroup -g not retrieving any headers when fullxover is 0.
+  * Fix bug introduced in 0.18 where -g would fail on a new group with fullxover=0.
 
 2002-04-02 v0.18:
   * Remove fixed length buffers. (Fix errors with extremely long subjects, etc.)
