@@ -92,5 +92,8 @@ DEFINE_EX_SUBCLASS(CacheEx, baseEx, false);
 #define printCaughtEx_nnl(e) PERROR_nnl("%s:%i:caught exception %s:%i:%s: %s",__FILE__,__LINE__,e.getExFile(),e.getExLine(),e.getExType(),e.getExStr())
 #define printCaughtEx(e) {printCaughtEx_nnl(e);PERROR_nnl("\n");}
 
+void print_ex_with_message(const baseEx &e, const char *m, ...)
+			__attribute__ ((format (printf, 2, 3)));
+
 
 #endif

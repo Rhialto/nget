@@ -27,3 +27,16 @@ void baseEx::set_params(const char *file, int line, const char * s, va_list ap) 
     str=cstr;
     free(cstr);
 }
+
+void print_ex_with_message(const baseEx &e, const char *m, ...) {
+    va_list ap;
+    va_start(ap,m);
+    vfprintf(stderr, m, ap);
+    va_end(ap);
+    PERROR_nnl(" (");
+    if (debug>=DEBUG_MIN) {
+        printCaughtEx_nnl(e);
+        PERROR(")");
+    } else
+        PERROR("%s)",e.getExStr());
+}

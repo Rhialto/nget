@@ -73,7 +73,7 @@ void SockPool::connection_erase(t_connection_map::iterator i) {
 	try {
 		i->second->close();
 	} catch (FileEx &e) {//ignore transport errors while closing
-		printCaughtEx_nnl(e);printf(" (ignored)\n");
+		print_ex_with_message(e, "ignored error");
 	}
 	delete i->second;
 	connections.erase(i);
@@ -92,7 +92,7 @@ Connection* SockPool::connect(const c_server::ptr &server){
 					c->getline(1);
 				}
 			} catch (baseCommEx &e) {//ignore transport errors (probably server timeout)
-				printCaughtEx_nnl(e);printf(" (ignored)\n");
+				print_ex_with_message(e, "ignored error");
 			}
 		}
 		if (c->isopen()) {

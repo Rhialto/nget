@@ -55,6 +55,16 @@
 
 extern SockPool sockpool;
 
+
+static void printCommEx(const baseEx &e, const c_server::ptr &s, int redone, const nget_options &options) {
+	if (e.isfatal())
+		print_ex_with_message(e, "fatal error, won't try %s again", s->alias.c_str());
+	else if (redone+1 < options.maxretry)
+		print_ex_with_message(e, "error, will try %s again", s->alias.c_str());
+	else //if this is the last retry, don't say that we will try it again.
+		print_ex_with_message(e, "error, retries exhausted, won't try %s again", s->alias.c_str());
+}
+
 int c_prot_nntp::putline(int echo,const char * str,...){
 	va_list ap;
 	va_start(ap,str);
@@ -248,14 +258,8 @@ void c_prot_nntp::nntp_grouplist(int update, const nget_options &options){
 					succeeded++;
 					connection->server_ok=true;
 				} catch (baseCommEx &e) {
-					printCaughtEx(e);
-					if (e.isfatal()) {
-						printf("fatal error, won't try %s again\n", s->alias.c_str());
-						//fall through to removing server from list below.
-					}else{
-						//if this is the last retry, don't say that we will try it again.
-						if (redone+1 < options.maxretry)
-							printf("will try %s again\n", s->alias.c_str());
+					printCommEx(e, s, redone, options);
+					if (!e.isfatal()) {
 						++dsi;
 						continue;//don't remove server from list
 					}
@@ -309,14 +313,8 @@ void c_prot_nntp::nntp_xgrouplist(const t_xpat_list &patinfos, const nget_option
 				succeeded++;
 				connection->server_ok=true;
 			} catch (baseCommEx &e) {
-				printCaughtEx(e);
-				if (e.isfatal()) {
-					printf("fatal error, won't try %s again\n", s->alias.c_str());
-					//fall through to removing server from list below.
-				}else{
-					//if this is the last retry, don't say that we will try it again.
-					if (redone+1 < options.maxretry)
-						printf("will try %s again\n", s->alias.c_str());
+				printCommEx(e, s, redone, options);
+				if (!e.isfatal()) {
 					++dsi;
 					continue;//don't remove server from list
 				}
@@ -697,14 +695,8 @@ void c_prot_nntp::nntp_xgroup(const c_group_info::ptr &group, const t_xpat_list 
 				succeeded++;
 				connection->server_ok=true;
 			} catch (baseCommEx &e) {
-				printCaughtEx(e);
-				if (e.isfatal()) {
-					printf("fatal error, won't try %s again\n", s->alias.c_str());
-					//fall through to removing server from list below.
-				}else{
-					//if this is the last retry, don't say that we will try it again.
-					if (redone+1 < options.maxretry)
-						printf("will try %s again\n", s->alias.c_str());
+				printCommEx(e, s, redone, options);
+				if (!e.isfatal()) {
 					++dsi;
 					continue;//don't remove server from list
 				}
@@ -763,14 +755,8 @@ void c_prot_nntp::nntp_group(const c_group_info::ptr &ngroup, int getheaders, co
 					succeeded++;
 					connection->server_ok=true;
 				} catch (baseCommEx &e) {
-					printCaughtEx(e);
-					if (e.isfatal()) {
-						printf("fatal error, won't try %s again\n", s->alias.c_str());
-						//fall through to removing server from list below.
-					}else{
-						//if this is the last retry, don't say that we will try it again.
-						if (redone+1 < options.maxretry)
-							printf("will try %s again\n", s->alias.c_str());
+					printCommEx(e, s, redone, options);
+					if (!e.isfatal()) {
 						++dsi;
 						continue;//don't remove server from list
 					}
@@ -990,16 +976,12 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 				nntp_dogetarticle(ari,toti,buf);
 				connection->server_ok=true;
 			} catch (baseCommEx &e) {
-				printCaughtEx(e);
+				printCommEx(e, s, redone, options);
 				if (e.isfatal()) {
-					printf("fatal error, won't try %s again\n", s->alias.c_str());
 					sap_erase_i = sapi;
 					++sapi;
 					sap.erase(sap_erase_i);
 				}else{
-					//if this is the last retry, don't say that we will try it again.
-					if (redone+1 < options.maxretry)
-						printf("will try %s again\n", s->alias.c_str());
 					++sapi;
 				}
 				continue;

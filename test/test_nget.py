@@ -2741,30 +2741,30 @@ else:
 
 		def test_socket_error(self):
 			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw',-2)]"), 16)
-			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+			self.check_for_errormsg(r'error.*127.0.0.1.*socket')
 
 		def test_connect_error(self):
 			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw',-1)]"), 16)
-			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+			self.check_for_errormsg(r'error.*127.0.0.1.*connect')
 
 		def test_sock_write_error(self):
 			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('w',0)]"), 16)
-			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+			self.check_for_errormsg(r'error.*write.*127.0.0.1')
 
 		def test_sock_read_error(self):
 			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('r',0)]"), 16)
-			self.check_for_errormsg(r'TransportEx.*127.0.0.1')
+			self.check_for_errormsg(r'error.*read.*127.0.0.1')
 
 		def test_sock_close_error_onexit(self):
 			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw','c')]"), 0) #error on sock close doesn't really need an error return, since it can't cause any problems.  (Any problem causing errors would be caught before sock.close() gets called.)
-			self.check_for_errormsg(r'127.0.0.1')#'TransportEx.*127.0.0.1')
+			self.check_for_errormsg(r'error.*127.0.0.1')#'TransportEx.*127.0.0.1')
 		
 		def test_sock_close_error(self):
 			#somewhat hacky stuff since we need 2 servers for this test only.
 			self.tearDown()
 			self.do_setUp(2, {'options':{'tries':1, 'maxconnections':1}})
 			self.vfailUnlessEqual(self.runnget("-g test", "IOError:s=[('rw','c')]"), 0) #error on sock close doesn't really need an error return, since it can't cause any problems.  (Any problem causing errors would be caught before sock.close() gets called.)
-			self.check_for_errormsg(r'127.0.0.1', dupe=1)#'TransportEx.*127.0.0.1')
+			self.check_for_errormsg(r'error.*127.0.0.1', dupe=1)#'TransportEx.*127.0.0.1')
 
 
 	class LiteErrorTest_base(SubterfugueTest_base):
