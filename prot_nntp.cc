@@ -845,7 +845,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 				//				delete fn;
 				fnbuf.push_back(fn);
 			}
-			if (!derr && !(optionflags&GETFILES_NODECODE)){
+			if (!derr && !(optionflags&GETFILES_NODECODE) && f->have>=f->req){
 				if ((r=UUInitialize())!=UURET_OK)
 					throw ApplicationExFatal(Ex_INIT,"UUInitialize: %s",UUstrerror(r));
 				UUSetOption(UUOPT_DUMBNESS,1,NULL);//we already put the parts in the correct order, so it doesn't need to.
@@ -960,6 +960,7 @@ void c_prot_nntp::nntp_retrieve(const nget_options &options){
 			}else if (derr<0 && fnbuf.size())
 				printf("download error occured, keeping temp files.\n");
 			else if (un==0){
+				set_undecoded_warn_status();
 				printf("hm.. nothing decoded.. keeping temp files\n");
 				derr=-2;
 			}else if (derr==0){

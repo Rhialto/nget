@@ -78,6 +78,7 @@ SET_x_OK_STATUS(unknown, 512);
 SET_x_OK_STATUS(group, 1024);
 SET_x_OK_STATUS(skipped, 2048);
 SET_x_WARN_STATUS(retrieve,1);
+SET_x_WARN_STATUS(undecoded,2);
 SET_x_WARN_STATUS(unequal_line_count,8);
 SET_x_WARN_STATUS(dupe, 256);
 SET_x_WARN_STATUS(group,1024);
@@ -109,6 +110,7 @@ void print_error_status(void){
 		printf("WARNINGS:");
 		print_x_WARN_STATUS(group);
 		print_x_WARN_STATUS(retrieve);
+		print_x_WARN_STATUS(undecoded);
 		print_x_WARN_STATUS(unequal_line_count);
 		print_x_WARN_STATUS(dupe);
 	}
