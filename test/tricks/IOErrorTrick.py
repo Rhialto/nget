@@ -93,6 +93,7 @@ class IOError(Trick): #somewhat unfortunate, you must name <blah>Trick class as 
 
 
 	def callbefore(self, pid, call, args):
+#		print pid, call, args
 		def doreadwrite(callt, args):
 #			print 'doreadwrite',call,callt,args,
 			fd = args[0]
@@ -141,6 +142,7 @@ class IOError(Trick): #somewhat unfortunate, you must name <blah>Trick class as 
 			fd = args[0]
 			pfd = pid,fd
 			fdinfo = self.__do_fail.get(pfd, None)
+#			print pfd, call, args, fdinfo
 			if fdinfo and fdinfo.cerrs:
 				return (None, -errno.EIO, None, None)
 			
@@ -189,13 +191,15 @@ class IOError(Trick): #somewhat unfortunate, you must name <blah>Trick class as 
 			elif subcall in (9,10):          # send/recv
 				if subcall == 9:          # send
 					r = doreadwrite('w', (ptrace.peekdata(pid, args[1]), ptrace.peekdata(pid, args[1]+4), ptrace.peekdata(pid, args[1]+8)))
+					subcalln = 'write'
 				elif subcall == 10:          # recv
 					r = doreadwrite('r', (ptrace.peekdata(pid, args[1]), ptrace.peekdata(pid, args[1]+4), ptrace.peekdata(pid, args[1]+8)))
+					subcalln = 'read'
 				if not r or r[1]: # if default return or error, we can return it with no probs.
 					return r
 				#otherwise we have to convert from doreadwrite return which is in read()/write() format to socketcall format
 				ptrace.pokedata(args[1]+8, r[3][2]) # set new recv/write size
-				return (r[0], r[1], r[2], args)
+				return ((subcalln,r[0]), r[1], r[2], args)
 
 			if do:
 				#ses = []
@@ -207,7 +211,7 @@ class IOError(Trick): #somewhat unfortunate, you must name <blah>Trick class as 
 				errs = [err for err in self.serrs if err.after>=0]
 				if errs:
 					fdinfo = FDInfo(errs)
-					return (fdinfo, None, None, None)
+					return (('open',fdinfo), None, None, None)
 		
 		elif call == 'rename':
 			getarg = Memory.getMemory(pid).get_string
@@ -221,6 +225,10 @@ class IOError(Trick): #somewhat unfortunate, you must name <blah>Trick class as 
 
 	
 	def callafter(self, pid, call, result, state):
+		if call == 'socketcall':
+			if not state:
+				return
+			call, state = state
 		if call == 'read':
 			if result>0 and state!=None:
 				self.__do_fail[state].r.bytes += result
@@ -228,8 +236,6 @@ class IOError(Trick): #somewhat unfortunate, you must name <blah>Trick class as 
 			if result>0 and state!=None:
 				self.__do_fail[state].w.bytes += result
 		elif call == 'open' and result != -1:
-			self.__do_fail[pid,result] = state
-		elif call == 'socketcall' and result != -1:
 			self.__do_fail[pid,result] = state
 		elif (call == 'dup' or call == 'dup2') and result != -1:
 			self.__do_fail[pid,result] = self.__do_fail.get((pid,state), None)
