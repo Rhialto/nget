@@ -247,7 +247,7 @@ AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
 dnl AC_FUNC_VPRINTF
 
-AC_CHECK_FUNCS(mkdir mktime regcomp strerror atoul asprintf vasprintf vdprintf localtime_r inet_aton getaddrinfo getnameinfo getopt_long flock setlinebuf)
+AC_CHECK_FUNCS(mkdir mktime regcomp strerror atoul asprintf vasprintf vdprintf gmtime_r localtime_r inet_aton getaddrinfo getnameinfo getopt_long flock setlinebuf)
 
 AC_caolan_FUNC_WHICH_GETHOSTBYNAME_R
 AC_raf_FUNC_WHICH_GETSERVBYNAME_R

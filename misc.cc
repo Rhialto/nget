@@ -35,17 +35,6 @@
 #include "_sstream.h"
 #include <iomanip>
 
-#ifdef HAVE_CONFIG_H
-#ifndef HAVE_LOCALTIME_R
-struct tm * localtime_r(const time_t *t,struct tm * tmu){
-	struct tm *t1=localtime(t);
-	if (!t1) return NULL;
-	memcpy(tmu,t1,sizeof(struct tm));
-	return tmu;
-}
-#endif
-#endif//HAVE_CONFIG_H
-
 long my_timezone=0;
 #if (defined(TIMEZONE_IS_VAR) || defined(_TIMEZONE_IS_VAR))
 void init_my_timezone(void){
@@ -62,8 +51,8 @@ void init_my_timezone(void){
 	struct tm tm;
 	time_t t;
 	time(&t);
-	localtime_r(&t,&tm);
-	my_timezone=tm.tm_gmtoff;
+	struct tm *lt = localtime_r(&t);
+	my_timezone=lt->tm_gmtoff;
 //	printf("my_timezone2=%li\n",my_timezone);
 }
 #endif
@@ -281,18 +270,17 @@ time_t decode_textdate(const char * cbuf, bool local){
 		tblock.tm_mon=decode_textmonth(rsubs.subs(1));
 		tblock.tm_mday=atoi(rsubs.subs(2));
 		if (rsubs.subs(3)[2]==':'){
-			struct tm lt;
 			time_t curtime;
 			time(&curtime);
-			localtime_r(&curtime,&lt);
+			struct tm *lt = localtime(&curtime);
 
 			tblock.tm_hour=atoi(rsubs.subs(3));
 			tblock.tm_min=atoi(rsubs.subs(3)+3);
 
-			if (lt.tm_mon>=tblock.tm_mon)
-				tblock.tm_year=lt.tm_year;
+			if (lt->tm_mon>=tblock.tm_mon)
+				tblock.tm_year=lt->tm_year;
 			else
-				tblock.tm_year=lt.tm_year-1;
+				tblock.tm_year=lt->tm_year-1;
 		}else{
 			yearlen=rsubs.sublen(3);
 			tblock.tm_year=atoi(rsubs.subs(3));
@@ -353,18 +341,17 @@ time_t decode_textdate(const char * cbuf){
 		else
 			tblock.tm_mday=atoi(cbuf+4);
 		if (cbuf[9]==':'){
-			struct tm lt;
 			time_t curtime;
 			time(&curtime);
-			localtime_r(&curtime,&lt);
+			struct tm *lt = localtime(&curtime);
 
 			tblock.tm_hour=atoi(cbuf+7);
 			tblock.tm_min=atoi(cbuf+10);
 
-			if (lt.tm_mon>=tblock.tm_mon)
-				tblock.tm_year=lt.tm_year;
+			if (lt->tm_mon>=tblock.tm_mon)
+				tblock.tm_year=lt->tm_year;
 			else
-				tblock.tm_year=lt.tm_year-1;
+				tblock.tm_year=lt->tm_year-1;
 		}else{
 			tblock.tm_year=atoi(cbuf+8)-1900;
 		}
