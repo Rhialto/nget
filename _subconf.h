@@ -36,15 +36,21 @@ using namespace std;
 # define __STDC_FORMAT_MACROS
 # endif
 # include <inttypes.h>
-#else
+#endif
+#ifndef HAVE_INT_FAST64_T
 # ifdef HAVE_LONG_LONG
 #  define int_fast64_t long long
 #  define uint_fast64_t unsigned long long
-#  define PRIuFAST64 "llu"
 # else
 //well, they may not be 64 bits but at least it should still work.
 #  define int_fast64_t long
 #  define uint_fast64_t unsigned long
+# endif
+#endif
+#ifndef PRIuFAST64
+# ifdef HAVE_LONG_LONG
+#  define PRIuFAST64 "llu"
+# else
 #  define PRIuFAST64 "lu"
 # endif
 #endif
