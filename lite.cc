@@ -37,7 +37,7 @@ char *newstrcpy(char *&dest, const char *src){
 	return strcpy(dest,src);
 }
 
-int curfd=-1;
+int maxretry=20;
 c_prot_nntp nntp;
 
 void showhelp(void){
@@ -72,7 +72,7 @@ void dofile(const char *arg){
 	char *outfile=NULL;
 	char *host=NULL, *user=NULL, *pass=NULL;
 	char *cp;
-	int tempi,i,partdone,retry,maxretry=20;
+	int tempi,i,partdone,retry;
 	long flagpos,temppos;
 	ulong anum,lines,bytes;
 #define FCHK(a) {if (a) {printf(__FILE__":%i ",__LINE__); goto dofile_ferror;}}
@@ -169,9 +169,11 @@ dofile_done:
 }
 
 int main (int argc, char ** argv){
-	char *timeout_str=getenv("NGETLITE_TIMEOUT");
-	if (timeout_str)
-		sock_timeout=atoi(timeout_str);
+	char *env_str=getenv("NGETLITE_TIMEOUT");
+	if (env_str)
+		sock_timeout=atoi(env_str);
+	if ((env_str=getenv("NGETLITE_TRIES")))
+		maxretry=atoi(env_str);
 	
 	try {
 		sockstuff_init();
