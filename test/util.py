@@ -34,6 +34,14 @@ def vsystem(cmd):
 	
 class TestNGet:
 	def __init__(self, nget, servers, priorities=None, options=None, hostoptions=None):
+		self.exe = nget
+		self.rcdir = os.path.join(os.environ.get('TMPDIR') or '/tmp', 'nget_test_'+hex(random.randrange(0,sys.maxint)))
+		os.mkdir(self.rcdir)
+		self.tmpdir = os.path.join(self.rcdir, 'tmp')
+		os.mkdir(self.tmpdir)
+		self.writerc(servers, priorities, options, hostoptions)
+
+	def writerc(self, servers, priorities=None, options=None, hostoptions=None):
 		defaultoptions = {
 #			'tries': 1,
 			'tries': 2,
@@ -43,11 +51,6 @@ class TestNGet:
 #			'debug': 2,
 #			'fullxover': 1
 		}
-		self.exe = nget
-		self.rcdir = os.path.join(os.environ.get('TMPDIR') or '/tmp', 'nget_test_'+hex(random.randrange(0,sys.maxint)))
-		os.mkdir(self.rcdir)
-		self.tmpdir = os.path.join(self.rcdir, 'tmp')
-		os.mkdir(self.tmpdir)
 
 		rc = open(os.path.join(self.rcdir, '_ngetrc'), 'w')
 		if options:

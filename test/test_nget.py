@@ -570,7 +570,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.verifyoutput({'par01':['02.dat','a b.par','a b.p02','a b.p03']})
 		
 	def test_autoparhandling_incomplete_optimistic(self):
-		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'autopar_optimistic':1})
+		self.nget.writerc(self.servers.servers, options={'autopar_optimistic':1})
 		self.addarticle_toserver('par01', 'input', 'dat2', self.servers.servers[0])
 		self.addarticle_toserver('par01', 'input', 'par', self.servers.servers[0])
 		self.addarticle_toserver('par01', 'input', 'par2', self.servers.servers[0])
@@ -786,7 +786,7 @@ class RetrieveTest_base(DecodeTest_base):
 		self.verifyoutput({'par2-01':['c d 02.dat','c d.par2','c d.vol01+02.par2','c d.vol03+04.par2']})
 		
 	def test_autopar2handling_incomplete_optimistic(self):
-		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'autopar_optimistic':1})
+		self.nget.writerc(self.servers.servers, options={'autopar_optimistic':1})
 		self.addarticle_toserver('par2-01', 'input', 'dat2', self.servers.servers[0])
 		self.addarticle_toserver('par2-01', 'input', 'par', self.servers.servers[0])
 		self.addarticle_toserver('par2-01', 'input', 'par2', self.servers.servers[0])
