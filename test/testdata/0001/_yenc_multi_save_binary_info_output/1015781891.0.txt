@@ -1,0 +1,10 @@
+Path: unknown!not-for-mail
+From: donut@boo (Matthew Mueller)
+Newsgroups: test
+Subject: - testfile.txt - (001/002)
+Date: Sun, 10 Mar 2002 17:38:11 +0000 (UTC)
+Organization: A poorly-installed InterNetNews site
+Lines: 8
+Message-ID: <a6g5m3$2s9$1@boo>
+
+[yEnc testfile.txt]
