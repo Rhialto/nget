@@ -3,6 +3,7 @@ CXXFLAGS=@CXXFLAGS@ -Wall @UUINC@ @DEFS@
 
 CXX=@CXX@
 LIBS=@LIBS@
+LITELIBS=@LITELIBS@
 
 srcdir=@srcdir@
 
@@ -20,7 +21,7 @@ nget: $(OBJS) .depend
 
 LITEOBJS=lite.o litenntp.o log.o sockstuff.o strreps.o
 ngetlite: $(LITEOBJS) .depend 
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LITEOBJS) -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LITEOBJS) -o $@ $(LITELIBS)
 
 @NOUU@@UULIB@:
 @NOUU@	(cd @UUDIR@ && ./configure)

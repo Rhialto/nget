@@ -16,6 +16,14 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h getopt.h slist.h hash_map.h sstream regex.h term.h inttypes.h)
 
+dnl SunOS needs seperate libs for network stuff.
+AC_SEARCH_LIBS(socket, socket)
+AC_SEARCH_LIBS(gethostbyname, nsl)
+
+dnl All the libraries we check for after this point are not needed by ngetlite, so save its LIBS now.
+LITELIBS="$LIBS"
+AC_SUBST(LITELIBS)
+
 dnl Checks for libraries.
 MY_CHECK_TERMSTUFF
 
@@ -238,7 +246,8 @@ dnl Checks for library functions.
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
 dnl AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(mkdir mktime regcomp socket strerror atoul asprintf vasprintf vdprintf getservbyname_r gethostbyname_r localtime_r inet_aton getaddrinfo getnameinfo getopt_long flock setlinebuf)
+
+AC_CHECK_FUNCS(mkdir mktime regcomp strerror atoul asprintf vasprintf vdprintf getservbyname_r gethostbyname_r localtime_r inet_aton getaddrinfo getnameinfo getopt_long flock setlinebuf)
 
 MY_CHECK_OPTIMIZATION
 
