@@ -1,6 +1,6 @@
 /*
     cache.* - nntp header cache code
-    Copyright (C) 1999-2001  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -584,66 +584,75 @@ c_nntp_cache::~c_nntp_cache(){
 		string tmpfn;
 		tmpfn=file+".tmp";
 		if((f=dofileopen(tmpfn,"wb",group->usegz))){
-			auto_ptr<c_file> fcloser(f);
-			if (quiet<2){printf("saving cache: %lu parts, %i files..",totalnum,files.size());fflush(stdout);}
-			c_nntp_file::ptr nf;
-			t_references::iterator ri;
-			t_nntp_file_parts::iterator pi;
-			t_nntp_server_articles::iterator sai;
-			c_nntp_server_article *sa;
-			c_nntp_part *np;
 			ulong count=0,counta=0;
-			f->putf(CACHE_VERSION"\t%lu\n",totalnum);//START_MODE
-			//vv SERVERINFO_MODE
-			while (!server_info.empty()){
-				si=server_info.begin()->second;
-				assert(si);
-				f->putf("%lu\t%lu\t%lu\t%lu\n",si->serverid,si->high,si->low,si->num);//mode 4
-				server_info.erase(server_info.begin());
-				delete si;
-			}
-			f->putf(".\n");
-			//end SERVERINFO_MODE
-			//vv FILE_MODE
-			for(i = files.begin();i!=files.end();++i){
-				nf=(*i).second;
-				assert(!nf.isnull());
-				assert(!nf->parts.empty());
-				f->putf("%i\t%lu\t%lu\t%s\t%s\t%i\t%i\n",nf->req,nf->flags,nf->fileid,nf->subject.c_str(),nf->author.c_str(),nf->partoff,nf->tailoff);//FILE_MODE
-				for(ri = nf->references.begin();ri!=nf->references.end();++ri){
-					f->putf("%s\n",ri->c_str());//REFERENCES_MODE
+			try {
+				auto_ptr<c_file> fcloser(f);
+				if (quiet<2){printf("saving cache: %lu parts, %i files..",totalnum,files.size());fflush(stdout);}
+				c_nntp_file::ptr nf;
+				t_references::iterator ri;
+				t_nntp_file_parts::iterator pi;
+				t_nntp_server_articles::iterator sai;
+				c_nntp_server_article *sa;
+				c_nntp_part *np;
+				f->putf(CACHE_VERSION"\t%lu\n",totalnum);//START_MODE
+				//vv SERVERINFO_MODE
+				while (!server_info.empty()){
+					si=server_info.begin()->second;
+					assert(si);
+					f->putf("%lu\t%lu\t%lu\t%lu\n",si->serverid,si->high,si->low,si->num);//mode 4
+					server_info.erase(server_info.begin());
+					delete si;
 				}
-				f->putf(".\n");//end REFERENCES_MODE
-				for(pi = nf->parts.begin();pi!=nf->parts.end();++pi){
-					np=(*pi).second;
-					assert(np);
-					f->putf("%i\t%lu\t%s\n",np->partnum,np->date,np->messageid.c_str());//PART_MODE
-					for (sai = np->articles.begin(); sai != np->articles.end(); ++sai){
-						sa=(*sai).second;
-						assert(sa);
-						f->putf("%lu\t%lu\t%lu\t%lu\n",sa->serverid,sa->articlenum,sa->bytes,sa->lines);//SERVER_ARTICLE_MODE
-						counta++;
+				f->putf(".\n");
+				//end SERVERINFO_MODE
+				//vv FILE_MODE
+				for(i = files.begin();i!=files.end();++i){
+					nf=(*i).second;
+					assert(!nf.isnull());
+					assert(!nf->parts.empty());
+					f->putf("%i\t%lu\t%lu\t%s\t%s\t%i\t%i\n",nf->req,nf->flags,nf->fileid,nf->subject.c_str(),nf->author.c_str(),nf->partoff,nf->tailoff);//FILE_MODE
+					for(ri = nf->references.begin();ri!=nf->references.end();++ri){
+						f->putf("%s\n",ri->c_str());//REFERENCES_MODE
 					}
-					f->putf(".\n");//end SERVER_ARTICLE_MODE
-					count++;
+					f->putf(".\n");//end REFERENCES_MODE
+					for(pi = nf->parts.begin();pi!=nf->parts.end();++pi){
+						np=(*pi).second;
+						assert(np);
+						f->putf("%i\t%lu\t%s\n",np->partnum,np->date,np->messageid.c_str());//PART_MODE
+						for (sai = np->articles.begin(); sai != np->articles.end(); ++sai){
+							sa=(*sai).second;
+							assert(sa);
+							f->putf("%lu\t%lu\t%lu\t%lu\n",sa->serverid,sa->articlenum,sa->bytes,sa->lines);//SERVER_ARTICLE_MODE
+							counta++;
+						}
+						f->putf(".\n");//end SERVER_ARTICLE_MODE
+						count++;
+					}
+					f->putf(".\n");//end PART_MODE
+					(*i).second=NULL; //free cache as we go along instead of at the end, so we don't swap more with low-mem.
+					//nf->storef(f);
+					//delete nf;
+					//nf->dec_rcount();
 				}
-				f->putf(".\n");//end PART_MODE
-				(*i).second=NULL; //free cache as we go along instead of at the end, so we don't swap more with low-mem.
-				//nf->storef(f);
-				//delete nf;
-				//nf->dec_rcount();
+				f->close();
+			}catch(FileEx &e){
+				printCaughtEx(e);
+				if (unlink(tmpfn.c_str()))
+					perror("unlink:");
+				fatal_exit();
 			}
-			f->close();
 			if (quiet<2) printf(" done. (%lu sa)\n",counta);
 			if (count!=totalnum){
 				printf("warning: wrote %lu parts from cache, expecting %lu\n",count,totalnum);
 			}
 			if (rename(tmpfn.c_str(), file.c_str())){
 				printf("error renaming %s > %s: %s(%i)\n",tmpfn.c_str(),file.c_str(),strerror(errno),errno);
+				fatal_exit();
 			}
 			return;
 		}else{
 			printf("error opening %s: %s(%i)\n",tmpfn.c_str(),strerror(errno),errno);
+			fatal_exit();
 		}
 	}
 
@@ -732,7 +741,8 @@ int c_mid_info::load(string path,bool merge,bool lock){
 	return 0;
 }
 c_mid_info::~c_mid_info(){
-	save();
+	if (save())
+		fatal_exit();
 	clear();
 }
 int c_mid_info::save(void){
@@ -752,25 +762,34 @@ int c_mid_info::save(void){
 	int nums=0;
 	string tmpfn=file+".tmp";
 	if((f=dofileopen(tmpfn,"wb"))){
-		auto_ptr<c_file> fcloser(f);
-		if (debug){printf("saving mid_info: %i infos..",states.size());fflush(stdout);}
-		t_message_state_list::iterator sli;
-		c_message_state::ptr ms;
-		for (sli=states.begin(); sli!=states.end(); ++sli){
-			ms=(*sli).second;
-			if (ms->date_removed==TIME_T_DEAD)
-				continue;
-			f->putf("%s %li %li\n",ms->messageid.c_str(),ms->date_added,ms->date_removed);
-			nums++;
+		try {
+			auto_ptr<c_file> fcloser(f);
+			if (debug){printf("saving mid_info: %i infos..",states.size());fflush(stdout);}
+			t_message_state_list::iterator sli;
+			c_message_state::ptr ms;
+			for (sli=states.begin(); sli!=states.end(); ++sli){
+				ms=(*sli).second;
+				if (ms->date_removed==TIME_T_DEAD)
+					continue;
+				f->putf("%s %li %li\n",ms->messageid.c_str(),ms->date_added,ms->date_removed);
+				nums++;
+			}
+			if (debug) printf(" (%i) done.\n",nums);
+			f->close();
+		}catch(FileEx &e){
+			printCaughtEx(e);
+			if (unlink(tmpfn.c_str()))
+				perror("unlink:");
+			return -1;
 		}
-		if (debug) printf(" (%i) done.\n",nums);
-		f->close();
 		if (rename(tmpfn.c_str(), file.c_str())){
 			printf("error renaming %s > %s: %s(%i)\n",tmpfn.c_str(),file.c_str(),strerror(errno),errno);
 			return -1;
 		}
-	}else
+	}else {
+		printf("error opening %s: %s(%i)\n",tmpfn.c_str(),strerror(errno),errno);
 		return -1;
+	}
 	return 0;
 }
 

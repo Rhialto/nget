@@ -631,15 +631,16 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 			}
 			if (!f.open(fn,O_CREAT|O_WRONLY|O_TRUNC,PRIVMODE)){
 				list<string>::iterator curb;
-				for(curb = buf.begin();curb!=buf.end();++curb){
-					if (f.putf("%s\n",(*curb).c_str())<=0){
-						int e=errno;//save errno incase unlink call clobbers it.
-						if (errno==ENOSPC){//if the drive is full, then the temp file will be cutoff and useless, so delete it.
-							if (unlink(fn))
-								perror("unlink:");
-						}
-						throw ApplicationExFatal(Ex_INIT,"error writing %s: %s",fn,strerror(e));
+				try {
+					for(curb = buf.begin();curb!=buf.end();++curb){
+						f.putf("%s\n",(*curb).c_str());
 					}
+				}catch(FileEx &e){
+					if (errno==ENOSPC){//if the drive is full, then the temp file will be cutoff and useless, so delete it.
+						if (unlink(fn))
+							perror("unlink:");
+					}
+					throw ApplicationExFatal(Ex_INIT,"error writing %s: %s",fn,e.getExStr());
 				}
 				f.close();
 				set_retrieve_warn_status(attempted - sap.size());

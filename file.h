@@ -41,6 +41,8 @@
 #define FILEDEBUGRBUF(a)
 #endif
 
+DEFINE_EX_CLASSES(File, baseEx);
+	
 #include "buffy.h"
 
 class c_file;
@@ -97,8 +99,9 @@ class c_file {
 	int bgets(void){return rbuffer->bgets();}//buffered gets, should be faster than normal gets, definatly for tcp or gz. maybe not for stream.
 	unsigned int initrbuf(unsigned int s);
 //	int open(const char *name,const char * mode);
-	int flush(int local=0);
-	int close(void);
+	void flush(int local=0);
+	void close(void);
+	int close_noEx(void); //same as close, but never throws an exception
 
 	virtual int isopen(void)=0;
 };
@@ -129,7 +132,7 @@ class c_file_testpipe : public c_file {
 	int open(void);
 	int datasize(void){return data.size();}
 	c_file_testpipe(void){o=0;};
-	~c_file_testpipe(){close();};
+	~c_file_testpipe(){close_noEx();};
 };
 #endif
 
@@ -148,7 +151,7 @@ class c_file_fd : public c_file {
 	int open(const char *host,const char * mode);
 	int dup(int dfd);
 	c_file_fd(void){fd=-1;};
-	~c_file_fd(){close();};
+	~c_file_fd(){close_noEx();};
 };
 #ifdef USE_FILE_STREAM
 class c_file_stream : public c_file {
@@ -164,7 +167,7 @@ class c_file_stream : public c_file {
 	virtual int isopen(void);
 	int open(const char *name,const char * mode);
 	c_file_stream(void){fs=NULL;};
-	~c_file_stream(){close();};
+	~c_file_stream(){close_noEx();};
 };
 #endif
 class c_file_tcp : public c_file {
@@ -180,7 +183,7 @@ class c_file_tcp : public c_file {
 	virtual int isopen(void);
 	int open(const char *name,const char * port);
 	c_file_tcp(void){sock=-1;};
-	~c_file_tcp(){close();};
+	~c_file_tcp(){close_noEx();};
 };
 
 
@@ -198,7 +201,7 @@ class c_file_gz : public c_file {
 	virtual int isopen(void);
 	int open(const char *host,const char * mode);
 	c_file_gz(void){gzh=NULL;};
-	~c_file_gz(){close();};
+	~c_file_gz(){close_noEx();};
 };
 //class c_file_optgz : public c_file_gz, c_file_stream {
 //  private:

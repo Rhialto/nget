@@ -52,6 +52,11 @@ extern "C" {
 
 static int errorflags=0, warnflags=0, okflags=0;
 
+void fatal_exit(void) {
+	set_fatal_error_status();
+	exit(errorflags);
+}
+
 #define SET_x_x_STATUS(type, low, up, bit) static const int type ## _ ## up = bit; \
 static int low ## _ ## type;\
 void set_ ## type ## _ ## low ## _status(int incr=1){\
@@ -296,7 +301,15 @@ c_prot_nntp nntp;
 
 static void term_handler(int s){
 	printf("\nterm_handler: signal %i, shutting down.\n",s);
-	nntp.cleanup();
+	try {
+		nntp.cleanup();
+	}catch(baseEx &e){
+		printCaughtEx(e);
+	}catch(exception &e){
+		printf("term_handler: caught std exception %s\n",e.what());
+	}catch(...){
+		printf("term_handler: caught unknown exception\n");
+	}
 	exit(errorflags);
 }
 

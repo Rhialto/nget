@@ -1,6 +1,6 @@
 /*
     file.* - file io classes
-    Copyright (C) 1999-2001  Matthew Mueller <donut@azstarnet.com>
+    Copyright (C) 1999-2002  Matthew Mueller <donut@azstarnet.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "sockstuff.h"
 #include "strreps.h"
 
@@ -80,7 +81,9 @@ ssize_t c_file::putf(const char *data,...){
 	//	}
 	//	return len;
 	i=dowrite(fpbuf,l);
+	int e=errno;
 	free(fpbuf);
+	if (i != l) throw FileExFatal(Ex_INIT,"putf %i!=%i (%s)", i, l, strerror(e));
 	return i;
 }
 
@@ -88,21 +91,30 @@ ssize_t c_file::putf(const char *data,...){
 //	close();
 //	return doopen(name,mode);
 //}
-int c_file::flush(int local=0){
+void c_file::flush(int local=0){
 //	int i=0;
 //###########3 dowrite(buffers..)
-	if (!local)
-		return doflush();
-	return 0;
+	if (!local) {
+		int r=doflush();
+		if (r != 0) throw FileExFatal(Ex_INIT,"flush %i (%s)", r, strerror(errno));
+	}
 }
-int c_file::close(void){
+void c_file::close(void){
 	if (isopen()){
 		flush(1);
-		return doclose();
+		if (doclose() != 0)
+			throw FileExFatal(Ex_INIT,"close (%s)", strerror(errno));
 	}
 //	resetrbuf();rbufstate=0;
 	if (rbuffer)rbuffer->clearbuf();
-	return 0;
+}
+int c_file::close_noEx(void){
+	try {
+		close();
+		return 0;
+	} catch (FileEx &e) {
+		return -1;
+	}
 }
 unsigned int c_file::initrbuf(unsigned int s){
 	if (rbuffer)
