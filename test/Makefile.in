@@ -13,11 +13,8 @@ NGETLITE=../ngetlite$(EXEEXT)
 
 all: TestRunner
 
-$(NGET):
-	$(MAKE) -C .. $(NGET)
-
-$(NGETLITE):
-	$(MAKE) -C .. $(NGETLITE)
+../%:
+	$(MAKE) -C .. $(subst ../,,$@)
 
 test: all $(NGET) $(NGETLITE)
 	./test_nget.py
