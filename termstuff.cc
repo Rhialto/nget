@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef HAVE_TERM_H
+#ifdef HAVE_WORKING_TERMSTUFF
 #include <term.h>
 #endif
 
@@ -38,7 +38,7 @@ void generic_clr_bol(void) {
 
 voidfunc *clr_bol_func = generic_clr_bol;
 
-#ifdef HAVE_TERM_H
+#ifdef HAVE_WORKING_TERMSTUFF
 void tputs_clr_bol(void) {
 	if (tputs(clr_bol, 1, putchar)<0) {
 		generic_clr_bol();
@@ -48,7 +48,7 @@ void tputs_clr_bol(void) {
 #endif
 
 void init_term_stuff(void) {
-#ifdef HAVE_TERM_H
+#ifdef HAVE_WORKING_TERMSTUFF
 	char tbuf[1024];
 	char *term = getenv("TERM");
 	if (!term){

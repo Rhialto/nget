@@ -107,3 +107,26 @@ AC_DEFUN(MY_DISABLE_OPT,[
  CXXFLAGS=`echo $CXXFLAGS | sed "s/-O[1-9] *//"`
  changequote([, ])dnl
 ])
+
+
+AC_DEFUN([MY_CHECK_TERMSTUFF],
+[AC_CACHE_CHECK([for working term library], [my_cv_working_termstuff],
+[ac_func_search_save_LIBS=$LIBS
+my_includes=["#include <term.h>
+#include <stdio.h>"]
+my_func=["tputs(clr_bol, 1, putchar);"]
+my_cv_working_termstuff=no
+AC_TRY_LINK($my_includes, $my_func, [my_cv_working_termstuff="none required"])
+if test "$my_cv_working_termstuff" = no; then
+  for ac_lib in termcap curses ncurses; do
+    LIBS="-l$ac_lib $ac_func_search_save_LIBS"
+    AC_TRY_LINK($my_includes, $my_func,
+                     [my_cv_working_termstuff="-l$ac_lib"
+break])
+  done
+fi
+LIBS=$ac_func_search_save_LIBS])
+AS_IF([test "$my_cv_working_termstuff" != no],
+  [test "$my_cv_working_termstuff" = "none required" || LIBS="$my_cv_working_termstuff $LIBS"
+  AC_DEFINE(HAVE_WORKING_TERMSTUFF)])dnl
+])

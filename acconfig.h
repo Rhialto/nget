@@ -34,6 +34,9 @@
 /* Does popt want const argvs? */
 #undef POPT_CONST_ARGV
 
+/* Do we have a working term.h, tputs, and clr_bol? */
+#undef HAVE_WORKING_TERMSTUFF
+
 @BOTTOM@
 
 /* tests for some features that depend on other features */
