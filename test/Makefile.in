@@ -10,7 +10,7 @@ all: TestRunner
 test: all
 	./TestRunner
 
-OBJS=TestRunner.o ../file.o ../sockstuff.o ../nrange.o ../log.o ../dupe_file.o ../myregex.o
+OBJS=TestRunner.o ../file.o ../sockstuff.o ../nrange.o ../log.o ../dupe_file.o ../myregex.o ../strtoker.o
 TestRunner: .depend $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LIBS) `cppunit-config --libs`
 
