@@ -449,9 +449,9 @@ class FileArticle:
 		a.append('')
 		for l in fobj.xreadlines():
 			if l[0]=='.':
-				a.append('.'+l.rstrip())
+				a.append('.'+l.rstrip("\r\n"))
 			else:
-				a.append(l.rstrip())
+				a.append(l.rstrip("\r\n"))
 		self.text = '\r\n'.join(a)
 		self.lines = len(a) - 1 - len(msg.headers)
 		self.bytes = len(self.text)

@@ -1,0 +1,24 @@
+From: foo <baar@baaaz.here>
+Newsgroups: test
+Subject: Re: Can anyone make uulib not detect this post as uudata? (1/1)
+Date: 3 Jan 2003 04:04:58 GMT
+Lines: 14
+Message-ID: <toheunthonetuhontehunotheuntoheuntoh@123.456.789.012>
+References: <hoeduttehuntehunethuntehu@foobaaar.com>
+NNTP-Posting-Date: 3 Jan 2003 04:04:58 GMT
+User-Agent:  Xnews/5.04.25
+
+braz@bloorg.mo (braaaz) wrote
+<<snip>>
+
+Thanks for the post!  I had requested this a while ago.
+Sadly, I don't have any later episodes either.
+
+One suggestion: you used a very large file "Max Default 
+Lines Per Part" (of 7000 I suspect) in powerpost.  This 
+can hurt propagation.  On news.rcn.com, for instance,
+only 50% of your segments came through.  It seems that 
+a "Max Default Lines Per Part" of around 2000 (for yEnc 
+posts) is more likely to succeed.
+
+Everything came through fine on easynews in any event.

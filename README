@@ -27,7 +27,7 @@ Requirements:
      just hang trying to lock the file.)
 
 TestSuite Requirements:
-  Python >= 2.1       http://www.python.org/
+  Python >= 2.2       http://www.python.org/
   cppunit >= 1.8.0    http://cppunit.sourceforge.net/
   SUBTERFUGUE         http://subterfugue.org/
     (optional, currently only available for x86 linux >=2.4)

@@ -198,10 +198,10 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.servers.stop()
 		self.nget.clean_all()
 
-	def do_test(self, testnum, dirname):
+	def do_test(self, testnum, dirname, msg=None):
 		self.addarticles(testnum, dirname)
 
-		self.vfailIf(self.nget.run("-g test -r ."))
+		self.vfailIf(self.nget.run("-g test -r ."), msg)
 		
 		self.verifyoutput(testnum)
 	
@@ -217,8 +217,8 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		foo, testnum, testname = frame.f_code.co_name.split('_',2)
 		return testnum, testname
 	
-	def do_test_auto(self):
-		self.do_test(*self.get_auto_args())
+	def do_test_auto(self, **kw):
+		self.do_test(*self.get_auto_args(), **kw)
 
 	def do_test_auto_decodeerror(self):
 		self.do_test_decodeerror(*self.get_auto_args())
@@ -263,6 +263,8 @@ class DecodeTestCase(TestCase, DecodeTest_base):
 		self.verifyoutput("mbox01")
 	def test_mergesa01_input(self):
 		self.do_test_auto()
+	def test_textnotuu_input(self):
+		self.do_test_auto(msg="your uulib likes to misidentify text as uudata.  *** See http://nget.sf.net/patches/ ***")
 
 	def test_article_expiry(self):
 		article = self.addarticle_toserver('0001', 'uuencode_single', 'testfile.001', self.servers.servers[0])
