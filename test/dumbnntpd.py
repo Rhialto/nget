@@ -50,7 +50,7 @@ class NNTPRequestHandler(nntpd.NNTPRequestHandler):
 			f.write(l+'\n')
 
 def main():
-	servers = nntp.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",119), NNTPRequestHandler)])
+	servers = nntpd.NNTPD_Master([nntpd.NNTPTCPServer(("127.0.0.1",119), NNTPRequestHandler)])
 	servers.start()
 
 	print 'press enter to stop'
