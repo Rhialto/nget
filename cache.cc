@@ -803,11 +803,8 @@ void c_mid_info::load(string path,bool merge,bool lock){
 	int line=0;
 	//c_lockfile locker(path,WANT_SH_LOCK);
 	auto_ptr<c_lockfile> locker;
-	if (lock){
-		auto_ptr<c_lockfile> l(new c_lockfile(path,WANT_SH_LOCK));
-		locker=l;
-		//locker=new c_lockfile(path,WANT_SH_LOCK);//why can't we just do this?  sigh.
-	}
+	if (lock)
+		locker.reset(new c_lockfile(path,WANT_SH_LOCK));
 //	c_regex_r midre("^(.+) ([0-9]+) ([0-9]+)$");
 	char *t[3];
 	int i;
