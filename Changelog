@@ -2,6 +2,7 @@
   * Print info line about each file before beginning retrieval.
   * Fix slow exit with very large midinfo files.
   * Don't try to decode incomplete posts.
+  * In -T mode, only print x/y parts if the post is incomplete, otherwise just print x.
 
 2001-11-24 - v0.15.2:
   * Fix -df with filenames that begin or end in "non-word" chars since the \< and \> will not match because there is no word boundry in such a case. (reported by Bernhard Josef Rieder)

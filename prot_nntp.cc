@@ -700,7 +700,11 @@ void print_nntp_file_info(c_nntp_file::ptr f) {
 	char tconvbuf[TCONV_DEF_BUF_LEN];
 	c_nntp_part *p=(*f->parts.begin()).second;
 	tconv(tconvbuf,TCONV_DEF_BUF_LEN,&p->date);
-	printf("%i/%i\t%lil\t%s\t%s\t%s\t%s\n",f->have,f->req,f->lines(),tconvbuf,f->subject.c_str(),f->author.c_str(),p->messageid.c_str());
+	if (f->iscomplete())
+		printf("%i",f->have);
+	else
+		printf("%i/%i",f->have,f->req);
+	printf("\t%lil\t%s\t%s\t%s\t%s\n",f->lines(),tconvbuf,f->subject.c_str(),f->author.c_str(),p->messageid.c_str());
 }
 
 void c_prot_nntp::nntp_retrieve(const nget_options &options){
