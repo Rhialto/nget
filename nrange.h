@@ -60,6 +60,7 @@ class c_nrange{
 		void insert(ulong l,ulong h);
 		void remove(ulong n){remove(n,n);}
 		void remove(ulong l, ulong h);
+		void clip_to_max_total(ulong num);
 		void clear(void){
 			if (!rlist.empty()){
 				rlist.erase(rlist.begin(),rlist.end());

@@ -35,6 +35,7 @@
 #autopar=1
 #autopar_optimistic=0
 #bindaddr=
+#maxheaders=-1
 
 //hostname aliases
 {halias

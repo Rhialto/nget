@@ -130,6 +130,7 @@ void c_nget_config::setlist(const CfgSection *cfg,const CfgSection *hinfo,const 
 	cfg->get("initialpenalty",initialpenalty,1,INT_MAX);
 	cfg->get("penaltymultiplier",penaltymultiplier,1.0f,1e100f);
 	bindaddr = cfg->gets("bindaddr");
+	cfg->get("maxheaders",maxheaders,-1,INT_MAX);
 	//halias
 	assert(hinfo);
 	for (dli=hinfo->sections_begin();dli!=hinfo->sections_end();++dli){

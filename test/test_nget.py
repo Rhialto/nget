@@ -2311,11 +2311,19 @@ class XoverTest_base(DecodeTest_base):
 		self.vfailIf(self.nget.run(args))
 		self.vfailIf(self.fxnget.run(args))
 		self.vfailIf(self.fx2nget.run(args))
+	
+	def clean_tmp_all(self):
+		self.nget.clean_tmp()
+		self.fxnget.clean_tmp()
+		self.fx2nget.clean_tmp()
 
 	def verifyoutput_all(self, testnum):
-		self.verifyoutput(testnum)
-		self.verifyoutput(testnum, tmpdir=self.fxnget.tmpdir)
-		self.verifyoutput(testnum, tmpdir=self.fx2nget.tmpdir)
+		self.verifyoutput_each(testnum, testnum, testnum)
+	
+	def verifyoutput_each(self, *testnums):
+		self.verifyoutput(testnums[0])
+		self.verifyoutput(testnums[1], tmpdir=self.fxnget.tmpdir)
+		self.verifyoutput(testnums[2], tmpdir=self.fx2nget.tmpdir)
 		
 	def test_newarticle(self):
 		self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[0])
@@ -2418,6 +2426,88 @@ class XoverTest_base(DecodeTest_base):
 		self.vfailIf(self.nget.run("-N -G test -r ."))
 
 		self.verifyoutput('0002')
+	
+	def test_maxheaders(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=5)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=10)
+		self.nget.updaterc(options={'maxheaders':100000})
+		self.fxnget.updaterc(options={'maxheaders':100000})
+		self.fx2nget.updaterc(options={'maxheaders':100000})
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_all(['0002'])
+
+		self.clean_tmp_all()
+		self.run_all("-g test -F host0")
+		
+		self.nget.updaterc(options={'maxheaders':10})
+		self.fxnget.updaterc(options={'maxheaders':10})
+		self.fx2nget.updaterc(options={'maxheaders':10})
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_all(['0002'])
+
+		self.clean_tmp_all()
+		self.run_all("-g test -F host0")
+		
+		self.nget.updaterc(options={'maxheaders':9})
+		self.fxnget.updaterc(options={'maxheaders':9})
+		self.fx2nget.updaterc(options={'maxheaders':9})
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_each([],[],['0002'])
+
+		self.clean_tmp_all()
+		self.run_all("-g test -F host0")
+		
+		self.nget.updaterc(options={'maxheaders':2})
+		self.fxnget.updaterc(options={'maxheaders':2})
+		self.fx2nget.updaterc(options={'maxheaders':2})
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_all([])
+
+	def test_maxheaders_update(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=2)
+		self.nget.updaterc(options={'maxheaders':3})
+		self.fxnget.updaterc(options={'maxheaders':3})
+		self.fx2nget.updaterc(options={'maxheaders':3})
+		self.run_all("-g test")
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=10)
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_each([],[],['0002'])
+	
+	def test_maxheaders_update2(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=2)
+		self.nget.updaterc(options={'maxheaders':2})
+		self.fxnget.updaterc(options={'maxheaders':2})
+		self.fx2nget.updaterc(options={'maxheaders':2})
+		self.run_all("-g test")
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=10)
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_all([])
+
+	def test_maxheaders_update3(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=2)
+		self.nget.updaterc(options={'maxheaders':10})
+		self.fxnget.updaterc(options={'maxheaders':10})
+		self.fx2nget.updaterc(options={'maxheaders':10})
+		self.run_all("-g test")
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=10)
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_all(['0002'])
+
+	def test_maxheaders_update4(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=2)
+		self.nget.updaterc(options={'maxheaders':100000})
+		self.fxnget.updaterc(options={'maxheaders':100000})
+		self.fx2nget.updaterc(options={'maxheaders':100000})
+		self.run_all("-g test")
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=10)
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_all(['0002'])
+
 
 class XoverTestCase(TestCase, XoverTest_base):
 	def setUp(self):

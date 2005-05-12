@@ -1,6 +1,7 @@
 2005-xx-xx v0.xx:
   * Add --bindaddr and corresponding config file options to specify address to connect from.
   * Allow -fomit-frame-pointer on gcc versions >= 3.3.1. (Frederick Bruckman, me)
+  * Add maxheaders .ngetrc option to limit the number of headers that will be retrieved/stored. (Frederick Bruckman, me)
 
 2004-12-20 v0.27.1:
   * Fix error in configure script when printing exceptions not found message, due to unquoted string. (Reported by M.J. Soft)

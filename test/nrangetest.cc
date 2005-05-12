@@ -263,6 +263,262 @@ class nrangeTest : public CppUnit::TestFixture {
 		}
 };
 
+class nrangeClipTest : public CppUnit::TestFixture {
+	CPPUNIT_TEST_SUITE(nrangeClipTest);
+		CPPUNIT_TEST(testClipToMaxTotal0);
+		CPPUNIT_TEST(testClipToMaxTotal1);
+		CPPUNIT_TEST(testClipToMaxTotal2);
+		CPPUNIT_TEST(testClipToMaxTotal3);
+		CPPUNIT_TEST(testClipToMaxTotal4);
+		CPPUNIT_TEST(testClipToMaxTotal5);
+		CPPUNIT_TEST(testClipToMaxTotal6);
+		CPPUNIT_TEST(testClipToMaxTotal7);
+		CPPUNIT_TEST(testClipToMaxTotal8);
+	CPPUNIT_TEST_SUITE_END();
+	protected:
+		c_nrange *range;
+	public:
+		void setUp(void) {
+			range = new c_nrange();
+			range->insert(1,2);
+			range->insert(5);
+			range->insert(9,11);
+			range->insert(20);
+		}
+		void tearDown(void) {
+			delete range;
+		}
+		void testClipToMaxTotal0(void) {
+			range->clip_to_max_total(0);
+			CPPUNIT_ASSERT(range->empty());
+			CPPUNIT_ASSERT_EQUAL(0UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(1));
+			CPPUNIT_ASSERT(!range->check(11));
+			CPPUNIT_ASSERT(!range->check(19));
+			CPPUNIT_ASSERT(!range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal1(void) {
+			range->clip_to_max_total(1);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(1UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(11));
+			CPPUNIT_ASSERT(!range->check(19));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal2(void) {
+			range->clip_to_max_total(2);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(2UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(10));
+			CPPUNIT_ASSERT(range->check(11));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal3(void) {
+			range->clip_to_max_total(3);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(3UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(9));
+			CPPUNIT_ASSERT(range->check(10));
+			CPPUNIT_ASSERT(range->check(11));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal4(void) {
+			range->clip_to_max_total(4);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(4UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(5));
+			CPPUNIT_ASSERT(range->check(9));
+			CPPUNIT_ASSERT(range->check(10));
+			CPPUNIT_ASSERT(range->check(11));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal5(void) {
+			range->clip_to_max_total(5);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(5UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(2));
+			CPPUNIT_ASSERT(range->check(5));
+			CPPUNIT_ASSERT(range->check(9));
+			CPPUNIT_ASSERT(range->check(10));
+			CPPUNIT_ASSERT(range->check(11));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal6(void) {
+			range->clip_to_max_total(6);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(6UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(1));
+			CPPUNIT_ASSERT(range->check(2));
+			CPPUNIT_ASSERT(range->check(5));
+			CPPUNIT_ASSERT(range->check(9));
+			CPPUNIT_ASSERT(range->check(10));
+			CPPUNIT_ASSERT(range->check(11));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal7(void) {
+			range->clip_to_max_total(7);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(7UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(0));
+			CPPUNIT_ASSERT(range->check(1));
+			CPPUNIT_ASSERT(range->check(2));
+			CPPUNIT_ASSERT(range->check(5));
+			CPPUNIT_ASSERT(range->check(9));
+			CPPUNIT_ASSERT(range->check(10));
+			CPPUNIT_ASSERT(range->check(11));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal8(void) {
+			range->clip_to_max_total(8);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(7UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(0));
+			CPPUNIT_ASSERT(range->check(1));
+			CPPUNIT_ASSERT(range->check(2));
+			CPPUNIT_ASSERT(range->check(5));
+			CPPUNIT_ASSERT(range->check(9));
+			CPPUNIT_ASSERT(range->check(10));
+			CPPUNIT_ASSERT(range->check(11));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+};
+
+class nrangeClip2Test : public CppUnit::TestFixture {
+	CPPUNIT_TEST_SUITE(nrangeClip2Test);
+		CPPUNIT_TEST(testClipToMaxTotal0);
+		CPPUNIT_TEST(testClipToMaxTotal1);
+		CPPUNIT_TEST(testClipToMaxTotal2);
+		CPPUNIT_TEST(testClipToMaxTotal3);
+		CPPUNIT_TEST(testClipToMaxTotal4);
+		CPPUNIT_TEST(testClipToMaxTotal5);
+		CPPUNIT_TEST(testClipToMaxTotal6);
+		CPPUNIT_TEST(testClipToMaxTotal7);
+		CPPUNIT_TEST(testClipToMaxTotal8);
+	CPPUNIT_TEST_SUITE_END();
+	protected:
+		c_nrange *range;
+	public:
+		void setUp(void) {
+			range = new c_nrange();
+			range->insert(0,1); //test zero edge case
+			range->insert(5);
+			range->insert(9,11);
+			range->insert(20);
+		}
+		void tearDown(void) {
+			delete range;
+		}
+		void testClipToMaxTotal0(void) {
+			range->clip_to_max_total(0);
+			CPPUNIT_ASSERT(range->empty());
+			CPPUNIT_ASSERT_EQUAL(0UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(1));
+			CPPUNIT_ASSERT(!range->check(11));
+			CPPUNIT_ASSERT(!range->check(19));
+			CPPUNIT_ASSERT(!range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal1(void) {
+			range->clip_to_max_total(1);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(1UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(11));
+			CPPUNIT_ASSERT(!range->check(19));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal2(void) {
+			range->clip_to_max_total(2);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(2UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(10));
+			CPPUNIT_ASSERT(range->check(11));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal3(void) {
+			range->clip_to_max_total(3);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(3UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(9));
+			CPPUNIT_ASSERT(range->check(10));
+			CPPUNIT_ASSERT(range->check(11));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal4(void) {
+			range->clip_to_max_total(4);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(4UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(5));
+			CPPUNIT_ASSERT(range->check(9));
+			CPPUNIT_ASSERT(range->check(10));
+			CPPUNIT_ASSERT(range->check(11));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal5(void) {
+			range->clip_to_max_total(5);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(5UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(1));
+			CPPUNIT_ASSERT(range->check(5));
+			CPPUNIT_ASSERT(range->check(9));
+			CPPUNIT_ASSERT(range->check(10));
+			CPPUNIT_ASSERT(range->check(11));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal6(void) {
+			range->clip_to_max_total(6);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(6UL, range->get_total());
+			CPPUNIT_ASSERT(!range->check(0));
+			CPPUNIT_ASSERT(range->check(1));
+			CPPUNIT_ASSERT(range->check(5));
+			CPPUNIT_ASSERT(range->check(9));
+			CPPUNIT_ASSERT(range->check(10));
+			CPPUNIT_ASSERT(range->check(11));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal7(void) {
+			range->clip_to_max_total(7);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(7UL, range->get_total());
+			CPPUNIT_ASSERT(range->check(0));
+			CPPUNIT_ASSERT(range->check(1));
+			CPPUNIT_ASSERT(range->check(5));
+			CPPUNIT_ASSERT(range->check(9));
+			CPPUNIT_ASSERT(range->check(10));
+			CPPUNIT_ASSERT(range->check(11));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+		void testClipToMaxTotal8(void) {
+			range->clip_to_max_total(8);
+			CPPUNIT_ASSERT(!range->empty());
+			CPPUNIT_ASSERT_EQUAL(7UL, range->get_total());
+			CPPUNIT_ASSERT(range->check(0));
+			CPPUNIT_ASSERT(range->check(1));
+			CPPUNIT_ASSERT(range->check(5));
+			CPPUNIT_ASSERT(range->check(9));
+			CPPUNIT_ASSERT(range->check(10));
+			CPPUNIT_ASSERT(range->check(11));
+			CPPUNIT_ASSERT(range->check(20));
+			CPPUNIT_ASSERT(!range->check(21));
+		}
+};
+
 class nrangeEqTest : public CppUnit::TestFixture {
 	CPPUNIT_TEST_SUITE(nrangeEqTest);
 		CPPUNIT_TEST(testEmpty);
@@ -304,5 +560,7 @@ class nrangeEqTest : public CppUnit::TestFixture {
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( nrangeTest );
+CPPUNIT_TEST_SUITE_REGISTRATION( nrangeClipTest );
+CPPUNIT_TEST_SUITE_REGISTRATION( nrangeClip2Test );
 CPPUNIT_TEST_SUITE_REGISTRATION( nrangeEqTest );
 

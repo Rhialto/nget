@@ -576,10 +576,13 @@ void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, bool getheaders, 
 
 		c_nntp_server_info* servinfo=gcache->getserverinfo(connection->server->serverid);
 		assert(servinfo);
-		//shouldn't do fullxover2 on first update of group or if cached headers are ALL older than available headers
-		if (servinfo->high!=0 && servinfo->high>=low && fullxover==2){
+		//shouldn't do fullxover2 on first update of group or if cached headers are ALL older than available headers (unless we are limiting on maxheaders, and there are more than we want)
+		if (fullxover==2 && ((servinfo->high!=0 && servinfo->high>=low) || (nconfig.maxheaders!=-1 && (high-low+1)>(ulong)nconfig.maxheaders))){
 			c_nrange existing;
 			dolistgroup(existing, low, high, num);
+			if (nconfig.maxheaders!=-1) {
+				existing.clip_to_max_total(nconfig.maxheaders);
+			}
 
 			c_nrange nonexistant;
 			nonexistant.invert(existing);
@@ -591,6 +594,10 @@ void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, bool getheaders, 
 
 			doxover(group, &r);	
 		}else{
+			if (nconfig.maxheaders!=-1 && (high>=(ulong)nconfig.maxheaders && low<(high - nconfig.maxheaders + 1))){
+				low = high - nconfig.maxheaders + 1;
+				//num = min(num, nconfig.maxheaders); //unnecessary, num isn't used after this
+			}
 			if (low>servinfo->low)
 				gcache->flushlow(servinfo,low,midinfo);
 			if (fullxover){

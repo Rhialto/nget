@@ -130,6 +130,7 @@ class c_nget_config {
 		float penaltymultiplier;
 		bool fatal_user_errors;
 		bool autopar_optimistic;
+		int maxheaders;
 		string bindaddr;
 
 		void check_penalized(const c_server::ptr &s) const {
@@ -181,6 +182,7 @@ class c_nget_config {
 			penaltymultiplier=2.0;
 			fatal_user_errors=false;
 			autopar_optimistic=false;
+			maxheaders=-1;
 		}
 		~c_nget_config(){
 			delete trustsizes;

@@ -135,6 +135,22 @@ void c_nrange::remove(ulong l, ulong h){
 	if (debug)printf("%i(%lu tot:%lu part:%lu (%lu->%lu))\n",tmp,ssize-(ulong)rlist.size(),rtot,rpart,ssize,(ulong)rlist.size());
 }
 
+void c_nrange::clip_to_max_total(ulong num) {
+	ulong tot=0;
+	const t_rlist &const_rlist = rlist;
+	for (t_rlist::const_reverse_iterator i=const_rlist.rbegin(); i!=const_rlist.rend(); ++i) {
+		ulong c = i->first - i->second + 1;
+		tot += c;
+		if (tot >= num) {
+			ulong ofs = tot - num;
+			ulong newlow = i->second + ofs;
+			if (low()!=newlow)
+				remove(low(), newlow-1);
+			return;
+		}
+	}
+}
+
 void c_nrange::invert(const c_nrange &r){
 	if (r.empty()) {
 		insert(varmin,varmax);

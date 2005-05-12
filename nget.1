@@ -329,6 +329,10 @@ Default for the \-\-text option (possible values are ignore,files,mbox[:filename
 Default for the \-\-save\-binary\-info option.
 .IP "cachedir (string)"
 Specifies a different location to store cache files.  Could be used to share a single cache dir between a trusted group of users, to reduce HD/bandwidth usage, while still allowing each user to have their own config/midinfo files.)
+.IP "maxheaders (int, default=-1)"
+The maximum number of article headers per group, per server, that will be fetched and retained in the cache.
+The default of \-1 means "no limit".
+Note that this unless you use fullxover=2, this is only an approximation, since servers may leave holes in their article number assignments.
 .SS "Host Configuration"
 Host configuration is done in the halias section, with a subsection for each
 host containing its options:
