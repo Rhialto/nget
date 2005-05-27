@@ -29,6 +29,9 @@
 #include "file.h"
 #include "log.h"
 
+/* The Connection class encapsulates the socket and other information about a
+ * connection to an nntp server.
+ */
 class Connection {
 	protected:
 		time_t lastuse;
@@ -76,6 +79,11 @@ class Connection {
 
 typedef map<c_server::ptr, Connection *> t_connection_map;
 
+/* The SockPool class holds a pool of connections to various servers, keeping
+ * them open for reuse later without having to reconnect.  It disconnects them
+ * if they go unused too long, or a new connection is needed and there are too
+ * many currently open.
+ */
 class SockPool {
 	protected:
 		//t_connection_map used_connections;
@@ -103,6 +111,9 @@ class SockPool {
 };
 
 
+/* The ConnectionHolder class uses the RAII idiom to ensure that some code that
+ * uses a connection properly releases it when done.
+ */
 class ConnectionHolder {
 	protected:
 		SockPool * pool;
