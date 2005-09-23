@@ -2,6 +2,7 @@
   * Add --bindaddr and corresponding config file options to specify address to connect from.
   * Allow -fomit-frame-pointer on gcc versions >= 3.3.1. (Frederick Bruckman, me)
   * Add maxheaders .ngetrc option to limit the number of headers that will be retrieved/stored. (Frederick Bruckman, me)
+  * Reduce memory usage by using vectors rather than maps for some data structures that usually do not have many elements anyway. (Dieter Shirley)
 
 2004-12-20 v0.27.1:
   * Fix error in configure script when printing exceptions not found message, due to unquoted string. (Reported by M.J. Soft)
