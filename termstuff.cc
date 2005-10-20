@@ -23,7 +23,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef HAVE_WORKING_TERMSTUFF
+#ifdef HAVE_NETBSD_TERMCAP
+#include <termcap.h>
+static struct tinfo *info;
+static char *clr_bol;
+static void my_putchar(char c, void *d) { putchar((int)c); }
+#elif defined(HAVE_WORKING_TERMSTUFF)
 #include <term.h>
 #endif
 
@@ -32,15 +37,20 @@ typedef void voidfunc(void);
 //Fake clr_bol function incase we can't use termcap.  Assumes that we will be
 //writing another line of near the same length after clearing, thus we don't
 //really need to clear the whole line, only the end of it.
-void generic_clr_bol(void) {
+static void generic_clr_bol(void) {
 	printf("\b\b\b\b    ");
 }
 
-voidfunc *clr_bol_func = generic_clr_bol;
+static voidfunc *clr_bol_func = generic_clr_bol;
 
-#ifdef HAVE_WORKING_TERMSTUFF
-void tputs_clr_bol(void) {
-	if (tputs(clr_bol, 1, putchar)<0) {
+#if defined(HAVE_WORKING_TERMSTUFF) || defined(HAVE_NETBSD_TERMCAP)
+static void tputs_clr_bol(void) {
+# ifdef HAVE_NETBSD_TERMCAP
+	if (t_puts(info, clr_bol, 1, my_putchar, NULL)<0)
+# else
+	if (tputs(clr_bol, 1, putchar)<0)
+# endif 
+	{
 		generic_clr_bol();
 		PDEBUG(DEBUG_MIN, "tputs_clr_bol: error");
 	}
@@ -48,18 +58,30 @@ void tputs_clr_bol(void) {
 #endif
 
 void init_term_stuff(void) {
-#ifdef HAVE_WORKING_TERMSTUFF
+#if defined(HAVE_WORKING_TERMSTUFF) || defined(HAVE_NETBSD_TERMCAP)
+# if defined(HAVE_WORKING_TERMSTUFF)
 	char tbuf[1024];
+# endif
 	char *term = getenv("TERM");
 	if (!term){
 		PDEBUG(DEBUG_MIN, "init_term_stuff: TERM env not set");
 		return;
 	}
-	if (tgetent(tbuf, term) != 1){
-		PDEBUG(DEBUG_MIN, "init_term_stuff: tgetent failure");
-//		err(2, "tgetent failure");
+# ifdef HAVE_NETBSD_TERMCAP
+	if (t_getent(&info, term) != 1) {
+		PDEBUG(DEBUG_MIN, "init_term_stuff: t_getent failure");
 		return;
 	}
+	if (!(clr_bol = t_agetstr(info, "ce"))) {
+		PDEBUG(DEBUG_MIN, "init_term_stuff: t_agetstr failure");
+		return;
+	}
+# else
+	if (tgetent(tbuf, term) != 1) {
+		PDEBUG(DEBUG_MIN, "init_term_stuff: tgetent failure");
+		return;
+	}
+# endif
 	clr_bol_func = tputs_clr_bol;
 	PDEBUG(DEBUG_MIN, "init_term_stuff: using tputs_clr_bol");
 #else

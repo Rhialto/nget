@@ -146,12 +146,22 @@ AS_IF([test "$my_cv_$1" != no],
   AC_DEFINE(HAVE_[]translit([$1], [a-z], [A-Z]),1,[Do we have $5?])])dnl
 ])
 
-AC_DEFUN([MY_CHECK_TERMSTUFF],[MY_SEARCH_LIBS(working_termstuff,
-[#include <term.h>
-#include <stdio.h>],
-[tputs(clr_bol, 1, putchar);],
-[termcap curses ncurses],
-[a working term.h, tputs, and clr_bol])
+AC_DEFUN([MY_CHECK_TERMSTUFF],[
+ MY_SEARCH_LIBS(netbsd_termcap,
+  [#include <termcap.h>],
+  [struct tinfo *info;
+   char *term="foo";
+   int res = t_getent(&info, term);],
+  [termcap curses ncurses],
+  [netbsd-style termcap])
+ if test "$my_cv_netbsd_termcap" = no ; then
+  MY_SEARCH_LIBS(working_termstuff,
+   [#include <term.h>
+    #include <stdio.h>],
+   [int res = tputs(clr_bol, 1, putchar);],
+   [termcap curses ncurses],
+   [a working term.h, tputs, and clr_bol])
+ fi
 ])
 
 AC_DEFUN([MY_CHECK_SOCKET],[MY_SEARCH_LIBS(socket,
