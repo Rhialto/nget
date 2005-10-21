@@ -1348,6 +1348,11 @@ class RetrieveTest_base(DecodeTest_base):
 		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','c d 05.dat','c d.par2'],
 			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','_c_d_par2_output/c d.par2']})
 		
+	def test_autopar2handling_splitfile(self):
+		self.addarticles('par2-01', 'splitfile_input')
+		self.vfailIf(self.nget_run('-g test -r par2.test'))
+		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','_splitfile_output/c d 05.dat.000','_splitfile_output/c d 05.dat.001','_splitfile_output/c d 05.dat.002','_splitfile_output/c d 05.dat.003','c d.par2']})
+		
 	#### TODO: further par2 tests
 	
 	def test_autoparhandling_multiparversions(self):
