@@ -2458,6 +2458,8 @@ class XoverTest_base(DecodeTest_base):
 		self.fxnget.updaterc(options={'maxheaders':9})
 		self.fx2nget.updaterc(options={'maxheaders':9})
 		self.run_all("-g test -D -r .")
+		self.verifyoutput_all([])
+		self.run_all("-g test -D -r .")
 		self.verifyoutput_each([],[],['0002'])
 
 		self.clean_tmp_all()
