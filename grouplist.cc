@@ -316,7 +316,7 @@ void c_nntp_grouplist::save(void){
 		return;
 	int nums=0, numsd=0, num=0, numd=0;
 	string tmpfn=filename+".tmp";
-	c_file *f=f=dofileopen(tmpfn,"wb");
+	c_file *f=dofileopen(tmpfn,"wb");
 	try {
 		auto_ptr<c_file> fcloser(f);
 		if (debug){printf("saving grouplist: %lu groups..",(ulong)groups.size());fflush(stdout);}
