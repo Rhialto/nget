@@ -131,11 +131,11 @@ void c_prot_nntp::doarticle(const char *article,ulong bytes,ulong lines,const ch
 	long glr;
 	char *lp;
 	char tempfilename[100];
-	sprintf(tempfilename,"%s.%i",tempfilename_base,
+	sprintf(tempfilename,"%s.%li",tempfilename_base,
 #ifdef HAVE_GETPID
-			getpid()
+			static_cast<long>(getpid())
 #else
-			rand()
+			static_cast<long>(rand())
 #endif
 			);
 	c_file_fd f(tempfilename,"w");
