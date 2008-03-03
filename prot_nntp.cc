@@ -214,10 +214,9 @@ void c_prot_nntp::nntp_dogroupdescriptions(const char *wildmat){
 			*desc = '\0';
 			desc++;
 			desc += strspn(desc, " \t");
-		}else
-			desc = "";
+		}
 
-		glist->addgroupdesc(connection->server->serverid, cbuf, desc);
+		glist->addgroupdesc(connection->server->serverid, cbuf, desc ? desc : "");
 		done++;
 	}
 	if(quiet<2){

@@ -7,6 +7,7 @@
   * Make autopar handle posts where someone has created par2 for a large file, then split the file into parts named <original name>.<part number>. (Steven Mueller, me)
   * Fix compile on OSX. (yacht)
   * Fix compile with GCC 4.2.
+  * Fix some compile warnings. (Frederick Bruckman, me)
 
 2004-12-20 v0.27.1:
   * Fix error in configure script when printing exceptions not found message, due to unquoted string. (Reported by M.J. Soft)
