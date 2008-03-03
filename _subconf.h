@@ -12,8 +12,6 @@
 #undef CHECKSUM
 #endif
 
-#include <assert.h>
-
 #define GETOPT_ARGV_T (char * const *)
 
 #ifdef POPT_CONST_ARGV
@@ -66,6 +64,8 @@ using namespace std;
 #  define PRIuFAST64 "lu"
 # endif
 #endif
+
+#include <assert.h>
 
 #ifndef HAVE_INT32_T
 # define int32_t int
