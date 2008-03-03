@@ -147,20 +147,29 @@ AS_IF([test "$my_cv_$1" != no],
 ])
 
 AC_DEFUN([MY_CHECK_TERMSTUFF],[
- MY_SEARCH_LIBS(netbsd_termcap,
+ MY_SEARCH_LIBS(netbsd_curses,
   [#include <termcap.h>],
   [struct tinfo *info;
    char *term="foo";
    int res = t_getent(&info, term);],
-  [termcap curses ncurses],
+  [termcap],
   [netbsd-style termcap])
- if test "$my_cv_netbsd_termcap" = no ; then
-  MY_SEARCH_LIBS(working_termstuff,
+ if test "$my_cv_netbsd_curses" = no ; then
+  MY_SEARCH_LIBS(new_curses,
    [#include <term.h>
     #include <stdio.h>],
    [int res = tputs(clr_bol, 1, putchar);],
    [termcap curses ncurses],
-   [a working term.h, tputs, and clr_bol])
+   [new curses terminfo])
+ fi
+ if test "$my_cv_netbsd_curses" = no -a "$my_cv_new_curses" = no ; then
+  MY_SEARCH_LIBS(old_curses,
+   [#include <curses.h>
+    #include <term.h>],
+   [setupterm((char *)0, 1, (int *)0);
+    int res = putp(clr_bol);],
+   [curses],
+   [sysv terminfo])
  fi
 ])
 

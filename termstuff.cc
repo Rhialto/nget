@@ -23,12 +23,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef HAVE_NETBSD_TERMCAP
+#ifdef HAVE_NETBSD_CURSES
 #include <termcap.h>
 static struct tinfo *info;
 static char *clr_bol;
 static void my_putchar(char c, void *d) { putchar((int)c); }
-#elif defined(HAVE_WORKING_TERMSTUFF)
+#elif HAVE_NEW_CURSES
+#include <term.h>
+#elif HAVE_OLD_CURSES
+#include <curses.h>
 #include <term.h>
 #endif
 
@@ -43,12 +46,14 @@ static void generic_clr_bol(void) {
 
 static voidfunc *clr_bol_func = generic_clr_bol;
 
-#if defined(HAVE_WORKING_TERMSTUFF) || defined(HAVE_NETBSD_TERMCAP)
+#if defined(HAVE_NETBSD_CURSES) || defined(HAVE_NEW_CURSES) || defined(HAVE_OLD_CURSES)
 static void tputs_clr_bol(void) {
-# ifdef HAVE_NETBSD_TERMCAP
+# ifdef HAVE_NETBSD_CURSES
 	if (t_puts(info, clr_bol, 1, my_putchar, NULL)<0)
-# else
+# elif HAVE_NEW_CURSES
 	if (tputs(clr_bol, 1, putchar)<0)
+# elif HAVE_OLD_CURSES
+	if (putp(clr_bol)<0)
 # endif 
 	{
 		generic_clr_bol();
@@ -58,16 +63,18 @@ static void tputs_clr_bol(void) {
 #endif
 
 void init_term_stuff(void) {
-#if defined(HAVE_WORKING_TERMSTUFF) || defined(HAVE_NETBSD_TERMCAP)
-# if defined(HAVE_WORKING_TERMSTUFF)
+#if defined(HAVE_NETBSD_CURSES) || defined(HAVE_NEW_CURSES) || defined(HAVE_OLD_CURSES)
+# ifdef HAVE_NEW_CURSES
 	char tbuf[1024];
+# elif HAVE_OLD_CURSES
+	int err;
 # endif
 	char *term = getenv("TERM");
 	if (!term){
 		PDEBUG(DEBUG_MIN, "init_term_stuff: TERM env not set");
 		return;
 	}
-# ifdef HAVE_NETBSD_TERMCAP
+# ifdef HAVE_NETBSD_CURSES
 	if (t_getent(&info, term) != 1) {
 		PDEBUG(DEBUG_MIN, "init_term_stuff: t_getent failure");
 		return;
@@ -76,9 +83,15 @@ void init_term_stuff(void) {
 		PDEBUG(DEBUG_MIN, "init_term_stuff: t_agetstr failure");
 		return;
 	}
-# else
+# elif HAVE_NEW_CURSES
 	if (tgetent(tbuf, term) != 1) {
 		PDEBUG(DEBUG_MIN, "init_term_stuff: tgetent failure");
+		return;
+	}
+# else /* HAVE_OLD_CURSES */
+       setupterm(term, 1, &err);
+       if (err != 1) {
+		PDEBUG(DEBUG_MIN, "init_term_stuff: setupterm failure");
 		return;
 	}
 # endif
