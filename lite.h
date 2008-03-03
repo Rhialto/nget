@@ -24,6 +24,8 @@
 #endif
 
 #include <stdlib.h>
+#include <string.h>
+
 char * newstrcpy(char *&dest, const char *src);
 inline void safefree(char *&p){
     if (p){free(p);p=NULL;}

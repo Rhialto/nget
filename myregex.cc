@@ -21,6 +21,7 @@
 #endif
 #include <stdlib.h>
 #include "myregex.h"
+#include <string.h>
 
 
 static string regex_match_word_beginning_safe_str;

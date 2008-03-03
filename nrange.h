@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <map>
 #include <stdexcept>
+#include <limits.h>
 
 
 typedef map<ulong, ulong> t_rlist;//we are going to use high as the key, and low as the value
