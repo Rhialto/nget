@@ -68,7 +68,7 @@ class auto_map : public auto_map_base<K, T, std::map<K, restricted_ptr<T> > > {
 			return super::insert(v);
 		}*/
 		std::pair<iterator, bool> insert_value(const K &k, T* p) { //we can't really use the normal insert funcs, but we don't want to just name it insert since it would be easy to confuse with all the normal map insert funcs
-			assert(find(k)==this->end());
+			assert(this->find(k)==this->end());
 			return super::insert(value_type(k, restricted_ptr<T>(p)));
 		}
 };
