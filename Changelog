@@ -11,6 +11,7 @@
   * Fix compile with GCC 4.3. (Arnaud Cornet)
   * Add support for SVR4 curses. (Frederick Bruckman)
   * Add generic fcntl locking, for Solaris 10 and others. (Frederick Bruckman)
+  * Remove old flock locking support.
 
 2004-12-20 v0.27.1:
   * Fix error in configure script when printing exceptions not found message, due to unquoted string. (Reported by M.J. Soft)

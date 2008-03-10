@@ -56,40 +56,6 @@ class c_lockfile{
 			}
 		}
 };
-#elif HAVE_FLOCK
-#include <unistd.h>
-#include <sys/file.h>
-class c_lockfile{
-	public:
-		int fd;
-
-		c_lockfile(string filename,int flag){
-			PDEBUG(FLOCK_DEBUG_LEV,"attempting to flock %s",filename.c_str());
-			fd=open(filename.c_str(),O_RDONLY);
-			if (fd<0){
-				if (errno==ENOENT){
-//					if (flag&WANT_SH_LOCK)
-					return;
-				} else
-					throw ApplicationExFatal(Ex_INIT,"c_lockfile: open %s (%s)",filename.c_str(),strerror(errno));
-			}
-			int ret=flock(fd,(flag&WANT_SH_LOCK)?LOCK_SH:LOCK_EX);
-			if (ret) {
-				int savederrno = errno;
-				close(fd); fd = -1;
-				throw ApplicationExFatal(Ex_INIT,"c_lockfile: flock %s: %i (%s)",filename.c_str(),ret,strerror(savederrno));
-			}
-			PDEBUG(FLOCK_DEBUG_LEV,"flocked %s (%i)",filename.c_str(),fd);
-//			sleep(10);
-		}
-		~c_lockfile(){
-			if (fd>=0) {
-				flock(fd,LOCK_UN);
-				close(fd);
-				PDEBUG(FLOCK_DEBUG_LEV,"unflocked %i",fd);
-			}
-		}
-};
 #elif HAVE_LOCKFILE
 #define WIN32_LEAN_AND_MEAN
 #undef NOMINMAX
