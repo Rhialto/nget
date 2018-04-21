@@ -208,7 +208,7 @@ for ac_func in $1
 do
 MY_CHECK_FUNC($ac_func,[$2],
 	      [AC_DEFINE_UNQUOTED(AS_TR_CPP([HAVE_$ac_func])) $3],
-	      [$4],[$5])dnl
+	      [$4],[$5])
 done
 ])
 
