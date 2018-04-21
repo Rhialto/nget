@@ -23,7 +23,9 @@
 #include "config.h"
 #endif
 
-#include <stdlib.h>
+#include <cstring>
+#include <cstdlib>
+
 char * newstrcpy(char *&dest, const char *src);
 inline void safefree(char *&p){
     if (p){free(p);p=NULL;}
