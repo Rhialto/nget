@@ -233,7 +233,10 @@ bool Par1Repairer::LoadRecoveryFile(string filename)
           ||
           (fileheader.datasize && (fileheader.dataoffset < sizeof(fileheader) || fileheader.dataoffset + fileheader.datasize > filesize))
           ||
-          (fileheader.datasize && (fileheader.filelistoffset <= fileheader.dataoffset && fileheader.dataoffset < fileheader.filelistoffset+fileheader.filelistsize || fileheader.dataoffset <= fileheader.filelistoffset && fileheader.filelistoffset < fileheader.dataoffset + fileheader.datasize)))
+          (fileheader.datasize &&
+	   ((fileheader.filelistoffset <= fileheader.dataoffset &&
+	     fileheader.dataoffset < fileheader.filelistoffset+fileheader.filelistsize) ||
+	    (fileheader.dataoffset <= fileheader.filelistoffset && fileheader.filelistoffset < fileheader.dataoffset + fileheader.datasize))))
         break;
 
       // Check the size of the file list
@@ -388,6 +391,7 @@ bool Par1Repairer::LoadRecoveryFile(string filename)
   // Remember that the file was processed
   bool success = diskfilemap.Insert(diskfile);
   assert(success);
+  success = success;
 
   return true;
 }
@@ -424,9 +428,9 @@ bool Par1Repairer::LoadOtherRecoveryFiles(string filename)
       // Check the the file extension is the correct form
       if ((tail[0] == 'P' || tail[0] == 'p') &&
           (
-            (tail[1] == 'A' || tail[1] == 'a') && (tail[2] == 'R' || tail[2] == 'r')
+            ((tail[1] == 'A' || tail[1] == 'a') && (tail[2] == 'R' || tail[2] == 'r'))
             ||
-            isdigit(tail[1]) && isdigit(tail[2])
+            (isdigit(tail[1]) && isdigit(tail[2]))
           ))
       {
         LoadRecoveryFile(filename);
@@ -455,9 +459,9 @@ bool Par1Repairer::LoadExtraRecoveryFiles(const list<CommandLine::ExtraFile> &ex
       // Check the the file extension is the correct form
       if ((tail[0] == 'P' || tail[0] == 'p') &&
           (
-            (tail[1] == 'A' || tail[1] == 'a') && (tail[2] == 'R' || tail[2] == 'r')
+            ((tail[1] == 'A' || tail[1] == 'a') && (tail[2] == 'R' || tail[2] == 'r'))
             ||
-            isdigit(tail[1]) && isdigit(tail[2])
+            (isdigit(tail[1]) && isdigit(tail[2]))
           ))
       {
         LoadRecoveryFile(filename);
@@ -505,6 +509,8 @@ bool Par1Repairer::VerifySourceFiles(void)
       // Remember that we have processed this file
       bool success = diskfilemap.Insert(diskfile);
       assert(success);
+      success = success;
+
 
       // Do the actual verification
       if (!VerifyDataFile(diskfile, sourcefile))
@@ -555,9 +561,9 @@ bool Par1Repairer::VerifyExtraFiles(const list<CommandLine::ExtraFile> &extrafil
       // Check the the file extension is the correct form
       if ((tail[0] == 'P' || tail[0] == 'p') &&
           (
-            (tail[1] == 'A' || tail[1] == 'a') && (tail[2] == 'R' || tail[2] == 'r')
+            ((tail[1] == 'A' || tail[1] == 'a') && (tail[2] == 'R' || tail[2] == 'r'))
             ||
-            isdigit(tail[1]) && isdigit(tail[2])
+            (isdigit(tail[1]) && isdigit(tail[2]))
           ))
       {
         skip = true;
@@ -583,6 +589,7 @@ bool Par1Repairer::VerifyExtraFiles(const list<CommandLine::ExtraFile> &extrafil
         // Remember that we have processed this file
         bool success = diskfilemap.Insert(diskfile);
         assert(success);
+        success = success;
 
         // Do the actual verification
         VerifyDataFile(diskfile, 0);
