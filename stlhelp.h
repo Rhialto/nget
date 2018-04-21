@@ -19,6 +19,8 @@
 #ifndef _STLHELP_H_
 #define _STLHELP_H_
 
+#include <cstring>
+
 struct eqstr
 {
 	bool operator()(const char* s1, const char* s2) const
