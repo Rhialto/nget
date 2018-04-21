@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 #include <sys/types.h>
+#include <climits>
 #include <map>
 #include <stdexcept>
 
