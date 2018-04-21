@@ -294,13 +294,13 @@ dnl
 dnl
 dnl Collect tags that will be substituted
 dnl
- pushdef([tags],[AC_PROTOTYPE_TAGS(builtin([shift],builtin([shift],builtin([shift],$@))))])
+ pushdef([tags],[AC_PROTOTYPE_TAGS(m4_shift(m4_shift(m4_shift($@))))])
 dnl
 dnl Wrap in a 1 time loop, when a combination is found break to stop the combinatory exploration
 dnl
  for i in 1
  do
-   AC_PROTOTYPE_LOOP(AC_PROTOTYPE_REVERSE($1, AC_PROTOTYPE_SUBST($2,tags),AC_PROTOTYPE_SUBST($3,tags),builtin([shift],builtin([shift],builtin([shift],$@)))))
+   AC_PROTOTYPE_LOOP(AC_PROTOTYPE_REVERSE($1, AC_PROTOTYPE_SUBST($2,tags),AC_PROTOTYPE_SUBST($3,tags),m4_shift(m4_shift(m4_shift($@)))))
    AC_MSG_ERROR($1 unable to find a working combination)
  done
  popdef([tags])
@@ -312,7 +312,7 @@ dnl AC_PROTOTYPE_REVERSE(list)
 dnl
 dnl Reverse the order of the <list>
 dnl
-AC_DEFUN([AC_PROTOTYPE_REVERSE],[ifelse($#,0,,$#,1,[[$1]],[AC_PROTOTYPE_REVERSE(builtin([shift],$@)),[$1]])])
+AC_DEFUN([AC_PROTOTYPE_REVERSE],[ifelse($#,0,,$#,1,[[$1]],[AC_PROTOTYPE_REVERSE(m4_shift($@)),[$1]])])
 
 dnl
 dnl AC_PROTOTYPE_SUBST(string, tag)
@@ -320,14 +320,14 @@ dnl
 dnl Substitute all occurence of <tag> in <string> with <tag>_VAL.
 dnl Assumes that tag_VAL is a macro containing the value associated to tag.
 dnl
-AC_DEFUN([AC_PROTOTYPE_SUBST],[ifelse($2,,[$1],[AC_PROTOTYPE_SUBST(patsubst([$1],[$2],[$2[]_VAL]),builtin([shift],builtin([shift],$@)))])])
+AC_DEFUN([AC_PROTOTYPE_SUBST],[ifelse($2,,[$1],[AC_PROTOTYPE_SUBST(patsubst([$1],[$2],[$2[]_VAL]),m4_shift(m4_shift($@)))])])
 
 dnl
 dnl AC_PROTOTYPE_TAGS([tag, values, [tag, values ...]])
 dnl
 dnl Generate a list of <tag> by skipping <values>.
 dnl
-AC_DEFUN([AC_PROTOTYPE_TAGS],[ifelse($1,,[],[$1, AC_PROTOTYPE_TAGS(builtin([shift],builtin([shift],$@)))])])
+AC_DEFUN([AC_PROTOTYPE_TAGS],[ifelse($1,,[],[$1, AC_PROTOTYPE_TAGS(m4_shift(m4_shift($@)))])])
 
 dnl
 dnl AC_PROTOTYPE_DEFINES(tags)
@@ -336,7 +336,7 @@ dnl Generate a AC_DEFINE(function_tag, tag_VAL) for each tag in <tags> list
 dnl Assumes that function is a macro containing the name of the function in upper case
 dnl and that tag_VAL is a macro containing the value associated to tag.
 dnl
-AC_DEFUN([AC_PROTOTYPE_DEFINES],[ifelse($1,,[],[AC_DEFINE(function[]_$1, $1_VAL, Type of function $1) AC_PROTOTYPE_DEFINES(builtin([shift],$@))])])
+AC_DEFUN([AC_PROTOTYPE_DEFINES],[ifelse($1,,[],[AC_DEFINE(function[]_$1, $1_VAL, Type of function $1) AC_PROTOTYPE_DEFINES(m4_shift($@))])])
 
 dnl
 dnl AC_PROTOTYPE_STATUS(tags)
@@ -345,7 +345,7 @@ dnl Generates a message suitable for argument to AC_MSG_* macros. For each tag
 dnl in the <tags> list the message tag => tag_VAL is generated.
 dnl Assumes that tag_VAL is a macro containing the value associated to tag.
 dnl
-AC_DEFUN([AC_PROTOTYPE_STATUS],[ifelse($1,,[],[$1 => $1_VAL AC_PROTOTYPE_STATUS(builtin([shift],$@))])])
+AC_DEFUN([AC_PROTOTYPE_STATUS],[ifelse($1,,[],[$1 => $1_VAL AC_PROTOTYPE_STATUS(m4_shift($@))])])
 
 dnl
 dnl AC_PROTOTYPE_EACH(tag, values)
@@ -359,7 +359,7 @@ AC_DEFUN([AC_PROTOTYPE_EACH],[
     pushdef([$1_VAL], $2)
     AC_PROTOTYPE_LOOP(rest)
     popdef([$1_VAL])
-    AC_PROTOTYPE_EACH($1, builtin([shift], builtin([shift], $@)))
+    AC_PROTOTYPE_EACH($1, m4_shift(m4_shift($@)))
   ])
 ])
 
@@ -372,9 +372,9 @@ dnl using AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[]). If it compiles
 dnl current value and exit with success.
 dnl
 AC_DEFUN([AC_PROTOTYPE_LOOP],[
- ifelse(builtin([eval], $# > 3), 1,
+ ifelse(m4_eval($# > 3), 1,
    [
-     pushdef([rest],[builtin([shift],builtin([shift],$@))])
+     pushdef([rest],[m4_shift(m4_shift($@))])
      AC_PROTOTYPE_EACH($2,$1)
      popdef([rest])
    ], [
