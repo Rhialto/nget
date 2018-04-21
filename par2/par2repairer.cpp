@@ -388,6 +388,7 @@ bool Par2Repairer::LoadPacketsFromFile(string filename)
     // Remember that the file was processed
     bool success = diskFileMap.Insert(diskfile);
     assert(success);
+    success = success;
   }
   else
   {
@@ -1049,6 +1050,7 @@ bool Par2Repairer::VerifySourceFiles(void)
       // Remember that we have processed this file
       bool success = diskFileMap.Insert(diskfile);
       assert(success);
+      success = success;
       // Do the actual verification
       if (!VerifyDataFile(diskfile, sourcefile))
         finalresult = false;
@@ -1153,6 +1155,7 @@ bool Par2Repairer::VerifyExtraFile(const string &filename) {
     // Remember that we have processed this file
     bool success = diskFileMap.Insert(diskfile);
     assert(success);
+    success = success;
 
     // Do the actual verification
     VerifyDataFile(diskfile, 0);
