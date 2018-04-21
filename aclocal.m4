@@ -387,7 +387,7 @@ dnl
      if test "$GXX" = "yes" ; then CPPFLAGS="$CPPFLAGS -Werror" ; fi
 dnl     ifelse(AC_LANG,CPLUSPLUS,if test "$GXX" = "yes" ; then CPPFLAGS="$CPPFLAGS -Werror" ; fi)
 dnl     ifelse(AC_LANG,C,if test "$GCC" = "yes" ; then CPPFLAGS="$CPPFLAGS -Werror" ; fi)
-     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[$2]], [[$1]])],[
+     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[$2]], [$1])],[
       CPPFLAGS="$ac_save_CPPFLAGS"
       AC_MSG_RESULT(ok)
       AC_PROTOTYPE_DEFINES(tags)
