@@ -20,24 +20,22 @@ fi
 AC_DEFUN(MY_CHECK_POPT_CONST,
 [AC_CACHE_CHECK([if popt wants const argvs],
   ac_cv_popt_const_argv,
-[AC_TRY_COMPILE([#include <popt.h>], [const char ** targv=NULL;poptContext c=poptGetContext(NULL,1,targv,NULL,0);],
-  ac_cv_popt_const_argv=yes, ac_cv_popt_const_argv=no)])
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <popt.h>]], [[const char ** targv=NULL;poptContext c=poptGetContext(NULL,1,targv,NULL,0);]])],[ac_cv_popt_const_argv=yes],[ac_cv_popt_const_argv=no])])
 if test $ac_cv_popt_const_argv = yes; then
   AC_DEFINE(POPT_CONST_ARGV,1,[Does popt want const argvs?])
 fi
 ])
 
 
-dnl AC_TRY_COMPILE(INCLUDES, FUNCTION-BODY,
-dnl             [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
+dnl AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[INCLUDES]], [[FUNCTION-BODY]])],[dnl             ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]],[])
 AC_DEFUN(MY_CHECK_EXCEPTIONS,
  [
   AC_MSG_CHECKING(for exception handling support)
   AC_CACHE_VAL(my_cv_exceptions,[
-   AC_TRY_COMPILE([#include <stdlib.h>], [try { throw 1; } catch (int i) {int z=i;}], my_cv_exceptions=yes)
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]], [[try { throw 1; } catch (int i) {int z=i;}]])],[my_cv_exceptions=yes],[])
    if test -z $my_cv_exceptions; then
      CXXFLAGS="$CXXFLAGS -fhandle-exceptions"
-     AC_TRY_COMPILE([#include <stdlib.h>], [try { throw 1; } catch (int i) {int z=i;}], my_cv_exceptions=yes, my_cv_exceptions=no)
+     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]], [[try { throw 1; } catch (int i) {int z=i;}]])],[my_cv_exceptions=yes],[my_cv_exceptions=no])
    fi
   ])
   AC_MSG_RESULT($my_cv_exceptions)
@@ -88,7 +86,7 @@ AC_DEFUN(MY_DISABLE_OPT,[
 ])
 
 AC_DEFUN([MY_TRY_COMPILE_HASH_MAP],[
-	AC_TRY_COMPILE([
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #ifdef HAVE_HASH_MAP
 #include <hash_map>
 #elif HAVE_EXT_HASH_MAP
@@ -98,13 +96,11 @@ AC_DEFUN([MY_TRY_COMPILE_HASH_MAP],[
 #endif
 using namespace std;
 $1
-	],      [
+	]], [[
 	hash_map<int, long> h;
 	hash_multimap<int, long> h2;
-	],
-	[$2],
-	[$3]
-	)
+	]])],[$2],[$3
+	])
 ])
 
 AC_DEFUN([MY_CHECK_HASH_MAP],[
@@ -131,13 +127,12 @@ AC_DEFUN([MY_SEARCH_LIBS],[
 AC_CACHE_CHECK([for $5], [my_cv_$1],
 [ac_func_search_save_LIBS=$LIBS
 my_cv_$1=no
-AC_TRY_LINK([$2], [$3], [my_cv_$1="none required"])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[$2]], [[$3]])],[my_cv_$1="none required"],[])
 if test "$my_cv_$1" = no; then
   for ac_lib in $4; do
     LIBS="-l$ac_lib $ac_func_search_save_LIBS"
-    AC_TRY_LINK([$2], [$3],
-                     [my_cv_$1="-l$ac_lib"
-break])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[$2]], [[$3]])],[my_cv_$1="-l$ac_lib"
+break],[])
   done
 fi
 LIBS=$ac_func_search_save_LIBS])
@@ -201,8 +196,7 @@ AS_VAR_POPDEF([ac_var])dnl
 # MY_CHECK_FUNCS(FUNCTION..., [ARGS], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND], [HEADERS])
 # ---------------------------------------------------------------------
 AC_DEFUN([MY_CHECK_FUNCS],
-[AC_FOREACH([AC_Func], [$1],
-  [AH_TEMPLATE(AS_TR_CPP(HAVE_[]AC_Func),
+[m4_foreach_w([AC_Func],[$1],[AH_TEMPLATE(AS_TR_CPP(HAVE_[]AC_Func),
 	       [Define to 1 if you have the `]AC_Func[' function.])])dnl
 for ac_func in $1
 do
@@ -220,7 +214,7 @@ dnl Try all the combinations of <TAG1>, <TAG2>... to successfully compile <code>
 dnl <TAG1>, <TAG2>, ... are substituted in <code> and <include> with values found in
 dnl <values1>, <values2>, ... respectively. <values1>, <values2>, ... contain a list of
 dnl possible values for each corresponding tag and all combinations are tested.
-dnl When AC_TRY_COMPILE(include, code) is successfull for a given substitution, the macro
+dnl When AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[include]], [[code]])],[],[]) is successfull for a given substitution, the macro
 dnl stops and defines the following macros: FUNCTION_TAG1, FUNCTION_TAG2, ... using AC_DEFINE()
 dnl with values set to the current values of <TAG1>, <TAG2>, ...
 dnl If no combination is successfull the configure script is aborted with a message.
@@ -374,7 +368,7 @@ dnl AC_PROTOTYPE_LOOP([tag, values, [tag, values ...]], code, include, function)
 dnl
 dnl If there is a tag/values pair, call AC_PROTOTYPE_EACH with it.
 dnl If there is no tag/values pair left, tries to compile the code and include
-dnl using AC_TRY_COMPILE. If it compiles, AC_DEFINE all the tags to their
+dnl using AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[]). If it compiles, AC_DEFINE all the tags to their
 dnl current value and exit with success.
 dnl
 AC_DEFUN([AC_PROTOTYPE_LOOP],[
@@ -393,12 +387,12 @@ dnl
      if test "$GXX" = "yes" ; then CPPFLAGS="$CPPFLAGS -Werror" ; fi
 dnl     ifelse(AC_LANG,CPLUSPLUS,if test "$GXX" = "yes" ; then CPPFLAGS="$CPPFLAGS -Werror" ; fi)
 dnl     ifelse(AC_LANG,C,if test "$GCC" = "yes" ; then CPPFLAGS="$CPPFLAGS -Werror" ; fi)
-     AC_TRY_COMPILE($2, $1, [
+     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[$2]], [[$1]])],[
       CPPFLAGS="$ac_save_CPPFLAGS"
       AC_MSG_RESULT(ok)
       AC_PROTOTYPE_DEFINES(tags)
       break;
-     ], [
+     ],[
       CPPFLAGS="$ac_save_CPPFLAGS"
       AC_MSG_RESULT(not ok)
      ])
@@ -453,13 +447,12 @@ AC_DEFUN([AC_FUNC_MKDIR],
 [AC_CHECK_FUNCS([mkdir _mkdir])
 AC_CACHE_CHECK([whether mkdir takes one argument],
                 [ac_cv_mkdir_takes_one_arg],
-[AC_TRY_COMPILE([
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/stat.h>
 #if HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-],[mkdir (".");],
-[ac_cv_mkdir_takes_one_arg=yes],[ac_cv_mkdir_takes_one_arg=no])])
+]], [[mkdir (".");]])],[ac_cv_mkdir_takes_one_arg=yes],[ac_cv_mkdir_takes_one_arg=no])])
 if test x"$ac_cv_mkdir_takes_one_arg" = xyes; then
   AC_DEFINE([MKDIR_TAKES_ONE_ARG],1,
             [Define if mkdir takes only one argument.])
@@ -479,7 +472,7 @@ dnl |  may prototype it in dir.h and dirent.h, for instance).
 dnl |
 dnl |Alexandre:
 dnl |  Would it be sufficient to check for these headers and #include
-dnl |  them in the AC_TRY_COMPILE block?  (and is AC_HEADER_DIRENT
+dnl |  them in the AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[]) block?  (and is AC_HEADER_DIRENT
 dnl |  suitable for this?)
 dnl |
 dnl |Thomas:
@@ -509,7 +502,7 @@ dnl
 AC_DEFUN([AC_donut_CHECK_PACKAGE_pre],
 [
 AC_ARG_WITH($1-prefix,
-[AC_HELP_STRING([--with-$1-prefix=DIR],[use $1 and look in DIR/{include,lib}/])],
+[AS_HELP_STRING([--with-$1-prefix=DIR],[use $1 and look in DIR/{include,lib}/])],
 if test "$withval" != no; then
 	with_$1=yes
 	if test "$withval" != yes; then
@@ -520,11 +513,11 @@ fi
 )
 
 AC_ARG_WITH($1-include,
-[AC_HELP_STRING([--with-$1-include=DIR],[specify exact include dir for $1 headers])],
+[AS_HELP_STRING([--with-$1-include=DIR],[specify exact include dir for $1 headers])],
 $1_include="$withval")
 
 AC_ARG_WITH($1-lib,
-[AC_HELP_STRING([--with-$1-lib=DIR],[specify exact library dir for $1 library])],
+[AS_HELP_STRING([--with-$1-lib=DIR],[specify exact library dir for $1 library])],
 $1_libdir="$withval")
 
 if test "${with_$1}" != no ; then
@@ -587,8 +580,8 @@ dnl package that defaults to enabled
 AC_DEFUN([AC_donut_CHECK_PACKAGE_DEF],
 [
 AC_ARG_WITH($1,
-AC_HELP_STRING([--without-$1], [disables $1 usage completely])
-AC_HELP_STRING([--with-$1=DIR], [look in DIR for $1]),
+AS_HELP_STRING([--without-$1],[disables $1 usage completely])
+AS_HELP_STRING([--with-$1=DIR],[look in DIR for $1]),
 with_$1=$withval
 ,
 with_$1=yes
@@ -601,7 +594,7 @@ dnl package that defaults to disabled
 AC_DEFUN([AC_donut_CHECK_PACKAGE],
 [
 AC_ARG_WITH($1,
-[AC_HELP_STRING([--with-$1(=DIR)], [use $1, optionally looking in DIR])],
+[AS_HELP_STRING([--with-$1(=DIR)],[use $1, optionally looking in DIR])],
 with_$1=$withval
 ,
 with_$1=no
@@ -625,8 +618,8 @@ dnl package that defaults to enabled
 AC_DEFUN([AC_donut_SEARCH_PACKAGE_DEF],
 [
 AC_ARG_WITH($1,
-AC_HELP_STRING([--without-$1], [disables $1 usage completely])
-AC_HELP_STRING([--with-$1=DIR], [look in DIR for $1]),
+AS_HELP_STRING([--without-$1],[disables $1 usage completely])
+AS_HELP_STRING([--with-$1=DIR],[look in DIR for $1]),
 with_$1=$withval
 ,
 with_$1=yes
@@ -639,7 +632,7 @@ dnl package that defaults to disabled
 AC_DEFUN([AC_donut_SEARCH_PACKAGE],
 [
 AC_ARG_WITH($1,
-[AC_HELP_STRING([--with-$1(=DIR)], [use $1, optionally looking in DIR])],
+[AS_HELP_STRING([--with-$1(=DIR)],[use $1, optionally looking in DIR])],
 with_$1=$withval
 ,
 with_$1=no
