@@ -152,6 +152,7 @@ void c_prot_nntp::doarticle(const char *article,ulong bytes,ulong lines,const ch
 		if (header && lp[0]==0){
 			header=0;
 			hlines=rlines;
+			hlines = hlines; // unused variable
 			rlines=0;
 		}
 		f.putf("%s\n",lp);
