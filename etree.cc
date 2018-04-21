@@ -82,6 +82,10 @@ template <template <class A, class B> class Op, class ClassType, class RetType>
 pred<ClassType> *new_comparison(RetType (ClassType::*memberf)(void), RetType v){
 	return new Comparison<Op, MemfuncGetter, RetType, ClassType>(memberf, v);
 }
+template <template <class A, class B> class Op, class ClassType, class RetType>
+pred<ClassType> *new_comparison(RetType (ClassType::*memberf)(void) const, RetType v){
+	return new Comparison<Op, MemfuncGetter, RetType, ClassType>(memberf, v);
+}
 template <class ClassType, class getterT, class T2>
 pred<ClassType> *comparison(const string &opstr, getterT get, T2 v) {
 	if      (opstr.compare("==")==0) return new_comparison<Op_eq,ClassType>(get, v);
@@ -113,6 +117,10 @@ pred<ClassType> *new_comparison_re(RetType (ClassType::*member), const char *pat
 }
 template <template <class A, class B> class Op, class ClassType, class RetType>
 pred<ClassType> *new_comparison_re(RetType (ClassType::*memberf)(void), const char *pattern, int flags){
+	return new Comparison_re<Op, MemfuncGetter, RetType, ClassType>(memberf, pattern, flags);
+}
+template <template <class A, class B> class Op, class ClassType, class RetType>
+pred<ClassType> *new_comparison_re(RetType (ClassType::*memberf)(void) const, const char *pattern, int flags){
 	return new Comparison_re<Op, MemfuncGetter, RetType, ClassType>(memberf, pattern, flags);
 }
 template <class ClassType, class getterT>

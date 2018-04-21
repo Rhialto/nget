@@ -35,7 +35,7 @@ class MemGetter {
 template <class RetType, class ClassType>
 class MemfuncGetter {
 	private:
-		typedef RetType (ClassType::*member_t)(void);
+		typedef RetType (ClassType::*member_t)(void) const;
 		member_t member;		
 	public:
 		typedef RetType T;
