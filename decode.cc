@@ -190,7 +190,7 @@ int Decoder::decode(const nget_options &options, const c_nntp_file_retr::ptr &fr
 			printf("invalid uulist item, uul->filename==NULL\n");
 			uustatus.derr++;
 			//continue; // if not using UUOPT_DESPERATE.
-			UURenameFile(uul,"noname");
+			UURenameFile(uul, const_cast<char *>("noname"));
 		}
 		if (!(uul->state & UUFILE_OK)){
 			printf("%s not ok\n",uul->filename);
