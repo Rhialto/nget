@@ -79,10 +79,6 @@ pred<ClassType> *new_comparison(RetType (ClassType::*member), RetType v){
 	return new Comparison<Op, MemGetter, RetType, ClassType>(member, v);
 }
 template <template <class A, class B> class Op, class ClassType, class RetType>
-pred<ClassType> *new_comparison(RetType (ClassType::*memberf)(void), RetType v){
-	return new Comparison<Op, MemfuncGetter, RetType, ClassType>(memberf, v);
-}
-template <template <class A, class B> class Op, class ClassType, class RetType>
 pred<ClassType> *new_comparison(RetType (ClassType::*memberf)(void) const, RetType v){
 	return new Comparison<Op, MemfuncGetter, RetType, ClassType>(memberf, v);
 }
@@ -114,10 +110,6 @@ class Comparison_re : public pred<ClassType> {
 template <template <class A, class B> class Op, class ClassType, class RetType>
 pred<ClassType> *new_comparison_re(RetType (ClassType::*member), const char *pattern, int flags){
 	return new Comparison_re<Op, MemGetter, RetType, ClassType>(member, pattern, flags);
-}
-template <template <class A, class B> class Op, class ClassType, class RetType>
-pred<ClassType> *new_comparison_re(RetType (ClassType::*memberf)(void), const char *pattern, int flags){
-	return new Comparison_re<Op, MemfuncGetter, RetType, ClassType>(memberf, pattern, flags);
 }
 template <template <class A, class B> class Op, class ClassType, class RetType>
 pred<ClassType> *new_comparison_re(RetType (ClassType::*memberf)(void) const, const char *pattern, int flags){
