@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_PREREQ(2.53)
-AC_INIT(nget,0.27.1)
+AC_PREREQ([2.69])
+AC_INIT([nget],[0.27.1])
 AC_CONFIG_SRCDIR(nget.cc)
 AC_CONFIG_HEADER(config.h)
 AH_TOP([#ifndef _NGET_CONFIG_H_
@@ -13,7 +13,7 @@ AH_BOTTOM([
 #endif /* _NGET_CONFIG_H_ */
 ])
 
-AC_LANG_CPLUSPLUS
+AC_LANG([C++])
 
 dnl Checks for programs.
 AC_PROG_CC
@@ -64,7 +64,7 @@ AC_donut_CHECK_PACKAGE_DEF(popt, poptGetContext, popt, popt.h, MY_CHECK_POPT_CON
 dnl check for uulib.  We need a bit of special handling to support the
 dnl nget+uulib source.
 AC_ARG_WITH(uulib,
-[AC_HELP_STRING([--with-uulib(=DIR)], [look in DIR for uulib])],
+[AS_HELP_STRING([--with-uulib(=DIR)],[look in DIR for uulib])],
 with_uulib=$withval
 ,
 if test -d uulib; then 
@@ -177,7 +177,18 @@ AC_HEADER_TIME
 AC_STRUCT_TM
 
 dnl Checks for library functions.
-AC_TYPE_SIGNAL
+AC_DIAGNOSE([obsolete],[your code may safely assume C89 semantics that RETSIGTYPE is void.
+Remove this warning and the `AC_CACHE_CHECK' when you adjust the code.])dnl
+AC_CACHE_CHECK([return type of signal handlers],[ac_cv_type_signal],[AC_COMPILE_IFELSE(
+[AC_LANG_PROGRAM([#include <sys/types.h>
+#include <signal.h>
+],
+		 [return *(signal (0, 0)) (0) == 1;])],
+		   [ac_cv_type_signal=int],
+		   [ac_cv_type_signal=void])])
+AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type of signal handlers
+		    (`int' or `void').])
+
 AC_FUNC_STRFTIME
 dnl AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(stricmp strcasecmp)
@@ -226,5 +237,7 @@ if test "$GCC" = "yes"; then
 	fi
 fi
 
-AC_OUTPUT(Makefile test/Makefile compat/Makefile par2/Makefile nget.spec,[echo timestamp > stamp-h])
+AC_CONFIG_FILES([Makefile test/Makefile compat/Makefile par2/Makefile nget.spec])
+AC_CONFIG_COMMANDS([default],[echo timestamp > stamp-h],[])
+AC_OUTPUT
 
