@@ -26,6 +26,7 @@
 #include <climits>
 #include <map>
 #include <stdexcept>
+#include <limits.h>
 
 
 typedef map<ulong, ulong> t_rlist;//we are going to use high as the key, and low as the value
@@ -61,6 +62,7 @@ class c_nrange{
 		void insert(ulong l,ulong h);
 		void remove(ulong n){remove(n,n);}
 		void remove(ulong l, ulong h);
+		void clip_to_max_total(ulong num);
 		void clear(void){
 			if (!rlist.empty()){
 				rlist.erase(rlist.begin(),rlist.end());

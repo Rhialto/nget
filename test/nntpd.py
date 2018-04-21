@@ -371,6 +371,11 @@ class NNTPTCPServer(StoppableThreadingTCPServer):
 		for g in self.groups.values():
 			g.rmarticle(article)
 
+	def rmallarticles(self):
+		self.midindex = {}
+		for g in self.groups.values():
+			g.rmallarticles()
+
 	def addgroup(self, name, desc=None):
 		if self.groups.has_key(name):
 			self.groups[name].description=desc
@@ -428,24 +433,34 @@ class Group:
 				else:
 					self.low = self.high + 1
 				return
+	def rmallarticles(self):
+		self.articles = {}
+		self.low = self.high + 1
 
-class FakeArticle:
-	def __init__(self, mid, name, partno, totalparts, groups, body):
+class FakeArticleHeaderOnly:
+	def __init__(self, mid, name, partno, totalparts, groups):
 		self.mid=mid
 		self.references=''
+		if totalparts>0:
+			self.subject="%(name)s [%(partno)i/%(totalparts)i]"%vars()
+		else:
+			self.subject="%(name)s"%vars()
+		self.author = "<noone@nowhere> (test)"
+		self.date=time.ctime()
+		self.text = ''
+		self.bytes = 0
+		self.lines = 0
+
+class FakeArticle(FakeArticleHeaderOnly):
+	def __init__(self, mid, name, partno, totalparts, groups, body):
+		FakeArticleHeaderOnly.__init__(self, mid, name, partno, totalparts, groups)
 		a = []
 		def add(foo):
 			a.append(foo)
 		add("Newsgroups: "+' '.join(groups))
-		if totalparts>0:
-			self.subject="%(name)s [%(partno)i/%(totalparts)i]"%vars()
-		else:
-			self.subject="Subject: %(name)s"%vars()
 		add("Subject: "+self.subject)
-		self.author = "<noone@nowhere> (test)"
 		self.lines = len(body)
 		add("From: "+self.author)
-		self.date=time.ctime()
 		add("Date: "+self.date)
 		add("Lines: %i"%self.lines)
 		add("Message-ID: "+mid)

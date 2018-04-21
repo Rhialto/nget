@@ -81,6 +81,7 @@ struct nget_options {
 	vector<c_group_info::ptr> groups;
 //	c_data_section *host;
 	c_server::ptr host;
+	string bindaddr;
 //	char *user,*pass;//,*path;
 	string path;
 	string startpath;

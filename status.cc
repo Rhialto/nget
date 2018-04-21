@@ -20,6 +20,7 @@
 #include "server.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 static int errorflags=0, warnflags=0, okflags=0;
 

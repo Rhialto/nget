@@ -1348,6 +1348,11 @@ class RetrieveTest_base(DecodeTest_base):
 		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','c d 05.dat','c d.par2'],
 			'par02':['p2-01.dat','p2-02.dat','p2-03.dat','p2-04.dat','p2-05.dat','_c_d_par2_output/c d.par2']})
 		
+	def test_autopar2handling_splitfile(self):
+		self.addarticles('par2-01', 'splitfile_input')
+		self.vfailIf(self.nget_run('-g test -r par2.test'))
+		self.verifyoutput({'par2-01':['c d 01.dat','c d 02.dat','c d 03.dat','c d 04.dat','_splitfile_output/c d 05.dat.000','_splitfile_output/c d 05.dat.001','_splitfile_output/c d 05.dat.002','_splitfile_output/c d 05.dat.003','c d.par2']})
+		
 	#### TODO: further par2 tests
 	
 	def test_autoparhandling_multiparversions(self):
@@ -2311,11 +2316,19 @@ class XoverTest_base(DecodeTest_base):
 		self.vfailIf(self.nget.run(args))
 		self.vfailIf(self.fxnget.run(args))
 		self.vfailIf(self.fx2nget.run(args))
+	
+	def clean_tmp_all(self):
+		self.nget.clean_tmp()
+		self.fxnget.clean_tmp()
+		self.fx2nget.clean_tmp()
 
 	def verifyoutput_all(self, testnum):
-		self.verifyoutput(testnum)
-		self.verifyoutput(testnum, tmpdir=self.fxnget.tmpdir)
-		self.verifyoutput(testnum, tmpdir=self.fx2nget.tmpdir)
+		self.verifyoutput_each(testnum, testnum, testnum)
+	
+	def verifyoutput_each(self, *testnums):
+		self.verifyoutput(testnums[0])
+		self.verifyoutput(testnums[1], tmpdir=self.fxnget.tmpdir)
+		self.verifyoutput(testnums[2], tmpdir=self.fx2nget.tmpdir)
 		
 	def test_newarticle(self):
 		self.addarticle_toserver('0002', 'uuencode_multi', '001', self.servers.servers[0])
@@ -2418,6 +2431,90 @@ class XoverTest_base(DecodeTest_base):
 		self.vfailIf(self.nget.run("-N -G test -r ."))
 
 		self.verifyoutput('0002')
+	
+	def test_maxheaders(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=5)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=10)
+		self.nget.updaterc(options={'maxheaders':100000})
+		self.fxnget.updaterc(options={'maxheaders':100000})
+		self.fx2nget.updaterc(options={'maxheaders':100000})
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_all(['0002'])
+
+		self.clean_tmp_all()
+		self.run_all("-g test -F host0")
+		
+		self.nget.updaterc(options={'maxheaders':10})
+		self.fxnget.updaterc(options={'maxheaders':10})
+		self.fx2nget.updaterc(options={'maxheaders':10})
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_all(['0002'])
+
+		self.clean_tmp_all()
+		self.run_all("-g test -F host0")
+		
+		self.nget.updaterc(options={'maxheaders':9})
+		self.fxnget.updaterc(options={'maxheaders':9})
+		self.fx2nget.updaterc(options={'maxheaders':9})
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_all([])
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_each([],[],['0002'])
+
+		self.clean_tmp_all()
+		self.run_all("-g test -F host0")
+		
+		self.nget.updaterc(options={'maxheaders':2})
+		self.fxnget.updaterc(options={'maxheaders':2})
+		self.fx2nget.updaterc(options={'maxheaders':2})
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_all([])
+
+	def test_maxheaders_update(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=2)
+		self.nget.updaterc(options={'maxheaders':3})
+		self.fxnget.updaterc(options={'maxheaders':3})
+		self.fx2nget.updaterc(options={'maxheaders':3})
+		self.run_all("-g test")
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=10)
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_each([],[],['0002'])
+	
+	def test_maxheaders_update2(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=2)
+		self.nget.updaterc(options={'maxheaders':2})
+		self.fxnget.updaterc(options={'maxheaders':2})
+		self.fx2nget.updaterc(options={'maxheaders':2})
+		self.run_all("-g test")
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=10)
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_all([])
+
+	def test_maxheaders_update3(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=2)
+		self.nget.updaterc(options={'maxheaders':10})
+		self.fxnget.updaterc(options={'maxheaders':10})
+		self.fx2nget.updaterc(options={'maxheaders':10})
+		self.run_all("-g test")
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=10)
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_all(['0002'])
+
+	def test_maxheaders_update4(self):
+		self.addarticle_toserver('0002', 'uuencode_multi3', '001', self.servers.servers[0], anum=1)
+		self.addarticle_toserver('0002', 'uuencode_multi3', '002', self.servers.servers[0], anum=2)
+		self.nget.updaterc(options={'maxheaders':100000})
+		self.fxnget.updaterc(options={'maxheaders':100000})
+		self.fx2nget.updaterc(options={'maxheaders':100000})
+		self.run_all("-g test")
+		self.addarticle_toserver('0002', 'uuencode_multi3', '003', self.servers.servers[0], anum=10)
+		self.run_all("-g test -D -r .")
+		self.verifyoutput_all(['0002'])
+
 
 class XoverTestCase(TestCase, XoverTest_base):
 	def setUp(self):
@@ -3026,6 +3123,23 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 1)
 		self.vfailUnlessEqual(self.servers.servers[2].count("_conns"), 0)
+	
+	def test_DuplicateArticles(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.start()
+		article=self.addarticle_toserver('0001', 'uuencode_single', 'testfile.001', self.servers.servers[0])
+		for i in range(0,15):
+			self.servers.servers[0].addarticle(['test'], article)
+		self.vfailIf(self.nget.run("-g test"))
+		self.vfailIf(self.nget.run("-G test -r ."))
+		self.verifyoutput('0001')
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
+		self.servers.servers[0].rmallarticles()
+		self.vfailIf(self.nget.run("-D -g test -r ."))
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 3)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 1)
 
 	def test_FlushServer(self):
 		self.servers = nntpd.NNTPD_Master(2)
@@ -3204,6 +3318,83 @@ class ConnectionTestCase(TestCase, DecodeTest_base):
 		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 2)
 		self.vfailUnlessEqual(self.servers.servers[1].count("_conns"), 2)
 		self.verifyoutput('0002')
+	
+	def test_bindaddr_perserv_error(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, hostoptions=[{'bindaddr':'foobarred'}])
+		self.servers.start()
+		self.vfailUnlessExitstatus(self.nget.run('-a'), 32)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	
+	def test_bindaddr_global_error(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'bindaddr':'foobarred'})
+		self.servers.start()
+		self.vfailUnlessExitstatus(self.nget.run('-a'), 32)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+	
+	def test_bindaddr_commandline_error(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.start()
+		self.vfailUnlessExitstatus(self.nget.run('--bindaddr=foobarred -a'), 32)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 0)
+		
+	def test_bindaddr_perserv_overrides_global(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'bindaddr':'foobarred'}, hostoptions=[{'bindaddr':nntpd.serveraddr}])
+		self.servers.start()
+		self.vfailIf(self.nget.run('-a'))
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+
+	def test_bindaddr_commandline_overrides_all(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'bindaddr':'foobarred'}, hostoptions=[{'bindaddr':'foobarred2'}])
+		self.servers.start()
+		self.vfailIf(self.nget.run('--bindaddr="%s" -a'%(nntpd.serveraddr)))
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 1)
+
+	def test_bindaddr_commandline_overrides_all_reset(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers, options={'bindaddr':'foobarred'}, hostoptions=[{'bindaddr':'foobarred2'}])
+		self.servers.start()
+		self.addarticles('0001', 'yenc_multi')
+		self.vfailUnlessExitstatus(self.nget.run('--bindaddr="%s" -a --bindaddr="" -gtest'%(nntpd.serveraddr)), 16)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("group"), 0)
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 1)
+
+	def test_bindaddr_commandline_changes(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.start()
+		self.addarticles('0001', 'yenc_multi')
+		self.vfailUnlessExitstatus(self.nget.run('--bindaddr=foobarred -gtest --bindaddr="%s" -a'%(nntpd.serveraddr)), 16)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("group"), 0)
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 1)
+
+	def test_bindaddr_commandline_reset(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.start()
+		self.addarticles('0001', 'yenc_multi')
+		self.vfailUnlessExitstatus(self.nget.run('--bindaddr=foobarred -gtest --bindaddr="" -a'), 16)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("group"), 0)
+		self.vfailUnlessEqual(self.servers.servers[0].count("list_newsgroups"), 1)
+
+	def test_bindaddr_commandline_changes2(self):
+		self.servers = nntpd.NNTPD_Master(1)
+		self.nget = util.TestNGet(ngetexe, self.servers.servers)
+		self.servers.start()
+		self.addarticles('0001', 'yenc_multi')
+		self.vfailUnlessExitstatus(self.nget.run('--bindaddr="%s" -gtest --bindaddr=foobarred -r .'%(nntpd.serveraddr)), 8)
+		self.vfailUnlessEqual(self.servers.servers[0].count("_conns"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("group"), 1)
+		self.vfailUnlessEqual(self.servers.servers[0].count("article"), 0)
+		self.verifyoutput([])
 
 
 class AuthTestCase(TestCase, DecodeTest_base):

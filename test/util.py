@@ -49,9 +49,37 @@ class TestNGet:
 		self.tmpdir = os.path.join(self.rcdir, 'tmp')
 		os.mkdir(self.tmpdir)
 		self.writerc(servers, **kw)
+	
+	def _dowriterc(self):
+		rc = open(self.cur_rcfilename, 'w')
+		for k,v in self.cur_options.items():
+			rc.write("%s=%s\n"%(k,v))
+
+		rc.write("{halias\n")
+		for i in range(0, len(self.cur_servers)):
+			rc.write(" {host%i\n"%i)
+			for k,v in self.cur_hostoptions[i].items():
+				rc.write("%s=%s\n"%(k,v))
+			rc.write(" }\n")
+		rc.write("}\n")
+		
+		if self.cur_priorities:
+			rc.write("{hpriority\n")
+			rc.write(" {default\n")
+			for i,p in zip(range(0, len(self.cur_servers)), self.cur_priorities):
+				rc.write("  host%i=%s\n"%(i, p))
+			rc.write(" }\n")
+			rc.write("}\n")
+			
+		rc.write(self.cur_extratail)
+		rc.close()
+
+		#print 'begin ngetrc:\n',open(os.path.join(self.rcdir, '_ngetrc'), 'r').read()
+		#print '--end ngetrc'
+		
 
 	def writerc(self, servers, priorities=None, options=None, hostoptions=None, extratail="", rcfilename=None):
-		defaultoptions = {
+		self.cur_options = {
 #			'tries': 1,
 			'tries': 2,
 			'delay': 0,
@@ -60,45 +88,38 @@ class TestNGet:
 #			'debug': 2,
 #			'fullxover': 1
 		}
+		self.cur_servers = tuple(servers)
 
-		if rcfilename is None:
-			rcfilename = '_ngetrc'
-		if os.sep not in rcfilename:
-			rcfilename = os.path.join(self.rcdir, rcfilename)
-		rc = open(rcfilename, 'w')
+		self.cur_rcfilename = rcfilename or '_ngetrc'
+		if os.sep not in self.cur_rcfilename:
+			self.cur_rcfilename = os.path.join(self.rcdir, self.cur_rcfilename)
 		if options:
-			defaultoptions.update(options)
-		for k,v in defaultoptions.items():
-			rc.write("%s=%s\n"%(k,v))
-
-		rc.write("{halias\n")
-		for i in range(0, len(servers)):
-			defaulthostoptions = {
-				'addr': nntpd.addressstr(servers[i].socket.getsockname()),
+			self.cur_options.update(options)
+		self.cur_hostoptions = [None]*len(self.cur_servers)
+		for i in range(0, len(self.cur_servers)):
+			self.cur_hostoptions[i] = {
+				'addr': nntpd.addressstr(self.cur_servers[i].socket.getsockname()),
 				'shortname': 'h%i'%i,
 				'id': str(i+1),
 			}
-			rc.write(" {host%i\n"%i)
 			if hostoptions:
-				defaulthostoptions.update(hostoptions[i])
-			for k,v in defaulthostoptions.items():
-				rc.write("%s=%s\n"%(k,v))
-			rc.write(" }\n")
-		rc.write("}\n")
+				self.cur_hostoptions[i].update(hostoptions[i])
 
+		self.cur_priorities = priorities and tuple(priorities) or None
+
+		self.cur_extratail = extratail
+
+		self._dowriterc()
+	
+	def updaterc(self, priorities=None, options=None, hostoptions=None):
 		if priorities:
-			rc.write("{hpriority\n")
-			rc.write(" {default\n")
-			for i,p in zip(range(0, len(servers)), priorities):
-				rc.write("  host%i=%s\n"%(i, p))
-			rc.write(" }\n")
-			rc.write("}\n")
-			
-		rc.write(extratail)
-		rc.close()
-
-		#print 'begin ngetrc:\n',open(os.path.join(self.rcdir, '_ngetrc'), 'r').read()
-		#print '--end ngetrc'
+			self.cur_priorities = priorities
+		if options:
+			self.cur_options.update(options)
+		if hostoptions:
+			for i in range(0, len(self.cur_servers)):
+				self.cur_hostoptions[i].update(hostoptions[i])
+		self._dowriterc()
 	
 	def runv(self, args):
 		os.environ['NGETHOME'] = self.rcdir

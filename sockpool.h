@@ -29,10 +29,14 @@
 #include "file.h"
 #include "log.h"
 
+/* The Connection class encapsulates the socket and other information about a
+ * connection to an nntp server.
+ */
 class Connection {
 	protected:
 		time_t lastuse;
 	public:
+		string bindaddr;
 		c_file_tcp sock;
 		c_server::ptr server;
 		c_group_info::ptr curgroup;
@@ -64,7 +68,7 @@ class Connection {
 				sock.close();
 			}
 		}
-		Connection(c_server::ptr serv):lastuse(0), sock(serv->addr.c_str(), "nntp"), server(serv){
+		Connection(c_server::ptr serv, const string &force_bindaddr) : lastuse(0), bindaddr(serv->get_bindaddr(force_bindaddr)), sock(serv->addr.c_str(), "nntp", bindaddr.c_str()), server(serv) {
 			sock.initrbuf();
 			freshconnect=true;
 			server_ok=false;
@@ -75,6 +79,11 @@ class Connection {
 
 typedef map<c_server::ptr, Connection *> t_connection_map;
 
+/* The SockPool class holds a pool of connections to various servers, keeping
+ * them open for reuse later without having to reconnect.  It disconnects them
+ * if they go unused too long, or a new connection is needed and there are too
+ * many currently open.
+ */
 class SockPool {
 	protected:
 		//t_connection_map used_connections;
@@ -91,7 +100,7 @@ class SockPool {
 //			return free_connections.size() + used_connections.size();
 //		}
 
-		Connection* connect(const c_server::ptr &server);
+		Connection* connect(const c_server::ptr &server, const string &bindaddr);
 		void release(Connection *connection);
 		void expire_old_connection(void);
 		void expire_connections(bool closeall=false);
@@ -102,14 +111,17 @@ class SockPool {
 };
 
 
+/* The ConnectionHolder class uses the RAII idiom to ensure that some code that
+ * uses a connection properly releases it when done.
+ */
 class ConnectionHolder {
 	protected:
 		SockPool * pool;
 		Connection ** connection;
 	public:
-		ConnectionHolder(SockPool *sockpool, Connection **conn, const c_server::ptr &server):pool(sockpool), connection(conn) {
+		ConnectionHolder(SockPool *sockpool, Connection **conn, const c_server::ptr &server, const string &bindaddr):pool(sockpool), connection(conn) {
 			PDEBUG(DEBUG_MED, "aquiring connection to %s", server->alias.c_str());
-			*connection = pool->connect(server);
+			*connection = pool->connect(server, bindaddr);
 			PDEBUG(DEBUG_MED, "aquired connection to %s (%p)", server->alias.c_str(), *connection);
 			pool->expire_connections();
 		}

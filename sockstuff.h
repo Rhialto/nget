@@ -57,7 +57,7 @@ inline int sock_write(sock_t sockfd, const char *buf, size_t count) {
 
 extern int sock_timeout;
 
-sock_t make_connection(const char *netaddress,const char *service);
+sock_t make_connection(const char *netaddress,const char *service, const char *bindaddress);
 
 int sock_write_ensured(sock_t sockfd, const char *buf, size_t count);
 int sock_read(sock_t sockfd, void *buf, size_t count);

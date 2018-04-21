@@ -1,4 +1,4 @@
-.TH nget 1 "21 Dec 2004"
+.TH nget 1 "21 Mar 2005"
 .SH NAME
 nget \- retrieve files from NNTP (usenet news) hosts
 .SH SYNOPSIS
@@ -20,6 +20,9 @@ When specified twice, will disable printing of merely informative messages.  Err
 .IP "\-h/\-\-host host"
 Force only the given host to be used for subsequent commands.  (Must be configured in .ngetrc.)
 Can reset to standard auto-choosing method with \-h ""
+.IP "\-\-bindaddr addr"
+Local address to connect from.  Overrides any bindaddr set in .ngetrc.
+Can be reset to default with \-\-bindaddr ""
 .IP "\-a/\-\-available"
 Update the list of available newsgroups.
 Subsequent \-r/\-R commands can be use to search for newsgroups.
@@ -131,7 +134,8 @@ Set the number of seconds to wait for a reply from the nntp server before giving
 .IP "\-i/\-\-incomplete"
 Retrieve files with missing parts.
 .IP "\-I/\-\-complete"
-Retrieve only files with all parts.
+Retrieve only files with all parts (default).
+Note that if autopar handling is enabled, incomplete files may be retrieved anyway, if there are not enough recovery packets.
 .IP "\-\-decode"
 Decode and delete temp files (default)
 .IP "\-k/\-\-keep"
@@ -143,8 +147,9 @@ Match case sensitively.
 .IP "\-C/\-\-nocase"
 Match case insensitively.
 .IP "\-\-autopar"
-Enable automatic parfile handling. (default)
+Enable automatic parfile handling (default).
 Only download as many par files as needed to replace missing or corrupt files.
+With par2 files, if there are not enough recovery packets available, nget will automatically download incomplete files as necessary, even if \-i is not set.
 .IP "\-\-no\-autopar"
 Disable automatic parfile handling.
 All parfiles that match the expression will be downloaded.
@@ -284,6 +289,8 @@ Number of consecutive connect errors before penalizing a server, \-1 to disable 
 Number of seconds to ignore a penalized server for.
 .IP "penaltymultiplier (float, default=2.0)"
 Multiplier for penalty time for each time the penalty time runs out and the server continues to be down.
+.IP "bindaddr (string)"
+Local address to connect from.
 .IP "case (boolean, default=0)"
 Default for regex case sensitivity. (0=\-C/\-\-nocase, 1=\-c/\-\-case)
 .IP "complete (boolean, default=1)"
@@ -322,12 +329,19 @@ Default for the \-\-text option (possible values are ignore,files,mbox[:filename
 Default for the \-\-save\-binary\-info option.
 .IP "cachedir (string)"
 Specifies a different location to store cache files.  Could be used to share a single cache dir between a trusted group of users, to reduce HD/bandwidth usage, while still allowing each user to have their own config/midinfo files.)
+.IP "maxheaders (int, default=-1)"
+The maximum number of article headers per group, per server, that will be fetched and retained in the cache.
+The default of \-1 means "no limit".
+Note that this unless you use fullxover=2, this is only an approximation, since servers may leave holes in their article number assignments.
 .SS "Host Configuration"
 Host configuration is done in the halias section, with a subsection for each
 host containing its options:
-.IP "address (string, required)"
+.IP "addr (string, required)"
 Address of the server, with optional port number seperated by a colon.
 To specify a literal IPv6 address with a port number, use the format "[address]:port".
+.IP "bindaddr (string)"
+Local address to connect from.
+Overrides the global bindaddr setting for this server only.
 .IP "id (int, required)"
 An identifier for this server.
 The id uniquely identifies a certain set of header cache data.

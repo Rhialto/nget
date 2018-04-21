@@ -214,10 +214,9 @@ void c_prot_nntp::nntp_dogroupdescriptions(const char *wildmat){
 			*desc = '\0';
 			desc++;
 			desc += strspn(desc, " \t");
-		}else
-			desc = "";
+		}
 
-		glist->addgroupdesc(connection->server->serverid, cbuf, desc);
+		glist->addgroupdesc(connection->server->serverid, cbuf, desc ? desc : "");
 		done++;
 	}
 	if(quiet<2){
@@ -251,7 +250,7 @@ void c_prot_nntp::nntp_grouplist(int update, const nget_options &options){
 				assert(s);
 				PDEBUG(DEBUG_MED,"nntp_grouplist: serv(%s) %f>=%f",s->alias.c_str(),priogroup->getserverpriority(s),priogroup->defglevel);
 				try {
-					ConnectionHolder holder(&sockpool, &connection, s);
+					ConnectionHolder holder(&sockpool, &connection, s, options.bindaddr);
 					nntp_doopen();
 					nntp_dogrouplist();
 					nntp_dogroupdescriptions();//####make this a seperate option?
@@ -304,7 +303,7 @@ void c_prot_nntp::nntp_xgrouplist(const t_xpat_list &patinfos, const nget_option
 			assert(s);
 			PDEBUG(DEBUG_MED,"nntp_xgrouplist: serv(%s) %f>=%f",s->alias.c_str(),priogroup->getserverpriority(s),priogroup->defglevel);
 			try {
-				ConnectionHolder holder(&sockpool, &connection, s);
+				ConnectionHolder holder(&sockpool, &connection, s, options.bindaddr);
 				nntp_doopen();
 				for (t_xpat_list::const_iterator i = patinfos.begin(); i != patinfos.end(); ++i) {
 					nntp_dogrouplist((*i)->wildmat.c_str());
@@ -580,6 +579,9 @@ void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, bool getheaders, 
 		if (servinfo->high!=0 && servinfo->high>=low && fullxover==2){
 			c_nrange existing;
 			dolistgroup(existing, low, high, num);
+			if (nconfig.maxheaders!=-1) {
+				existing.clip_to_max_total(nconfig.maxheaders);
+			}
 
 			c_nrange nonexistant;
 			nonexistant.invert(existing);
@@ -591,6 +593,10 @@ void c_prot_nntp::nntp_dogroup(const c_group_info::ptr &group, bool getheaders, 
 
 			doxover(group, &r);	
 		}else{
+			if (nconfig.maxheaders!=-1 && (high>=(ulong)nconfig.maxheaders && low<(high - nconfig.maxheaders + 1))){
+				low = high - nconfig.maxheaders + 1;
+				//num = min(num, nconfig.maxheaders); //unnecessary, num isn't used after this
+			}
 			if (low>servinfo->low)
 				gcache->flushlow(servinfo,low,midinfo);
 			if (fullxover){
@@ -685,7 +691,7 @@ void c_prot_nntp::nntp_xgroup(const c_group_info::ptr &group, const t_xpat_list 
 			assert(s);
 			PDEBUG(DEBUG_MED,"nntp_xgroup: serv(%s) %f>=%f",s->alias.c_str(),group->priogrouping->getserverpriority(s),group->priogrouping->defglevel);
 			try {
-				ConnectionHolder holder(&sockpool, &connection, s);
+				ConnectionHolder holder(&sockpool, &connection, s, options.bindaddr);
 				nntp_doopen();
 				ulong num,low,high;
 				nntp_dogroup(group, num,low,high);
@@ -750,7 +756,7 @@ void c_prot_nntp::nntp_group(const c_group_info::ptr &ngroup, bool getheaders, c
 				assert(s);
 				PDEBUG(DEBUG_MED,"nntp_group: serv(%s) %f>=%f",s->alias.c_str(),group->priogrouping->getserverpriority(s),group->priogrouping->defglevel);
 				try {
-					ConnectionHolder holder(&sockpool, &connection, s);
+					ConnectionHolder holder(&sockpool, &connection, s, options.bindaddr);
 					nntp_doopen();
 					nntp_dogroup(ngroup, getheaders, options.fullxover);
 					succeeded++;
@@ -810,7 +816,7 @@ int c_prot_nntp::nntp_doarticle_prioritize(c_nntp_part *part,t_nntp_server_artic
 	c_nntp_server_article *sa=NULL;
 	float prio;
 	for (sai = part->articles.begin(); sai != part->articles.end(); ++sai){
-		sa=(*sai).second;
+		sa=(*sai);
 		assert(sa);
 		for (t_server_list_range servers = nconfig.getservers(sa->serverid); servers.first!=servers.second; ++servers.first) {
 			const c_server::ptr &s = servers.first->second;
@@ -966,7 +972,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 			PDEBUG(DEBUG_MED,"trying server %s(%lu) article %lu",s->alias.c_str(),sa->serverid,sa->articlenum);
 			list<string> buf;//use a list of strings instead of char *.  Easier and it cleans up after itself too.
 			try {
-				ConnectionHolder holder(&sockpool, &connection, s);
+				ConnectionHolder holder(&sockpool, &connection, s, options.bindaddr);
 				nntp_doopen();
 				if (toti->doarticle_show_multi==SHOW_MULTI_SHORT)
 					ari->server_name=connection->server->shortname.c_str();
@@ -1012,7 +1018,7 @@ int c_prot_nntp::nntp_doarticle(c_nntp_part *part,arinfo*ari,quinfo*toti,char *f
 
 void print_nntp_file_info(c_nntp_file::ptr f, t_show_multiserver show_multi) {
 	char tconvbuf[TCONV_DEF_BUF_LEN];
-	c_nntp_part *p=(*f->parts.begin()).second;
+	c_nntp_part *p=(*f->parts.begin());
 	tconv(tconvbuf,TCONV_DEF_BUF_LEN,&p->date);
 	if (f->iscomplete())
 		printf("%i",f->have);
@@ -1161,7 +1167,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 		qtotinfo.doarticle_show_multi=gcache_ismultiserver?SHOW_MULTI_SHORT:NO_SHOW_MULTI;
 		c_nntp_part *p;
 //		s_part_u *bp;
-		t_nntp_file_parts::iterator curp;
+		c_nntp_file_parts::iterator curp;
 		char *fn;
 		if (!options.writelite.empty())
 			optionflags |= GETFILES_NODECODE;
@@ -1202,7 +1208,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 			Decoder decoder;
 			for(curp = f->parts.begin();curp!=f->parts.end();++curp){
 				//asprintf(&fn,"%s/%s-%s-%li-%li-%li",nghome.c_str(),host.c_str(),group.c_str(),fgnum,part,num);
-				p=(*curp).second;
+				p=(*curp);
 				if (dlerr){
 					qtotinfo.bytesleft-=p->bytes();
 					continue;
@@ -1213,9 +1219,9 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 						usepath="";
 					else usepath=fr->temppath.c_str();
 					if (optionflags & GETFILES_TEMPSHORTNAMES)
-						asprintf(&fn,"%s%lx.%03i",usepath,f->getfileid(),(*curp).first);
+						asprintf(&fn,"%s%lx.%03i",usepath,f->getfileid(),p->partnum);
 					else
-						asprintf(&fn,"%sngettemp-%lx.%03i",usepath,f->getfileid(),(*curp).first);
+						asprintf(&fn,"%sngettemp-%lx.%03i",usepath,f->getfileid(),p->partnum);
 				}
 				if (!fexists(fn)){
 					ainfo.partreq = f->req;

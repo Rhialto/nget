@@ -84,6 +84,7 @@ c_server::c_server(ulong id, const CfgSection *ds) : serverid(id), alias(ds->key
 	addr = ds->gets("addr");
 	user = ds->gets("user");
 	pass = ds->gets("pass");
+	bindaddr = ds->gets("bindaddr", nconfig.bindaddr);
 	shortname = ds->gets("shortname");
 	if (shortname.empty()) shortname = alias[0];
 	ds->get("idletimeout",idletimeout,1,INT_MAX,nconfig.idletimeout);
@@ -129,6 +130,8 @@ void c_nget_config::setlist(const CfgSection *cfg,const CfgSection *hinfo,const 
 	cfg->get("penaltystrikes",penaltystrikes,-1,INT_MAX);
 	cfg->get("initialpenalty",initialpenalty,1,INT_MAX);
 	cfg->get("penaltymultiplier",penaltymultiplier,1.0f,1e100f);
+	bindaddr = cfg->gets("bindaddr");
+	cfg->get("maxheaders",maxheaders,-1,INT_MAX);
 	//halias
 	assert(hinfo);
 	for (dli=hinfo->sections_begin();dli!=hinfo->sections_end();++dli){

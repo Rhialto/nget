@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 
 void dupe_file_checker::add(const char *filename, ulong size){
 	file_match *fm;

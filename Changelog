@@ -1,3 +1,18 @@
+2005-xx-xx v0.xx:
+  * Add --bindaddr and corresponding config file options to specify address to connect from.
+  * Allow -fomit-frame-pointer on gcc versions >= 3.3.1. (Frederick Bruckman, me)
+  * Add maxheaders .ngetrc option to limit the number of headers that will be retrieved/stored. (Frederick Bruckman, me)
+  * Reduce memory usage by using vectors rather than maps for some data structures that usually do not have many elements anyway. (Dieter Shirley)
+  * Use netbsd-style termcap for line clearing when available, fixes problems with progress lines getting overwritten on netbsd systems. (Frederick Bruckman, me)
+  * Make autopar handle posts where someone has created par2 for a large file, then split the file into parts named <original name>.<part number>. (Steven Mueller, me)
+  * Fix compile on OSX. (yacht)
+  * Fix compile with GCC 4.2.
+  * Fix some compile warnings. (Frederick Bruckman, me)
+  * Fix compile with GCC 4.3. (Arnaud Cornet)
+  * Add support for SVR4 curses. (Frederick Bruckman)
+  * Add generic fcntl locking, for Solaris 10 and others. (Frederick Bruckman)
+  * Remove old flock locking support.
+
 2004-12-20 v0.27.1:
   * Fix error in configure script when printing exceptions not found message, due to unquoted string. (Reported by M.J. Soft)
   * Fix -G* when NGETCACHE != NGETHOME. (Reported by Steven Adeff)

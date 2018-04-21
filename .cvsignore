@@ -1,4 +1,4 @@
-configure config.log config.h.in config.h config.cache config.status autom4te.cache
+configure config.log config.h.in config.h config.cache config.status autom4te.cache configure.lineno
 stamp-h stamp-h.in *.d Makefile nget.spec
 *.bb *.bbg *.da *.gcov
 nget ngetlite nrangetest filetest filetest2

@@ -46,7 +46,7 @@ par2/par2.a: par2/*.cpp par2/*.h config.h _subconf.h
 	$(MAKE) -C par2 par2.a
 
 @NOUU@@UULIB@: @UUDIR@/*.c @UUDIR@/*.h
-@NOUU@	(cd @UUDIR@ && ./configure)
+@NOUU@	(cd @UUDIR@ && ./configure --prefix="${prefix}")
 @NOUU@	$(MAKE) -C @UUDIR@ libuu.a
 
 test:
@@ -131,11 +131,13 @@ distclean: clean
 	-$(MAKE) -C test distclean
 	-$(MAKE) -C par2 distclean
 	-$(MAKE) -C compat distclean
-	-rm config.status config.h config.cache config.log Makefile stamp-h nget.spec
+	-rm config.status config.h config.cache config.log configure.lineno Makefile stamp-h nget.spec
 	-rm -r autom4te.cache
+
+extraclean: distclean
 	-find . \( -name 'CVS' -o -name '.cvsignore' -o -name '*~' -o -name '.*~' -o -name '.#*' -o -name '.*.sw[po]' -o -name '*.rej' -o -name '*.orig' -o -name 'tags' \) -print0 | xargs -0 rm -r
 
-distclean-killuu: distclean
+extraclean-killuu: extraclean
 	-rm -r uulib
 
 -include *.d

@@ -197,7 +197,7 @@ if test "$nget_ipv6" != "no"; then
 	AC_CHECK_TYPES([struct addrinfo],,,[#include "compat/socketheaders.h"])
 fi
 
-AC_CHECK_FUNCS(mktime regcomp strerror atoul asprintf vsnprintf vasprintf timegm gmtime_r localtime_r getopt_long flock setlinebuf fcntl fsync getpid)
+AC_CHECK_FUNCS(mktime regcomp strerror atoul asprintf vsnprintf vasprintf timegm gmtime_r localtime_r getopt_long setlinebuf fcntl fsync getpid)
 
 AC_PROTOTYPE_RECV
 AC_FUNC_MKDIR

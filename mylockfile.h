@@ -56,40 +56,6 @@ class c_lockfile{
 			}
 		}
 };
-#elif HAVE_FLOCK
-#include <unistd.h>
-#include <sys/file.h>
-class c_lockfile{
-	public:
-		int fd;
-
-		c_lockfile(string filename,int flag){
-			PDEBUG(FLOCK_DEBUG_LEV,"attempting to flock %s",filename.c_str());
-			fd=open(filename.c_str(),O_RDONLY);
-			if (fd<0){
-				if (errno==ENOENT){
-//					if (flag&WANT_SH_LOCK)
-					return;
-				} else
-					throw ApplicationExFatal(Ex_INIT,"c_lockfile: open %s (%s)",filename.c_str(),strerror(errno));
-			}
-			int ret=flock(fd,(flag&WANT_SH_LOCK)?LOCK_SH:LOCK_EX);
-			if (ret) {
-				int savederrno = errno;
-				close(fd); fd = -1;
-				throw ApplicationExFatal(Ex_INIT,"c_lockfile: flock %s: %i (%s)",filename.c_str(),ret,strerror(savederrno));
-			}
-			PDEBUG(FLOCK_DEBUG_LEV,"flocked %s (%i)",filename.c_str(),fd);
-//			sleep(10);
-		}
-		~c_lockfile(){
-			if (fd>=0) {
-				flock(fd,LOCK_UN);
-				close(fd);
-				PDEBUG(FLOCK_DEBUG_LEV,"unflocked %i",fd);
-			}
-		}
-};
 #elif HAVE_LOCKFILE
 #define WIN32_LEAN_AND_MEAN
 #undef NOMINMAX
@@ -128,6 +94,134 @@ class c_lockfile{
 				DeleteFile(filename.c_str());
 				PDEBUG(FLOCK_DEBUG_LEV,"unlocked %s(%p)",filename.c_str(),hFile);
 			}
+		}
+};
+#elif HAVE_FCNTL
+#include <unistd.h>
+#include <fcntl.h>
+// Generic POSIX fcntl locking.
+//
+// All our fcntl() locks are applied to a ".locks" file, so that the lock
+// holder can freely unlink or rename the locked file without concern for
+// impacting the locks themselves.  Addition of locks to the locks file,
+// as well as creation or removal of the locks file, is locked by another
+// file which has open() O_EXCL semantics. (Note, that we don't ever lock
+// the lock to the locks file to *remove* locks from the locks file, as
+// that would deadlock.)
+//
+class c_lockfile{
+	public:
+		int fd;
+		long mypid;
+		string file;
+
+		c_lockfile(string filename,int flag) {
+			mypid=getpid();
+			file=filename;
+			PDEBUG(FLOCK_DEBUG_LEV,"c_lockfile %li: Lock requested: %s (%s)",mypid,filename.c_str(),(flag&WANT_SH_LOCK)?"shared":"exclusive");
+			int locklocksfd;
+			string locksfile=filename;
+			locksfile.append(".locks");
+			string locklocksfile=locksfile;
+			locklocksfile.append(".locked");
+
+			PDEBUG(FLOCK_DEBUG_LEV,"c_lockfile %li: creating %s",mypid,locklocksfile.c_str());
+			while ((locklocksfd=open(locklocksfile.c_str(),O_RDWR|O_CREAT|O_EXCL,0777)) == -1) {
+				if (errno==EEXIST)
+					sleep(1);
+				else
+					throw ApplicationExFatal(Ex_INIT,"c_lockfile: open %s (%s)",locklocksfile.c_str(),strerror(errno));
+			}
+			close(locklocksfd);
+			PDEBUG(FLOCK_DEBUG_LEV,"c_lockfile %li: created %s",mypid,locklocksfile.c_str());
+
+			if ((fd=open(locksfile.c_str(),O_RDWR|O_CREAT,0777)) == -1) {
+				int savederrno=errno;
+				if (unlink(locklocksfile.c_str()) == -1)
+					PERROR("c_lockfile %li: unlink %s: %s",mypid,locklocksfile.c_str(),strerror(errno));
+				throw ApplicationExFatal(Ex_INIT,"c_lockfile: open %s (%s)",locksfile.c_str(),strerror(savederrno));
+			}
+			struct flock mylock;
+			memset(&mylock,0,sizeof(struct flock));
+			mylock.l_type=(flag&WANT_SH_LOCK)?F_RDLCK:F_WRLCK;
+			mylock.l_whence=SEEK_SET;//Lock the whole file.
+			int ret;
+			PDEBUG(FLOCK_DEBUG_LEV,"c_lockfile %li: locking %s (%i)",mypid,locksfile.c_str(),fd);
+			while ((ret=fcntl(fd,F_SETLKW,&mylock)) == -1) {
+				if (errno!=EINTR) {
+					int savederrno=errno;
+					if (unlink(locklocksfile.c_str()) == -1)
+						PERROR("c_lockfile %li: unlink %s: %s",mypid,locklocksfile.c_str(),strerror(errno));
+					throw ApplicationExFatal(Ex_INIT,"c_lockfile: fcntl %s: (%s)",locksfile.c_str(),strerror(savederrno));
+				}
+			}
+			PDEBUG(FLOCK_DEBUG_LEV,"c_lockfile %li: locked %s (%i)",mypid,locksfile.c_str(), fd);
+
+			if (unlink(locklocksfile.c_str()) == -1)
+				PERROR("c_lockfile %li: unlink %s: %s",mypid,locklocksfile.c_str(),strerror(errno));
+			else
+				PDEBUG(FLOCK_DEBUG_LEV,"c_lockfile %li: unlinked %s",mypid,locklocksfile.c_str());
+		}
+		~c_lockfile(){
+			if (fd>=0)
+				close(fd);
+			PDEBUG(FLOCK_DEBUG_LEV,"~c_lockfile %li: unlocked (%i)",mypid,fd);
+
+			// At this point in time, another process may remove
+			// the "emptied of locks" locks file!  Therefore, we
+			// absolutely must lock, then reopen, the locks file
+			// before checking it, so we don't end up checking a
+			// file that had already been unlinked, then unlinking
+			// a live locks file.
+
+			int locklocksfd;
+			string locksfile=file;
+			locksfile.append(".locks");
+			string locklocksfile=locksfile;
+			locklocksfile.append(".locked");
+			PDEBUG(FLOCK_DEBUG_LEV,"~c_lockfile %li: creating %s",mypid,locklocksfile.c_str());
+			while ((locklocksfd=open(locklocksfile.c_str(),O_RDWR|O_CREAT|O_EXCL,0777)) == -1) {
+				if (errno==EEXIST)
+					sleep(1);
+				else
+					throw ApplicationExFatal(Ex_INIT,"c_lockfile: open %s (%s)",locklocksfile.c_str(),strerror(errno));
+			}
+			close(locklocksfd);
+			PDEBUG(FLOCK_DEBUG_LEV,"~c_lockfile %li: created %s",mypid,locklocksfile.c_str());
+
+			// Note, no O_CREAT. If the locks file has already been
+			// emptied of locks and unlinked, we're nearly done.
+			if ((fd=open(locksfile.c_str(),O_RDWR)) == -1) {
+				if (errno!=ENOENT) {
+					int savederrno=errno;
+					if (unlink(locklocksfile.c_str()) == -1)
+						PERROR("c_lockfile %li: unlink %s: %s",mypid,locklocksfile.c_str(),strerror(errno));
+					throw ApplicationExFatal(Ex_INIT,"c_lockfile: open %s (%s)",locksfile.c_str(),strerror(savederrno));
+				}
+			}
+			if (fd>=0) {
+				struct flock mylock;
+				memset(&mylock,0,sizeof(struct flock));
+				mylock.l_type=F_WRLCK;
+				mylock.l_whence=SEEK_SET;
+				PDEBUG(FLOCK_DEBUG_LEV,"~c_lockfile %li: checking (%i)",mypid,fd);
+				if (fcntl(fd,F_GETLK,&mylock) == -1)
+					throw ApplicationExFatal(Ex_INIT,"~c_lockfile: fcntl %i: (%s)",fd,strerror(errno));
+				close(fd);
+				if (mylock.l_type==F_UNLCK) {
+					if (unlink(locksfile.c_str()) == -1)
+						PERROR("~c_lockfile %li: unlink %s: %s",mypid,locksfile.c_str(),strerror(errno));
+					else
+						PDEBUG(FLOCK_DEBUG_LEV,"~c_lockfile %li: unlinked %s",mypid,locksfile.c_str());
+				} else {
+					PDEBUG(FLOCK_DEBUG_LEV,"~c_lockfile %li: %s locked by %li",mypid,file.c_str(),(long)mylock.l_pid);
+				}
+			}
+
+			if (unlink(locklocksfile.c_str()) == -1)
+				PERROR("~c_lockfile %li: unlink %s: %s",mypid,locklocksfile.c_str(),strerror(errno));
+			else
+				PDEBUG(FLOCK_DEBUG_LEV,"~c_lockfile %li: unlinked %s",mypid,locklocksfile.c_str());
 		}
 };
 #else

@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include "log.h"
 #include "_fileconf.h"
+#include <string.h>
 
 #ifdef WIN32
 #include <ctype.h>

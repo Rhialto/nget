@@ -79,7 +79,7 @@ void SockPool::connection_erase(t_connection_map::iterator i) {
 	connections.erase(i);
 }
 
-Connection* SockPool::connect(const c_server::ptr &server){
+Connection* SockPool::connect(const c_server::ptr &server, const string &bindaddr){
 	Connection *c;
 
 	//use existing connection when possible
@@ -95,7 +95,7 @@ Connection* SockPool::connect(const c_server::ptr &server){
 				print_ex_with_message(e, "ignored error");
 			}
 		}
-		if (c->isopen()) {
+		if (c->isopen() && c->bindaddr==server->get_bindaddr(bindaddr)) {
 			c->touch();
 			return c;
 		} else {
@@ -112,7 +112,7 @@ Connection* SockPool::connect(const c_server::ptr &server){
 	
 	//create new connection
 	try {
-		c = new Connection(server);
+		c = new Connection(server, bindaddr);
 	}  catch (FileEx &e) {
 		nconfig.penalize(server);
 		throw TransportExError(Ex_INIT,"Connection: %s",e.getExStr());

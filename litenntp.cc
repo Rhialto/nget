@@ -131,11 +131,11 @@ void c_prot_nntp::doarticle(const char *article,ulong bytes,ulong lines,const ch
 	long glr;
 	char *lp;
 	char tempfilename[100];
-	sprintf(tempfilename,"%s.%i",tempfilename_base,
+	sprintf(tempfilename,"%s.%li",tempfilename_base,
 #ifdef HAVE_GETPID
-			getpid()
+			static_cast<long>(getpid())
 #else
-			rand()
+			static_cast<long>(rand())
 #endif
 			);
 	c_file_fd f(tempfilename,"w");
@@ -194,7 +194,7 @@ void c_prot_nntp::doopen(const char *host, const char *user, const char *pass){
 
 	doclose();
 	try {
-		cursock.reset(new c_file_tcp(host,"nntp"));
+		cursock.reset(new c_file_tcp(host,"nntp",NULL));
 		cursock->initrbuf();
 	} catch (FileEx &e) {
 		throw TransportExError(Ex_INIT,"nntp_doopen: %s",e.getExStr());
