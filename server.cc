@@ -129,7 +129,7 @@ void c_nget_config::setlist(const CfgSection *cfg,const CfgSection *hinfo,const 
 	cfg->get("idletimeout",idletimeout,1,INT_MAX);
 	cfg->get("penaltystrikes",penaltystrikes,-1,INT_MAX);
 	cfg->get("initialpenalty",initialpenalty,1,INT_MAX);
-	cfg->get("penaltymultiplier",penaltymultiplier,1.0f,1e100f);
+	cfg->get("penaltymultiplier",penaltymultiplier,1.0f,FLT_MAX);
 	bindaddr = cfg->gets("bindaddr");
 	cfg->get("maxheaders",maxheaders,-1,INT_MAX);
 	//halias
