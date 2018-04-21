@@ -561,7 +561,7 @@ static int do_args(int argc, const char **argv,nget_options options,int sub){
 		switch (c){
 			case 'T':
 				options.gflags|=GETFILES_TESTMODE;
-				PDEBUG(DEBUG_MIN,"testmode now %i",options.gflags&GETFILES_TESTMODE > 0);
+				PDEBUG(DEBUG_MIN,"testmode now %i",(options.gflags&GETFILES_TESTMODE) != 0);
 				break;
 			case OPT_TEST_MULTI:
 				options.set_test_multi(loptarg);
