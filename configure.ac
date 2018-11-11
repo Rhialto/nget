@@ -13,6 +13,7 @@ AH_BOTTOM([
 #endif /* _NGET_CONFIG_H_ */
 ])
 
+CXXFLAGS="$CXXFLAGS -std=c++11"
 AC_LANG([C++])
 
 dnl Checks for programs.
@@ -33,7 +34,8 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h sstream limits regex.h term.h inttypes.h winsock.h winsock2.h ws2tcpip.h sys/socket.h process.h windows.h)
 AC_CHECK_HEADERS(stdio.h endian.h)
 
-MY_CHECK_HASH_MAP
+dnl <hash_map> is too outdated by now. Don't try to use it.
+dnl MY_CHECK_HASH_MAP
 
 dnl due to windows' linking methods, you need the correct prototype to find some funcs, eg LockFile
 MY_SEARCH_LIBS(LockFile,[#include <windows.h>], [LockFile(0,0,0,0,0);], [kernel32], [library containing LockFile])

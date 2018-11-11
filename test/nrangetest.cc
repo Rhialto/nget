@@ -41,7 +41,8 @@ class nrangeTest : public CppUnit::TestFixture {
 			range->insert(1);
 			CPPUNIT_ASSERT(!range->empty());
 			CPPUNIT_ASSERT(range->get_total() == 1);
-			CPPUNIT_ASSERT(range->low() == range->high() == 1);
+			CPPUNIT_ASSERT(range->low() == 1);
+			CPPUNIT_ASSERT(range->high() == 1);
 			range->insert(2);
 			CPPUNIT_ASSERT(!range->empty());
 			CPPUNIT_ASSERT(range->num_ranges() == 1);
@@ -59,7 +60,8 @@ class nrangeTest : public CppUnit::TestFixture {
 			CPPUNIT_ASSERT(!range->empty());
 			CPPUNIT_ASSERT(range->num_ranges() == 1);
 			CPPUNIT_ASSERT(range->get_total() == 1);
-			CPPUNIT_ASSERT(range->low() == range->high() == 1);
+			CPPUNIT_ASSERT(range->low() == 1);
+			CPPUNIT_ASSERT(range->high() == 1);
 			CPPUNIT_ASSERT(!range->check(0));
 			CPPUNIT_ASSERT(range->check(1));
 			CPPUNIT_ASSERT(!range->check(2));

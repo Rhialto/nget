@@ -1149,7 +1149,7 @@ void c_prot_nntp::nntp_doretrieve(c_nntp_files_u &filec, ParHandler &parhandler,
 		}
 		if (optionflags & GETFILES_MARK)
 			printf("Would mark ");
-		printf("%"PRIuFAST64" bytes in %lu files\n",filec.bytes,(ulong)filec.files.size());
+		printf("%" PRIuFAST64 " bytes in %lu files\n",filec.bytes,(ulong)filec.files.size());
 	} else if (optionflags & GETFILES_MARK) {
 		for(curf = filec.files.begin();curf!=filec.files.end();++curf){
 			fr=(*curf).second;

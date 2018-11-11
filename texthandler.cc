@@ -140,7 +140,7 @@ void TextHandler::save(void) const {
 					//ignore
 				}
 				time_t curtime = time(NULL);
-				f->putf("From nget-"PACKAGE_VERSION" %s", ctime(&curtime)); //ctime has a \n already.
+				f->putf("From nget-" PACKAGE_VERSION " %s", ctime(&curtime)); //ctime has a \n already.
 				writeinfo(f.get(), true);
 				f->putf("\n");
 				f->close();

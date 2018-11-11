@@ -193,7 +193,7 @@ static void addoptions(void)
 	addoption(NULL,0,0,NULL,NULL);
 };
 static void print_help(void){
-	printf("nget v"PACKAGE_VERSION" - nntp command line fetcher\n");
+	printf("nget v" PACKAGE_VERSION " - nntp command line fetcher\n");
 	printf("Copyright 1999-2004 Matthew Mueller <donut AT dakotacom.net>\n");
 	printf("\n\
 This program is free software; you can redistribute it and/or modify\n\

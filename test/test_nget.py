@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 #
 #    test_nget.py - test of nget
 #    Copyright (C) 2002-2004  Matthew Mueller <donut AT dakotacom.net>

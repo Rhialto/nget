@@ -1,3 +1,4 @@
+#include <cstring>
 #include "strtoker.h"
 
 #include <cppunit/extensions/HelperMacros.h>
