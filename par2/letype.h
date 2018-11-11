@@ -28,6 +28,15 @@ typedef u64 leu64;
 
 #else
 
+#ifdef WIN32
+#pragma pack(push, 1)
+#ifndef PACKED
+#define PACKED
+#endif
+#else
+#define PACKED __attribute__ ((packed))
+#endif
+
 class leu16
 {
 public:
@@ -43,7 +52,7 @@ public:
 
 protected:
   u16 value;
-};
+} PACKED;
 
 inline leu16::leu16(void)
 {
@@ -96,7 +105,7 @@ public:
 
 protected:
   u32 value;
-};
+} PACKED;
 
 inline leu32::leu32(void)
 {
@@ -155,7 +164,7 @@ public:
 
 protected:
   u64 value;
-};
+} PACKED;
 
 inline leu64::leu64(void)
 {
@@ -209,6 +218,11 @@ inline leu64::operator u64(void) const
          (u64)(((unsigned char*)&value)[6]) << 48 |
          (u64)(((unsigned char*)&value)[7]) << 56;
 }
+
+#ifdef WIN32
+#pragma pack(pop)
+#endif
+#undef PACKED
 
 #endif
 
