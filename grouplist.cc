@@ -294,7 +294,7 @@ c_nntp_grouplist::c_nntp_grouplist(string path){
 	}catch(FileNOENTEx &e){
 		return;
 	}
-	auto_ptr<c_file> fcloser(f);
+	unique_ptr<c_file> fcloser(f);
 	try{
 		c_nntp_grouplist_reader reader(f, server_info);
 		c_group_availability::ptr ng;
@@ -318,7 +318,7 @@ void c_nntp_grouplist::save(void){
 	string tmpfn=filename+".tmp";
 	c_file *f=dofileopen(tmpfn,"wb");
 	try {
-		auto_ptr<c_file> fcloser(f);
+		unique_ptr<c_file> fcloser(f);
 		if (debug){printf("saving grouplist: %lu groups..",(ulong)groups.size());fflush(stdout);}
 		t_group_availability_map::iterator gdi;
 		t_server_group_description_map::iterator sgdi;
@@ -378,7 +378,7 @@ void nntp_grouplist_printinfos(const t_grouplist_getinfo_list &getinfos) {
 	}catch(FileNOENTEx &e){
 		return;
 	}
-	auto_ptr<c_file> fcloser(f);
+	unique_ptr<c_file> fcloser(f);
 	try{
 		t_nntp_grouplist_server_info_map server_info;
 		c_nntp_grouplist_reader reader(f, server_info);

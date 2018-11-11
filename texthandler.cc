@@ -130,10 +130,10 @@ void TextHandler::save(void) const {
 			tmppath.append(".tmp");
 			//c_file_fd f(mboxpath.c_str(), O_CREAT|O_WRONLY|O_APPEND, PUBMODE);
 			c_lockfile locker(mboxpath.c_str(), WANT_EX_LOCK);
-			auto_ptr<c_file> f(maybegzopen(tmppath.c_str(), "w"));
+			unique_ptr<c_file> f(maybegzopen(tmppath.c_str(), "w"));
 			try {
 				try {
-					auto_ptr<c_file> of(maybegzopen(mboxpath.c_str(), "r"));
+					unique_ptr<c_file> of(maybegzopen(mboxpath.c_str(), "r"));
 					copyfile(of.get(), f.get());
 					of->close();
 				}catch (FileNOENTEx &e) {

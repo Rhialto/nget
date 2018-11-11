@@ -33,7 +33,7 @@
 class c_prot_nntp {
 	public:
 		char *cbuf;
-		auto_ptr<c_file_tcp> cursock;
+		unique_ptr<c_file_tcp> cursock;
 		char *curhost;
 		char *curgroup;
 		char *curuser;

@@ -445,7 +445,7 @@ int Par2Info::maybe_get_pxxs(c_nntp_files_u &fc) {
 		set<uint32_t> goodpackets;
 		bool goodparfound = false;
 		int needed_packets = 0;
-		auto_ptr<Par2Repairer> par2;
+		unique_ptr<Par2Repairer> par2;
 
 		vector<string> fullpaths;
 		for (vector<string>::const_iterator fni=bfni->second.begin(); fni!=bfni->second.end(); ++fni)

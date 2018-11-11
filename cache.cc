@@ -724,7 +724,7 @@ c_nntp_cache::c_nntp_cache(string path,c_group_info::ptr group_,meta_mid_info *m
 	}catch(FileNOENTEx &e){
 		return;
 	}
-	auto_ptr<c_file> fcloser(f);
+	unique_ptr<c_file> fcloser(f);
 	try{
 		c_nntp_cache_reader reader(f, midinfo, server_info, group_);
 		c_nntp_file::ptr nf;
@@ -751,7 +751,7 @@ c_nntp_cache::~c_nntp_cache(){
 			c_file *f=dofileopen(tmpfn,"wb",group->usegz);
 			ulong count=0,counta=0;
 			try {
-				auto_ptr<c_file> fcloser(f);
+				unique_ptr<c_file> fcloser(f);
 				if (quiet<2){printf("saving cache: %lu parts, %lu files..",totalnum,(ulong)files.size());fflush(stdout);}
 				c_nntp_file::ptr nf;
 				t_references::iterator ri;
@@ -949,7 +949,7 @@ void nntp_cache_getfiles(c_nntp_files_u *fc, ParHandler *parhandler, bool *ismul
 	}catch(FileNOENTEx &e){
 		return;
 	}
-	auto_ptr<c_file> fcloser(f);
+	unique_ptr<c_file> fcloser(f);
 	try{
 		t_nntp_server_info server_info;
 		ulong numfiles=0;
@@ -1010,7 +1010,7 @@ void c_mid_info::load(string path,bool merge,bool lock){
 		file=path;
 	int line=0;
 	//c_lockfile locker(path,WANT_SH_LOCK);
-	auto_ptr<c_lockfile> locker;
+	unique_ptr<c_lockfile> locker;
 	if (lock)
 		locker.reset(new c_lockfile(path,WANT_SH_LOCK));
 //	c_regex_r midre("^(.+) ([0-9]+) ([0-9]+)$");
@@ -1021,7 +1021,7 @@ void c_mid_info::load(string path,bool merge,bool lock){
 	}catch(FileNOENTEx &e){
 		return;
 	}
-	auto_ptr<c_file> fcloser(f);
+	unique_ptr<c_file> fcloser(f);
 	while (!f->beof()){
 		line++;
 		i = f->btoks(' ',t,3);
@@ -1065,7 +1065,7 @@ void c_mid_info::save(void){
 	string tmpfn=file+".tmp";
 	f=dofileopen(tmpfn,"wb");
 	try {
-		auto_ptr<c_file> fcloser(f);
+		unique_ptr<c_file> fcloser(f);
 		if (debug){printf("saving mid_info: %lu infos..",(ulong)states.size());fflush(stdout);}
 		t_message_state_list::iterator sli;
 		c_message_state::ptr ms;
