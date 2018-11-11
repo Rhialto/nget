@@ -167,6 +167,7 @@ typedef unsigned long long u64;
 #      define __LITTLE_ENDIAN _LITTLE_ENDIAN
 #      define __BIG_ENDIAN _BIG_ENDIAN
 #      define __PDP_ENDIAN _PDP_ENDIAN
+#      define __BYTE_ORDER _BYTE_ORDER
 #    else
 #      error <endian.h> does not define __LITTLE_ENDIAN etc.
 #    endif
